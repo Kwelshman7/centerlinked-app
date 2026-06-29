@@ -1,0 +1,274 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 15%;
+
+    --primary: 197 65% 42%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 187 55% 50%;
+    --brand-purple: 262 45% 42%;
+
+    --secondary: 200 25% 96%;
+    --secondary-foreground: 200 30% 22%;
+
+    --muted: 200 20% 96%;
+    --muted-foreground: 210 14% 30%;
+
+    --accent: 197 70% 95%;
+    --accent-foreground: 197 65% 32%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 18% 90%;
+    --input: 200 18% 90%;
+    --ring: 197 65% 42%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --success: 168 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --gradient-hero: linear-gradient(135deg, hsl(197 70% 98%) 0%, hsl(187 55% 96%) 50%, hsl(262 40% 97%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(187 55% 48%) 0%, hsl(197 65% 42%) 50%, hsl(262 45% 42%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(200 20% 98%) 100%);
+    
+    --shadow-sm: 0 1px 2px 0 hsl(200 30% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(200 30% 15% / 0.1), 0 2px 4px -2px hsl(200 30% 15% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(200 30% 15% / 0.1), 0 4px 6px -4px hsl(200 30% 15% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(200 30% 15% / 0.1), 0 8px 10px -6px hsl(200 30% 15% / 0.1);
+    --shadow-glow: 0 0 40px hsl(197 65% 45% / 0.18);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 20% 8%;
+    --foreground: 220 14% 96%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 220 14% 96%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 220 14% 96%;
+
+    --primary: 197 70% 52%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 187 60% 55%;
+    --brand-purple: 262 50% 55%;
+
+    --secondary: 200 20% 18%;
+    --secondary-foreground: 200 14% 96%;
+
+    --muted: 200 20% 18%;
+    --muted-foreground: 200 14% 75%;
+
+    --accent: 197 70% 22%;
+    --accent-foreground: 197 70% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 20% 20%;
+    --input: 200 20% 20%;
+    --ring: 197 70% 52%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(220 20% 8%) 0%, hsl(197 50% 12%) 50%, hsl(262 40% 12%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(187 60% 50%) 0%, hsl(197 70% 48%) 50%, hsl(262 50% 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220 20% 12%) 0%, hsl(220 20% 10%) 100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Global scale-down: shrinks rem-based sizing across the entire app
+     (typography, spacing, radii, shadows) without altering layout or content.
+     Tailwind defaults assume 16px; we step it down responsively so more
+     content fits comfortably on every screen size. */
+  html {
+    font-size: 14px;
+  }
+  @media (min-width: 640px) {
+    html { font-size: 14.5px; }
+  }
+  @media (min-width: 1024px) {
+    html { font-size: 15px; }
+  }
+  @media (min-width: 1536px) {
+    html { font-size: 15.5px; }
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .bg-hero-gradient {
+    background: var(--gradient-hero);
+  }
+
+  .bg-card-gradient {
+    background: var(--gradient-card);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.6s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulseSoft 3s ease-in-out infinite;
+  }
+
+  .animate-ticker {
+    animation: ticker 22s linear infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.18), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2.6s ease-in-out infinite;
+  }
+
+  .animate-blink {
+    animation: blink 1.6s ease-in-out infinite;
+  }
+
+  .animate-bar-grow {
+    animation: barGrow 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transform-origin: left center;
+  }
+
+  .animate-pop-in {
+    opacity: 0;
+    animation: popIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes ticker {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+@keyframes barGrow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* iOS safe-area utilities */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.bottom-safe { bottom: env(safe-area-inset-bottom); }
+.h-safe-tabbar { height: calc(64px + env(safe-area-inset-bottom)); }
+html, body, #root { overflow-x: hidden; max-width: 100%; }
