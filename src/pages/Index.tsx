@@ -6,7 +6,6 @@ import { Positioning } from "@/components/landing/Positioning";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { ProductShowcase } from "@/components/landing/ProductShowcase";
 import { AlwaysAccurate } from "@/components/landing/AlwaysAccurate";
-import { Testimonials } from "@/components/landing/Testimonials";
 import { WhoFor } from "@/components/landing/WhoFor";
 import { Pricing } from "@/components/landing/Pricing";
 import { FAQ } from "@/components/landing/FAQ";
@@ -29,7 +28,6 @@ const Index = () => {
         <section id="features">
           <AlwaysAccurate />
         </section>
-        <Testimonials />
         <WhoFor />
         <section id="pricing">
           <Pricing />

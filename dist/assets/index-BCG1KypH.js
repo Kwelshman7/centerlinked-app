@@ -1,1 +1,0 @@
-import{s as t}from"./index-CoBGuxmO.js";const a={auth:{signInWithOAuth:async(i,r)=>{const{error:e}=await t.auth.signInWithOAuth({provider:i,options:{redirectTo:(r==null?void 0:r.redirect_uri)??`${window.location.origin}/app`}});return e?{error:e,redirected:!1}:{error:null,redirected:!0}}}};export{a as lovable};

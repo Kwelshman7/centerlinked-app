@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { applySocialMeta } from "@/lib/social-meta";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function Signup() {
     setLoading(true);
 
     // Members-only gate: must have a pending invite OR match a verified org domain.
-    const { data: eligible, error: eligErr } = await (supabase.rpc as any)("email_signup_eligible", { _email: email });
+    const { data: eligible, error: eligErr } = await supabase.rpc("email_signup_eligible", { _email: email });
     if (eligErr) {
       setLoading(false);
       toast.error("Couldn't verify access", { description: eligErr.message });
@@ -101,6 +102,13 @@ export default function Signup() {
               Members-only. Use the work email you were invited with — or one that matches a verified organization.{" "}
               <Link to="/request-access" className="text-primary font-medium hover:underline">Need access?</Link>
             </p>
+          </div>
+
+          <GoogleSignInButton label="Sign up with Google" className="w-full mb-4" />
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

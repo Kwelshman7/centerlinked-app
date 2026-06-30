@@ -19,6 +19,7 @@ import {
   LEVELS_OF_CARE, HIGHLIGHT_OPTIONS, POPULATION_OPTIONS,
   SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS,
 } from "@/components/app/facility/facility-types";
+import { fileToBase64 } from "@/lib/files";
 
 type Stage = "create-org" | "add-facilities" | "done";
 
@@ -54,14 +55,6 @@ const emptyFacility = (): ManualFacility => ({
   bd_contact_name: "", bd_contact_phone: "", bd_contact_email: "",
   image_urls: [], payers_in_network: "", payers_out_of_network: "",
 });
-
-const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(",")[1] ?? "");
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
 
 interface PdfFacility {
   name: string;

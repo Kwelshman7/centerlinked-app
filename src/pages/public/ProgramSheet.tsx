@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
@@ -15,6 +15,7 @@ import {
 import { OrgFooter } from "@/components/public/OrgFooter";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
+import { useNoIndex } from "@/hooks/useNoIndex";
 
 interface Facility extends FacilitySheetData {
   organization_id: string;
@@ -40,22 +41,24 @@ export default function ProgramSheet() {
   const { profile, isSuperAdmin } = useAuth();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [org, setOrg] = useState<SheetOrg | null>(null);
-  const [contracts, setContracts] = useState<SheetContract[]>([]);
   const [fullContracts, setFullContracts] = useState<FullContract[]>([]);
   const [notFound, setNotFound] = useState(false);
   const canEdit =
     !!facility && (isSuperAdmin || profile?.organization_id === facility.organization_id);
-  const canShare = canEdit;
+  const contracts = useMemo<SheetContract[]>(
+    () =>
+      fullContracts
+        .filter((r) => r.in_network)
+        .map((row) => ({
+          id: row.id,
+          payer_name: row.payer_name,
+          in_network: row.in_network,
+          payer_logo_url: null,
+        })),
+    [fullContracts],
+  );
 
-  useEffect(() => {
-    const meta = document.createElement("meta");
-    meta.name = "robots";
-    meta.content = "noindex, nofollow";
-    document.head.appendChild(meta);
-    return () => {
-      document.head.removeChild(meta);
-    };
-  }, []);
+  useNoIndex();
 
   const loadAll = async () => {
     if (!slug) return;
@@ -86,17 +89,7 @@ export default function ProgramSheet() {
         .order("payer_name"),
     ]);
     setOrg((o as SheetOrg | null) ?? null);
-    const rows = (c as FullContract[]) ?? [];
-    setFullContracts(rows);
-    const list: SheetContract[] = rows
-      .filter((r) => r.in_network)
-      .map((row) => ({
-        id: row.id,
-        payer_name: row.payer_name,
-        in_network: row.in_network,
-        payer_logo_url: null,
-      }));
-    setContracts(list);
+    setFullContracts((c as FullContract[]) ?? []);
     const orgRow = o as SheetOrg | null;
     const loc = [fac.city, fac.state].filter(Boolean).join(", ");
     applySocialMeta({
@@ -153,7 +146,7 @@ export default function ProgramSheet() {
           org={org}
           contracts={contracts}
           mode="public"
-          canShare={canShare}
+          canShare={canEdit}
           canEditPhotos={canEdit}
           onPhotosUpdated={loadAll}
           aboutHeaderExtra={

@@ -68,5 +68,4 @@ export function ShareSheetButton({
     </div>
   );
 }
-// `copied` is intentionally unused when hideCopy is true; lint suppression not needed.
 

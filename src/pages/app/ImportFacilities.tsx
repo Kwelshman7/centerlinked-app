@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -233,7 +233,6 @@ const TEMPLATE_SAMPLE = [
 
 export default function ImportFacilities() {
   const { profile, user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -277,11 +276,7 @@ export default function ImportFacilities() {
     let cols: string[] = [];
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
-      toast({
-        title: "Unsupported file type",
-        description: "Please upload a CSV file. In Excel, use File → Save As → CSV (UTF-8).",
-        variant: "destructive",
-      });
+      toast.error("Please upload a CSV file. In Excel, use File → Save As → CSV (UTF-8).");
       return;
     }
     const text = await file.text();
@@ -311,7 +306,7 @@ export default function ImportFacilities() {
 
   const runImport = async () => {
     if (!user?.id) {
-      toast({ title: "Not signed in", variant: "destructive" });
+      toast.error("Not signed in");
       return;
     }
     setImporting(true);
@@ -350,7 +345,7 @@ export default function ImportFacilities() {
     setImporting(false);
 
     if (error) {
-      toast({ title: "Import failed", description: error.message, variant: "destructive" });
+      toast.error("Import failed", { description: error.message });
       setDone({ ok: 0, failed: validRows.length });
       return;
     }
@@ -359,10 +354,7 @@ export default function ImportFacilities() {
     const failed = (data as any)?.failed ?? 0;
     const orgs = (data as any)?.organizations_created ?? 0;
     setDone({ ok, failed });
-    toast({
-      title: "Import complete",
-      description: `${ok} facilities imported across ${orgs} organizations${failed ? `, ${failed} failed` : ""}.`,
-    });
+    toast.success(`${ok} facilities imported across ${orgs} organizations${failed ? `, ${failed} failed` : ""}.`);
   };
 
   return (

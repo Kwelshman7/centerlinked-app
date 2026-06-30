@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import { fileToBase64 } from "@/lib/files";
 import {
   Upload,
   FileText,
@@ -69,22 +70,8 @@ interface ExtractedImage {
 
 type Stage = "upload" | "parsing" | "review" | "committing" | "done";
 
-const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      // strip "data:...;base64," prefix
-      const b64 = result.split(",")[1] ?? "";
-      resolve(b64);
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-
 export default function PdfFacilityUpload() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, profile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,19 +113,11 @@ export default function PdfFacilityUpload() {
 
   const handleFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
-      toast({
-        title: "PDF only",
-        description: "Please upload a PDF version of your one-pager.",
-        variant: "destructive",
-      });
+      toast.error("Please upload a PDF version of your one-pager.");
       return;
     }
     if (file.size > 15 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload a PDF under 15MB.",
-        variant: "destructive",
-      });
+      toast.error("Please upload a PDF under 15MB.");
       return;
     }
     setFileName(file.name);
@@ -201,13 +180,10 @@ export default function PdfFacilityUpload() {
           setImageAssignments(init);
         })
         .finally(() => setExtracting(false));
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast({
-        title: "Couldn't read that PDF",
-        description: e?.message ?? "Try a clearer one-pager or fewer pages.",
-        variant: "destructive",
-      });
+      const message = e instanceof Error ? e.message : "Try a clearer one-pager or fewer pages.";
+      toast.error("Couldn't read that PDF", { description: message });
       setStage("upload");
       setFileName("");
     }
@@ -394,17 +370,11 @@ export default function PdfFacilityUpload() {
           .eq("id", uploadId);
       }
       setStage("done");
-      toast({
-        title: "Profile ready",
-        description: `${parsed.facilities.length} facility page${parsed.facilities.length === 1 ? "" : "s"} created.`,
-      });
-    } catch (e: any) {
+      toast.success(`${parsed.facilities.length} facility page${parsed.facilities.length === 1 ? "" : "s"} created.`);
+    } catch (e: unknown) {
       console.error(e);
-      toast({
-        title: "Couldn't save",
-        description: e?.message ?? "Please try again.",
-        variant: "destructive",
-      });
+      const message = e instanceof Error ? e.message : "Please try again.";
+      toast.error("Couldn't save", { description: message });
       setStage("review");
     }
   };

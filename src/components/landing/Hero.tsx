@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, CheckCircle2, Share2, MapPin, Phone, Mail, Globe, Shield, Users, FileText, Bell, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import { PhoneFrame } from "./PhoneFrame";
 import northbendCover from "@/assets/northbend-cover.jpg";
 import logoNorthbend from "@/assets/logo-northbend.png";
 import logoRidgeview from "@/assets/logo-ridgeview.png";
@@ -19,11 +19,10 @@ export function Hero() {
                 <Sparkles className="h-3.5 w-3.5" />{"\u00a0"}Built for behavioral health BD teams
               </div>
               <h1 className="font-heading text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] leading-[1.05]">
-                One link that tells referral partners{" "}
-                <span className="text-primary">everything they need to know.</span>
+                Make your organization easier to refer to.
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
-                Your levels of care, accepted insurance, facility locations, and the right contact all in one live, shareable profile. No more outdated PDFs. No more "let me check and get back to you."
+                One live, shareable profile with your levels of care, verified insurance, facility locations, and the right contact — so referral partners never work from outdated PDFs or &ldquo;let me check and get back to you.&rdquo;
               </p>
             </div>
 
@@ -75,49 +74,9 @@ export function Hero() {
 
 function IPhoneOrgDashboard() {
   return (
-    <div
-      className="relative mx-auto w-[260px] sm:w-[290px] lg:w-[300px]"
-      style={{ aspectRatio: "393 / 852" }}
-    >
-      {/* iPhone 16 Pro frame */}
-      <div className="absolute inset-0 rounded-[3.2rem] bg-gradient-to-b from-neutral-800 via-neutral-900 to-black shadow-2xl shadow-glow p-[5px]">
-        <div className="relative h-full w-full rounded-[2.95rem] bg-black p-[2px]">
-          {/* Side buttons */}
-          <span className="absolute -left-[3px] top-[120px] h-8 w-[3px] rounded-l-sm bg-neutral-700" />
-          <span className="absolute -left-[3px] top-[170px] h-14 w-[3px] rounded-l-sm bg-neutral-700" />
-          <span className="absolute -left-[3px] top-[240px] h-14 w-[3px] rounded-l-sm bg-neutral-700" />
-          <span className="absolute -right-[3px] top-[190px] h-20 w-[3px] rounded-r-sm bg-neutral-700" />
-
-          <div className="relative h-full w-full rounded-[2.85rem] overflow-hidden bg-background">
-            {/* Status bar */}
-            <div className="absolute top-0 inset-x-0 h-11 flex items-center justify-between px-7 z-30 text-foreground">
-              <span className="text-[11px] font-semibold tracking-tight">9:41</span>
-              <span className="flex items-center gap-1 text-[10px] font-semibold">
-                <span>5G</span>
-                <span>●●●●</span>
-              </span>
-            </div>
-
-            {/* Dynamic Island */}
-            <div className="absolute top-2.5 left-1/2 -translate-x-1/2 h-[30px] w-[110px] rounded-full bg-black z-40 flex items-center justify-end pr-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-blink" />
-            </div>
-
-            {/* Static content (auto-scroll disabled) */}
-            <div className="absolute inset-0 pt-11 overflow-hidden bg-background">
-              <OrgDashboardContent />
-            </div>
-
-            {/* Home indicator */}
-            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-28 rounded-full bg-foreground/80 z-40" />
-
-            {/* Top & bottom gradient fades */}
-            <div className="pointer-events-none absolute top-11 inset-x-0 h-8 bg-gradient-to-b from-background to-transparent z-20" />
-            <div className="pointer-events-none absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-background to-transparent z-20" />
-          </div>
-        </div>
-      </div>
-    </div>
+    <PhoneFrame className="w-[260px] sm:w-[290px] lg:w-[300px]">
+      <OrgDashboardContent />
+    </PhoneFrame>
   );
 }
 

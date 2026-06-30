@@ -4,6 +4,7 @@ import { Phone, MessageSquare, Mail, User, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { trackOrgEvent } from "@/lib/track-org-event";
+import { sanitizePhone } from "@/lib/phone";
 
 interface Props {
   orgName: string;
@@ -15,13 +16,9 @@ interface Props {
   organizationId?: string;
 }
 
-function digits(p: string | null) {
-  return p ? p.replace(/[^\d+]/g, "") : "";
-}
-
 export function GetInTouchSheet({ orgName, contactName, phone, email, triggerLabel = "Get in Touch", triggerClassName, organizationId }: Props) {
   const [open, setOpen] = useState(false);
-  const tel = digits(phone);
+  const tel = sanitizePhone(phone);
   const hasAny = !!(tel || email);
 
   const copy = async (text: string, label: string) => {

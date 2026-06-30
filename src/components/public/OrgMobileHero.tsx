@@ -5,6 +5,8 @@ import { GetInTouchSheet } from "@/components/public/GetInTouchSheet";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { toast } from "sonner";
+import { shareOrCopyUrl } from "@/lib/share";
+import { sanitizePhone } from "@/lib/phone";
 
 interface Props {
   org: {
@@ -26,14 +28,10 @@ interface Props {
   brand: string;
 }
 
-function digits(p?: string | null) {
-  return p ? p.replace(/[^\d+]/g, "") : "";
-}
-
 export function OrgMobileHero({ org, facilities, brand }: Props) {
   const [copied, setCopied] = useState(false);
   const loc = [org.hq_city, org.hq_state].filter(Boolean).join(", ");
-  const tel = digits(org.bd_contact_phone);
+  const tel = sanitizePhone(org.bd_contact_phone);
 
   const levelsOfCare = useMemo(() => {
     const set = new Set<string>();
@@ -42,20 +40,19 @@ export function OrgMobileHero({ org, facilities, brand }: Props) {
   }, [facilities]);
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/o/${org.slug ?? ""}`;
-    if (org.id) trackOrgEvent(org.id, "share_click");
-    if ((navigator as any).share) {
-      try {
-        await (navigator as any).share({ title: `${org.name} on CenterLinked`, url });
-        return;
-      } catch {}
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      toast.success("Link copied");
-      setTimeout(() => setCopied(false), 1800);
-    } catch {}
+    if (!org.slug) return;
+    const url = `${window.location.origin}/o/${org.slug}`;
+    const ok = await shareOrCopyUrl({
+      url,
+      title: `${org.name} on CenterLinked`,
+      onSuccess: () => {
+        if (org.id) trackOrgEvent(org.id, "share_click");
+        setCopied(true);
+        toast.success("Link copied");
+        setTimeout(() => setCopied(false), 1800);
+      },
+    });
+    if (!ok) toast.error("Could not copy link");
   };
 
   return (

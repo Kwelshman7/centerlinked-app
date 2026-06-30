@@ -1,6 +1,7 @@
 import { Phone, MessageSquare, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { sanitizePhone } from "@/lib/phone";
 
 interface Props {
   name?: string | null;
@@ -11,12 +12,8 @@ interface Props {
   variant?: "outline" | "secondary";
 }
 
-function digits(p?: string | null) {
-  return p ? p.replace(/[^\d+]/g, "") : "";
-}
-
 export function BdContactButtons({ phone, email, size = "sm", className, variant = "outline" }: Props) {
-  const tel = digits(phone);
+  const tel = sanitizePhone(phone);
   const hasAny = !!(tel || email);
   if (!hasAny) {
     return <p className={cn("text-xs text-muted-foreground", className)}>No BD rep contact on file</p>;

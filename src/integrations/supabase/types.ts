@@ -136,7 +136,9 @@ export type Database = {
     Views: { [_ in never]: never }
     Functions: {
       admin_create_organization: { Args: { _bd_contact_email?: string; _bd_contact_name?: string; _bd_contact_phone?: string; _description?: string; _email_domain?: string; _hq_city?: string; _hq_state?: string; _logo_url?: string; _name: string; _num_facilities?: number; _phone?: string; _verified?: boolean; _website?: string }; Returns: string }
+      bootstrap_super_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       create_organization_with_owner: { Args: { _description?: string; _email_domain: string; _hq_city?: string; _hq_state?: string; _logo_url?: string; _name: string; _num_facilities?: number; _phone?: string; _website?: string }; Returns: string }
+      email_signup_eligible: { Args: { _email: string }; Returns: boolean }
       freeze_stale_facilities: { Args: Record<PropertyKey, never>; Returns: number }
       get_networked_org_ids: { Args: Record<PropertyKey, never>; Returns: string[] }
       get_or_create_direct_conversation: { Args: { _other_user_id: string }; Returns: string }

@@ -1,0 +1,16 @@
+# CenterLinked
+
+> The professional network for addiction-treatment business development reps. Share program updates, levels of care, and insurance networks with verified referral partners.
+
+CenterLinked is a secure, verified-only platform for treatment-center BD professionals to connect with peers, post census and program updates, and find in-network referral partners across the country.
+
+## Pages
+
+- [Home](/): Product overview, features, pricing, and FAQ.
+- [Login](/login): Sign in to your verified CenterLinked account.
+- [Signup](/signup): Apply for a verified CenterLinked account (work email required).
+
+## Optional
+
+- [Pricing](/#pricing): Plans for individuals and organizations.
+- [FAQ](/#faq): Common questions about verification, security, and team access.

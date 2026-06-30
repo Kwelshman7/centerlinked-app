@@ -14,6 +14,7 @@ import { GetInTouchSheet } from "@/components/public/GetInTouchSheet";
 import { applySocialMeta } from "@/lib/social-meta";
 import { ContractRow } from "@/lib/derive-insurance";
 import { trackOrgEvent } from "@/lib/track-org-event";
+import { useNoIndex } from "@/hooks/useNoIndex";
 
 interface Org {
   id: string;
@@ -51,15 +52,7 @@ export default function OrgSheet() {
   const [extraContacts, setExtraContacts] = useState<HeroContact[]>([]);
   const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
-    const meta = document.createElement("meta");
-    meta.name = "robots";
-    meta.content = "noindex, nofollow";
-    document.head.appendChild(meta);
-    return () => {
-      document.head.removeChild(meta);
-    };
-  }, []);
+  useNoIndex();
 
   useEffect(() => {
     if (!slug) return;

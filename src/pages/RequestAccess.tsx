@@ -36,14 +36,11 @@ export default function RequestAccess() {
       toast.error("Please use your work email", { description: "Personal email addresses aren't accepted." }); return;
     }
     setLoading(true);
-    const { error } = await supabase.from("early_access_requests").insert({
+    const { error } = await supabase.from("early_access_leads").insert({
       full_name: form.full_name.trim(),
       email: form.email.trim().toLowerCase(),
       organization: form.organization.trim(),
-      role: form.role.trim() || null,
-      num_facilities: form.num_facilities ? Number(form.num_facilities) : null,
-      notes: form.notes.trim() || null,
-      source: "landing",
+      facilities: form.num_facilities ? String(form.num_facilities) : "1",
     });
     setLoading(false);
     if (error) { toast.error("Could not submit request", { description: error.message }); return; }

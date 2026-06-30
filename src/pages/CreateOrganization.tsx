@@ -43,7 +43,7 @@ export default function CreateOrganization() {
       return;
     }
     setSaving(true);
-    const { data, error } = await supabase.rpc("create_organization_with_owner", {
+    const { data: orgId, error } = await supabase.rpc("create_organization_with_owner", {
       _name: form.name.trim(),
       _email_domain: domain,
       _website: form.website || null,
@@ -53,9 +53,6 @@ export default function CreateOrganization() {
       _phone: form.phone || null,
       _num_facilities: form.num_facilities ? parseInt(form.num_facilities) : null,
       _logo_url: form.logo_url || null,
-      _bd_contact_name: form.bd_contact_name || null,
-      _bd_contact_phone: form.bd_contact_phone || null,
-      _bd_contact_email: form.bd_contact_email || null,
     });
     if (error) {
       setSaving(false);
@@ -70,11 +67,18 @@ export default function CreateOrganization() {
       );
       return;
     }
+
+    if (orgId && (form.bd_contact_name || form.bd_contact_phone || form.bd_contact_email)) {
+      await supabase.from("organizations").update({
+        bd_contact_name: form.bd_contact_name || null,
+        bd_contact_phone: form.bd_contact_phone || null,
+        bd_contact_email: form.bd_contact_email || null,
+      }).eq("id", orgId);
+    }
     await refresh();
     setSaving(false);
     toast.success("Organization created!", { description: "Now let's add your facilities." });
     navigate("/app/onboarding", { replace: true });
-    void data;
   };
 
   return (

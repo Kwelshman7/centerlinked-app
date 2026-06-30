@@ -61,7 +61,7 @@ export function Problem() {
         </div>
 
         <p className="mt-12 text-center text-base text-muted-foreground max-w-2xl mx-auto">
-          None of this is anyone's fault. The problem is simple — there's no good way to keep your referral partners current. Until now.
+          None of this is anyone's fault. Referral partners just need one place that's always current. CenterLinked is that place.
         </p>
       </div>
     </section>

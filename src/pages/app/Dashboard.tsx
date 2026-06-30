@@ -22,6 +22,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { formatUpdatedAt } from "@/lib/relative-time";
+import { shareOrCopyUrl } from "@/lib/share";
 
 interface OrgRow {
   id: string;
@@ -37,26 +39,6 @@ interface FacilityRow {
   state: string | null;
   image_urls: string[] | null;
   updated_at: string;
-}
-
-function relativeTime(iso: string): string {
-  const then = new Date(iso).getTime();
-  const diffMs = Date.now() - then;
-  const sec = Math.max(1, Math.floor(diffMs / 1000));
-  if (sec < 60) return "just now";
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `Updated ${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `Updated ${hr}h ago`;
-  const d = Math.floor(hr / 24);
-  if (d === 1) return "Updated 1 day ago";
-  if (d < 7) return `Updated ${d} days ago`;
-  const w = Math.floor(d / 7);
-  if (w === 1) return "Updated 1 week ago";
-  if (w < 5) return `Updated ${w} weeks ago`;
-  const mo = Math.floor(d / 30);
-  if (mo < 12) return `Updated ${mo}mo ago`;
-  return `Updated ${Math.floor(d / 365)}y ago`;
 }
 
 export default function Dashboard() {
@@ -133,21 +115,9 @@ export default function Dashboard() {
       toast.error("Your organization link isn't ready yet.");
       return;
     }
-    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
-    if (nav.share) {
-      try {
-        await nav.share({ url: publicUrl, title: org.name });
-        return;
-      } catch {
-        // fall through to clipboard
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(publicUrl);
-      toast.success("Link copied", { description: publicUrl });
-    } catch {
-      toast.error("Could not copy link");
-    }
+    const ok = await shareOrCopyUrl({ url: publicUrl, title: org.name });
+    if (ok) toast.success("Link copied", { description: publicUrl });
+    else toast.error("Could not copy link");
   };
 
   if (!profile?.organization_id) {
@@ -391,7 +361,7 @@ export default function Dashboard() {
                       )}
                     </div>
                     <div className="hidden sm:block text-xs text-muted-foreground shrink-0">
-                      {relativeTime(f.updated_at)}
+                      {formatUpdatedAt(f.updated_at)}
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </Link>

@@ -49,11 +49,11 @@ export function HowItWorks() {
             What's in your profile
           </span>
           <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            One link.{" "}
-            <span className="text-primary">Your whole story.</span>
+            One link your partners can{" "}
+            <span className="text-primary">actually use.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Your CenterLinked profile has everything a referral partner needs — in one place, always current. Your BD reps share it everywhere. When something changes, you update it once. Every link your team has ever shared updates automatically.
+            Your CenterLinked profile has everything a referral partner needs — levels of care, insurance, contacts, and how to send a client. Update it once; every link your team has shared stays current.
           </p>
         </div>
 

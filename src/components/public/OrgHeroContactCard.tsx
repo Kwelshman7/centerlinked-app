@@ -1,6 +1,7 @@
 import { Phone, MessageSquare, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackOrgEvent } from "@/lib/track-org-event";
+import { sanitizePhone } from "@/lib/phone";
 
 export interface HeroContact {
   name: string;
@@ -23,10 +24,6 @@ function initials(name: string) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-function digits(p?: string | null) {
-  return p ? p.replace(/[^\d+]/g, "") : "";
 }
 
 export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8" }: Props) {
@@ -52,7 +49,7 @@ export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8"
 
       <div className="p-4 space-y-4">
         {contacts.map((c, i) => {
-          const tel = digits(c.phone);
+          const tel = sanitizePhone(c.phone);
           return (
             <div key={i} className="space-y-3">
               <div className="flex items-center gap-3">

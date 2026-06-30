@@ -5,8 +5,6 @@ import logoFull from "@/assets/centerlinked-logo-full.png";
 interface LogoProps {
   className?: string;
   to?: string;
-  /** Kept for API compatibility — the wordmark is baked into the logo image. */
-  showText?: boolean;
   size?: "sm" | "md" | "lg" | "xl";
 }
 

@@ -29,6 +29,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { US_STATES } from "@/lib/us-states";
+import { sanitizePhone } from "@/lib/phone";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import { AddPartnerOrgDialog } from "@/components/app/network/AddPartnerOrgDialog";
 import { toast } from "sonner";
@@ -57,10 +58,6 @@ interface OrgAggregate {
 const ANY = "__any__";
 const PAGE_SIZE = 24;
 type View = "network" | "all";
-
-function digits(p?: string | null) {
-  return p ? p.replace(/[^\d+]/g, "") : "";
-}
 
 export default function Organizations() {
   const { partners, partnerOrgIds, loading: partnersLoading, addPartner, removePartner } =
@@ -357,7 +354,7 @@ export default function Organizations() {
                   .slice(0, 8)
                   .map(([name]) => name)
               : [];
-            const tel = digits(o.bd_contact_phone);
+            const tel = sanitizePhone(o.bd_contact_phone);
             const email = o.bd_contact_email;
             return (
               <div

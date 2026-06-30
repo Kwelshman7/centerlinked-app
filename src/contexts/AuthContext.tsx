@@ -1,6 +1,8 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { bootstrapSuperAdmin } from "@/lib/bootstrap-admin";
+import { ensureProfile } from "@/lib/ensure-profile";
 
 type AppRole = "super_admin" | "facility_admin" | "bd_rep";
 
@@ -34,23 +36,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadRef = useRef<Promise<void> | null>(null);
 
-  const loadProfileAndRoles = async (uid: string) => {
-    const [{ data: prof }, { data: rolesData }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
-    ]);
-    setProfile((prof as Profile) ?? null);
-    setRoles(((rolesData as { role: AppRole }[]) ?? []).map((r) => r.role));
+  const loadProfileAndRoles = async (authUser: User) => {
+    if (loadRef.current) return loadRef.current;
+
+    loadRef.current = (async () => {
+      await ensureProfile(authUser);
+      await bootstrapSuperAdmin(authUser);
+      const [{ data: prof }, { data: rolesData }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", authUser.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", authUser.id),
+      ]);
+      setProfile((prof as Profile) ?? null);
+      setRoles(((rolesData as { role: AppRole }[]) ?? []).map((r) => r.role));
+    })().finally(() => {
+      loadRef.current = null;
+    });
+
+    return loadRef.current;
   };
 
   useEffect(() => {
-    // Listener first
+    let mounted = true;
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!mounted) return;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        setTimeout(() => loadProfileAndRoles(sess.user.id).finally(() => setLoading(false)), 0);
+        loadProfileAndRoles(sess.user).finally(() => mounted && setLoading(false));
       } else {
         setProfile(null);
         setRoles([]);
@@ -59,13 +74,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
+      if (!mounted || sess?.user) return;
       setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) loadProfileAndRoles(sess.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      setUser(null);
+      setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
@@ -73,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refresh = async () => {
-    if (user) await loadProfileAndRoles(user.id);
+    if (user) await loadProfileAndRoles(user);
   };
 
   return (

@@ -19,11 +19,10 @@ export function FinalCTA() {
       <div className="container relative z-10">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Your partners want to refer to you.{" "}
-            <span className="text-primary">Make it easy for them.</span>
+            Make your organization easier to refer to.
           </h2>
           <p className="mt-6 text-lg text-muted-foreground">
-            Give every referral partner one link that tells them exactly who you are, what you treat, who to call, and how to send a client. Setup takes about 30 minutes. Your BD team can start sharing it today.
+            Give every referral partner one link with your levels of care, verified insurance, contacts, and referral instructions. Setup takes about 30 minutes — your BD team can start sharing it today.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

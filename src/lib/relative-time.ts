@@ -11,3 +11,9 @@ export function formatDistanceToNow(date: Date): string {
   if (weeks < 5) return `${weeks}w ago`;
   return date.toLocaleDateString();
 }
+
+export function formatUpdatedAt(iso: string): string {
+  const relative = formatDistanceToNow(new Date(iso));
+  if (relative === "just now") return "Updated just now";
+  return `Updated ${relative}`;
+}

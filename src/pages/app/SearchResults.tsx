@@ -33,9 +33,11 @@ type ContractRow = {
   } | null;
 };
 
+type OrgSearchBase = Omit<OrgSearchResult, "in_your_network">;
+
 export default function SearchResults() {
   const [params] = useSearchParams();
-  const [results, setResults] = useState<OrgSearchResult[] | null>(null);
+  const [baseResults, setBaseResults] = useState<OrgSearchBase[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const { partnerOrgIds } = useReferralNetwork();
@@ -77,14 +79,13 @@ export default function SearchResults() {
       if (cancelled) return;
 
       if (error) {
-        setResults([]);
+        setBaseResults([]);
         setLoading(false);
         return;
       }
 
-      // Group by org
-      const byOrg = new Map<string, OrgSearchResult>();
-      const seenFac = new Map<string, Set<string>>(); // orgId -> facility ids seen
+      const byOrg = new Map<string, OrgSearchBase>();
+      const seenFac = new Map<string, Set<string>>();
       ((data as unknown as ContractRow[]) ?? []).forEach((row) => {
         const f = row.facilities;
         if (!f || !f.organizations) return;
@@ -97,7 +98,6 @@ export default function SearchResults() {
             logo_url: org.logo_url,
             hq_city: org.hq_city,
             hq_state: org.hq_state,
-            in_your_network: partnerOrgIds.has(org.id),
             facilities: [],
             latest_verified_at: null,
           });
@@ -124,21 +124,27 @@ export default function SearchResults() {
         }
       });
 
-      const out = Array.from(byOrg.values()).sort((a, b) => {
-        if (a.in_your_network !== b.in_your_network) return a.in_your_network ? -1 : 1;
-        const va = a.latest_verified_at ?? "";
-        const vb = b.latest_verified_at ?? "";
-        if (va !== vb) return vb.localeCompare(va);
-        return a.org_name.localeCompare(b.org_name);
-      });
-
-      setResults(out);
+      setBaseResults(Array.from(byOrg.values()));
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [payerId, state, city, loc, partnerOrgIds]);
+  }, [payerId, state, city, loc]);
 
-  const totalFacilities = results?.reduce((n, o) => n + o.facilities.length, 0) ?? 0;
+  const results = useMemo(
+    () =>
+      baseResults
+        .map((r) => ({ ...r, in_your_network: partnerOrgIds.has(r.org_id) }))
+        .sort((a, b) => {
+          if (a.in_your_network !== b.in_your_network) return a.in_your_network ? -1 : 1;
+          const va = a.latest_verified_at ?? "";
+          const vb = b.latest_verified_at ?? "";
+          if (va !== vb) return vb.localeCompare(va);
+          return a.org_name.localeCompare(b.org_name);
+        }),
+    [baseResults, partnerOrgIds],
+  );
+
+  const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">
@@ -162,13 +168,13 @@ export default function SearchResults() {
         <p className="text-xs text-muted-foreground mt-1">
           {loading
             ? "Searching…"
-            : `${results?.length ?? 0} ${results?.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`}
+            : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`}
         </p>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-      ) : results && results.length > 0 ? (
+      ) : results.length > 0 ? (
         <div className="space-y-3">
           {results.map((o) => <OrgResultCard key={o.org_id} o={o} />)}
         </div>
