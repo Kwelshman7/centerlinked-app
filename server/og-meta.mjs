@@ -181,6 +181,12 @@ export async function resolvePublicMeta(pathname) {
   return null;
 }
 
+export async function renderPreviewHtml(pathname, baseHtml) {
+  const meta = await resolvePublicMeta(pathname);
+  if (!meta) return null;
+  return injectSocialMeta(baseHtml, meta);
+}
+
 export function injectSocialMeta(baseHtml, meta) {
   const title = escapeHtml(meta.title);
   const description = escapeHtml(meta.description);
