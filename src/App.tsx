@@ -30,7 +30,7 @@ import AccessRequests from "./pages/app/admin/AccessRequests";
 import OrganizationClaims from "./pages/app/admin/OrganizationClaims";
 import AdminCreateOrganization from "./pages/app/admin/AdminCreateOrganization";
 import AdminOrganizations from "./pages/app/admin/AdminOrganizations";
-import AdminOrganizationManage from "./pages/app/admin/AdminOrganizationManage";
+import AdminOrgWorkspace from "./pages/app/admin/AdminOrgWorkspace";
 import VerifyContracts from "./pages/app/VerifyContracts";
 import ProgramSheet from "./pages/public/ProgramSheet";
 import OrgSheet from "./pages/public/OrgSheet";
@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/request-access" element={<RequestAccess />} />
+            <Route path="/o/:orgSlug/p/:programSlug" element={<ProgramSheet />} />
             <Route path="/p/:slug" element={<ProgramSheet />} />
             <Route path="/o/:slug" element={<OrgSheet />} />
             <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
@@ -61,7 +62,7 @@ const App = () => (
               <Route path="admin/claims" element={<AdminRoute><OrganizationClaims /></AdminRoute>} />
               <Route path="admin/organizations" element={<AdminRoute><AdminOrganizations /></AdminRoute>} />
               <Route path="admin/organizations/new" element={<AdminRoute><AdminCreateOrganization /></AdminRoute>} />
-              <Route path="admin/organizations/:id" element={<AdminRoute><AdminOrganizationManage /></AdminRoute>} />
+              <Route path="admin/organizations/:id" element={<AdminRoute><AdminOrgWorkspace /></AdminRoute>} />
               <Route path="organizations" element={<Organizations />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="facilities/new" element={<Navigate to="/app/onboarding?add=1" replace />} />

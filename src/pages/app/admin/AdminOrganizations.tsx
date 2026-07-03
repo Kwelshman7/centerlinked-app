@@ -63,7 +63,7 @@ export default function AdminOrganizations() {
             <Building2 className="h-7 w-7 text-primary" /> Manage organizations
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Super-admin view. Edit any organization or add facilities to it.
+            Open any org workspace to manage its dashboard, branding, facilities, and shared links.
           </p>
         </div>
         <Button asChild>
@@ -134,7 +134,7 @@ export default function AdminOrganizations() {
                   )}
                   <Button asChild size="sm" variant="outline">
                     <Link to={`/app/admin/organizations/${o.id}`}>
-                      <Settings className="h-4 w-4" /> Manage
+                      <Settings className="h-4 w-4" /> Open workspace
                     </Link>
                   </Button>
                 </div>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 import { FacilityPhotoGallery } from "@/components/public/FacilityPhotoGallery";
+import { parseBrandColor } from "@/lib/public-urls";
 
 
 export interface FacilitySheetData {
@@ -69,6 +70,9 @@ interface Props {
   canEditPhotos?: boolean;
   facilityId?: string;
   onPhotosUpdated?: (images: string[]) => void;
+  brandColor?: string;
+  coverImageUrl?: string | null;
+  orgLogoUrl?: string | null;
 }
 
 
@@ -97,6 +101,9 @@ export function FacilitySheetView({
   canEditPhotos = false,
   facilityId,
   onPhotosUpdated,
+  brandColor,
+  coverImageUrl,
+  orgLogoUrl,
 }: Props) {
   const address = [facility.address_line1, [facility.city, facility.state].filter(Boolean).join(", "), facility.zip]
     .filter(Boolean)
@@ -138,14 +145,19 @@ export function FacilitySheetView({
     </nav>
   ) : null;
 
+  const brand = parseBrandColor(brandColor ?? org?.brand_color);
+
   const shareNode = canShare && facility.slug ? (
     <ShareSheetButton
       slug={facility.slug}
+      orgSlug={org?.slug}
       kind="facility"
       variant="default"
       size="sm"
       label="Share Facility"
       hideCopy
+      className="shadow-md"
+      style={{ backgroundColor: brand, borderColor: brand }}
     />
   ) : null;
 
@@ -155,6 +167,9 @@ export function FacilitySheetView({
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
         <FacilityHeroImage
           images={facility.image_urls ?? []}
+          fallbackImage={coverImageUrl}
+          orgLogoUrl={orgLogoUrl}
+          brand={brand}
           name={facility.name}
           location={cityStateZip}
           breadcrumb={breadcrumb}
@@ -246,7 +261,7 @@ export function FacilitySheetView({
 
                 <div className="relative grid sm:grid-cols-2 gap-x-8 gap-y-5 sm:before:content-[''] sm:before:absolute sm:before:top-0 sm:before:bottom-0 sm:before:left-1/2 sm:before:-translate-x-1/2 sm:before:w-px sm:before:bg-border/60">
                   {facility.levels_of_care?.length > 0 && (
-                    <PillBlock title="Programs" items={facility.levels_of_care} variant="primary" />
+                    <PillBlock title="Programs" items={facility.levels_of_care} variant="primary" brand={brand} />
                   )}
                   {facility.population_served?.length > 0 && (
                     <PillBlock title="Population" items={facility.population_served} variant="muted" />
@@ -258,7 +273,7 @@ export function FacilitySheetView({
                     <PillBlock title="Amenities" items={facility.highlights} variant="muted" />
                   )}
                   {facility.accreditations && facility.accreditations.length > 0 && (
-                    <PillBlock title="Accreditations" items={facility.accreditations} variant="primary" />
+                    <PillBlock title="Accreditations" items={facility.accreditations} variant="primary" brand={brand} />
                   )}
                 </div>
               </div>
@@ -272,8 +287,8 @@ export function FacilitySheetView({
         <aside className="lg:flex lg:flex-col lg:gap-5 lg:h-full lg:min-h-0">
           <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:shrink-0">
 
-            <div className="border-b border-border/60 bg-primary/10 px-5 py-4">
-              <p className="text-[11px] uppercase tracking-wider font-bold text-primary">
+            <div className="border-b border-border/60 px-5 py-4" style={{ backgroundColor: `${brand}14` }}>
+              <p className="text-[11px] uppercase tracking-wider font-bold" style={{ color: brand }}>
                 For Referrals
               </p>
             </div>
@@ -281,7 +296,10 @@ export function FacilitySheetView({
             <div className="p-5">
               {repName ? (
                 <div className="flex items-center gap-3">
-                  <div className="h-14 w-14 rounded-full bg-primary/10 text-primary grid place-items-center shrink-0 font-heading font-bold text-lg border border-primary/20">
+                  <div
+                    className="h-14 w-14 rounded-full grid place-items-center shrink-0 font-heading font-bold text-lg border"
+                    style={{ backgroundColor: `${brand}14`, color: brand, borderColor: `${brand}30` }}
+                  >
                     {getInitials(repName)}
                   </div>
                   <div className="min-w-0">
@@ -307,7 +325,7 @@ export function FacilitySheetView({
 
               <div className="mt-4 space-y-2">
                 {repEmail && (
-                  <Button asChild className="w-full">
+                  <Button asChild className="w-full" style={{ backgroundColor: brand, borderColor: brand }}>
                     <a href={`mailto:${repEmail}`}>
                       <Mail className="h-4 w-4" /> Email
                     </a>
@@ -358,20 +376,34 @@ function getInitials(name: string): string {
 
 function FacilityHeroImage({
   images,
+  fallbackImage,
+  orgLogoUrl,
+  brand,
   name,
   location,
   breadcrumb,
   share,
 }: {
   images: string[];
+  fallbackImage?: string | null;
+  orgLogoUrl?: string | null;
+  brand?: string;
   name: string;
   location?: string;
   breadcrumb?: React.ReactNode;
   share?: React.ReactNode;
 }) {
   const list = (images ?? []).filter(Boolean);
+  const heroImage = list[0] ?? fallbackImage ?? null;
   const Overlay = (
     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent">
+      {orgLogoUrl && (
+        <div className="absolute top-4 left-4 sm:top-5 sm:left-5 z-10">
+          <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg bg-white/95 shadow-lg ring-1 ring-black/10 overflow-hidden grid place-items-center p-1">
+            <img src={orgLogoUrl} alt="" className="w-full h-full object-contain" />
+          </div>
+        </div>
+      )}
       <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6 lg:p-8">
         <h1
           className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white leading-tight"
@@ -398,10 +430,18 @@ function FacilityHeroImage({
     </div>
   );
 
-  if (list.length === 0) {
+  if (!heroImage) {
     return (
-      <div className="relative h-56 sm:h-72 lg:h-[26rem] w-full bg-muted">
-        <div className="absolute inset-0 grid place-items-center text-muted-foreground">
+      <div
+        className="relative h-56 sm:h-72 lg:h-[26rem] w-full"
+        style={{
+          background: brand
+            ? `linear-gradient(135deg, ${brand} 0%, ${brand}cc 50%, #0f172a 100%)`
+            : undefined,
+        }}
+      >
+        {!brand && <div className="absolute inset-0 bg-muted" />}
+        <div className="absolute inset-0 grid place-items-center text-white/40">
           <Building2 className="h-12 w-12" />
         </div>
         {Overlay}
@@ -411,7 +451,7 @@ function FacilityHeroImage({
   return (
     <div className="relative h-56 sm:h-80 lg:h-[26rem] w-full bg-muted overflow-hidden">
       <img
-        src={list[0]}
+        src={heroImage}
         alt={name}
         className="w-full h-full object-cover object-center"
         loading="eager"
@@ -427,10 +467,12 @@ function PillBlock({
   title,
   items,
   variant,
+  brand,
 }: {
   title: string;
   items: string[];
   variant: "primary" | "muted";
+  brand?: string;
 }) {
   return (
     <div>
@@ -443,8 +485,13 @@ function PillBlock({
             key={x}
             className={
               variant === "primary"
-                ? "px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold"
+                ? "px-2.5 py-1 rounded-md text-xs font-semibold"
                 : "px-2.5 py-1 rounded-md border border-border bg-background text-foreground text-xs font-medium"
+            }
+            style={
+              variant === "primary" && brand
+                ? { backgroundColor: `${brand}14`, color: brand }
+                : undefined
             }
           >
             {x}

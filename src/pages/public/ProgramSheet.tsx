@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { applySocialMeta } from "@/lib/social-meta";
+import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
 import { Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -13,9 +12,11 @@ import {
   SheetContract,
 } from "@/components/public/FacilitySheetView";
 import { OrgFooter } from "@/components/public/OrgFooter";
+import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
-import { useNoIndex } from "@/hooks/useNoIndex";
+import { parseBrandColor, programDisplayPath, programPublicPath, programPublicUrl } from "@/lib/public-urls";
+import { trackOrgEvent } from "@/lib/track-org-event";
 
 interface Facility extends FacilitySheetData {
   organization_id: string;
@@ -29,6 +30,10 @@ interface Facility extends FacilitySheetData {
   accreditations?: string[];
 }
 
+interface OrgRow extends SheetOrg {
+  cover_image_url?: string | null;
+}
+
 interface FullContract {
   id: string;
   payer_id: string | null;
@@ -37,14 +42,23 @@ interface FullContract {
 }
 
 export default function ProgramSheet() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, orgSlug, programSlug } = useParams<{
+    slug?: string;
+    orgSlug?: string;
+    programSlug?: string;
+  }>();
+  const navigate = useNavigate();
   const { profile, isSuperAdmin } = useAuth();
   const [facility, setFacility] = useState<Facility | null>(null);
-  const [org, setOrg] = useState<SheetOrg | null>(null);
+  const [org, setOrg] = useState<OrgRow | null>(null);
   const [fullContracts, setFullContracts] = useState<FullContract[]>([]);
   const [notFound, setNotFound] = useState(false);
+
+  const facilitySlug = programSlug ?? slug ?? null;
+
   const canEdit =
     !!facility && (isSuperAdmin || profile?.organization_id === facility.organization_id);
+
   const contracts = useMemo<SheetContract[]>(
     () =>
       fullContracts
@@ -58,28 +72,37 @@ export default function ProgramSheet() {
     [fullContracts],
   );
 
-  useNoIndex();
+  const brand = parseBrandColor(org?.brand_color);
+  const sharePath =
+    facility?.slug && org?.slug
+      ? programPublicPath(facility.slug, org.slug)
+      : facility?.slug
+        ? programPublicPath(facility.slug)
+        : null;
 
   const loadAll = async () => {
-    if (!slug) return;
+    if (!facilitySlug) return;
     const { data: f } = await supabase
       .from("facilities")
       .select(
         "id,organization_id,name,slug,description,tagline,address_line1,city,state,zip,phone,website,capacity,highlights,accreditations,image_urls,levels_of_care,population_served,specializations,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,updated_at",
       )
-      .eq("slug", slug)
+      .eq("slug", facilitySlug)
       .eq("verification_status", "approved")
       .maybeSingle();
+
     if (!f) {
       setNotFound(true);
       return;
     }
-    setFacility(f as Facility);
+
     const fac = f as Facility;
     const [{ data: o }, { data: c }] = await Promise.all([
       supabase
         .from("organizations")
-        .select("id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,tagline,brand_color,accent_color")
+        .select(
+          "id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,tagline,brand_color,accent_color,cover_image_url",
+        )
         .eq("id", fac.organization_id)
         .maybeSingle(),
       supabase
@@ -88,26 +111,51 @@ export default function ProgramSheet() {
         .eq("facility_id", fac.id)
         .order("payer_name"),
     ]);
-    setOrg((o as SheetOrg | null) ?? null);
+
+    const orgRow = (o as OrgRow | null) ?? null;
+
+    if (orgSlug && orgRow?.slug && orgRow.slug !== orgSlug) {
+      setNotFound(true);
+      return;
+    }
+
+    setFacility(fac);
+    setOrg(orgRow);
     setFullContracts((c as FullContract[]) ?? []);
-    const orgRow = o as SheetOrg | null;
+
+    if (orgRow?.id) {
+      trackOrgEvent(orgRow.id, "page_view");
+    }
+
     const loc = [fac.city, fac.state].filter(Boolean).join(", ");
+    const canonicalPath = programPublicPath(fac.slug ?? facilitySlug, orgRow?.slug);
     applySocialMeta({
-      title: `${fac.name}${orgRow?.name ? ` — ${orgRow.name}` : ""} · CenterLinked`,
+      title: `${fac.name} — ${orgRow?.name ?? "Program"}`,
       description:
         fac.description ||
         fac.tagline ||
-        `${fac.name}${loc ? ` in ${loc}` : ""}. Program sheet on CenterLinked.`,
-      path: `/p/${fac.slug ?? slug}`,
-      image: fac.image_urls?.[0] ?? orgRow?.logo_url ?? null,
+        orgRow?.tagline ||
+        `${fac.name}${loc ? ` in ${loc}` : ""}. Program sheet.`,
+      path: canonicalPath,
+      image: orgRow ? orgShareImage(orgRow) : fac.image_urls?.[0] ?? null,
+      siteName: orgRow?.name ?? undefined,
+      card: orgRow ? orgShareCardType(orgRow) : "summary_large_image",
     });
+
+    // Canonical branded URL when visiting legacy /p/:slug
+    if (!orgSlug && orgRow?.slug && fac.slug && typeof window !== "undefined") {
+      const branded = programPublicPath(fac.slug, orgRow.slug);
+      if (window.location.pathname !== branded) {
+        navigate(branded, { replace: true });
+      }
+    }
   };
 
   useEffect(() => {
+    setNotFound(false);
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
-
+  }, [facilitySlug, orgSlug]);
 
   if (notFound) {
     return (
@@ -125,22 +173,34 @@ export default function ProgramSheet() {
       </div>
     );
   }
-  if (!facility)
+
+  if (!facility) {
     return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
+  }
+
+  const shareUrl =
+    sharePath && typeof window !== "undefined"
+      ? `${window.location.origin}${sharePath}`
+      : sharePath
+        ? programPublicUrl("https://centerlinked.com", facility.slug!, org?.slug)
+        : undefined;
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <header className="bg-slate-900 text-white border-b border-slate-800 print:hidden">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <Logo to="/" size="md" />
-          <Button asChild size="sm" variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
-            <Link to="/login">Sign in</Link>
-          </Button>
-        </div>
-      </header>
+      {org ? (
+        <ProgramOrgHeader org={org} facilityName={facility.name} brand={brand} />
+      ) : (
+        <header className="bg-slate-900 text-white border-b border-slate-800 print:hidden">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <span className="font-heading font-bold">{facility.name}</span>
+            <Button asChild size="sm" variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
+              <Link to="/login">Sign in</Link>
+            </Button>
+          </div>
+        </header>
+      )}
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6">
-
         <FacilitySheetView
           facility={facility}
           org={org}
@@ -149,6 +209,9 @@ export default function ProgramSheet() {
           canShare={canEdit}
           canEditPhotos={canEdit}
           onPhotosUpdated={loadAll}
+          brandColor={brand}
+          coverImageUrl={org?.cover_image_url ?? null}
+          orgLogoUrl={org?.logo_url ?? null}
           aboutHeaderExtra={
             canEdit ? (
               <EditFacilityDialog
@@ -201,18 +264,22 @@ export default function ProgramSheet() {
           }
         />
 
-
         <OrgFooter
           orgId={org?.id ?? facility.organization_id}
           orgName={org?.name ?? "This organization"}
           slug={org?.slug ?? null}
           logoUrl={org?.logo_url ?? null}
           tagline={org?.tagline ?? null}
-          brand={
-            org?.brand_color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(org.brand_color)
-              ? org.brand_color
-              : "#1A73E8"
+          brand={brand}
+          shareUrl={shareUrl}
+          shareDisplayPath={
+            facility.slug && org?.slug
+              ? programDisplayPath(facility.slug, org.slug)
+              : undefined
           }
+          shareTitle={`${facility.name} — ${org?.name ?? "Program"}`}
+          shareLabel="Share this program"
+          orgLinkLabel="View all programs"
         />
       </main>
     </div>

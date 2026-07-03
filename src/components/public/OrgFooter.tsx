@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Building2, Copy, Check, Share2, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackOrgEvent } from "@/lib/track-org-event";
+import { orgDisplayPath, orgPublicPath } from "@/lib/public-urls";
 
 interface Props {
   orgId: string;
@@ -11,16 +12,38 @@ interface Props {
   logoUrl: string | null;
   tagline?: string | null;
   brand: string;
+  /** Override share URL (e.g. program sheet on branded path). */
+  shareUrl?: string;
+  /** Override display path in the copy bar. */
+  shareDisplayPath?: string;
+  shareLabel?: string;
+  orgLinkLabel?: string;
+  /** Native share sheet title (defaults to org name). */
+  shareTitle?: string;
 }
 
-export function OrgFooter({ orgId, orgName, slug, logoUrl, tagline, brand }: Props) {
+export function OrgFooter({
+  orgId,
+  orgName,
+  slug,
+  logoUrl,
+  tagline,
+  brand,
+  shareUrl: shareUrlOverride,
+  shareDisplayPath,
+  shareLabel = "Share organization",
+  orgLinkLabel,
+  shareTitle,
+}: Props) {
   const [copied, setCopied] = useState(false);
-  // Normalized display URL (always centerlinked.com regardless of preview host)
-  const displayUrl = slug ? `centerlinked.com/${slug}` : "centerlinked.com";
+  const displayUrl =
+    shareDisplayPath ??
+    (slug ? orgDisplayPath(slug) : "centerlinked.com");
   const fullUrl =
-    typeof window !== "undefined" && slug
-      ? `${window.location.origin}/o/${slug}`
-      : `https://${displayUrl}`;
+    shareUrlOverride ??
+    (typeof window !== "undefined" && slug
+      ? `${window.location.origin}${orgPublicPath(slug)}`
+      : `https://${displayUrl}`);
   const year = new Date().getFullYear();
 
   const copy = async () => {
@@ -43,7 +66,7 @@ export function OrgFooter({ orgId, orgName, slug, logoUrl, tagline, brand }: Pro
         await (
           navigator as Navigator & { share: (data: ShareData) => Promise<void> }
         ).share({
-          title: `${orgName} on CenterLinked`,
+          title: shareTitle ?? orgName,
           url: fullUrl,
         });
         trackOrgEvent(orgId, "share_click");
@@ -104,7 +127,9 @@ export function OrgFooter({ orgId, orgName, slug, logoUrl, tagline, brand }: Pro
           </div>
 
           {/* Share block */}
-          <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg p-1 backdrop-blur-sm">
+          <div className="flex flex-col gap-2 sm:items-end">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-white/70">{shareLabel}</p>
+            <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg p-1 backdrop-blur-sm w-full sm:max-w-md">
             <span className="flex-1 min-w-0 px-2.5 text-xs sm:text-sm truncate text-white/95 font-medium">
               {displayUrl}
             </span>
@@ -132,6 +157,15 @@ export function OrgFooter({ orgId, orgName, slug, logoUrl, tagline, brand }: Pro
             >
               <Share2 className="h-4 w-4" />
             </Button>
+            </div>
+            {orgLinkLabel && slug && (
+              <Link
+                to={orgPublicPath(slug)}
+                className="text-[11px] font-semibold text-white/85 hover:text-white hover:underline"
+              >
+                {orgLinkLabel} →
+              </Link>
+            )}
           </div>
         </div>
 

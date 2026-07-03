@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageUploader } from "@/components/app/ImageUploader";
+import { programPublicPath } from "@/lib/public-urls";
 import { toast } from "sonner";
 import {
   ArrowLeft, ArrowRight, Building2, Loader2, Lock, Upload, Sparkles, Wand2,
@@ -281,7 +282,7 @@ export default function AdminCreateOrganization() {
           })),
         ];
         if (contracts.length) await supabase.from("insurance_contracts").insert(contracts);
-        if (inserted.slug) urls.push(`/p/${inserted.slug}`);
+        if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));
       }
       setCreatedFacilityUrls(urls);
       setStage("done");
@@ -358,7 +359,7 @@ export default function AdminCreateOrganization() {
           ...oon.map((p) => ({ facility_id: inserted.id, payer_name: p, in_network: false })),
         ];
         if (contracts.length) await supabase.from("insurance_contracts").insert(contracts);
-        if (inserted.slug) urls.push(`/p/${inserted.slug}`);
+        if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));
       }
       setCreatedFacilityUrls(urls);
       setStage("done");

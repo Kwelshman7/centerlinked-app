@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 interface Props {
   facilities: ShowcaseFacility[];
   contracts: ContractRow[];
+  orgSlug?: string | null;
 }
 
-export function OrgFacilityRail({ facilities, contracts }: Props) {
+export function OrgFacilityRail({ facilities, contracts, orgSlug }: Props) {
   const autoScrollRef = useRef(
     AutoScroll({
       speed: 0.6,
@@ -57,6 +58,7 @@ export function OrgFacilityRail({ facilities, contracts }: Props) {
             key={f.id}
             facility={f}
             contracts={contracts}
+            orgSlug={orgSlug}
             onExpandChange={(o) => o && pauseAuto()}
           />
         ))}
@@ -76,6 +78,7 @@ export function OrgFacilityRail({ facilities, contracts }: Props) {
               <OrgFacilityShowcaseCard
                 facility={f}
                 contracts={contracts}
+                orgSlug={orgSlug}
                 onExpandChange={(o) => o && pauseAuto()}
               />
             </div>

@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import { MapPin, ChevronDown, Building2, CheckCircle2, Users, Sparkles, Home, Award, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContractRow } from "@/lib/derive-insurance";
-
-
+import { programPublicPath } from "@/lib/public-urls";
 
 export interface ShowcaseFacility {
   id: string;
@@ -31,10 +30,11 @@ export interface ShowcaseFacility {
 interface Props {
   facility: ShowcaseFacility;
   contracts: ContractRow[];
+  orgSlug?: string | null;
   onExpandChange?: (open: boolean) => void;
 }
 
-export function OrgFacilityShowcaseCard({ facility: f, contracts, onExpandChange }: Props) {
+export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug, onExpandChange }: Props) {
   const [open, setOpen] = useState(false);
   const [showAllPayers, setShowAllPayers] = useState(false);
 
@@ -74,11 +74,13 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, onExpandChange
   const extra = Math.max(0, inNetwork.length - topPayers.length);
   const hasInNetwork = topPayers.length > 0;
 
+  const programHref = f.slug ? programPublicPath(f.slug, orgSlug) : null;
+
   return (
     <div className="bg-card rounded-xl border border-border/60 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
-      {f.slug ? (
+      {programHref ? (
         <Link
-          to={`/p/${f.slug}`}
+          to={programHref}
           className="aspect-[4/3] w-full bg-muted overflow-hidden block group"
           aria-label={`View ${f.name}`}
         >
@@ -115,8 +117,8 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, onExpandChange
       <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
         <div>
           <h3 className="font-heading font-bold text-base sm:text-lg leading-tight">
-            {f.slug ? (
-              <Link to={`/p/${f.slug}`} className="hover:text-primary transition-colors">
+            {programHref ? (
+              <Link to={programHref} className="hover:text-primary transition-colors">
                 {f.name}
               </Link>
             ) : (

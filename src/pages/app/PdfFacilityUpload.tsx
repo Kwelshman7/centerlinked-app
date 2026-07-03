@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fileToBase64 } from "@/lib/files";
+import { programPublicPath } from "@/lib/public-urls";
 import {
   Upload,
   FileText,
@@ -314,6 +315,13 @@ export default function PdfFacilityUpload() {
       const approvedByFacility = await uploadApprovedImages(orgId!);
 
       // 3. Insert facilities + contracts
+      const { data: orgRow } = await supabase
+        .from("organizations")
+        .select("slug")
+        .eq("id", orgId!)
+        .maybeSingle();
+      const orgSlug = orgRow?.slug ?? null;
+
       const urls: string[] = [];
       for (let fIdx = 0; fIdx < parsed.facilities.length; fIdx++) {
         const f = parsed.facilities[fIdx];
@@ -359,7 +367,7 @@ export default function PdfFacilityUpload() {
         if (contracts.length) {
           await supabase.from("insurance_contracts").insert(contracts);
         }
-        if (inserted.slug) urls.push(`/p/${inserted.slug}`);
+        if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));
       }
 
       setResultUrls(urls);

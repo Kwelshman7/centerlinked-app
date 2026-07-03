@@ -11,10 +11,9 @@ import { OrgFacilityRail } from "@/components/public/OrgFacilityRail";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { OrgFooter } from "@/components/public/OrgFooter";
 import { GetInTouchSheet } from "@/components/public/GetInTouchSheet";
-import { applySocialMeta } from "@/lib/social-meta";
+import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
 import { ContractRow } from "@/lib/derive-insurance";
 import { trackOrgEvent } from "@/lib/track-org-event";
-import { useNoIndex } from "@/hooks/useNoIndex";
 
 interface Org {
   id: string;
@@ -52,8 +51,6 @@ export default function OrgSheet() {
   const [extraContacts, setExtraContacts] = useState<HeroContact[]>([]);
   const [notFound, setNotFound] = useState(false);
 
-  useNoIndex();
-
   useEffect(() => {
     if (!slug) return;
     (async () => {
@@ -74,13 +71,15 @@ export default function OrgSheet() {
       trackOrgEvent(orgData.id, "page_view");
       const loc = [orgData.hq_city, orgData.hq_state].filter(Boolean).join(", ");
       applySocialMeta({
-        title: `${orgData.name} · CenterLinked`,
+        title: orgData.name,
         description:
           orgData.tagline ||
           orgData.description ||
-          `${orgData.name}${loc ? ` — ${loc}` : ""}. Referral profile on CenterLinked.`,
+          `${orgData.name}${loc ? ` — ${loc}` : ""}. Referral profile.`,
         path: `/o/${orgData.slug ?? slug}`,
-        image: orgData.cover_image_url || orgData.logo_url,
+        image: orgShareImage(orgData),
+        siteName: orgData.name,
+        card: orgShareCardType(orgData),
       });
 
       const { data: f } = await supabase
@@ -294,7 +293,7 @@ export default function OrgSheet() {
               No facilities published yet.
             </div>
           ) : (
-            <OrgFacilityRail facilities={facilities} contracts={contracts} />
+            <OrgFacilityRail facilities={facilities} contracts={contracts} orgSlug={org.slug} />
           )}
         </section>
 
