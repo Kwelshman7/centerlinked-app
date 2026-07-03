@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: Number(process.env.PORT) || 8080,
+      strictPort: true,
     },
     plugins: [react(), socialPreviewPlugin()],
     resolve: {

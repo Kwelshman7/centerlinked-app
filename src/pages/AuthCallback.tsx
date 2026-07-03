@@ -7,17 +7,55 @@ import { isBootstrapAdminEmail } from "@/lib/bootstrap-admin";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { toast } from "sonner";
 
+function readOAuthParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    code: params.get("code"),
+    error: params.get("error"),
+    errorDescription: params.get("error_description"),
+    hasAuthParams: params.has("code") || window.location.hash.includes("access_token"),
+  };
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { user, profile, loading, isSuperAdmin } = useAuth();
   const handled = useRef(false);
 
   useEffect(() => {
+    const { error, errorDescription } = readOAuthParams();
+    if (!error) return;
+
+    handled.current = true;
+    toast.error("Google sign-in failed", {
+      description: errorDescription ?? error,
+    });
+    navigate("/login", { replace: true });
+  }, [navigate]);
+
+  useEffect(() => {
+    if (loading || user || handled.current) return;
+
+    const { hasAuthParams } = readOAuthParams();
+    if (!hasAuthParams) return;
+
+    const timeout = window.setTimeout(() => {
+      if (handled.current || user) return;
+      handled.current = true;
+      toast.error("Google sign-in timed out", {
+        description:
+          "Try again in the same browser tab. If you're developing locally, use http://localhost:8080 (not another port).",
+      });
+      navigate("/login", { replace: true });
+    }, 20_000);
+
+    return () => window.clearTimeout(timeout);
+  }, [loading, user, navigate]);
+
+  useEffect(() => {
     if (loading || handled.current) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const hasAuthParams =
-      params.has("code") || window.location.hash.includes("access_token");
+    const { hasAuthParams } = readOAuthParams();
 
     if (!user) {
       if (hasAuthParams) return;
