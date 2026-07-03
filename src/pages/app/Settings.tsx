@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/app/ImageUploader";
 import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck } from "lucide-react";
+import { SuperAdminSettingsCard } from "@/components/app/admin/SuperAdminPanel";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -171,6 +172,8 @@ export default function Settings() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="font-heading text-2xl font-bold">Settings</h1>
+
+      {isSuperAdmin && <SuperAdminSettingsCard />}
 
       {profile?.organization_id && (
         <Card className="p-5 sm:p-6 space-y-5">

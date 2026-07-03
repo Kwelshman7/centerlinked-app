@@ -6,21 +6,20 @@ import {
   Users,
   Shield,
   Settings,
-  CheckSquare,
   Upload,
   LogOut,
   Search as SearchIcon,
-  Database,
-  Inbox,
-  ShieldCheck,
   PanelLeftClose,
   PanelLeft,
+  Menu,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { adminLinks } from "@/components/app/admin/SuperAdminPanel";
 
 type NavItem = { to: string; label: string; icon: typeof SearchIcon; end?: boolean };
 
@@ -42,14 +41,12 @@ export function AppLayout() {
     { to: "/app/facilities/import", label: "Import", icon: Upload },
   ];
 
-  const secondaryAdmin: NavItem[] = [
-    { to: "/app/admin/organizations", label: "Manage organizations", icon: Building2, end: true },
-    { to: "/app/admin/organizations/new", label: "Add organization", icon: Building2 },
-    { to: "/app/admin/requests", label: "Access requests", icon: Inbox },
-    { to: "/app/admin/claims", label: "Org claims", icon: ShieldCheck },
-    { to: "/app/verifications", label: "Verifications", icon: CheckSquare },
-    { to: "/app/admin/insurance", label: "Insurance DB", icon: Database },
-  ];
+  const secondaryAdmin: NavItem[] = adminLinks.map(({ to, label, icon, end }) => ({
+    to,
+    label,
+    icon,
+    end,
+  }));
 
   const isMessengerThread =
     location.pathname.startsWith("/app/messages") && new URLSearchParams(location.search).get("c");
@@ -166,8 +163,47 @@ export function AppLayout() {
       </aside>
 
       <header className="lg:hidden sticky top-0 z-40 bg-card/85 backdrop-blur-xl border-b border-border/60 pt-safe">
-        <div className="flex items-center justify-center px-4 h-12 relative">
+        <div className="flex items-center justify-between px-4 h-12 relative">
+          {isSuperAdmin ? (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Admin menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[min(100vw-2rem,20rem)]">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2 text-left">
+                    <Shield className="h-4 w-4 text-primary" /> Super admin
+                  </SheetTitle>
+                </SheetHeader>
+                <nav className="mt-6 space-y-1">
+                  {adminLinks.map(({ to, label, icon: Icon, end }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      end={end}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                        )
+                      }
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {label}
+                    </NavLink>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <div className="w-9 shrink-0" />
+          )}
           <Logo to="/app" size="sm" />
+          <div className="w-9 shrink-0" />
         </div>
       </header>
 

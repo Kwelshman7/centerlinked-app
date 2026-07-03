@@ -23,6 +23,7 @@ import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
 import { OrgDashboard } from "@/components/app/OrgDashboard";
 import { OrgSharedLinksPanel } from "@/components/app/OrgSharedLinksPanel";
 import { AdminOrgBrandingForm } from "@/components/app/admin/AdminOrgBrandingForm";
+import { EditOrganizationDialog, type OrgEditable } from "@/components/app/admin/EditOrganizationDialog";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -39,17 +40,8 @@ import {
 const TABS = ["dashboard", "links", "branding", "facilities"] as const;
 type TabId = (typeof TABS)[number];
 
-interface OrgHeader {
-  id: string;
-  name: string;
+interface OrgHeader extends OrgEditable {
   slug: string | null;
-  logo_url: string | null;
-  hq_city: string | null;
-  hq_state: string | null;
-  email_domain: string | null;
-  website: string | null;
-  description: string | null;
-  verified: boolean | null;
 }
 
 interface FacilityRow {
@@ -115,7 +107,9 @@ export default function AdminOrgWorkspace() {
     const [{ data: o }, { data: f }] = await Promise.all([
       supabase
         .from("organizations")
-        .select("id,name,slug,logo_url,hq_city,hq_state,email_domain,website,description,verified")
+        .select(
+          "id,name,slug,logo_url,hq_city,hq_state,email_domain,website,description,verified,phone,bd_contact_name,bd_contact_phone,bd_contact_email",
+        )
         .eq("id", id)
         .maybeSingle(),
       supabase.from("facilities").select("*").eq("organization_id", id).order("name"),
@@ -205,6 +199,7 @@ export default function AdminOrgWorkspace() {
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <EditOrganizationDialog org={org} onSaved={load} triggerLabel="Edit profile" />
             {org.slug && (
               <Button asChild size="sm" variant="ghost">
                 <Link to={`/o/${org.slug}`} target="_blank">

@@ -6,6 +6,7 @@ import { Building2, Shield, Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrgDashboard } from "@/components/app/OrgDashboard";
+import { SuperAdminBanner } from "@/components/app/admin/SuperAdminPanel";
 
 interface OrgPick {
   id: string;
@@ -34,10 +35,13 @@ export default function Dashboard() {
 
   if (orgId) {
     return (
-      <OrgDashboard
-        organizationId={orgId}
-        welcomeName={profile?.full_name || "there"}
-      />
+      <div className="space-y-6">
+        {isSuperAdmin && <SuperAdminBanner />}
+        <OrgDashboard
+          organizationId={orgId}
+          welcomeName={profile?.full_name || "there"}
+        />
+      </div>
     );
   }
 

@@ -7,16 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, Search, Plus, BadgeCheck, ExternalLink, Settings } from "lucide-react";
+import { EditOrganizationDialog, type OrgEditable } from "@/components/app/admin/EditOrganizationDialog";
 
-interface OrgRow {
-  id: string;
-  name: string;
+interface OrgRow extends OrgEditable {
   slug: string | null;
-  logo_url: string | null;
-  hq_city: string | null;
-  hq_state: string | null;
-  verified: boolean | null;
-  email_domain: string | null;
 }
 
 export default function AdminOrganizations() {
@@ -25,24 +19,28 @@ export default function AdminOrganizations() {
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [q, setQ] = useState("");
 
+  const loadOrgs = async () => {
+    setLoading(true);
+    const [{ data: o }, { data: f }] = await Promise.all([
+      supabase
+        .from("organizations")
+        .select(
+          "id,name,slug,logo_url,hq_city,hq_state,verified,email_domain,website,description,phone,bd_contact_name,bd_contact_phone,bd_contact_email",
+        )
+        .order("name"),
+      supabase.from("facilities").select("organization_id"),
+    ]);
+    setOrgs((o as OrgRow[]) ?? []);
+    const m = new Map<string, number>();
+    ((f as Array<{ organization_id: string }>) ?? []).forEach((row) => {
+      m.set(row.organization_id, (m.get(row.organization_id) ?? 0) + 1);
+    });
+    setCounts(m);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [{ data: o }, { data: f }] = await Promise.all([
-        supabase
-          .from("organizations")
-          .select("id,name,slug,logo_url,hq_city,hq_state,verified,email_domain")
-          .order("name"),
-        supabase.from("facilities").select("organization_id"),
-      ]);
-      setOrgs((o as OrgRow[]) ?? []);
-      const m = new Map<string, number>();
-      ((f as Array<{ organization_id: string }>) ?? []).forEach((row) => {
-        m.set(row.organization_id, (m.get(row.organization_id) ?? 0) + 1);
-      });
-      setCounts(m);
-      setLoading(false);
-    })();
+    loadOrgs();
   }, []);
 
   const filtered = useMemo(() => {
@@ -63,7 +61,9 @@ export default function AdminOrganizations() {
             <Building2 className="h-7 w-7 text-primary" /> Manage organizations
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Open any org workspace to manage its dashboard, branding, facilities, and shared links.
+            Pick an organization, then use <strong className="font-medium text-foreground">Edit</strong> for profile
+            details or <strong className="font-medium text-foreground">Manage</strong> for branding, facilities, and
+            shared links.
           </p>
         </div>
         <Button asChild>
@@ -124,7 +124,7 @@ export default function AdminOrganizations() {
                     {o.email_domain ? ` · ${o.email_domain}` : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                   {o.slug && (
                     <Button asChild size="sm" variant="ghost">
                       <Link to={`/o/${o.slug}`} target="_blank">
@@ -132,9 +132,10 @@ export default function AdminOrganizations() {
                       </Link>
                     </Button>
                   )}
-                  <Button asChild size="sm" variant="outline">
+                  <EditOrganizationDialog org={o} onSaved={loadOrgs} triggerLabel="Edit" />
+                  <Button asChild size="sm">
                     <Link to={`/app/admin/organizations/${o.id}`}>
-                      <Settings className="h-4 w-4" /> Open workspace
+                      <Settings className="h-4 w-4" /> Manage
                     </Link>
                   </Button>
                 </div>
