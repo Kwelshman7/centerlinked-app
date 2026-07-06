@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { US_STATES } from "@/lib/us-states";
 import { sanitizePhone } from "@/lib/phone";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import { AddPartnerOrgDialog } from "@/components/app/network/AddPartnerOrgDialog";
+import { SuperAdminBanner } from "@/components/app/admin/SuperAdminPanel";
 import { toast } from "sonner";
 
 interface OrgRow {
@@ -60,6 +62,7 @@ const PAGE_SIZE = 24;
 type View = "network" | "all";
 
 export default function Organizations() {
+  const { isSuperAdmin } = useAuth();
   const { partners, partnerOrgIds, loading: partnersLoading, addPartner, removePartner } =
     useReferralNetwork();
   const [view, setView] = useState<View>("network");
@@ -221,6 +224,7 @@ export default function Organizations() {
 
   return (
     <div className="space-y-6">
+      {isSuperAdmin && <SuperAdminBanner />}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrgDashboard } from "@/components/app/OrgDashboard";
 import { SuperAdminBanner } from "@/components/app/admin/SuperAdminPanel";
+import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
 
 interface OrgPick {
   id: string;
@@ -16,7 +17,7 @@ interface OrgPick {
 }
 
 export default function Dashboard() {
-  const { profile, isSuperAdmin } = useAuth();
+  const { profile, isSuperAdmin, needsSuperAdminSetup } = useAuth();
   const [recentOrgs, setRecentOrgs] = useState<OrgPick[]>([]);
 
   const orgId = profile?.organization_id ?? null;
@@ -36,6 +37,7 @@ export default function Dashboard() {
   if (orgId) {
     return (
       <div className="space-y-6">
+        {needsSuperAdminSetup && <SuperAdminSetupAlert />}
         {isSuperAdmin && <SuperAdminBanner />}
         <OrgDashboard
           organizationId={orgId}
@@ -51,6 +53,7 @@ export default function Dashboard() {
 
     return (
       <div className="space-y-6 max-w-3xl mx-auto">
+        {needsSuperAdminSetup && <SuperAdminSetupAlert />}
         <div className="text-center py-8">
           <Shield className="h-12 w-12 text-primary/70 mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold">Super-admin setup mode</h1>

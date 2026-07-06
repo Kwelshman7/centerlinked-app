@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { bootstrapSuperAdmin } from "@/lib/bootstrap-admin";
+import { bootstrapSuperAdmin, isBootstrapAdminEmail } from "@/lib/bootstrap-admin";
 import { ensureProfile } from "@/lib/ensure-profile";
 
 type AppRole = "super_admin" | "facility_admin" | "bd_rep";
@@ -23,6 +23,8 @@ interface AuthContextValue {
   roles: AppRole[];
   loading: boolean;
   isSuperAdmin: boolean;
+  isBootstrapAdmin: boolean;
+  needsSuperAdminSetup: boolean;
   isFacilityAdmin: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -43,13 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     loadRef.current = (async () => {
       await ensureProfile(authUser);
-      await bootstrapSuperAdmin(authUser);
+      const bootstrapped = await bootstrapSuperAdmin(authUser);
       const [{ data: prof }, { data: rolesData }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", authUser.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", authUser.id),
       ]);
+      let nextRoles = ((rolesData as { role: AppRole }[]) ?? []).map((r) => r.role);
+      if (bootstrapped && !nextRoles.includes("super_admin")) {
+        const { data: retryRoles } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id);
+        nextRoles = ((retryRoles as { role: AppRole }[]) ?? []).map((r) => r.role);
+      }
       setProfile((prof as Profile) ?? null);
-      setRoles(((rolesData as { role: AppRole }[]) ?? []).map((r) => r.role));
+      setRoles(nextRoles);
     })().finally(() => {
       loadRef.current = null;
     });
@@ -87,6 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await loadProfileAndRoles(user);
   };
 
+  const isBootstrapAdmin = isBootstrapAdminEmail(user?.email);
+  const isSuperAdmin = roles.includes("super_admin");
+  const needsSuperAdminSetup = isBootstrapAdmin && !isSuperAdmin;
+
   return (
     <AuthContext.Provider
       value={{
@@ -95,8 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         roles,
         loading,
-        isSuperAdmin: roles.includes("super_admin"),
-        isFacilityAdmin: roles.includes("facility_admin") || roles.includes("super_admin"),
+        isSuperAdmin,
+        isBootstrapAdmin,
+        needsSuperAdminSetup,
+        isFacilityAdmin: roles.includes("facility_admin") || isSuperAdmin,
         signOut,
         refresh,
       }}

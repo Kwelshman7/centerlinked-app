@@ -58,12 +58,12 @@ export default function AdminOrganizations() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            <Building2 className="h-7 w-7 text-primary" /> Manage organizations
+            <Building2 className="h-7 w-7 text-primary" /> Edit all organizations
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pick an organization, then use <strong className="font-medium text-foreground">Edit</strong> for profile
-            details or <strong className="font-medium text-foreground">Manage</strong> for branding, facilities, and
-            shared links.
+            Click <strong className="font-medium text-foreground">Edit</strong> to update profile details, or{" "}
+            <strong className="font-medium text-foreground">Manage</strong> to edit branding, facilities, and shared
+            links for any organization on the platform.
           </p>
         </div>
         <Button asChild>

@@ -41,19 +41,22 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section id="pricing" className="py-20 lg:py-28 bg-secondary/30">
+    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/30">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <div className="mx-auto max-w-3xl text-center px-1">
+          <span className="inline-block px-4 py-1.5 mb-5 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
+            Pricing
+          </span>
+          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
             Straightforward pricing.{" "}
             <span className="text-primary">No surprises.</span>
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-muted-foreground">
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
             Join free during early access. When early access ends, keep your profile active for $99/month. Your whole team — BD reps, admissions, leadership — is included under one organization account. No per-seat fees.
           </p>
         </div>
 
-        <div className="mt-16 grid gap-6 sm:gap-8 md:grid-cols-2 max-w-4xl mx-auto items-start">
+        <div className="mt-12 sm:mt-16 grid gap-6 sm:gap-8 md:grid-cols-2 max-w-4xl mx-auto items-start">
           {plans.map((plan, idx) => (
             <div
               key={idx}
@@ -76,7 +79,7 @@ export function Pricing() {
                 <h3 className="font-heading text-xl font-bold text-foreground">
                   {plan.name}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground min-h-[3.5rem]">
+                <p className="mt-2 text-sm text-muted-foreground min-h-0 sm:min-h-[3.5rem]">
                   {plan.description}
                 </p>
 
@@ -116,7 +119,7 @@ export function Pricing() {
           ))}
         </div>
 
-        <p className="mt-3 text-center text-xs text-muted-foreground max-w-2xl mx-auto">
+        <p className="mt-4 sm:mt-6 text-center text-xs text-muted-foreground max-w-2xl mx-auto px-2">
           BD reps and admissions team members are included as users under your organization account.
         </p>
       </div>

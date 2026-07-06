@@ -16,13 +16,15 @@ export function Hero() {
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-3 sm:space-y-4 animate-fade-up">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
-                <Sparkles className="h-3.5 w-3.5" />{"\u00a0"}Built for behavioral health BD teams
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                Built for behavioral health BD teams
               </div>
-              <h1 className="font-heading text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] leading-[1.05]">
-                Make your organization easier to refer to.
+              <h1 className="font-heading text-[2rem] font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] leading-[1.05]">
+                Make your organization{" "}
+                <span className="text-primary">easier to refer to.</span>
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
-                One live, shareable profile with your levels of care, verified insurance, facility locations, and the right contact — so referral partners never work from outdated PDFs or &ldquo;let me check and get back to you.&rdquo;
+                CenterLinked gives your organization one live, shareable referral profile with the information partners need to send the right referral with confidence.
               </p>
             </div>
 
@@ -38,12 +40,12 @@ export function Hero() {
               </p>
             </div>
 
-            <ul className="grid grid-cols-2 gap-2 text-xs sm:text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: "150ms" }}>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-xs sm:text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: "150ms" }}>
               {[
-                "Your levels of care (Detox, Residential, PHP, IOP, OP)",
-                "Who you're in-network with — verified",
-                "Which facilities you operate and where",
-                "The right admissions and BD contacts",
+                "Levels of care and services offered",
+                "Program locations and service areas",
+                "In-network insurance contracts",
+                "The right BD contact for referrals",
               ].map((t) => (
                 <li key={t} className="flex items-start gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
@@ -55,11 +57,12 @@ export function Hero() {
 
           <div className="animate-slide-in-right relative flex justify-center">
             <div className="relative">
-              {/* Deep ambient glow for depth */}
               <div className="absolute -inset-16 bg-primary/8 blur-[80px] rounded-full opacity-70" />
               <div className="absolute -inset-8 bg-primary/10 blur-3xl rounded-full opacity-60" />
               <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[70%] h-24 bg-foreground/5 blur-2xl rounded-full" />
-              <IPhoneOrgDashboard />
+              <PhoneFrame className="w-[260px] sm:w-[290px] lg:w-[300px]">
+                <OrgDashboardContent />
+              </PhoneFrame>
             </div>
           </div>
         </div>
@@ -72,71 +75,51 @@ export function Hero() {
   );
 }
 
-function IPhoneOrgDashboard() {
-  return (
-    <PhoneFrame className="w-[260px] sm:w-[290px] lg:w-[300px]">
-      <OrgDashboardContent />
-    </PhoneFrame>
-  );
-}
-
 function OrgDashboardContent() {
   return (
     <div className="flex flex-col">
-      {/* Header */}
       <div className="px-4 pt-2 pb-3 flex items-center justify-between bg-background border-b border-border">
-        <img
-          src={centerlinkedLogo}
-          alt="CenterLinked"
-          className="h-4 w-auto object-contain"
-          draggable={false}
-        />
-        <div className="flex items-center gap-2">
-          <button className="relative h-7 w-7 rounded-full bg-muted flex items-center justify-center">
-            <Bell className="h-3 w-3 text-foreground" />
-            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-rose-500" />
-          </button>
-        </div>
+        <img src={centerlinkedLogo} alt="CenterLinked" className="h-4 w-auto object-contain" draggable={false} />
+        <button type="button" className="relative h-7 w-7 rounded-full bg-muted flex items-center justify-center" aria-label="Notifications">
+          <Bell className="h-3 w-3 text-foreground" />
+          <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-rose-500" />
+        </button>
       </div>
 
-      {/* Hero cover */}
       <div className="relative h-32 overflow-hidden">
         <img src={northbendCover} alt="Northbend Recovery facility" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
       </div>
 
-      {/* Org identity */}
       <div className="px-4 -mt-8 relative">
         <div className="h-16 w-16 rounded-2xl bg-white border-4 border-background shadow-lg flex items-center justify-center overflow-hidden p-1.5">
           <img src={logoNorthbend} alt="Northbend Recovery logo" className="h-full w-full object-contain" />
         </div>
         <div className="mt-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="font-heading font-bold text-[15px] text-foreground leading-tight">Northbend Recovery</h3>
             <span className="inline-flex items-center gap-0.5 text-[8.5px] font-bold text-success bg-success/10 px-1.5 py-0.5 rounded-full">
               <CheckCircle2 className="h-2.5 w-2.5" /> Verified
             </span>
           </div>
           <p className="text-[10.5px] text-muted-foreground mt-0.5 flex items-center gap-1">
-            <MapPin className="h-2.5 w-2.5" /> Asheville, NC · 4 facilities
+            <MapPin className="h-2.5 w-2.5 shrink-0" /> Asheville, NC · 4 facilities
           </p>
         </div>
 
-        {/* Action buttons */}
         <div className="mt-3 grid grid-cols-3 gap-1.5">
-          <button className="h-8 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center gap-1">
+          <button type="button" className="h-8 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center gap-1">
             <Share2 className="h-3 w-3" /> Share
           </button>
-          <button className="h-8 rounded-lg bg-muted text-foreground text-[10px] font-bold flex items-center justify-center gap-1">
+          <button type="button" className="h-8 rounded-lg bg-muted text-foreground text-[10px] font-bold flex items-center justify-center gap-1">
             <Phone className="h-3 w-3" /> Call
           </button>
-          <button className="h-8 rounded-lg bg-muted text-foreground text-[10px] font-bold flex items-center justify-center gap-1">
+          <button type="button" className="h-8 rounded-lg bg-muted text-foreground text-[10px] font-bold flex items-center justify-center gap-1">
             <Mail className="h-3 w-3" /> Email
           </button>
         </div>
       </div>
 
-      {/* About */}
       <div className="px-4 mt-4">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">About</p>
         <p className="text-[10.5px] text-foreground leading-snug">
@@ -144,7 +127,6 @@ function OrgDashboardContent() {
         </p>
       </div>
 
-      {/* Levels of care */}
       <div className="px-4 mt-4">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">Levels of Care</p>
         <div className="flex flex-wrap gap-1">
@@ -154,7 +136,6 @@ function OrgDashboardContent() {
         </div>
       </div>
 
-      {/* In-network */}
       <div className="px-4 mt-4">
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">In-Network Payers</p>
@@ -170,7 +151,6 @@ function OrgDashboardContent() {
         </div>
       </div>
 
-      {/* Facilities */}
       <div className="px-4 mt-4">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">Facilities</p>
         <div className="space-y-1.5">
@@ -187,13 +167,12 @@ function OrgDashboardContent() {
                 <p className="text-[10.5px] font-bold text-foreground truncate leading-tight">{f.name}</p>
                 <p className="text-[9px] text-muted-foreground truncate">{f.loc}</p>
               </div>
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
             </div>
           ))}
         </div>
       </div>
 
-      {/* BD team */}
       <div className="px-4 mt-4">
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">BD Team</p>
@@ -210,7 +189,7 @@ function OrgDashboardContent() {
                 <p className="text-[10.5px] font-bold text-foreground truncate leading-tight">{m.n}</p>
                 <p className="text-[9px] text-muted-foreground truncate">{m.r}</p>
               </div>
-              <button className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center">
+              <button type="button" className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center" aria-label={`Email ${m.n}`}>
                 <Mail className="h-2.5 w-2.5 text-primary" />
               </button>
             </div>
@@ -218,7 +197,6 @@ function OrgDashboardContent() {
         </div>
       </div>
 
-      {/* Photos */}
       <div className="px-4 mt-4">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">Gallery</p>
         <div className="grid grid-cols-3 gap-1">
@@ -228,7 +206,6 @@ function OrgDashboardContent() {
         </div>
       </div>
 
-      {/* Documents */}
       <div className="px-4 mt-4">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">Documents</p>
         <div className="space-y-1.5">
@@ -243,13 +220,12 @@ function OrgDashboardContent() {
         </div>
       </div>
 
-      {/* Contact */}
       <div className="px-4 mt-4 mb-6">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">Contact</p>
         <div className="space-y-1 bg-card border border-border rounded-xl p-2.5">
-          <div className="flex items-center gap-2 text-[10px] text-foreground"><Phone className="h-3 w-3 text-primary" /> (828) 555-0142</div>
-          <div className="flex items-center gap-2 text-[10px] text-foreground"><Mail className="h-3 w-3 text-primary" /> admissions@northbend.co</div>
-          <div className="flex items-center gap-2 text-[10px] text-foreground"><Globe className="h-3 w-3 text-primary" /> northbendrecovery.com</div>
+          <div className="flex items-center gap-2 text-[10px] text-foreground"><Phone className="h-3 w-3 text-primary shrink-0" /> (828) 555-0142</div>
+          <div className="flex items-center gap-2 text-[10px] text-foreground"><Mail className="h-3 w-3 text-primary shrink-0" /> admissions@northbend.co</div>
+          <div className="flex items-center gap-2 text-[10px] text-foreground"><Globe className="h-3 w-3 text-primary shrink-0" /> northbendrecovery.com</div>
         </div>
       </div>
     </div>

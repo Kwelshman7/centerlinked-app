@@ -1,79 +1,66 @@
-import { Linkedin, Facebook, Youtube } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 
-const footerLinks = {
-  company: [
-    { label: "About", href: "#" },
-    { label: "Contact", href: "#" },
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-  ],
-  quickLinks: [
-    { label: "Pricing", href: "#pricing" },
-    { label: "Features", href: "#features" },
-    { label: "Demo", href: "#" },
-    { label: "Login", href: "#" },
-  ],
-};
+const productLinks = [
+  { label: "Home", href: "/" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Request Access", href: "/request-access", isRoute: true },
+  { label: "Sign In", href: "/login", isRoute: true },
+];
 
-const socialLinks = [
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Youtube, href: "#", label: "YouTube" },
+const legalLinks = [
+  { label: "Privacy Policy", href: "#" },
+  { label: "Terms of Service", href: "#" },
+  { label: "Acceptable Use", href: "#" },
+  { label: "Cookie Policy", href: "#" },
+  { label: "Privacy Rights", href: "#" },
+  { label: "Legal Notice", href: "#" },
 ];
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card py-12">
+    <footer className="border-t border-border bg-card py-10 sm:py-12">
       <div className="container">
-        <div className="grid gap-8 md:grid-cols-4">
-          {/* Logo & Description */}
-          <div className="md:col-span-2">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="sm:col-span-2 lg:col-span-2">
             <Logo to="/" size="lg" />
             <p className="mt-3 text-sm text-muted-foreground max-w-md leading-relaxed">
-              The professional network for addiction-treatment BD teams. Connect, share, and build referral relationships.
+              The private professional network for behavioral-health and addiction-treatment organizations.
             </p>
-            <div className="mt-6 flex gap-3">
-              {socialLinks.map((social, idx) => (
-                <a
-                  key={idx}
-                  href={social.href}
-                  aria-label={social.label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover:scale-105"
-                >
-                  <social.icon className="h-5 w-5" />
-                </a>
-              ))}
-            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Questions:{" "}
+              <a href="mailto:legal@centerlinked.com" className="text-primary hover:underline">
+                legal@centerlinked.com
+              </a>
+            </p>
           </div>
 
-          {/* Company Links */}
           <div>
-            <h4 className="font-semibold text-foreground">Company</h4>
+            <h4 className="font-semibold text-foreground">Product</h4>
             <ul className="mt-4 space-y-3">
-              {footerLinks.company.map((link, idx) => (
-                <li key={idx}>
-                  <a
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-                  >
-                    {link.label}
-                  </a>
+              {productLinks.map((link) => (
+                <li key={link.label}>
+                  {"isRoute" in link && link.isRoute ? (
+                    <Link to={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-foreground">Quick Links</h4>
+            <h4 className="font-semibold text-foreground">Legal</h4>
             <ul className="mt-4 space-y-3">
-              {footerLinks.quickLinks.map((link, idx) => (
-                <li key={idx}>
-                  <a
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-                  >
+              {legalLinks.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
                     {link.label}
                   </a>
                 </li>
@@ -82,12 +69,12 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-center sm:text-left">
           <p className="text-sm text-muted-foreground">
-            © CenterLinked 2026. All rights reserved.
+            © 2026 CenterLinked. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
-            Built for the behavioral health industry.
+            Built for the behavioral health industry. Not a patient-facing directory.
           </p>
         </div>
       </div>

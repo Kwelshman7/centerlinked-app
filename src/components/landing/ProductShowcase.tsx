@@ -31,7 +31,7 @@ function FacilityProfileContent() {
         </div>
         <h3 className="font-bold text-[12.5px] mt-1.5 leading-tight text-foreground">Northbend Detox Center</h3>
         <p className="text-[9px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-          <MapPin className="h-2.5 w-2.5" /> Asheville, NC
+          <MapPin className="h-2.5 w-2.5 shrink-0" /> Asheville, NC
         </p>
       </div>
 
@@ -90,9 +90,9 @@ function FacilityProfileContent() {
       <div className="px-3.5 mt-3 shrink-0 pb-3">
         <p className="text-[8.5px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">How to Refer</p>
         <div className="bg-card border border-border rounded-xl p-2.5 space-y-1">
-          <div className="flex items-center gap-1.5 text-[9px] text-foreground"><Phone className="h-3 w-3 text-primary" /> (828) 555-0142</div>
-          <div className="flex items-center gap-1.5 text-[9px] text-foreground"><Mail className="h-3 w-3 text-primary" /> referrals@northbend.co</div>
-          <div className="flex items-center gap-1.5 text-[9px] text-foreground"><Globe className="h-3 w-3 text-primary" /> northbendrecovery.com</div>
+          <div className="flex items-center gap-1.5 text-[9px] text-foreground"><Phone className="h-3 w-3 text-primary shrink-0" /> (828) 555-0142</div>
+          <div className="flex items-center gap-1.5 text-[9px] text-foreground"><Mail className="h-3 w-3 text-primary shrink-0" /> referrals@northbend.co</div>
+          <div className="flex items-center gap-1.5 text-[9px] text-foreground"><Globe className="h-3 w-3 text-primary shrink-0" /> northbendrecovery.com</div>
         </div>
       </div>
     </div>
@@ -102,7 +102,7 @@ function FacilityProfileContent() {
 const views = [
   {
     label: "What your partners see",
-    caption: "A clean, shareable profile with LOC, insurance, contacts, and referral instructions.",
+    caption: "A clean, shareable profile showing your LOC, insurance, BD contact, and referral instructions.",
     content: <FacilityProfileContent />,
     center: false,
   },
@@ -114,7 +114,7 @@ const views = [
   },
   {
     label: "How partners find you",
-    caption: "Search by level of care, location, and insurance — verified profiles surface first.",
+    caption: "Search by level of care, location, and insurance — your verified profile surfaces first.",
     content: <SearchResultsPreviewContent />,
     center: false,
   },
@@ -122,34 +122,34 @@ const views = [
 
 export function ProductShowcase() {
   return (
-    <section className="py-20 lg:py-28 bg-background overflow-hidden">
+    <section className="py-16 sm:py-20 lg:py-28 bg-background overflow-hidden">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center mb-16">
+        <div className="mx-auto max-w-3xl text-center mb-12 sm:mb-16 px-1">
           <span className="inline-block px-4 py-1.5 mb-5 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
             See it in action
           </span>
-          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
             Three views.{" "}
-            <span className="text-primary">One referral profile.</span>
+            <span className="text-primary">One product.</span>
           </h2>
           <p className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            What your team manages, what partners see when you share a link, and how they find you when they need a placement.
+            Here's what CenterLinked looks like for your team, your referral partners, and the people searching for a placement.
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-end justify-center gap-10 lg:gap-12 max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row items-center md:items-end justify-center gap-10 lg:gap-12 max-w-5xl mx-auto">
           {views.map((v) => (
             <div
               key={v.label}
-              className={`flex flex-col items-center gap-5 w-full max-w-[280px] md:max-w-none md:w-auto ${
+              className={`flex flex-col items-center gap-4 sm:gap-5 w-full max-w-[280px] mx-auto md:max-w-none md:w-auto md:mx-0 ${
                 v.center ? "md:relative md:z-10" : "md:translate-y-8 md:opacity-95"
               }`}
             >
-              <div className={v.center ? "md:scale-110 origin-bottom" : ""}>
-                <PhoneFrame>{v.content}</PhoneFrame>
+              <div className={`w-full flex justify-center ${v.center ? "md:scale-110 origin-bottom" : ""}`}>
+                <PhoneFrame className="mx-auto">{v.content}</PhoneFrame>
               </div>
 
-              <div className="text-center max-w-[240px]">
+              <div className="text-center max-w-[260px] px-2">
                 <p className="font-semibold text-foreground text-sm">{v.label}</p>
                 <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{v.caption}</p>
               </div>

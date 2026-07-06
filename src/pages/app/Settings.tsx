@@ -10,11 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/app/ImageUploader";
 import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck } from "lucide-react";
 import { SuperAdminSettingsCard } from "@/components/app/admin/SuperAdminPanel";
+import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function Settings() {
-  const { profile, user, isFacilityAdmin, isSuperAdmin, refresh } = useAuth();
+  const { profile, user, isFacilityAdmin, isSuperAdmin, needsSuperAdminSetup, refresh } = useAuth();
   const [fullName, setFullName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [phone, setPhone] = useState("");
@@ -172,6 +173,8 @@ export default function Settings() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="font-heading text-2xl font-bold">Settings</h1>
+
+      {needsSuperAdminSetup && <SuperAdminSetupAlert />}
 
       {isSuperAdmin && <SuperAdminSettingsCard />}
 

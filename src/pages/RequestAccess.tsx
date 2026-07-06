@@ -19,7 +19,7 @@ export default function RequestAccess() {
   useEffect(() => {
     applySocialMeta({
       title: "Request early access · CenterLinked",
-      description: "Request early access to CenterLinked for your treatment organization's BD and admissions team.",
+      description: "Request early access to CenterLinked — one live referral profile for your treatment organization's BD and admissions team.",
       path: "/request-access",
     });
   }, []);
@@ -58,7 +58,7 @@ export default function RequestAccess() {
           <div className="text-center mb-6">
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold mt-4">Request access</h1>
-            <p className="text-sm text-muted-foreground mt-2">CenterLinked is a private, invite-only network for treatment BD reps. Tell us about your organization and we'll get you set up.</p>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">CenterLinked is a private, invite-only network for treatment BD reps. Tell us about your organization and we'll get you set up.</p>
           </div>
 
           <form onSubmit={submit} className="space-y-3">

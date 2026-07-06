@@ -23,23 +23,23 @@ const differentiators = [
 
 export function AlwaysAccurate() {
   return (
-    <section className="py-20 lg:py-28 bg-secondary/30">
+    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/30">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto max-w-3xl text-center px-1">
           <span className="inline-block px-4 py-1.5 mb-5 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
             Why CenterLinked works
           </span>
-          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
             Three things that{" "}
             <span className="text-primary">make it different.</span>
           </h2>
         </div>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+        <div className="mt-12 sm:mt-14 grid gap-4 sm:gap-6 md:grid-cols-3 max-w-5xl mx-auto">
           {differentiators.map((d) => (
             <div
               key={d.title}
-              className="group p-7 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300"
+              className="group p-6 sm:p-7 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300 h-full"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary mb-5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
                 <d.icon className="h-5 w-5" />

@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { SuperAdminAccessDenied } from "@/components/app/admin/SuperAdminSetupAlert";
 import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -39,7 +40,7 @@ export function AdminRoute({ children }: { children: ReactNode }) {
   }
 
   if (!isSuperAdmin) {
-    return <Navigate to="/app" replace />;
+    return <SuperAdminAccessDenied />;
   }
 
   return <>{children}</>;

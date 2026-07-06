@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -24,17 +24,36 @@ import { adminLinks } from "@/components/app/admin/SuperAdminPanel";
 type NavItem = { to: string; label: string; icon: typeof SearchIcon; end?: boolean };
 
 export function AppLayout() {
-  const { profile, isSuperAdmin, signOut, user } = useAuth();
+  const { profile, isSuperAdmin, needsSuperAdminSetup, signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
-  const primary: NavItem[] = [
-    { to: "/app/dashboard", label: "Home", icon: LayoutDashboard },
-    { to: "/app/search", label: "Search", icon: SearchIcon },
-    { to: "/app/organizations", label: "Organizations", icon: Building2 },
-    { to: "/app/settings", label: "Settings", icon: Settings },
-  ];
+  const primary: NavItem[] = useMemo(() => {
+    const items: NavItem[] = [
+      { to: "/app/dashboard", label: "Home", icon: LayoutDashboard },
+      { to: "/app/search", label: "Search", icon: SearchIcon },
+    ];
+    if (isSuperAdmin) {
+      items.push({
+        to: "/app/admin/organizations",
+        label: "Manage orgs",
+        icon: Shield,
+        end: true,
+      });
+    }
+    items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
+    items.push({ to: "/app/settings", label: "Settings", icon: Settings });
+    return items;
+  }, [isSuperAdmin]);
+
+  const mobilePrimary: NavItem[] = useMemo(() => {
+    if (!needsSuperAdminSetup) return primary;
+    return [
+      { to: "/app/dashboard", label: "Home", icon: LayoutDashboard },
+      { to: "/app/settings", label: "Settings", icon: Settings },
+    ];
+  }, [needsSuperAdminSetup, primary]);
 
   const secondaryOrg: NavItem[] = [
     { to: "/app/members", label: "Members", icon: Users },
@@ -133,6 +152,11 @@ export function AppLayout() {
                 <Shield className="h-3 w-3" /> Super Admin
               </span>
             )}
+            {needsSuperAdminSetup && (
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 text-[10px] font-semibold">
+                Setup required
+              </span>
+            )}
           </div>
         )}
         {collapsed ? (
@@ -164,7 +188,7 @@ export function AppLayout() {
 
       <header className="lg:hidden sticky top-0 z-40 bg-card/85 backdrop-blur-xl border-b border-border/60 pt-safe">
         <div className="flex items-center justify-between px-4 h-12 relative">
-          {isSuperAdmin ? (
+          {isSuperAdmin || needsSuperAdminSetup ? (
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Admin menu">
@@ -178,24 +202,30 @@ export function AppLayout() {
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="mt-6 space-y-1">
-                  {adminLinks.map(({ to, label, icon: Icon, end }) => (
-                    <NavLink
-                      key={to}
-                      to={to}
-                      end={end}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                        )
-                      }
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {label}
-                    </NavLink>
-                  ))}
+                  {needsSuperAdminSetup ? (
+                    <p className="text-sm text-muted-foreground px-3 pb-3">
+                      Complete super admin setup in Settings to unlock organization editing.
+                    </p>
+                  ) : (
+                    adminLinks.map(({ to, label, icon: Icon, end }) => (
+                      <NavLink
+                        key={to}
+                        to={to}
+                        end={end}
+                        className={({ isActive }) =>
+                          cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                            isActive
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                          )
+                        }
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {label}
+                      </NavLink>
+                    ))
+                  )}
                 </nav>
               </SheetContent>
             </Sheet>
@@ -220,8 +250,8 @@ export function AppLayout() {
 
       {!isMessengerThread && (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card/90 backdrop-blur-xl border-t border-border/60" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-          <ul className="grid grid-cols-4 h-16">
-            {primary.map(({ to, label, icon: Icon, end }) => (
+          <ul className={cn("grid h-16", mobilePrimary.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+            {mobilePrimary.map(({ to, label, icon: Icon, end }) => (
               <li key={to}>
                 <NavLink to={to} end={end} className={({ isActive }) =>
                   cn(
