@@ -1,2 +1,26 @@
+# Dependencies & build output
+node_modules/
+dist/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+server/.lovable-anon-key
+
+# Local tooling
 .vercel
-.env*
+.claude/
+.DS_Store
+*.log
+
+# Supabase CLI temp state
+supabase/.temp/
+
+# Facility image pipeline artifacts
+server/facility-images/.work/
+server/facility-images/reports/
+server/lovable-facility-overrides.json
+
+# Generated sync artifacts
+supabase/sync-from-lovable.generated.sql
