@@ -35,7 +35,7 @@ export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8"
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border/50 overflow-hidden w-full max-w-[320px] text-foreground">
+    <div className="bg-white rounded-xl shadow-lg border border-border/50 overflow-hidden w-full lg:max-w-[320px] text-foreground">
       <div
         className="px-4 py-2.5 border-b"
         style={{ backgroundColor: `${brand}14`, borderColor: `${brand}26` }}

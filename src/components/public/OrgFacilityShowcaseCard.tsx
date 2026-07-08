@@ -116,7 +116,7 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug, onExp
 
       <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
         <div>
-          <h3 className="font-heading font-bold text-base sm:text-lg leading-tight">
+          <h3 className="font-heading font-bold text-base sm:text-[17px] leading-snug break-words">
             {programHref ? (
               <Link to={programHref} className="hover:text-primary transition-colors">
                 {f.name}
@@ -151,12 +151,12 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug, onExp
               <CheckCircle2 className="h-3 w-3" />
               In-Network Contracts
             </p>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+            <div className="grid grid-cols-1 gap-y-1">
               {(showAllPayers ? inNetwork : topPayers).map((p) => (
                 <div
                   key={p}
                   title={p}
-                  className="text-[11px] sm:text-xs text-foreground/85 font-medium truncate"
+                  className="text-[11px] sm:text-xs text-foreground/85 font-medium break-words leading-snug"
                 >
                   {p}
                 </div>

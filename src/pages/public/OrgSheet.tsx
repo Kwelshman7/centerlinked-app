@@ -159,7 +159,7 @@ export default function OrgSheet() {
         onResourcesClick={() => setActiveTab("resources")}
       />
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <OrganizationSheetView
           org={org}
           facilities={facilities}

@@ -9,7 +9,7 @@ interface Props {
 
 export function OrgFacilityRail({ facilities, contracts, orgSlug }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
       {facilities.map((f) => (
         <OrgFacilityShowcaseCard key={f.id} facility={f} contracts={contracts} orgSlug={orgSlug} />
       ))}
