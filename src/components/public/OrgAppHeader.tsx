@@ -1,14 +1,9 @@
 import { Link } from "react-router-dom";
-import { Building2, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
-import { orgPublicPath } from "@/lib/public-urls";
 
 interface Props {
-  org: {
-    name: string;
-    slug: string | null;
-    logo_url: string | null;
-  };
   brand: string;
 }
 
@@ -26,29 +21,14 @@ const NAV_LINKS = [
   { label: "Network", to: "/app/organizations" },
 ] as const;
 
-export function OrgAppHeader({ org, brand }: Props) {
+export function OrgAppHeader({ brand }: Props) {
   const { user, profile } = useAuth();
-  const orgHref = org.slug ? orgPublicPath(org.slug) : "#top";
 
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/60 print:hidden">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-14 sm:h-16 flex items-center justify-between gap-3 sm:gap-4">
-          <Link to={orgHref} className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink-0 max-w-[55%] sm:max-w-none">
-            <div
-              className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-white border shadow-sm overflow-hidden grid place-items-center shrink-0 p-0.5"
-              style={{ borderColor: `${brand}35` }}
-            >
-              {org.logo_url ? (
-                <img src={org.logo_url} alt={`${org.name} logo`} className="w-full h-full object-contain" />
-              ) : (
-                <Building2 className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
-            <span className="font-heading font-bold text-sm sm:text-base truncate">
-              {org.name}
-            </span>
-          </Link>
+          <Logo to="/" size="md" className="shrink-0" />
 
           {user ? (
             <nav className="hidden md:flex items-center gap-1">

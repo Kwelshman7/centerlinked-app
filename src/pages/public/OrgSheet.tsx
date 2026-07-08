@@ -152,7 +152,7 @@ export default function OrgSheet() {
 
   return (
     <div id="top" className="min-h-screen bg-muted/30">
-      <OrgAppHeader org={org} brand={brand} />
+      <OrgAppHeader brand={brand} />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <OrganizationSheetView

@@ -76,7 +76,7 @@ export function OrganizationSheetView({
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
             <div className="flex gap-4 sm:gap-5 lg:gap-6 min-w-0 flex-1">
               <div
-                className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 xl:h-32 xl:w-32 rounded-xl bg-white border shadow-md overflow-hidden grid place-items-center p-2 shrink-0"
+                className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36 xl:h-40 xl:w-40 rounded-xl bg-white border shadow-md overflow-hidden grid place-items-center p-2.5 sm:p-3 shrink-0"
                 style={{ borderColor: `${brand}35` }}
               >
                 {org.logo_url ? (
@@ -86,7 +86,7 @@ export function OrganizationSheetView({
                     className="w-full h-full object-contain"
                   />
                 ) : (
-                  <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
+                  <Building2 className="h-12 w-12 sm:h-14 sm:w-14 text-muted-foreground" />
                 )}
               </div>
 
@@ -135,25 +135,28 @@ export function OrganizationSheetView({
       </section>
 
       {/* Facilities grid */}
-      <section className="space-y-4 sm:space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
-          <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight">Our Facilities</h2>
-          {filteredFacilities.length > 0 && (
-            <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
-              {filteredFacilities.length}{" "}
-              {filteredFacilities.length === 1 ? "location" : "locations"}
-              {selectedState !== "all" ? " in this state" : ""}
-            </span>
-          )}
+      <section>
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5">
+            <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight">Our Facilities</h2>
+            {filteredFacilities.length > 0 && (
+              <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
+                {filteredFacilities.length}{" "}
+                {filteredFacilities.length === 1 ? "location" : "locations"}
+                {selectedState !== "all" ? " in this state" : ""}
+              </span>
+            )}
+          </div>
+
+          <OrgStateFilter
+            states={facilityStates}
+            selected={selectedState}
+            onSelect={onStateChange}
+            brand={brand}
+          />
         </div>
 
-        <OrgStateFilter
-          states={facilityStates}
-          selected={selectedState}
-          onSelect={onStateChange}
-          brand={brand}
-        />
-
+        <div className="mt-4 sm:mt-5">
         {filteredFacilities.length === 0 ? (
           <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
             {facilities.length === 0
@@ -163,6 +166,7 @@ export function OrganizationSheetView({
         ) : (
           <OrgFacilityRail facilities={filteredFacilities} contracts={contracts} orgSlug={org.slug} />
         )}
+        </div>
       </section>
 
       <OrgFooter
