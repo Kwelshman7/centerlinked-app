@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { bootstrapSuperAdmin, isBootstrapAdminEmail } from "@/lib/bootstrap-admin";
+import { bootstrapSuperAdmin, checkBootstrapAdminCandidate } from "@/lib/bootstrap-admin";
 import { ensureProfile } from "@/lib/ensure-profile";
 
 type AppRole = "super_admin" | "facility_admin" | "bd_rep";
@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [isBootstrapAdmin, setIsBootstrapAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const loadRef = useRef<Promise<void> | null>(null);
 
@@ -45,7 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     loadRef.current = (async () => {
       await ensureProfile(authUser);
-      const bootstrapped = await bootstrapSuperAdmin(authUser);
+      const [bootstrapped, bootstrapCandidate] = await Promise.all([
+        bootstrapSuperAdmin(authUser),
+        checkBootstrapAdminCandidate(),
+      ]);
+      setIsBootstrapAdmin(bootstrapCandidate);
       const [{ data: prof }, { data: rolesData }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", authUser.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", authUser.id),
@@ -76,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRoles([]);
+        setIsBootstrapAdmin(false);
         setLoading(false);
       }
     });
@@ -94,7 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await loadProfileAndRoles(user);
   };
 
-  const isBootstrapAdmin = isBootstrapAdminEmail(user?.email);
   const isSuperAdmin = roles.includes("super_admin");
   const needsSuperAdminSetup = isBootstrapAdmin && !isSuperAdmin;
 

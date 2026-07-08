@@ -6,6 +6,9 @@ CREATE TABLE IF NOT EXISTS public.bootstrap_admin_emails (
   email text PRIMARY KEY
 );
 
+-- Lock allowlist: only SECURITY DEFINER RPCs / service role may read or write.
+ALTER TABLE public.bootstrap_admin_emails ENABLE ROW LEVEL SECURITY;
+
 INSERT INTO public.bootstrap_admin_emails (email)
 VALUES (lower('YOUR_EMAIL@COMPANY.COM'))
 ON CONFLICT (email) DO NOTHING;

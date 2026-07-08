@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { isBootstrapAdminEmail } from "@/lib/bootstrap-admin";
+import { checkBootstrapAdminCandidate } from "@/lib/bootstrap-admin";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { toast } from "sonner";
 
@@ -75,7 +75,8 @@ export default function AuthCallback() {
         return;
       }
 
-      const bootstrapAdmin = isBootstrapAdminEmail(email) || isSuperAdmin;
+      const bootstrapCandidate = await checkBootstrapAdminCandidate();
+      const bootstrapAdmin = isSuperAdmin || bootstrapCandidate;
 
       if (!bootstrapAdmin && isPersonalEmail(email)) {
         await supabase.auth.signOut();
