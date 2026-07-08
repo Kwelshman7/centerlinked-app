@@ -11,7 +11,10 @@
     "preview": "vite preview",
     "facility-images": "node server/facility-images/run-batch.mjs",
     "facility-images:status": "node server/facility-images/run-batch.mjs --status",
-    "facility-images:apply": "node server/facility-images/apply-pending-reports.mjs"
+    "facility-images:apply": "node server/facility-images/apply-pending-reports.mjs",
+    "backfill-payer-ids": "node server/backfill-payer-ids.mjs",
+    "seed-missing-payers": "node server/seed-missing-payers.mjs",
+    "approve-all-facilities": "node server/approve-all-facilities.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

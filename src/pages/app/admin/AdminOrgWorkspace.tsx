@@ -201,15 +201,12 @@ export default function AdminOrgWorkspace() {
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <EditOrganizationDialog org={org} onSaved={load} triggerLabel="Edit profile" />
             {org.slug && (
-              <Button asChild size="sm" variant="ghost">
+              <Button asChild size="sm" variant="outline">
                 <Link to={`/o/${org.slug}`} target="_blank">
                   <ExternalLink className="h-4 w-4" /> Public page
                 </Link>
               </Button>
             )}
-            <Button size="sm" variant="outline" onClick={() => setTab("links")}>
-              <Link2 className="h-4 w-4" /> Shared links
-            </Button>
           </div>
         </div>
       </Card>

@@ -145,6 +145,9 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
         ? `/app/facilities/${facilities[0].id}`
         : "/app/facilities";
 
+  const adminTabHref = (tab: "links" | "branding" | "facilities") =>
+    `/app/admin/organizations/${organizationId}?tab=${tab}`;
+
   const facilityDetailHref = (id: string) =>
     adminMode ? `/app/facilities/${id}` : `/app/facilities/${id}`;
 
@@ -176,13 +179,15 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
       label: "BD Team Members",
       value: memberCount,
       sublabel: memberCount === 1 ? "Active user" : "Active users",
-      linkLabel: "Manage team",
-      to: adminMode ? `/app/admin/organizations/${organizationId}?tab=facilities` : "/app/members",
+      linkLabel: adminMode ? null : "Manage team",
+      to: adminMode ? null : "/app/members",
       icon: Users,
     },
   ];
 
-  const quickActions = [
+  const quickActions = adminMode
+    ? []
+    : [
     {
       label: "Update Facility Information",
       description: "Make sure program info is always current",
@@ -196,55 +201,43 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
       onClick: handleShare,
     },
     {
-      label: adminMode ? "Edit branding & links" : "Organization settings",
-      description: adminMode ? "Logo, colors, tagline, share URLs" : "Logo, colors, and referral contact",
+      label: "Organization settings",
+      description: "Logo, colors, and referral contact",
       icon: Building2,
-      to: adminMode
-        ? `/app/admin/organizations/${organizationId}?tab=branding`
-        : "/app/settings",
+      to: "/app/settings",
     },
     {
       label: "Shared program links",
       description: "Copy links for each facility program sheet",
       icon: BarChart3,
-      to: adminMode ? `/app/admin/organizations/${organizationId}?tab=links` : manageFacilitiesHref,
+      to: manageFacilitiesHref,
     },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight">
-            {adminMode ? org?.name ?? "Organization" : `Welcome back, ${firstName}`}
-          </h1>
-          {!adminMode && org?.name && (
-            <p className="text-muted-foreground mt-1 truncate">{org.name}</p>
-          )}
-          {adminMode && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Super-admin workspace — set up this org before handoff to the customer.
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <Button variant="outline" size="sm" onClick={handleViewPublic} disabled={!publicUrl}>
-            <ExternalLink className="h-4 w-4" /> View public page
-          </Button>
-          {adminMode && (
-            <Button asChild size="sm" variant="outline">
-              <Link to={`/app/admin/organizations/${organizationId}?tab=links`}>
-                <Share2 className="h-4 w-4" /> Shared links
+      {!adminMode && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight">
+              Welcome back, {firstName}
+            </h1>
+            {org?.name && (
+              <p className="text-muted-foreground mt-1 truncate">{org.name}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleViewPublic} disabled={!publicUrl}>
+              <ExternalLink className="h-4 w-4" /> View public page
+            </Button>
+            <Button asChild size="sm" className="shadow-md shadow-primary/20">
+              <Link to={manageFacilitiesHref}>
+                <Pencil className="h-4 w-4" /> Manage facilities
               </Link>
             </Button>
-          )}
-          <Button asChild size="sm" className="shadow-md shadow-primary/20">
-            <Link to={manageFacilitiesHref}>
-              <Pencil className="h-4 w-4" /> Manage facilities
-            </Link>
-          </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((s) => (
@@ -257,12 +250,14 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
             </div>
             <div className="mt-2 font-heading text-3xl font-bold tracking-tight">{s.value}</div>
             <p className="text-xs text-muted-foreground mt-1">{s.sublabel}</p>
-            <Link
-              to={s.to}
-              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-            >
-              {s.linkLabel} <ArrowRight className="h-3 w-3" />
-            </Link>
+            {s.linkLabel && s.to && (
+              <Link
+                to={s.to}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+              >
+                {s.linkLabel} <ArrowRight className="h-3 w-3" />
+              </Link>
+            )}
           </Card>
         ))}
 
@@ -300,15 +295,23 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-3">
-        <Card className="lg:col-span-2 p-4 sm:p-5">
+      <div className={`grid gap-4 lg:gap-6 grid-cols-1 ${adminMode ? "" : "lg:grid-cols-3"}`}>
+        <Card className={`p-4 sm:p-5 ${adminMode ? "" : "lg:col-span-2"}`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading text-base sm:text-lg font-bold">Facilities</h2>
-            <Button asChild variant="ghost" size="sm">
-              <Link to={manageFacilitiesHref}>
-                <Plus className="h-3.5 w-3.5" /> Add facility
-              </Link>
-            </Button>
+            <h2 className="font-heading text-base sm:text-lg font-bold">Recent facilities</h2>
+            {adminMode ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link to={adminTabHref("facilities")}>
+                  View all <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="ghost" size="sm">
+                <Link to={manageFacilitiesHref}>
+                  <Plus className="h-3.5 w-3.5" /> Add facility
+                </Link>
+              </Button>
+            )}
           </div>
 
           {facilitiesLoading && facilities.length === 0 ? (
@@ -387,6 +390,7 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
           )}
         </Card>
 
+        {!adminMode && quickActions.length > 0 && (
         <Card className="p-4 sm:p-5">
           <h2 className="font-heading text-base sm:text-lg font-bold mb-4">Quick Actions</h2>
           <ul className="space-y-2">
@@ -418,6 +422,7 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
             })}
           </ul>
         </Card>
+        )}
       </div>
     </div>
   );

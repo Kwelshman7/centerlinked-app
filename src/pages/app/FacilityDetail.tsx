@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  Phone,
-  Mail,
-  MessageSquare,
   Building2,
   ExternalLink,
   AlertTriangle,
@@ -83,7 +80,7 @@ export default function FacilityDetail() {
     if (fac) {
       const { data: o } = await supabase
         .from("organizations")
-        .select("id,name,slug,logo_url,bd_contact_name,bd_contact_phone,bd_contact_email")
+        .select("id,name,slug,logo_url,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url")
         .eq("id", fac.organization_id)
         .maybeSingle();
       setOrg((o as SheetOrg | null) ?? null);
@@ -141,7 +138,7 @@ export default function FacilityDetail() {
     .map((c) => ({ id: c.id, payer_name: c.payer_name, in_network: c.in_network }));
 
   return (
-    <div className="max-w-[1400px] mx-auto pb-24 lg:pb-8 space-y-6">
+    <div className="max-w-[1400px] mx-auto pb-8 space-y-6">
       {/* Top action bar */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
         {org?.slug && (
@@ -191,6 +188,8 @@ export default function FacilityDetail() {
         canShare={canShare}
         canEditPhotos={isMine || isSuperAdmin}
         onPhotosUpdated={loadFacility}
+        coverImageUrl={org?.cover_image_url ?? null}
+        orgLogoUrl={org?.logo_url ?? null}
         contractsHeaderExtra={
           <div className="flex items-center gap-2 flex-wrap">
             <VerificationBadge
@@ -221,42 +220,6 @@ export default function FacilityDetail() {
       />
 
 
-      {/* Mobile sticky CTA */}
-      <MobileBdCta facility={facility} />
-    </div>
-  );
-}
-
-
-function MobileBdCta({ facility }: { facility: Facility }) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const handleMessage = async () => {
-    if (!user) { navigate("/login"); return; }
-    if (facility.bd_contact_email) {
-      const { data } = await supabase.from("profiles").select("user_id").ilike("email", facility.bd_contact_email).maybeSingle();
-      if (data?.user_id && data.user_id !== user.id) { navigate(`/app/messages?to=${data.user_id}`); return; }
-    }
-    const { data: members } = await supabase
-      .from("organization_members").select("user_id").eq("organization_id", facility.organization_id).neq("user_id", user.id).limit(1);
-    if (members && members.length > 0) { navigate(`/app/messages?to=${members[0].user_id}`); return; }
-    toast.error("This BD rep hasn't joined the platform yet.");
-  };
-  return (
-    <div
-      className="fixed left-0 right-0 lg:hidden z-30 bg-card/95 backdrop-blur-md border-t border-border p-3 flex gap-2"
-      style={{ bottom: "calc(64px + env(safe-area-inset-bottom))" }}
-    >
-      <Button size="lg" className="flex-1 shadow-md" onClick={handleMessage}>
-        <MessageSquare className="h-4 w-4" /> Message
-      </Button>
-      {facility.bd_contact_phone && (
-        <a href={`tel:${facility.bd_contact_phone}`} className="flex-1">
-          <Button size="lg" variant="outline" className="w-full">
-            <Phone className="h-4 w-4" /> Call
-          </Button>
-        </a>
-      )}
     </div>
   );
 }

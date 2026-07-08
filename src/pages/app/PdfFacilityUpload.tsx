@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fileToBase64 } from "@/lib/files";
 import { programPublicPath } from "@/lib/public-urls";
+import { buildInsuranceContractRows } from "@/lib/match-payer";
+import { loadApprovedPayers } from "@/lib/load-approved-payers";
 import {
   Upload,
   FileText,
@@ -322,6 +324,7 @@ export default function PdfFacilityUpload() {
         .maybeSingle();
       const orgSlug = orgRow?.slug ?? null;
 
+      const payers = await loadApprovedPayers();
       const urls: string[] = [];
       for (let fIdx = 0; fIdx < parsed.facilities.length; fIdx++) {
         const f = parsed.facilities[fIdx];
@@ -353,16 +356,8 @@ export default function PdfFacilityUpload() {
         if (facErr || !inserted) throw facErr ?? new Error("facility insert failed");
 
         const contracts = [
-          ...(f.payers_in_network ?? []).map((p) => ({
-            facility_id: inserted.id,
-            payer_name: p,
-            in_network: true,
-          })),
-          ...(f.payers_out_of_network ?? []).map((p) => ({
-            facility_id: inserted.id,
-            payer_name: p,
-            in_network: false,
-          })),
+          ...buildInsuranceContractRows(inserted.id, f.payers_in_network ?? [], true, payers),
+          ...buildInsuranceContractRows(inserted.id, f.payers_out_of_network ?? [], false, payers),
         ];
         if (contracts.length) {
           await supabase.from("insurance_contracts").insert(contracts);

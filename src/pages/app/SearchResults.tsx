@@ -7,8 +7,14 @@ import { ArrowLeft, Loader2, Search as SearchIcon } from "lucide-react";
 import { SearchForm } from "@/components/app/search/SearchForm";
 import { OrgResultCard, OrgSearchResult } from "@/components/app/search/OrgResultCard";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
+import {
+  buildPayerOrFilter,
+  contractMatchesPayer,
+  type PayerMatchInput,
+} from "@/lib/match-payer";
 
 type ContractRow = {
+  payer_id: string | null;
   payer_name: string;
   facilities: {
     id: string;
@@ -61,21 +67,38 @@ export default function SearchResults() {
     let cancelled = false;
     (async () => {
       setLoading(true);
+
+      let payer: PayerMatchInput | null = null;
+      if (payerId) {
+        const { data } = await supabase
+          .from("payers")
+          .select("id,name,aliases")
+          .eq("id", payerId)
+          .maybeSingle();
+        if (cancelled) return;
+        payer = (data as PayerMatchInput | null) ?? null;
+      }
+
       let q = supabase
         .from("insurance_contracts")
         .select(
-          "payer_name, facilities!inner(id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state))"
+          "payer_id,payer_name, facilities!inner(id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state))",
         )
         .eq("in_network", true);
 
-      if (payerId) q = q.eq("payer_id", payerId);
+      if (payer) {
+        q = q.or(buildPayerOrFilter(payer));
+      } else if (payerId) {
+        q = q.eq("payer_id", payerId);
+      }
+
       q = q.eq("facilities.verification_status", "approved");
       q = q.eq("facilities.verification_frozen", false);
       if (state) q = q.eq("facilities.state", state);
       if (city) q = q.ilike("facilities.city", `%${city}%`);
       if (loc) q = q.contains("facilities.levels_of_care", [loc]);
 
-      const { data, error } = await q.limit(400);
+      const { data, error } = await q.limit(500);
       if (cancelled) return;
 
       if (error) {
@@ -84,9 +107,14 @@ export default function SearchResults() {
         return;
       }
 
+      let rows = (data as unknown as ContractRow[]) ?? [];
+      if (payer) {
+        rows = rows.filter((row) => contractMatchesPayer(row, payer!));
+      }
+
       const byOrg = new Map<string, OrgSearchBase>();
       const seenFac = new Map<string, Set<string>>();
-      ((data as unknown as ContractRow[]) ?? []).forEach((row) => {
+      rows.forEach((row) => {
         const f = row.facilities;
         if (!f || !f.organizations) return;
         const org = f.organizations;
@@ -113,7 +141,7 @@ export default function SearchResults() {
             slug: f.slug,
             city: f.city,
             state: f.state,
-            matched_payer: row.payer_name,
+            matched_payer: payer?.name ?? row.payer_name,
             levels_of_care: f.levels_of_care ?? [],
           });
           if (f.contracts_verified_at) {

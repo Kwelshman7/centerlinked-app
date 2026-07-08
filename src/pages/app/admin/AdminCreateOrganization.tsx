@@ -21,6 +21,8 @@ import {
   SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS,
 } from "@/components/app/facility/facility-types";
 import { fileToBase64 } from "@/lib/files";
+import { buildInsuranceContractRows } from "@/lib/match-payer";
+import { loadApprovedPayers } from "@/lib/load-approved-payers";
 
 type Stage = "create-org" | "add-facilities" | "done";
 
@@ -246,6 +248,7 @@ export default function AdminCreateOrganization() {
     setCommitting(true);
     const urls: string[] = [];
     try {
+      const payers = await loadApprovedPayers();
       for (const f of parsedFacilities) {
         const { data: inserted, error } = await supabase
           .from("facilities")
@@ -274,12 +277,8 @@ export default function AdminCreateOrganization() {
         if (error || !inserted) throw error ?? new Error("Insert failed");
 
         const contracts = [
-          ...(f.payers_in_network ?? []).map((p) => ({
-            facility_id: inserted.id, payer_name: p, in_network: true,
-          })),
-          ...(f.payers_out_of_network ?? []).map((p) => ({
-            facility_id: inserted.id, payer_name: p, in_network: false,
-          })),
+          ...buildInsuranceContractRows(inserted.id, f.payers_in_network ?? [], true, payers),
+          ...buildInsuranceContractRows(inserted.id, f.payers_out_of_network ?? [], false, payers),
         ];
         if (contracts.length) await supabase.from("insurance_contracts").insert(contracts);
         if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));
@@ -322,6 +321,7 @@ export default function AdminCreateOrganization() {
     setSavingManual(true);
     const urls: string[] = [];
     try {
+      const payers = await loadApprovedPayers();
       for (const f of manualFacilities) {
         const { data: inserted, error } = await supabase
           .from("facilities")
@@ -355,8 +355,8 @@ export default function AdminCreateOrganization() {
         const ins = f.payers_in_network.split(",").map((s) => s.trim()).filter(Boolean);
         const oon = f.payers_out_of_network.split(",").map((s) => s.trim()).filter(Boolean);
         const contracts = [
-          ...ins.map((p) => ({ facility_id: inserted.id, payer_name: p, in_network: true })),
-          ...oon.map((p) => ({ facility_id: inserted.id, payer_name: p, in_network: false })),
+          ...buildInsuranceContractRows(inserted.id, ins, true, payers),
+          ...buildInsuranceContractRows(inserted.id, oon, false, payers),
         ];
         if (contracts.length) await supabase.from("insurance_contracts").insert(contracts);
         if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));

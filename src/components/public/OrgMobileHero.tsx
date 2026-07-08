@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { MapPin, BadgeCheck, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GetInTouchSheet } from "@/components/public/GetInTouchSheet";
-import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
+import { MobileContactBar, mobileContactBarPadding } from "@/components/public/MobileContactBar";
 import { OrgClaimCard } from "@/components/public/OrgClaimCard";
+import { HeroContact } from "@/components/public/OrgHeroContactCard";
 import { OrgFacilityRail } from "@/components/public/OrgFacilityRail";
 import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { OrgFooter } from "@/components/public/OrgFooter";
@@ -78,9 +78,20 @@ export function OrgMobileHero({
     if (!ok) toast.error("Could not copy link");
   };
 
+  const primaryContact = heroContacts[0] ?? (
+    org.bd_contact_phone || org.bd_contact_email
+      ? {
+          name: org.bd_contact_name ?? "",
+          phone: org.bd_contact_phone,
+          email: org.bd_contact_email,
+        }
+      : null
+  );
+  const hasContact = !!(primaryContact && (primaryContact.phone || primaryContact.email));
+
   return (
     <div className="sm:hidden">
-      <main className="px-4 py-4 space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))]">
+      <main className={`px-4 py-4 space-y-5 ${hasContact ? mobileContactBarPadding() : "pb-[calc(2rem+env(safe-area-inset-bottom))]"}`}>
         {/* Compact hero + contact */}
         <section className="rounded-xl border border-border/60 shadow-sm overflow-hidden bg-card">
           {/* Hero image + title */}
@@ -107,18 +118,11 @@ export function OrgMobileHero({
             </div>
           </div>
 
-          {/* Contact card */}
-          <div className="p-4 bg-muted/20 border-t border-border/50 flex justify-center">
-            {heroContacts.length > 0 ? (
-              <OrgHeroContactCard
-                contacts={heroContacts}
-                organizationId={org.id}
-                brand={brand}
-              />
-            ) : (
+          {heroContacts.length === 0 && (
+            <div className="p-4 bg-muted/20 border-t border-border/50 flex justify-center">
               <OrgClaimCard organizationId={org.id} organizationName={org.name} />
-            )}
-          </div>
+            </div>
+          )}
         </section>
 
         {/* Share + about */}
@@ -132,17 +136,6 @@ export function OrgMobileHero({
             {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
             <span className="ml-1.5">{copied ? "Copied" : "Share"}</span>
           </Button>
-          {!heroContacts.length && !org.bd_contact_email && (
-            <GetInTouchSheet
-              orgName={org.name}
-              contactName={org.bd_contact_name}
-              phone={org.bd_contact_phone}
-              email={org.bd_contact_email}
-              organizationId={org.id}
-              triggerLabel="Contact"
-              triggerClassName="h-9 text-xs font-semibold rounded-full"
-            />
-          )}
         </div>
 
         {org.description && (
@@ -190,6 +183,17 @@ export function OrgMobileHero({
           brand={brand}
         />
       </main>
+
+      {hasContact && primaryContact && (
+        <MobileContactBar
+          repName={primaryContact.name || null}
+          repPhone={primaryContact.phone ?? null}
+          repEmail={primaryContact.email ?? null}
+          brand={brand}
+          organizationId={org.id}
+          contextLabel={`Reach the BD rep at ${org.name}.`}
+        />
+      )}
     </div>
   );
 }

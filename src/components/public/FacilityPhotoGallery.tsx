@@ -165,7 +165,7 @@ export function FacilityPhotoGallery({
   );
 }
 
-function EditPhotosDialog({
+export function EditPhotosDialog({
   facilityId,
   images,
   open,
