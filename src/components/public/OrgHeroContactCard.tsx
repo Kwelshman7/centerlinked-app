@@ -15,6 +15,7 @@ interface Props {
   contacts: HeroContact[];
   organizationId?: string;
   brand?: string;
+  heading?: string;
 }
 
 function initials(name: string) {
@@ -26,7 +27,7 @@ function initials(name: string) {
     .join("");
 }
 
-export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8" }: Props) {
+export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8", heading = "For Referrals" }: Props) {
   if (!contacts.length) return null;
 
   const fire = (kind: "contact_call" | "contact_text" | "contact_email") => {
@@ -43,7 +44,7 @@ export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8"
           className="text-[11px] font-bold uppercase tracking-wider text-center"
           style={{ color: brand }}
         >
-          For Referrals
+          {heading}
         </p>
       </div>
 
