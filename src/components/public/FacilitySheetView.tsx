@@ -15,11 +15,7 @@ import {
   Clock,
   Check,
   Pencil,
-  Layers,
   Sparkles,
-  Users,
-  HeartPulse,
-  Home,
   ImageIcon,
   X,
   ChevronLeft,
@@ -131,35 +127,18 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function levelIcon(level: string) {
-  const l = level.toLowerCase();
-  if (l.includes("detox")) return HeartPulse;
-  if (l.includes("residential") || l.includes("inpatient")) return Home;
-  if (l.includes("outpatient") || l.includes("iop") || l.includes("php")) return Users;
-  return Layers;
-}
-
-function CardShell({
+function SectionHeading({
   title,
   headerExtra,
-  children,
-  className = "",
-  bodyClassName = "",
 }: {
   title: string;
   headerExtra?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  bodyClassName?: string;
 }) {
   return (
-    <section className={`rounded-2xl border border-border/60 bg-card shadow-sm h-fit self-start w-full ${className}`}>
-      <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-b border-border/60">
-        <h2 className="font-heading text-base font-bold">{title}</h2>
-        {headerExtra}
-      </div>
-      <div className={`p-5 sm:p-6 ${bodyClassName}`}>{children}</div>
-    </section>
+    <div className="flex items-center justify-between gap-3 mb-3">
+      <h2 className="font-heading text-sm sm:text-[15px] font-bold tracking-tight">{title}</h2>
+      {headerExtra}
+    </div>
   );
 }
 
@@ -265,14 +244,24 @@ export function FacilitySheetView({
       />
     ) : null;
 
+  const hasProgramDetails =
+    facility.description ||
+    facility.tagline ||
+    programFeatures.length > 0 ||
+    facility.population_served?.length > 0 ||
+    aboutHeaderExtra;
+
+  const hasFactsStrip = (facility.levels_of_care?.length ?? 0) > 0 || contracts.length >= 0;
+  const hasServiceArea = !!(address || cityStateZip);
+
   const tabBarOffset = mode === "internal" ? 64 : 0;
 
   return (
-    <div className={`space-y-6 lg:space-y-8 min-w-0 ${hasContact ? mobileContactBarPadding(tabBarOffset) : ""}`}>
+    <div className={`space-y-5 lg:space-y-6 min-w-0 ${hasContact ? mobileContactBarPadding(tabBarOffset) : ""}`}>
       {/* Hero */}
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
         <div className="grid lg:grid-cols-2 lg:items-start">
-          <div className="p-5 sm:p-8 flex flex-col gap-4 min-w-0 self-start">
+          <div className="p-4 sm:p-6 lg:p-7 flex flex-col gap-3 min-w-0 self-start">
             {mode === "public" && org?.slug && (
               <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
                 <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline">
@@ -302,7 +291,7 @@ export function FacilitySheetView({
               <p className="text-sm leading-relaxed text-foreground/80 break-words">{summaryText}</p>
             )}
 
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-1">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-0.5">
               {foundedYear && (
                 <MetaItem icon={Calendar} label="Founded" value={foundedYear} brand={brand} />
               )}
@@ -338,227 +327,214 @@ export function FacilitySheetView({
         )}
       </section>
 
-      {/* Detail sections */}
-      <div className="space-y-6 lg:space-y-8">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-8">
-          {/* Left column */}
-          <div className="space-y-6 lg:w-[34%] lg:shrink-0 min-w-0">
-            <CardShell title="In-Network Contracts" headerExtra={contractsHeaderExtra}>
-              {inNetworkPayers.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  {inNetworkPayers.map((c) => (
-                    <span
-                      key={c.id}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-xs font-semibold max-w-full"
-                    >
-                      {c.payer_logo_url ? (
-                        <img src={c.payer_logo_url} alt={c.payer_name} className="h-4 w-4 object-contain shrink-0" />
-                      ) : (
-                        <ShieldCheck className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
-                      )}
-                      <span className="truncate">{c.payer_name}</span>
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">Out-of-Network Only</p>
-              )}
-            </CardShell>
-
-            {facility.levels_of_care?.length > 0 && (
-              <CardShell title="Levels of Care" bodyClassName="py-4 sm:py-5">
-                <ul className="grid grid-cols-2 gap-x-3 gap-y-3">
-                  {facility.levels_of_care.map((level) => {
-                    const Icon = levelIcon(level);
-                    return (
-                      <li key={level} className="flex items-start gap-2 min-w-0">
-                        <div
-                          className="h-8 w-8 rounded-lg grid place-items-center shrink-0"
-                          style={{ backgroundColor: `${brand}14`, color: brand }}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="min-w-0 pt-0.5">
-                          <p className="text-xs sm:text-sm font-semibold break-words leading-snug">{level}</p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </CardShell>
-            )}
-          </div>
-
-          {/* Middle column — program details only */}
-          <div className="lg:flex-1 min-w-0 self-start">
-            {(facility.description ||
-              facility.tagline ||
-              programFeatures.length > 0 ||
-              facility.population_served?.length > 0 ||
-              aboutHeaderExtra) && (
-              <CardShell title="Program Details" headerExtra={aboutHeaderExtra}>
-                {(facility.tagline || facility.description) && (
-                  <div className="mb-6">
-                    {facility.tagline && facility.tagline !== summaryText && (
-                      <p className="text-base text-foreground/90 font-medium leading-snug mb-2 break-words">
-                        {facility.tagline}
+      {/* Unified details */}
+      {(hasFactsStrip || hasProgramDetails || hasServiceArea || repName || repEmail || repPhone) && (
+        <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="min-w-0 divide-y divide-border/50">
+              {hasFactsStrip && (
+                <div className="px-4 sm:px-6 py-4 sm:py-5 grid sm:grid-cols-2 gap-5 sm:gap-8">
+                  <div className="min-w-0">
+                    <SectionHeading title="In-Network Contracts" headerExtra={contractsHeaderExtra} />
+                    {inNetworkPayers.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {inNetworkPayers.map((c) => (
+                          <span
+                            key={c.id}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-semibold max-w-full"
+                          >
+                            {c.payer_logo_url ? (
+                              <img src={c.payer_logo_url} alt={c.payer_name} className="h-3.5 w-3.5 object-contain shrink-0" />
+                            ) : (
+                              <ShieldCheck className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
+                            )}
+                            <span className="truncate">{c.payer_name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">
+                        Out-of-Network Only
                       </p>
                     )}
-                    {facility.description && facility.description !== summaryText && (
-                      <ExpandableText text={facility.description} brand={brand} />
-                    )}
                   </div>
-                )}
 
-                {(programFeatures.length > 0 || facility.population_served?.length > 0) && (
-                  <div className="space-y-6">
-                    {programFeatures.length > 0 && (
-                      <ul className="grid grid-cols-2 gap-x-4 gap-y-3">
-                        {programFeatures.map((item) => (
-                          <li key={item} className="flex items-start gap-2 min-w-0">
-                            <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
-                            <span className="text-xs sm:text-sm text-foreground/85 leading-snug break-words">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {facility.population_served?.length > 0 && (
-                      <div className={programFeatures.length > 0 ? "pt-6 border-t border-border/60" : ""}>
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground mb-3">
-                          What We Treat
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {facility.population_served.map((item) => (
-                            <span
-                              key={item}
-                              className="px-2.5 py-1 rounded-md border border-border bg-background text-foreground text-xs font-medium break-words"
-                            >
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardShell>
-            )}
-          </div>
-
-          {/* Right column — sticky contact card */}
-          <div className="lg:w-[280px] xl:w-[300px] lg:shrink-0 min-w-0 self-start lg:sticky lg:top-20">
-            <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden h-fit self-start w-full">
-              <div className="px-5 sm:px-6 py-4 border-b border-border/60" style={{ backgroundColor: `${brand}14` }}>
-                <p className="text-[11px] uppercase tracking-wider font-bold" style={{ color: brand }}>
-                  For Referrals
-                </p>
-              </div>
-              <div className="p-5 sm:p-6">
-                {repName ? (
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="h-14 w-14 rounded-full grid place-items-center shrink-0 font-heading font-bold text-lg border"
-                      style={{ backgroundColor: `${brand}14`, color: brand, borderColor: `${brand}30` }}
-                    >
-                      {getInitials(repName)}
-                    </div>
+                  {facility.levels_of_care?.length > 0 && (
                     <div className="min-w-0">
-                      <p className="font-semibold text-[15px] break-words">{repName}</p>
-                      <p className="text-xs text-muted-foreground">BD Representative</p>
+                      <SectionHeading title="Levels of Care" />
+                      <div className="flex flex-wrap gap-1.5">
+                        {facility.levels_of_care.map((level) => (
+                          <span
+                            key={level}
+                            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold"
+                            style={{ backgroundColor: `${brand}14`, color: brand }}
+                          >
+                            {level}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="h-14 w-14 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
-                      <User className="h-6 w-6" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">No BD contact on file yet.</p>
-                  </div>
-                )}
-
-                <div className="mt-4 space-y-2 hidden lg:block">
-                  {repEmail && (
-                    <Button asChild className="w-full hover:opacity-90" style={{ backgroundColor: brand, borderColor: brand }}>
-                      <a href={`mailto:${repEmail}`}>
-                        <Mail className="h-4 w-4" /> Email
-                      </a>
-                    </Button>
-                  )}
-                  {repPhone && cleanPhone && (
-                    <Button asChild variant="outline" className="w-full">
-                      <a href={`sms:${cleanPhone}`}>
-                        <MessageCircle className="h-4 w-4" /> Text
-                      </a>
-                    </Button>
-                  )}
-                  {repPhone && cleanPhone && (
-                    <Button asChild variant="outline" className="w-full">
-                      <a href={`tel:${cleanPhone}`}>
-                        <Phone className="h-4 w-4" /> Call
-                        {formatPhoneDisplay(repPhone) ? ` (${formatPhoneDisplay(repPhone)})` : ""}
-                      </a>
-                    </Button>
                   )}
                 </div>
-              </div>
-            </section>
-          </div>
-        </div>
+              )}
 
-        {/* Service Area — full width below */}
-        {(address || cityStateZip) && (
-          <CardShell title="Service Area">
-            <div className="grid md:grid-cols-[180px_1fr] gap-4 lg:gap-6">
-              <a
-                href={directionsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative h-[140px] w-full rounded-xl overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0"
-              >
-                <iframe
-                  title={`Map for ${facility.name}`}
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(address || cityStateZip)}&z=11&output=embed`}
-                  className="absolute inset-0 w-full h-full border-0 pointer-events-none scale-[1.02]"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-transparent group-hover:bg-black/5 transition-colors" />
-              </a>
-              <div className="min-w-0">
-                {cityStateZip && (
-                  <p className="text-sm text-foreground/80 leading-relaxed mb-3 break-words">
-                    Located in {cityStateZip}.
-                    {facility.address_line1 ? ` ${facility.address_line1}.` : ""}
-                  </p>
+              {hasProgramDetails && (
+                <div className="px-4 sm:px-6 py-4 sm:py-5">
+                  <SectionHeading title="Program Details" headerExtra={aboutHeaderExtra} />
+
+                  {(facility.tagline || facility.description) && (
+                    <div className="mb-4">
+                      {facility.tagline && facility.tagline !== summaryText && (
+                        <p className="text-sm sm:text-[15px] text-foreground/90 font-medium leading-snug mb-2 break-words">
+                          {facility.tagline}
+                        </p>
+                      )}
+                      {facility.description && facility.description !== summaryText && (
+                        <ExpandableText text={facility.description} brand={brand} />
+                      )}
+                    </div>
+                  )}
+
+                  {programFeatures.length > 0 && (
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mb-4">
+                      {programFeatures.map((item) => (
+                        <li key={item} className="flex items-start gap-2 min-w-0">
+                          <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
+                          <span className="text-xs sm:text-sm text-foreground/85 leading-snug break-words">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {facility.population_served?.length > 0 && (
+                    <div className={programFeatures.length > 0 ? "pt-4 border-t border-border/50" : ""}>
+                      <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground mb-2.5">
+                        What We Treat
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {facility.population_served.map((item) => (
+                          <span
+                            key={item}
+                            className="px-2 py-0.5 rounded-md border border-border bg-background text-foreground text-xs font-medium break-words"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {hasServiceArea && (
+                <div className="px-4 sm:px-6 py-4 sm:py-5">
+                  <SectionHeading title="Service Area" />
+                  <div className="grid md:grid-cols-[160px_1fr] gap-4">
+                    <a
+                      href={directionsHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative h-[120px] md:h-full md:min-h-[120px] w-full rounded-lg overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0"
+                    >
+                      <iframe
+                        title={`Map for ${facility.name}`}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(address || cityStateZip)}&z=11&output=embed`}
+                        className="absolute inset-0 w-full h-full border-0 pointer-events-none scale-[1.02]"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-transparent group-hover:bg-black/5 transition-colors" />
+                    </a>
+                    <div className="min-w-0">
+                      {cityStateZip && (
+                        <p className="text-sm text-foreground/80 leading-relaxed mb-2.5 break-words">
+                          Located in {cityStateZip}.
+                          {facility.address_line1 ? ` ${facility.address_line1}.` : ""}
+                        </p>
+                      )}
+                      {nearbyCitiesLoading ? (
+                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <li key={i} className="flex items-center gap-2 min-w-0">
+                              <div className="h-3 w-3 rounded-full bg-muted animate-pulse shrink-0" />
+                              <div className="h-3 flex-1 rounded bg-muted animate-pulse" />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : nearbyCities.length > 0 ? (
+                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
+                          {nearbyCities.map((nearbyCity) => (
+                            <li key={nearbyCity} className="flex items-center gap-1.5 text-sm min-w-0">
+                              <Check className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
+                              <span className="break-words">{nearbyCity}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-muted-foreground break-words">
+                          Serving communities throughout {facility.state ?? "the surrounding area"}.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <aside className="border-t lg:border-t-0 lg:border-l border-border/50 bg-muted/15 px-4 sm:px-5 py-4 sm:py-5 lg:sticky lg:top-20 lg:self-start">
+              <p className="text-[11px] uppercase tracking-wider font-bold mb-3" style={{ color: brand }}>
+                For Referrals
+              </p>
+
+              {repName ? (
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="h-11 w-11 rounded-full grid place-items-center shrink-0 font-heading font-bold text-sm border"
+                    style={{ backgroundColor: `${brand}14`, color: brand, borderColor: `${brand}30` }}
+                  >
+                    {getInitials(repName)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm break-words">{repName}</p>
+                    <p className="text-xs text-muted-foreground">BD Representative</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No BD contact on file yet.</p>
+                </div>
+              )}
+
+              <div className="mt-3 space-y-2 hidden lg:block">
+                {repEmail && (
+                  <Button asChild className="w-full h-9 text-sm hover:opacity-90" style={{ backgroundColor: brand, borderColor: brand }}>
+                    <a href={`mailto:${repEmail}`}>
+                      <Mail className="h-4 w-4" /> Email
+                    </a>
+                  </Button>
                 )}
-                {nearbyCitiesLoading ? (
-                  <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <li key={i} className="flex items-center gap-2 min-w-0">
-                        <div className="h-3.5 w-3.5 rounded-full bg-muted animate-pulse shrink-0" />
-                        <div className="h-3.5 flex-1 rounded bg-muted animate-pulse" />
-                      </li>
-                    ))}
-                  </ul>
-                ) : nearbyCities.length > 0 ? (
-                  <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
-                    {nearbyCities.map((nearbyCity) => (
-                      <li key={nearbyCity} className="flex items-center gap-2 text-sm min-w-0">
-                        <Check className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
-                        <span className="break-words">{nearbyCity}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground break-words">
-                    Serving communities throughout {facility.state ?? "the surrounding area"}.
-                  </p>
+                {repPhone && cleanPhone && (
+                  <Button asChild variant="outline" className="w-full h-9 text-sm">
+                    <a href={`sms:${cleanPhone}`}>
+                      <MessageCircle className="h-4 w-4" /> Text
+                    </a>
+                  </Button>
+                )}
+                {repPhone && cleanPhone && (
+                  <Button asChild variant="outline" className="w-full h-9 text-sm">
+                    <a href={`tel:${cleanPhone}`}>
+                      <Phone className="h-4 w-4" /> Call
+                      {formatPhoneDisplay(repPhone) ? ` (${formatPhoneDisplay(repPhone)})` : ""}
+                    </a>
+                  </Button>
                 )}
               </div>
-            </div>
-          </CardShell>
-        )}
-      </div>
+            </aside>
+          </div>
+        </section>
+      )}
 
       {hasContact && (
         <MobileContactBar

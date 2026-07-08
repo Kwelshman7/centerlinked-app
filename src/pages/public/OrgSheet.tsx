@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { OrgAppHeader } from "@/components/public/OrgAppHeader";
-import { OrganizationSheetView, OrgSheetData, OrgTab } from "@/components/public/OrganizationSheetView";
+import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
 import { HeroContact } from "@/components/public/OrgHeroContactCard";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
@@ -36,7 +36,6 @@ export default function OrgSheet() {
   const [heroContact, setHeroContact] = useState<HeroContact | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [selectedState, setSelectedState] = useState("all");
-  const [activeTab, setActiveTab] = useState<OrgTab>("overview");
 
   useEffect(() => {
     if (!slug) return;
@@ -153,11 +152,7 @@ export default function OrgSheet() {
 
   return (
     <div id="top" className="min-h-screen bg-muted/30">
-      <OrgAppHeader
-        org={org}
-        brand={brand}
-        onResourcesClick={() => setActiveTab("resources")}
-      />
+      <OrgAppHeader org={org} brand={brand} />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <OrganizationSheetView
@@ -169,8 +164,6 @@ export default function OrgSheet() {
           facilityStates={facilityStates}
           selectedState={selectedState}
           onStateChange={setSelectedState}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
         />
       </main>
     </div>

@@ -114,9 +114,9 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug, onExp
         </div>
       )}
 
-      <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
-        <div>
-          <h3 className="font-heading font-bold text-base sm:text-[17px] leading-snug break-words">
+      <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1 min-h-0">
+        <div className="min-h-[3.25rem]">
+          <h3 className="font-heading font-bold text-base sm:text-[17px] leading-snug break-words line-clamp-2">
             {programHref ? (
               <Link to={programHref} className="hover:text-primary transition-colors">
                 {f.name}
@@ -134,7 +134,7 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug, onExp
           )}
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="min-h-[1.75rem] flex flex-wrap gap-1.5 content-start">
           {f.levels_of_care.slice(0, 4).map((l) => (
             <span
               key={l}
@@ -146,7 +146,7 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug, onExp
         </div>
 
         {hasInNetwork ? (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 min-h-[5rem]">
             <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 inline-flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               In-Network Contracts
@@ -176,16 +176,16 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug, onExp
             )}
           </div>
         ) : (
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700">
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 min-h-[5rem]">
             <span className="h-2 w-2 rounded-full bg-orange-500" />
             Out of network only
           </div>
         )}
 
 
-        {!open && (f.short_description || f.description) && (
-          <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-2">
-            {f.short_description || f.description}
+        {!open && (
+          <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-2 min-h-[2.625rem]">
+            {f.short_description || f.description || "\u00a0"}
           </p>
         )}
 

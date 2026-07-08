@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, Copy, Check, Share2, ArrowUpRight } from "lucide-react";
+import { Building2, Copy, Check, Share2, ArrowUpRight, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { orgDisplayPath, orgPublicPath } from "@/lib/public-urls";
+import { sanitizePhone } from "@/lib/phone";
 
 interface Props {
   orgId: string;
@@ -20,6 +21,9 @@ interface Props {
   orgLinkLabel?: string;
   /** Native share sheet title (defaults to org name). */
   shareTitle?: string;
+  referralEmail?: string | null;
+  referralPhone?: string | null;
+  onReferralFallback?: () => void;
 }
 
 export function OrgFooter({
@@ -34,6 +38,9 @@ export function OrgFooter({
   shareLabel = "Share organization",
   orgLinkLabel,
   shareTitle,
+  referralEmail,
+  referralPhone,
+  onReferralFallback,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const displayUrl =
@@ -78,6 +85,24 @@ export function OrgFooter({
     copy();
   };
 
+  const sendReferral = () => {
+    trackOrgEvent(orgId, "referral_click");
+
+    if (referralEmail) {
+      const subject = encodeURIComponent(`Referral inquiry — ${orgName}`);
+      window.location.href = `mailto:${referralEmail}?subject=${subject}`;
+      return;
+    }
+
+    const tel = sanitizePhone(referralPhone);
+    if (tel) {
+      window.location.href = `tel:${tel}`;
+      return;
+    }
+
+    onReferralFallback?.();
+  };
+
   const bgStyle: React.CSSProperties = {
     backgroundImage: `linear-gradient(135deg, ${brand} 0%, ${brand}e6 55%, #0f1f3d 100%)`,
   };
@@ -99,9 +124,7 @@ export function OrgFooter({
       />
 
       <div className="relative px-5 sm:px-8 py-6 sm:py-7">
-        {/* Top: Brand + share */}
-        <div className="grid lg:grid-cols-[1fr_1fr] gap-6 lg:gap-10 items-center">
-          {/* Brand block */}
+        <div className="grid lg:grid-cols-[1fr_auto] gap-6 lg:gap-10 items-center">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg bg-white shadow-md ring-1 ring-black/5 overflow-hidden grid place-items-center p-1 shrink-0">
               {logoUrl ? (
@@ -126,10 +149,30 @@ export function OrgFooter({
             </div>
           </div>
 
-          {/* Share block */}
-          <div className="flex flex-col gap-2 sm:items-end">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-white/70">{shareLabel}</p>
-            <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg p-1 backdrop-blur-sm w-full sm:max-w-md">
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto">
+            <Button
+              size="lg"
+              onClick={share}
+              className="h-11 bg-white text-foreground hover:bg-white/90 font-semibold flex-1 sm:flex-none sm:min-w-[160px]"
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </Button>
+            <Button
+              size="lg"
+              onClick={sendReferral}
+              variant="outline"
+              className="h-11 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white font-semibold flex-1 sm:flex-none sm:min-w-[180px]"
+            >
+              <Send className="h-4 w-4" />
+              Send a Referral
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-2 sm:items-start">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-white/70">{shareLabel}</p>
+          <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg p-1 backdrop-blur-sm w-full sm:max-w-md">
             <span className="flex-1 min-w-0 px-2.5 text-xs sm:text-sm truncate text-white/95 font-medium">
               {displayUrl}
             </span>
@@ -148,30 +191,19 @@ export function OrgFooter({
                 </>
               )}
             </Button>
-            <Button
-              size="sm"
-              onClick={share}
-              variant="ghost"
-              className="h-8 w-8 p-0 text-white hover:bg-white/15 shrink-0"
-              aria-label="Share"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-            </div>
-            {orgLinkLabel && slug && (
-              <Link
-                to={orgPublicPath(slug)}
-                className="text-[11px] font-semibold text-white/85 hover:text-white hover:underline"
-              >
-                {orgLinkLabel} →
-              </Link>
-            )}
           </div>
+          {orgLinkLabel && slug && (
+            <Link
+              to={orgPublicPath(slug)}
+              className="text-[11px] font-semibold text-white/85 hover:text-white hover:underline"
+            >
+              {orgLinkLabel} →
+            </Link>
+          )}
         </div>
 
         <div className="h-px bg-white/15 my-5" />
 
-        {/* Bottom: verified line */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <p className="text-[11px] text-white/65">
             © {year} {orgName}

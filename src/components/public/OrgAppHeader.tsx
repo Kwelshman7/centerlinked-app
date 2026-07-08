@@ -10,7 +10,6 @@ interface Props {
     logo_url: string | null;
   };
   brand: string;
-  onResourcesClick?: () => void;
 }
 
 function initials(name: string) {
@@ -27,7 +26,7 @@ const NAV_LINKS = [
   { label: "Network", to: "/app/organizations" },
 ] as const;
 
-export function OrgAppHeader({ org, brand, onResourcesClick }: Props) {
+export function OrgAppHeader({ org, brand }: Props) {
   const { user, profile } = useAuth();
   const orgHref = org.slug ? orgPublicPath(org.slug) : "#top";
 
@@ -62,13 +61,6 @@ export function OrgAppHeader({ org, brand, onResourcesClick }: Props) {
                   {label}
                 </Link>
               ))}
-              <button
-                type="button"
-                onClick={onResourcesClick}
-                className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md transition-colors"
-              >
-                Resources
-              </button>
             </nav>
           ) : null}
 
@@ -117,13 +109,6 @@ export function OrgAppHeader({ org, brand, onResourcesClick }: Props) {
                 {label}
               </Link>
             ))}
-            <button
-              type="button"
-              onClick={onResourcesClick}
-              className="shrink-0 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground rounded-full border border-border/60 bg-background transition-colors whitespace-nowrap"
-            >
-              Resources
-            </button>
           </nav>
         ) : null}
       </div>
