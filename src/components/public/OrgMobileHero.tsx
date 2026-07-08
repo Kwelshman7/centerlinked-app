@@ -1,12 +1,17 @@
-import { useMemo, useState } from "react";
-import { Building2, MapPin, BadgeCheck, Share2, Phone, Mail, Check } from "lucide-react";
+import { useState } from "react";
+import { MapPin, BadgeCheck, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GetInTouchSheet } from "@/components/public/GetInTouchSheet";
+import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
+import { OrgClaimCard } from "@/components/public/OrgClaimCard";
+import { OrgFacilityRail } from "@/components/public/OrgFacilityRail";
+import { OrgStateFilter } from "@/components/public/OrgStateFilter";
+import { OrgFooter } from "@/components/public/OrgFooter";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
+import { ContractRow } from "@/lib/derive-insurance";
 import { toast } from "sonner";
 import { shareOrCopyUrl } from "@/lib/share";
-import { sanitizePhone } from "@/lib/phone";
 
 interface Props {
   org: {
@@ -25,19 +30,37 @@ interface Props {
     bd_contact_email: string | null;
   };
   facilities: ShowcaseFacility[];
+  filteredFacilities: ShowcaseFacility[];
+  contracts: ContractRow[];
   brand: string;
+  heroContacts: HeroContact[];
+  facilityStates: string[];
+  selectedState: string;
+  onStateChange: (state: string) => void;
 }
 
-export function OrgMobileHero({ org, facilities, brand }: Props) {
+export function OrgMobileHero({
+  org,
+  facilities,
+  filteredFacilities,
+  contracts,
+  brand,
+  heroContacts,
+  facilityStates,
+  selectedState,
+  onStateChange,
+}: Props) {
   const [copied, setCopied] = useState(false);
   const loc = [org.hq_city, org.hq_state].filter(Boolean).join(", ");
-  const tel = sanitizePhone(org.bd_contact_phone);
+  const heroTitle = org.tagline || org.name;
 
-  const levelsOfCare = useMemo(() => {
-    const set = new Set<string>();
-    facilities.forEach((f) => (f.levels_of_care ?? []).forEach((l) => l && set.add(l)));
-    return Array.from(set);
-  }, [facilities]);
+  const heroBg = org.cover_image_url
+    ? {
+        backgroundImage: `linear-gradient(105deg, rgba(15,23,42,0.88) 0%, rgba(15,23,42,0.55) 100%), url(${org.cover_image_url})`,
+        backgroundSize: "cover" as const,
+        backgroundPosition: "center" as const,
+      }
+    : { background: `linear-gradient(135deg, ${brand}, ${brand}aa)` };
 
   const handleShare = async () => {
     if (!org.slug) return;
@@ -56,157 +79,117 @@ export function OrgMobileHero({ org, facilities, brand }: Props) {
   };
 
   return (
-    <div className="sm:hidden -mx-4 -mt-5">
-      {/* Cover image */}
-      <div className="relative w-full aspect-[4/3] bg-muted overflow-hidden">
-        {org.cover_image_url ? (
-          <img
-            src={org.cover_image_url}
-            alt={`${org.name} cover`}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full"
-            style={{ background: `linear-gradient(135deg, ${brand}, ${brand}aa)` }}
-          />
-        )}
-      </div>
+    <div className="sm:hidden">
+      <main className="px-4 py-4 space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))]">
+        {/* Compact hero + contact */}
+        <section className="rounded-xl border border-border/60 shadow-sm overflow-hidden bg-card">
+          {/* Hero image + title */}
+          <div className="relative min-h-[160px] flex flex-col justify-end">
+            <div className="absolute inset-0" style={heroBg} />
+            <div className="relative z-[1] p-4">
+              {org.verified && (
+                <span className="inline-flex items-center gap-0.5 bg-white/15 backdrop-blur text-white border border-white/30 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full mb-2">
+                  <BadgeCheck className="h-2.5 w-2.5" /> Verified
+                </span>
+              )}
+              <h1
+                className="font-heading text-xl font-bold tracking-tight leading-tight text-white"
+                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}
+              >
+                {heroTitle}
+              </h1>
+              {loc && (
+                <p className="mt-1.5 text-xs text-white/85 inline-flex items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  {loc}
+                </p>
+              )}
+            </div>
+          </div>
 
-      {/* Body */}
-      <div className="relative bg-card px-4 pt-2 pb-5 rounded-t-2xl -mt-4">
-        {/* Overlapping logo */}
-        <div className="-mt-12 mb-3">
-          <div className="h-20 w-20 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 grid place-items-center p-2">
-            {org.logo_url ? (
-              <img
-                src={org.logo_url}
-                alt={`${org.name} logo`}
-                className="w-full h-full object-contain"
+          {/* Contact card */}
+          <div className="p-4 bg-muted/20 border-t border-border/50 flex justify-center">
+            {heroContacts.length > 0 ? (
+              <OrgHeroContactCard
+                contacts={heroContacts}
+                organizationId={org.id}
+                brand={brand}
               />
             ) : (
-              <Building2 className="h-9 w-9 text-muted-foreground" />
+              <OrgClaimCard organizationId={org.id} organizationName={org.name} />
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Name + verified */}
-        <div className="flex items-start gap-2 flex-wrap">
-          <h1 className="font-heading text-2xl font-bold tracking-tight leading-tight">
-            {org.name}
-          </h1>
-          {org.verified && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold px-2 py-0.5 mt-1.5">
-              <BadgeCheck className="h-3 w-3" /> Verified
-            </span>
-          )}
-        </div>
-
-        {/* Location · facility count */}
-        {(loc || facilities.length > 0) && (
-          <p className="mt-1.5 text-sm text-muted-foreground inline-flex items-center gap-1.5">
-            {loc && <MapPin className="h-3.5 w-3.5" />}
-            <span>
-              {loc}
-              {loc && facilities.length > 0 ? " · " : ""}
-              {facilities.length > 0 && `${facilities.length} ${facilities.length === 1 ? "facility" : "facilities"}`}
-            </span>
-          </p>
-        )}
-
-        {/* Tagline */}
-        {org.tagline && (
-          <p className="mt-2 text-sm text-foreground/85 leading-snug">{org.tagline}</p>
-        )}
-
-        {/* Action buttons */}
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        {/* Share + about */}
+        <div className="flex items-center gap-2">
           <Button
             onClick={handleShare}
-            className="h-11 text-sm font-semibold rounded-full text-white hover:opacity-90"
-            style={{ backgroundColor: brand }}
+            variant="outline"
+            size="sm"
+            className="h-9 text-xs font-semibold rounded-full"
           >
-            {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-            <span className="ml-1.5">Share</span>
+            {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+            <span className="ml-1.5">{copied ? "Copied" : "Share"}</span>
           </Button>
-          {tel ? (
-            <Button
-              asChild
-              variant="secondary"
-              className="h-11 text-sm font-semibold rounded-full"
-            >
-              <a
-                href={`tel:${tel}`}
-                onClick={() => trackOrgEvent(org.id, "contact_call")}
-              >
-                <Phone className="h-4 w-4" />
-                <span className="ml-1.5">Call</span>
-              </a>
-            </Button>
-          ) : (
-            <Button variant="secondary" disabled className="h-11 text-sm font-semibold rounded-full">
-              <Phone className="h-4 w-4" />
-              <span className="ml-1.5">Call</span>
-            </Button>
-          )}
-          {org.bd_contact_email ? (
-            <Button
-              asChild
-              variant="secondary"
-              className="h-11 text-sm font-semibold rounded-full"
-            >
-              <a
-                href={`mailto:${org.bd_contact_email}`}
-                onClick={() => trackOrgEvent(org.id, "contact_email")}
-              >
-                <Mail className="h-4 w-4" />
-                <span className="ml-1.5">Email</span>
-              </a>
-            </Button>
-          ) : (
+          {!heroContacts.length && !org.bd_contact_email && (
             <GetInTouchSheet
               orgName={org.name}
               contactName={org.bd_contact_name}
               phone={org.bd_contact_phone}
               email={org.bd_contact_email}
               organizationId={org.id}
-              triggerLabel="Email"
-              triggerClassName="h-11 text-sm font-semibold rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              triggerLabel="Contact"
+              triggerClassName="h-9 text-xs font-semibold rounded-full"
             />
           )}
         </div>
 
-        {/* About */}
         {org.description && (
-          <div className="mt-6">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-foreground/70 mb-2">
-              About
-            </h2>
-            <p className="text-sm text-foreground/85 leading-relaxed">{org.description}</p>
-          </div>
+          <p className="text-sm text-foreground/80 leading-relaxed">{org.description}</p>
         )}
 
-        {/* Levels of Care */}
-        {levelsOfCare.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-foreground/70 mb-2">
-              Levels of Care
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {levelsOfCare.map((l) => (
-                <span
-                  key={l}
-                  className="inline-flex items-center text-sm font-semibold px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: `${brand}14`, color: brand }}
-                >
-                  {l}
-                </span>
-              ))}
+        <OrgStateFilter
+          states={facilityStates}
+          selected={selectedState}
+          onSelect={onStateChange}
+          brand={brand}
+        />
+
+        <section id="facilities" className="space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-heading text-lg font-bold tracking-tight">Our Facilities</h2>
+            {filteredFacilities.length > 0 && (
+              <span className="text-xs text-muted-foreground shrink-0">
+                {filteredFacilities.length}{" "}
+                {filteredFacilities.length === 1 ? "location" : "locations"}
+              </span>
+            )}
+          </div>
+          {filteredFacilities.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-card p-6 text-center text-sm text-muted-foreground">
+              {facilities.length === 0
+                ? "No facilities published yet."
+                : "No facilities in this state."}
             </div>
-          </div>
-        )}
+          ) : (
+            <OrgFacilityRail
+              facilities={filteredFacilities}
+              contracts={contracts}
+              orgSlug={org.slug}
+            />
+          )}
+        </section>
 
-      </div>
+        <OrgFooter
+          orgId={org.id}
+          orgName={org.name}
+          slug={org.slug}
+          logoUrl={org.logo_url}
+          tagline={org.tagline}
+          brand={brand}
+        />
+      </main>
     </div>
   );
 }
