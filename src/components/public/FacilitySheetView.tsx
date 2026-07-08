@@ -31,6 +31,11 @@ import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { useNearbyCities } from "@/hooks/useNearbyCities";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 
+/** Fixed hero gallery dimensions — identical for every facility/org. */
+const HERO_IMAGE_HEIGHT = "h-[280px]";
+const HERO_THUMB_SIZE = "h-14 w-14";
+const HERO_THUMB_STRIP = "h-[68px]";
+
 export interface FacilitySheetData {
   id: string;
   name: string;
@@ -148,7 +153,7 @@ function CardShell({
   bodyClassName?: string;
 }) {
   return (
-    <section className={`rounded-2xl border border-border/60 bg-card shadow-sm ${className}`}>
+    <section className={`rounded-2xl border border-border/60 bg-card shadow-sm h-fit self-start w-full ${className}`}>
       <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-b border-border/60">
         <h2 className="font-heading text-base font-bold">{title}</h2>
         {headerExtra}
@@ -266,8 +271,8 @@ export function FacilitySheetView({
     <div className={`space-y-5 min-w-0 ${hasContact ? mobileContactBarPadding(tabBarOffset) : ""}`}>
       {/* Hero */}
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-        <div className="grid lg:grid-cols-2">
-          <div className="p-5 sm:p-8 flex flex-col gap-4 min-w-0">
+        <div className="grid lg:grid-cols-2 lg:items-start">
+          <div className="p-5 sm:p-8 flex flex-col gap-4 min-w-0 self-start">
             {mode === "public" && org?.slug && (
               <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
                 <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline">
@@ -335,9 +340,9 @@ export function FacilitySheetView({
 
       {/* Detail sections */}
       <div className="space-y-5">
-        <div className="grid gap-5 lg:grid-cols-12 lg:items-start">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-5">
           {/* Left column */}
-          <div className="space-y-5 lg:col-span-4 min-w-0">
+          <div className="space-y-5 lg:w-[34%] lg:shrink-0 min-w-0">
             <CardShell title="In-Network Contracts" headerExtra={contractsHeaderExtra}>
               {inNetworkPayers.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
@@ -361,8 +366,8 @@ export function FacilitySheetView({
             </CardShell>
 
             {facility.levels_of_care?.length > 0 && (
-              <CardShell title="Levels of Care">
-                <ul className="space-y-3">
+              <CardShell title="Levels of Care" bodyClassName="py-4 sm:py-5">
+                <ul className="space-y-2.5">
                   {facility.levels_of_care.map((level) => {
                     const Icon = levelIcon(level);
                     return (
@@ -385,7 +390,7 @@ export function FacilitySheetView({
           </div>
 
           {/* Middle column — program details only */}
-          <div className="lg:col-span-5 min-w-0">
+          <div className="lg:flex-1 min-w-0 self-start">
             {(facility.description ||
               facility.tagline ||
               programFeatures.length > 0 ||
@@ -407,7 +412,7 @@ export function FacilitySheetView({
 
                 {(programFeatures.length > 0 || facility.population_served?.length > 0) && (
                   <div
-                    className={`grid gap-5 ${programFeatures.length > 0 && facility.population_served?.length > 0 ? "md:grid-cols-2" : ""}`}
+                    className={`grid gap-5 md:items-start ${programFeatures.length > 0 && facility.population_served?.length > 0 ? "md:grid-cols-2" : ""}`}
                   >
                     {programFeatures.length > 0 && (
                       <ul className="grid grid-cols-2 gap-x-3 gap-y-3">
@@ -443,9 +448,9 @@ export function FacilitySheetView({
             )}
           </div>
 
-          {/* Right column — sticky contact card, no stretch */}
-          <div className="lg:col-span-3 min-w-0 lg:sticky lg:top-20 self-start">
-            <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+          {/* Right column — sticky contact card */}
+          <div className="lg:w-[280px] xl:w-[300px] lg:shrink-0 min-w-0 self-start lg:sticky lg:top-20">
+            <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden h-fit self-start w-full">
               <div className="px-5 sm:px-6 py-4 border-b border-border/60" style={{ backgroundColor: `${brand}14` }}>
                 <p className="text-[11px] uppercase tracking-wider font-bold" style={{ color: brand }}>
                   For Referrals
@@ -506,12 +511,12 @@ export function FacilitySheetView({
         {/* Service Area — full width below */}
         {(address || cityStateZip) && (
           <CardShell title="Service Area">
-            <div className="grid md:grid-cols-[minmax(140px,200px)_1fr] gap-4 lg:gap-6">
+            <div className="grid md:grid-cols-[180px_1fr] gap-4 lg:gap-6">
               <a
                 href={directionsHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative aspect-[4/3] md:aspect-auto md:h-[140px] lg:h-[160px] rounded-xl overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0"
+                className="relative h-[140px] w-full rounded-xl overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0"
               >
                 <iframe
                   title={`Map for ${facility.name}`}
@@ -627,7 +632,7 @@ function HeroGallery({
   }, [activeIndex, displayImages.length]);
 
   return (
-    <div className="relative bg-muted min-h-[280px] lg:min-h-full border-t lg:border-t-0 lg:border-l border-border/60">
+    <div className="relative bg-muted shrink-0 self-start w-full border-t lg:border-t-0 lg:border-l border-border/60">
       {canEdit && (
         <Button
           type="button"
@@ -645,32 +650,32 @@ function HeroGallery({
           <button
             type="button"
             onClick={() => setLightboxOpen(true)}
-            className="block w-full h-[220px] sm:h-[260px] lg:h-[calc(100%-72px)] lg:min-h-[320px] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className={`block w-full ${HERO_IMAGE_HEIGHT} overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
             style={{ ["--tw-ring-color" as string]: brand }}
           >
             <img
               src={currentImage}
               alt={facilityName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
               loading="eager"
             />
           </button>
 
           {displayImages.length > 1 && (
-            <div className="flex gap-1.5 p-3 bg-card border-t border-border/60">
+            <div className={`flex items-center gap-2 px-3 ${HERO_THUMB_STRIP} bg-card border-t border-border/60 overflow-x-auto`}>
               {thumbs.map((src, i) => (
                 <button
                   key={src + i}
                   type="button"
                   onClick={() => setActiveIndex(i)}
-                  className={`relative flex-1 min-w-0 aspect-[4/3] rounded-md overflow-hidden transition-all ${
+                  className={`relative ${HERO_THUMB_SIZE} shrink-0 rounded-md overflow-hidden transition-all ${
                     activeIndex === i ? "ring-2 ring-offset-1" : "ring-1 ring-border/60 opacity-80 hover:opacity-100"
                   }`}
                   style={activeIndex === i ? { boxShadow: `0 0 0 2px ${brand}` } : undefined}
                 >
-                  <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  <img src={src} alt="" className="w-full h-full object-cover object-center" loading="lazy" />
                   {i === 4 && extraCount > 0 && (
-                    <span className="absolute inset-0 bg-black/55 text-white text-xs font-bold grid place-items-center">
+                    <span className="absolute inset-0 bg-black/55 text-white text-[10px] font-bold grid place-items-center">
                       +{extraCount}
                     </span>
                   )}
@@ -681,7 +686,7 @@ function HeroGallery({
         </>
       ) : (
         <div
-          className="flex flex-col items-center justify-center h-full min-h-[280px] p-8 text-center"
+          className={`flex flex-col items-center justify-center ${HERO_IMAGE_HEIGHT} p-8 text-center`}
           style={{
             background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 50%, #0f172a 100%)`,
           }}
