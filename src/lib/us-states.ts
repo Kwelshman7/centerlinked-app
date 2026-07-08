@@ -17,3 +17,33 @@ export const US_STATES = [
   { code: "VT", name: "Vermont" }, { code: "VA", name: "Virginia" }, { code: "WA", name: "Washington" },
   { code: "WV", name: "West Virginia" }, { code: "WI", name: "Wisconsin" }, { code: "WY", name: "Wyoming" },
 ];
+
+/** Normalize any state value (code or full name) to a 2-letter code. */
+export function resolveStateCode(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const upper = trimmed.toUpperCase();
+
+  const byCode = US_STATES.find((s) => s.code === upper);
+  if (byCode) return byCode.code;
+
+  const byName = US_STATES.find((s) => s.name.toUpperCase() === upper);
+  if (byName) return byName.code;
+
+  return upper;
+}
+
+/** Human-readable state name for display (title case). */
+export function stateDisplayName(codeOrRaw: string): string {
+  const code = resolveStateCode(codeOrRaw);
+  if (!code) return codeOrRaw;
+
+  const match = US_STATES.find((s) => s.code === code);
+  if (match) return match.name;
+
+  return codeOrRaw
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}

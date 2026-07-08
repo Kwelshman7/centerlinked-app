@@ -13,6 +13,7 @@ import { OrgMobileHero } from "@/components/public/OrgMobileHero";
 import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
 import { ContractRow } from "@/lib/derive-insurance";
 import { trackOrgEvent } from "@/lib/track-org-event";
+import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 
 interface Org {
   id: string;
@@ -44,10 +45,10 @@ function isHex(v: string | null | undefined): v is string {
 function uniqueFacilityStates(facilities: ShowcaseFacility[]) {
   const states = new Set<string>();
   for (const f of facilities) {
-    const s = f.state?.trim().toUpperCase();
-    if (s) states.add(s);
+    const code = resolveStateCode(f.state);
+    if (code) states.add(code);
   }
-  return Array.from(states).sort();
+  return Array.from(states).sort((a, b) => stateDisplayName(a).localeCompare(stateDisplayName(b)));
 }
 
 export default function OrgSheet() {
@@ -135,7 +136,7 @@ export default function OrgSheet() {
 
   const filteredFacilities = useMemo(() => {
     if (selectedState === "all") return facilities;
-    return facilities.filter((f) => f.state?.trim().toUpperCase() === selectedState);
+    return facilities.filter((f) => resolveStateCode(f.state) === selectedState);
   }, [facilities, selectedState]);
 
   if (notFound) {
@@ -218,22 +219,13 @@ export default function OrgSheet() {
 
       {/* Desktop layout */}
       <main className="hidden sm:block max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6 lg:space-y-8 pb-12">
-        {/* Hero: contact card + image side by side */}
+        {/* Hero: image + contact card side by side */}
         <section
           id="about"
-          className="grid md:grid-cols-[minmax(280px,320px)_1fr] rounded-2xl border border-border/60 shadow-sm overflow-hidden bg-card"
+          className="grid md:grid-cols-[1fr_minmax(280px,320px)] rounded-2xl border border-border/60 shadow-sm overflow-hidden bg-card"
         >
-          {/* Contact card — left column */}
-          <div className="flex items-start justify-center p-5 lg:p-6 bg-muted/20 border-b md:border-b-0 md:border-r border-border/50">
-            {limitedHeroContacts.length > 0 ? (
-              <OrgHeroContactCard contacts={limitedHeroContacts} organizationId={org.id} brand={brand} />
-            ) : (
-              <OrgClaimCard organizationId={org.id} organizationName={org.name} />
-            )}
-          </div>
-
-          {/* Hero image + heading — right column */}
-          <div className="relative min-h-[240px] lg:min-h-[300px] flex flex-col justify-end">
+          {/* Hero image + heading — left column */}
+          <div className="relative min-h-[240px] lg:min-h-[300px] flex flex-col justify-end border-b md:border-b-0 md:border-r border-border/50">
             <div className="absolute inset-0" style={heroBg} />
             {org.logo_url && (
               <div
@@ -301,6 +293,15 @@ export default function OrgSheet() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Contact card — right column */}
+          <div className="flex items-start justify-center p-5 lg:p-6 bg-muted/20">
+            {limitedHeroContacts.length > 0 ? (
+              <OrgHeroContactCard contacts={limitedHeroContacts} organizationId={org.id} brand={brand} />
+            ) : (
+              <OrgClaimCard organizationId={org.id} organizationName={org.name} />
+            )}
           </div>
         </section>
 

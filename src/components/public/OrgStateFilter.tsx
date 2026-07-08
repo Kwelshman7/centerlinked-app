@@ -1,4 +1,4 @@
-import { US_STATES } from "@/lib/us-states";
+import { stateDisplayName } from "@/lib/us-states";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -6,10 +6,6 @@ interface Props {
   selected: string;
   onSelect: (state: string) => void;
   brand: string;
-}
-
-function stateLabel(code: string) {
-  return US_STATES.find((s) => s.code === code)?.name ?? code;
 }
 
 export function OrgStateFilter({ states, selected, onSelect, brand }: Props) {
@@ -26,7 +22,7 @@ export function OrgStateFilter({ states, selected, onSelect, brand }: Props) {
       >
         {tabs.map((value) => {
           const active = selected === value;
-          const label = value === "all" ? "All Locations" : stateLabel(value);
+          const label = value === "all" ? "All Locations" : stateDisplayName(value);
           return (
             <button
               key={value}
@@ -35,7 +31,7 @@ export function OrgStateFilter({ states, selected, onSelect, brand }: Props) {
               aria-selected={active}
               onClick={() => onSelect(value)}
               className={cn(
-                "inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                "inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-medium tracking-normal transition-colors",
                 "border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                 active
                   ? "text-white border-transparent shadow-sm"
