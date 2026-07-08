@@ -10,8 +10,8 @@ const productLinks = [
 ];
 
 const legalLinks = [
-  { label: "Privacy Policy", href: "#" },
-  { label: "Terms of Service", href: "#" },
+  { label: "Privacy Policy", href: "/privacy", isRoute: true },
+  { label: "Terms of Service", href: "/terms", isRoute: true },
   { label: "Acceptable Use", href: "#" },
   { label: "Cookie Policy", href: "#" },
   { label: "Privacy Rights", href: "#" },
@@ -60,9 +60,15 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               {legalLinks.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-                    {link.label}
-                  </a>
+                  {"isRoute" in link && link.isRoute ? (
+                    <Link to={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

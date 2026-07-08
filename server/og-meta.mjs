@@ -3,6 +3,8 @@ const RESERVED_SLUGS = new Set([
   "signup",
   "auth",
   "request-access",
+  "privacy",
+  "terms",
   "create-organization",
   "app",
   "p",
@@ -32,6 +34,8 @@ export function isPublicSharePath(pathname) {
     path.startsWith("/signup") ||
     path.startsWith("/auth") ||
     path.startsWith("/request-access") ||
+    path.startsWith("/privacy") ||
+    path.startsWith("/terms") ||
     path.startsWith("/create-organization") ||
     path.startsWith("/assets")
   ) {

@@ -108,6 +108,12 @@ export default function Login() {
             Don't have an account?{" "}
             <Link to="/signup" className="text-primary font-medium hover:underline">Sign up</Link>
           </p>
+
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            By signing in, you agree to our{" "}
+            <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link> and{" "}
+            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+          </p>
         </div>
       </div>
     </main>

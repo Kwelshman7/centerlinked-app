@@ -35,6 +35,8 @@ import VerifyContracts from "./pages/app/VerifyContracts";
 import ProgramSheet from "./pages/public/ProgramSheet";
 import OrgSheet from "./pages/public/OrgSheet";
 import AuthCallback from "./pages/AuthCallback";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const App = () => (
     <TooltipProvider>
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/request-access" element={<RequestAccess />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/o/:orgSlug/p/:programSlug" element={<ProgramSheet />} />
             <Route path="/p/:slug" element={<ProgramSheet />} />
             <Route path="/o/:slug" element={<OrgSheet />} />
