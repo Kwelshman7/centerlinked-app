@@ -211,7 +211,6 @@ export default function ProgramSheet() {
           onPhotosUpdated={loadAll}
           brandColor={brand}
           coverImageUrl={org?.cover_image_url ?? null}
-          orgLogoUrl={org?.logo_url ?? null}
           aboutHeaderExtra={
             canEdit ? (
               <EditFacilityDialog

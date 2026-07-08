@@ -189,7 +189,6 @@ export default function FacilityDetail() {
         canEditPhotos={isMine || isSuperAdmin}
         onPhotosUpdated={loadFacility}
         coverImageUrl={org?.cover_image_url ?? null}
-        orgLogoUrl={org?.logo_url ?? null}
         contractsHeaderExtra={
           <div className="flex items-center gap-2 flex-wrap">
             <VerificationBadge
