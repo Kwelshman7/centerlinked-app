@@ -268,7 +268,7 @@ export function FacilitySheetView({
   const tabBarOffset = mode === "internal" ? 64 : 0;
 
   return (
-    <div className={`space-y-5 min-w-0 ${hasContact ? mobileContactBarPadding(tabBarOffset) : ""}`}>
+    <div className={`space-y-6 lg:space-y-8 min-w-0 ${hasContact ? mobileContactBarPadding(tabBarOffset) : ""}`}>
       {/* Hero */}
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
         <div className="grid lg:grid-cols-2 lg:items-start">
@@ -339,10 +339,10 @@ export function FacilitySheetView({
       </section>
 
       {/* Detail sections */}
-      <div className="space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-5">
+      <div className="space-y-6 lg:space-y-8">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-8">
           {/* Left column */}
-          <div className="space-y-5 lg:w-[34%] lg:shrink-0 min-w-0">
+          <div className="space-y-6 lg:w-[34%] lg:shrink-0 min-w-0">
             <CardShell title="In-Network Contracts" headerExtra={contractsHeaderExtra}>
               {inNetworkPayers.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
@@ -367,19 +367,19 @@ export function FacilitySheetView({
 
             {facility.levels_of_care?.length > 0 && (
               <CardShell title="Levels of Care" bodyClassName="py-4 sm:py-5">
-                <ul className="space-y-2.5">
+                <ul className="grid grid-cols-2 gap-x-3 gap-y-3">
                   {facility.levels_of_care.map((level) => {
                     const Icon = levelIcon(level);
                     return (
-                      <li key={level} className="flex items-start gap-3 min-w-0">
+                      <li key={level} className="flex items-start gap-2 min-w-0">
                         <div
-                          className="h-9 w-9 rounded-lg grid place-items-center shrink-0"
+                          className="h-8 w-8 rounded-lg grid place-items-center shrink-0"
                           style={{ backgroundColor: `${brand}14`, color: brand }}
                         >
-                          <Icon className="h-4 w-4" />
+                          <Icon className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0 pt-0.5">
-                          <p className="text-sm font-semibold break-words">{level}</p>
+                          <p className="text-xs sm:text-sm font-semibold break-words leading-snug">{level}</p>
                         </div>
                       </li>
                     );
@@ -398,7 +398,7 @@ export function FacilitySheetView({
               aboutHeaderExtra) && (
               <CardShell title="Program Details" headerExtra={aboutHeaderExtra}>
                 {(facility.tagline || facility.description) && (
-                  <div className="mb-5">
+                  <div className="mb-6">
                     {facility.tagline && facility.tagline !== summaryText && (
                       <p className="text-base text-foreground/90 font-medium leading-snug mb-2 break-words">
                         {facility.tagline}
@@ -411,11 +411,9 @@ export function FacilitySheetView({
                 )}
 
                 {(programFeatures.length > 0 || facility.population_served?.length > 0) && (
-                  <div
-                    className={`grid gap-5 md:items-start ${programFeatures.length > 0 && facility.population_served?.length > 0 ? "md:grid-cols-2" : ""}`}
-                  >
+                  <div className="space-y-6">
                     {programFeatures.length > 0 && (
-                      <ul className="grid grid-cols-2 gap-x-3 gap-y-3">
+                      <ul className="grid grid-cols-2 gap-x-4 gap-y-3">
                         {programFeatures.map((item) => (
                           <li key={item} className="flex items-start gap-2 min-w-0">
                             <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
@@ -426,11 +424,11 @@ export function FacilitySheetView({
                     )}
 
                     {facility.population_served?.length > 0 && (
-                      <div className={programFeatures.length > 0 ? "md:border-l md:border-border/60 md:pl-5" : ""}>
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground mb-2">
+                      <div className={programFeatures.length > 0 ? "pt-6 border-t border-border/60" : ""}>
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground mb-3">
                           What We Treat
                         </p>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-2">
                           {facility.population_served.map((item) => (
                             <span
                               key={item}
