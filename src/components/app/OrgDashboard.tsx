@@ -12,8 +12,6 @@ import {
   Phone,
   MessageSquare,
   Mail,
-  Eye,
-  Send,
   ExternalLink,
   Plus,
 } from "lucide-react";
@@ -47,18 +45,20 @@ interface Props {
   welcomeName?: string;
 }
 
+const FACILITIES_PAGE_SIZE = 5;
+
 export function OrgDashboard({ organizationId, adminMode = false, welcomeName = "there" }: Props) {
   const [org, setOrg] = useState<OrgRow | null>(null);
   const [facilities, setFacilities] = useState<FacilityRow[]>([]);
   const [facilityCount, setFacilityCount] = useState(0);
+  const [facilityPage, setFacilityPage] = useState(1);
+  const [facilitiesLoading, setFacilitiesLoading] = useState(false);
   const [memberCount, setMemberCount] = useState(0);
   const [engagement, setEngagement] = useState<{
     page_views: number;
-    share_clicks: number;
     call_clicks: number;
     text_clicks: number;
     email_clicks: number;
-    referral_clicks: number;
   } | null>(null);
 
   const firstName = useMemo(
@@ -67,23 +67,24 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
   );
 
   useEffect(() => {
+    setFacilityPage(1);
+  }, [organizationId]);
+
+  useEffect(() => {
     if (!organizationId) return;
     (async () => {
-      const [{ data: o }, { data: f, count: fCount }, { count: mCount }] = await Promise.all([
+      const [{ data: o }, { count: fCount }, { count: mCount }] = await Promise.all([
         supabase.from("organizations").select("id,name,slug,logo_url").eq("id", organizationId).maybeSingle(),
         supabase
           .from("facilities")
-          .select("id,name,city,state,image_urls,updated_at", { count: "exact" })
-          .eq("organization_id", organizationId)
-          .order("updated_at", { ascending: false })
-          .limit(4),
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", organizationId),
         supabase
           .from("organization_members")
           .select("user_id", { count: "exact", head: true })
           .eq("organization_id", organizationId),
       ]);
       setOrg(o as OrgRow | null);
-      setFacilities((f as FacilityRow[]) ?? []);
       setFacilityCount(fCount ?? 0);
       setMemberCount(mCount ?? 0);
 
@@ -94,24 +95,42 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
       if (row) {
         setEngagement({
           page_views: Number(row.page_views ?? 0),
-          share_clicks: Number(row.share_clicks ?? 0),
           call_clicks: Number(row.call_clicks ?? 0),
           text_clicks: Number(row.text_clicks ?? 0),
           email_clicks: Number(row.email_clicks ?? 0),
-          referral_clicks: Number((row as { referral_clicks?: number }).referral_clicks ?? 0),
         });
       } else {
         setEngagement({
           page_views: 0,
-          share_clicks: 0,
           call_clicks: 0,
           text_clicks: 0,
           email_clicks: 0,
-          referral_clicks: 0,
         });
       }
     })();
   }, [organizationId]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    (async () => {
+      setFacilitiesLoading(true);
+      const from = (facilityPage - 1) * FACILITIES_PAGE_SIZE;
+      const to = from + FACILITIES_PAGE_SIZE - 1;
+      const { data: f } = await supabase
+        .from("facilities")
+        .select("id,name,city,state,image_urls,updated_at")
+        .eq("organization_id", organizationId)
+        .order("updated_at", { ascending: false })
+        .range(from, to);
+      setFacilities((f as FacilityRow[]) ?? []);
+      setFacilitiesLoading(false);
+    })();
+  }, [organizationId, facilityPage]);
+
+  const totalFacilityPages = Math.max(1, Math.ceil(facilityCount / FACILITIES_PAGE_SIZE));
+  const showFacilityPagination = facilityCount > FACILITIES_PAGE_SIZE;
+  const facilityRangeStart = facilityCount === 0 ? 0 : (facilityPage - 1) * FACILITIES_PAGE_SIZE + 1;
+  const facilityRangeEnd = Math.min(facilityPage * FACILITIES_PAGE_SIZE, facilityCount);
 
   const publicUrl =
     org?.slug && typeof window !== "undefined"
@@ -248,43 +267,36 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
         ))}
 
         <Card className="p-4 sm:p-5 hover:shadow-md hover:border-primary/30 transition-all">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-sm font-medium text-muted-foreground">Network Activity</p>
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Contact engagement</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                When partners tap call, text, or email on your public profile
+              </p>
+            </div>
             <span className="h-8 w-8 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
               <BarChart3 className="h-4 w-4" />
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-3 flex-wrap">
-            <span className="font-heading text-3xl font-bold tracking-tight inline-flex items-center gap-1.5">
-              <Eye className="h-5 w-5 text-muted-foreground" />
-              {engagement?.page_views ?? 0}
-            </span>
-            <span className="text-xs text-muted-foreground">views</span>
-            <span className="font-heading text-xl font-bold tracking-tight inline-flex items-center gap-1.5 ml-1">
-              <Share2 className="h-4 w-4 text-muted-foreground" />
-              {engagement?.share_clicks ?? 0}
-            </span>
-            <span className="text-xs text-muted-foreground">shares</span>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Calls", value: engagement?.call_clicks ?? 0, icon: Phone },
+              { label: "Texts", value: engagement?.text_clicks ?? 0, icon: MessageSquare },
+              { label: "Emails", value: engagement?.email_clicks ?? 0, icon: Mail },
+            ].map((metric) => (
+              <div
+                key={metric.label}
+                className="rounded-lg border border-border/60 bg-muted/30 px-3 py-3 text-center"
+              >
+                <metric.icon className="h-4 w-4 text-primary mx-auto mb-2" />
+                <p className="font-heading text-2xl font-bold tracking-tight leading-none">{metric.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1.5">{metric.label}</p>
+              </div>
+            ))}
           </div>
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1 text-xs font-semibold bg-primary/10 text-primary px-2 py-1 rounded">
-              <Send className="h-3.5 w-3.5" />
-              {engagement?.referral_clicks ?? 0} referrals
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold bg-muted px-2 py-1 rounded">
-              <Phone className="h-3.5 w-3.5 text-primary" />
-              {engagement?.call_clicks ?? 0}
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold bg-muted px-2 py-1 rounded">
-              <MessageSquare className="h-3.5 w-3.5 text-primary" />
-              {engagement?.text_clicks ?? 0}
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold bg-muted px-2 py-1 rounded">
-              <Mail className="h-3.5 w-3.5 text-primary" />
-              {engagement?.email_clicks ?? 0}
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-2">From public shareable links · all time</p>
+          <p className="text-[11px] text-muted-foreground mt-4 pt-3 border-t border-border/60">
+            {engagement?.page_views ?? 0} profile views · all time
+          </p>
         </Card>
       </div>
 
@@ -299,45 +311,79 @@ export function OrgDashboard({ organizationId, adminMode = false, welcomeName = 
             </Button>
           </div>
 
-          {facilities.length === 0 ? (
+          {facilitiesLoading && facilities.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">Loading facilities…</div>
+          ) : facilities.length === 0 ? (
             <div className="text-center py-8">
               <Building2 className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
               <p className="font-medium">No facilities yet</p>
               <p className="text-sm text-muted-foreground mt-1">Add programs so BD reps can share them.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-border/60">
-              {facilities.map((f) => (
-                <li key={f.id}>
-                  <Link
-                    to={facilityDetailHref(f.id)}
-                    className="flex items-center gap-3 sm:gap-4 py-3 group hover:bg-muted/40 -mx-2 px-2 rounded-md transition-colors"
-                  >
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted shrink-0">
-                      {f.image_urls?.[0] ? (
-                        <img src={f.image_urls[0]} alt={f.name} loading="lazy" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full grid place-items-center">
-                          <Building2 className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold truncate group-hover:text-primary transition-colors">{f.name}</p>
-                      {(f.city || f.state) && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {[f.city, f.state].filter(Boolean).join(", ")}
-                        </p>
-                      )}
-                    </div>
-                    <div className="hidden sm:block text-xs text-muted-foreground shrink-0">
-                      {formatUpdatedAt(f.updated_at)}
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="divide-y divide-border/60">
+                {facilities.map((f) => (
+                  <li key={f.id}>
+                    <Link
+                      to={facilityDetailHref(f.id)}
+                      className="flex items-center gap-3 sm:gap-4 py-3 group hover:bg-muted/40 -mx-2 px-2 rounded-md transition-colors"
+                    >
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted shrink-0">
+                        {f.image_urls?.[0] ? (
+                          <img src={f.image_urls[0]} alt={f.name} loading="lazy" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full grid place-items-center">
+                            <Building2 className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold truncate group-hover:text-primary transition-colors">{f.name}</p>
+                        {(f.city || f.state) && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {[f.city, f.state].filter(Boolean).join(", ")}
+                          </p>
+                        )}
+                      </div>
+                      <div className="hidden sm:block text-xs text-muted-foreground shrink-0">
+                        {formatUpdatedAt(f.updated_at)}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {showFacilityPagination && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 mt-1 border-t border-border/60">
+                  <p className="text-xs text-muted-foreground">
+                    Showing {facilityRangeStart}–{facilityRangeEnd} of {facilityCount} facilities
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={facilityPage <= 1 || facilitiesLoading}
+                      onClick={() => setFacilityPage((page) => Math.max(1, page - 1))}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-xs text-muted-foreground tabular-nums px-1">
+                      Page {facilityPage} of {totalFacilityPages}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={facilityPage >= totalFacilityPages || facilitiesLoading}
+                      onClick={() => setFacilityPage((page) => Math.min(totalFacilityPages, page + 1))}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </Card>
 

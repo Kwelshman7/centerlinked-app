@@ -32,9 +32,6 @@ export function GetInTouchSheet({ orgName, contactName, phone, email, triggerLab
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (next && organizationId) {
-      trackOrgEvent(organizationId, "referral_click");
-    }
   };
 
   return (
@@ -79,10 +76,20 @@ export function GetInTouchSheet({ orgName, contactName, phone, email, triggerLab
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <Button asChild variant="outline" size="sm">
-                    <a href={`tel:${tel}`}><Phone className="h-4 w-4" /> Call</a>
+                    <a
+                      href={`tel:${tel}`}
+                      onClick={() => organizationId && trackOrgEvent(organizationId, "contact_call")}
+                    >
+                      <Phone className="h-4 w-4" /> Call
+                    </a>
                   </Button>
                   <Button asChild variant="outline" size="sm">
-                    <a href={`sms:${tel}`}><MessageSquare className="h-4 w-4" /> Text</a>
+                    <a
+                      href={`sms:${tel}`}
+                      onClick={() => organizationId && trackOrgEvent(organizationId, "contact_text")}
+                    >
+                      <MessageSquare className="h-4 w-4" /> Text
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -98,7 +105,12 @@ export function GetInTouchSheet({ orgName, contactName, phone, email, triggerLab
                   </Button>
                 </div>
                 <Button asChild variant="outline" size="sm" className="w-full mt-3">
-                  <a href={`mailto:${email}`}><Mail className="h-4 w-4" /> Send Email</a>
+                  <a
+                    href={`mailto:${email}`}
+                    onClick={() => organizationId && trackOrgEvent(organizationId, "contact_email")}
+                  >
+                    <Mail className="h-4 w-4" /> Send Email
+                  </a>
                 </Button>
               </div>
             )}

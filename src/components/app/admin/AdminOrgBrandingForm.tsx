@@ -157,7 +157,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
 
         <div className="space-y-2">
           <Label>Logo</Label>
-          <ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" />
+          <ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB." />
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -269,7 +269,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
           </div>
           <div className="space-y-2">
             <Label>Cover image</Label>
-            <ImageUploader bucket="org-logos" value={coverImage} onChange={setCoverImage} max={1} label="Upload cover" />
+            <ImageUploader bucket="org-logos" value={coverImage} onChange={setCoverImage} max={1} label="Upload cover" recommendedSize="Recommended: 1920×1080 px (16:9) banner. JPG or PNG, max 5 MB." />
           </div>
           <div className="space-y-2">
             <Label htmlFor="ann">Announcement banner</Label>

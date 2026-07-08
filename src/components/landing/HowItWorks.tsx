@@ -1,4 +1,7 @@
-import { Building2, MapPin, Phone, Users, ShieldCheck, ClipboardList, Handshake, Mic, RefreshCw, MessageSquare, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Building2, MapPin, Phone, Users, ShieldCheck, ClipboardList, Handshake, Mic, RefreshCw, MessageSquare } from "lucide-react";
+import { PhoneFrame } from "./PhoneFrame";
+import { FacilityEditPreviewContent } from "./FacilityEditPreview";
+import { PartnerProfilePreviewContent } from "./PartnerProfilePreview";
 
 const features = [
   {
@@ -40,60 +43,32 @@ const moments = [
   { icon: MessageSquare, title: "After a partner asks", description: "A clean, professional answer — not a search through old files." },
 ];
 
-function UpdateOnceDemo() {
+function AppWorkflowPreview() {
   return (
-    <div className="mt-12 sm:mt-14 max-w-4xl mx-auto">
-      <p className="text-center font-heading text-xl sm:text-2xl font-bold text-foreground mb-8">
-        Update once. Reflected everywhere.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 items-stretch">
-        <div className="rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-bold text-foreground">Profile editor</p>
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-2 py-0.5 rounded-full">Editing</span>
+    <div className="mt-12 sm:mt-14 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
+        <div className="flex flex-col items-center">
+          <PhoneFrame className="w-[260px] sm:w-[280px]">
+            <FacilityEditPreviewContent />
+          </PhoneFrame>
+          <div className="mt-5 text-center max-w-xs px-2">
+            <p className="text-sm font-semibold text-foreground">Your team edits in the app</p>
+            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+              Update payers, contacts, levels of care, and referral steps from your facility dashboard — the same screens you use day to day.
+            </p>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
-              <span className="text-sm font-medium text-foreground">Cigna PPO</span>
-              <span className="text-xs font-bold text-primary">Now in network</span>
-            </div>
-            {["Aetna PPO", "BCBS"].map((p) => (
-              <div key={p} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-                <span className="text-sm text-foreground">{p}</span>
-                <span className="text-xs text-muted-foreground">In network</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-            Save once. Every link your team has ever shared updates instantly.
-          </p>
         </div>
 
-        <div className="hidden md:flex items-center justify-center text-primary">
-          <ArrowRight className="h-6 w-6" />
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-bold text-foreground">Shared profile</p>
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-success bg-success/10 px-2 py-0.5 rounded-full">Live</span>
+        <div className="flex flex-col items-center">
+          <PhoneFrame className="w-[260px] sm:w-[280px]">
+            <PartnerProfilePreviewContent />
+          </PhoneFrame>
+          <div className="mt-5 text-center max-w-xs px-2">
+            <p className="text-sm font-semibold text-foreground">Partners open your live profile</p>
+            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+              Every shared link shows what you just saved — verified insurance, program details, and referral contacts in one view.
+            </p>
           </div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">In-network payers</p>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2.5">
-              <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-              <span className="text-sm text-foreground">Cigna PPO — <span className="font-semibold text-success">Now in network</span></span>
-            </div>
-            {["Aetna PPO", "BCBS"].map((p) => (
-              <div key={p} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2.5">
-                <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                <span className="text-sm text-foreground">{p}</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Last updated</span> — Just now · visible to every referral partner
-          </p>
         </div>
       </div>
     </div>
@@ -109,15 +84,15 @@ export function HowItWorks() {
             What's in your profile
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            One link.{" "}
-            <span className="text-primary">Your whole story.</span>
+            One link your partners can{" "}
+            <span className="text-primary">actually use.</span>
           </h2>
           <p className="mt-5 sm:mt-6 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Your CenterLinked profile has everything a referral partner needs — in one place, always current. Your BD reps share it everywhere. When something changes, you update it once. Every link your team has ever shared updates automatically.
+            Your CenterLinked profile has everything a referral partner needs — levels of care, insurance, contacts, and how to send a client. Update it once; every link your team has shared stays current.
           </p>
         </div>
 
-        <UpdateOnceDemo />
+        <AppWorkflowPreview />
 
         <div className="mt-12 sm:mt-14 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, idx) => (

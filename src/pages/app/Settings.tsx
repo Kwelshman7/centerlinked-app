@@ -231,7 +231,7 @@ export default function Settings() {
         <Card className="p-6">
           <h2 className="font-heading text-lg font-semibold mb-4">Organization</h2>
           <form onSubmit={saveOrg} className="space-y-4">
-            <div className="space-y-2"><Label>Logo</Label><ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" /></div>
+            <div className="space-y-2"><Label>Logo</Label><ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB." /></div>
             <div className="space-y-2"><Label htmlFor="on">Name</Label><Input id="on" value={orgName} onChange={(e) => setOrgName(e.target.value)} /></div>
             <div className="space-y-2"><Label htmlFor="od">Description</Label><Textarea id="od" rows={3} value={orgDesc} onChange={(e) => setOrgDesc(e.target.value)} /></div>
             <div className="grid sm:grid-cols-3 gap-4">
@@ -280,7 +280,7 @@ export default function Settings() {
               <div className="space-y-2">
                 <Label>Cover image (optional)</Label>
                 <p className="text-xs text-muted-foreground">If set, replaces the gradient header.</p>
-                <ImageUploader bucket="org-logos" value={coverImage} onChange={setCoverImage} max={1} label="Upload cover" />
+                <ImageUploader bucket="org-logos" value={coverImage} onChange={setCoverImage} max={1} label="Upload cover" recommendedSize="Recommended: 1920×1080 px (16:9) banner. JPG or PNG, max 5 MB." />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ann">Announcement banner (optional)</Label>

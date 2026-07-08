@@ -10,9 +10,20 @@ interface ImageUploaderProps {
   onChange: (urls: string[]) => void;
   max?: number;
   label?: string;
+  /** Override the default recommended dimensions hint for this bucket. */
+  recommendedSize?: string;
   /** When true, the first image is treated as the cover/profile image and users can promote any image to cover. */
   allowCover?: boolean;
 }
+
+const BUCKET_RECOMMENDED_SIZES: Record<ImageUploaderProps["bucket"], string> = {
+  "facility-images":
+    "Recommended: 1920×1080 px (16:9) for the cover photo; 1200×900 px or larger for gallery images. JPG or PNG, max 5 MB each.",
+  "org-logos":
+    "Recommended: 800×800 px minimum for logos; 1920×1080 px (16:9) for cover banners. PNG or JPG, max 5 MB.",
+  avatars: "Recommended: 400×400 px square. JPG or PNG, max 5 MB.",
+  "post-images": "Recommended: 1200×900 px or larger. JPG or PNG, max 5 MB each.",
+};
 
 export function ImageUploader({
   bucket,
@@ -20,6 +31,7 @@ export function ImageUploader({
   onChange,
   max = 6,
   label = "Add images",
+  recommendedSize,
   allowCover = bucket === "facility-images",
 }: ImageUploaderProps) {
   const { user } = useAuth();
@@ -65,6 +77,9 @@ export function ImageUploader({
 
   return (
     <div className="space-y-3">
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {recommendedSize ?? BUCKET_RECOMMENDED_SIZES[bucket]}
+      </p>
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
         {value.map((url, idx) => {
           const isCover = allowCover && idx === 0;

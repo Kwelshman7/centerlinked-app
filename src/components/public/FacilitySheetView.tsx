@@ -395,35 +395,37 @@ function FacilityHeroImage({
 }) {
   const list = (images ?? []).filter(Boolean);
   const heroImage = list[0] ?? fallbackImage ?? null;
+  const heroHeights = "h-40 sm:h-48 md:h-52";
   const Overlay = (
-    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent">
+    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(0,0,0,0.45)_100%)] pointer-events-none" />
       {orgLogoUrl && (
-        <div className="absolute top-4 left-4 sm:top-5 sm:left-5 z-10">
-          <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg bg-white/95 shadow-lg ring-1 ring-black/10 overflow-hidden grid place-items-center p-1">
+        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10">
+          <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg bg-white/95 shadow-lg ring-1 ring-black/10 overflow-hidden grid place-items-center p-1">
             <img src={orgLogoUrl} alt="" className="w-full h-full object-contain" />
           </div>
         </div>
       )}
-      <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6 lg:p-8">
+      <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
         <h1
-          className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white leading-tight"
+          className="font-heading text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white leading-tight"
           style={{ textShadow: "0 2px 8px rgba(0,0,0,0.55)" }}
         >
           {name}
         </h1>
         {location && (
           <p
-            className="mt-1.5 text-sm sm:text-base text-white/95 inline-flex items-center gap-1.5"
+            className="mt-1 text-sm text-white/95 inline-flex items-center gap-1.5"
             style={{ textShadow: "0 1px 4px rgba(0,0,0,0.55)" }}
           >
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-4 w-4 shrink-0" />
             {location}
           </p>
         )}
         {breadcrumb}
       </div>
       {share && (
-        <div className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5 lg:bottom-6 lg:right-6 z-10">
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10">
           {share}
         </div>
       )}
@@ -433,7 +435,7 @@ function FacilityHeroImage({
   if (!heroImage) {
     return (
       <div
-        className="relative h-56 sm:h-72 lg:h-[26rem] w-full"
+        className={`relative ${heroHeights} w-full`}
         style={{
           background: brand
             ? `linear-gradient(135deg, ${brand} 0%, ${brand}cc 50%, #0f172a 100%)`
@@ -442,18 +444,18 @@ function FacilityHeroImage({
       >
         {!brand && <div className="absolute inset-0 bg-muted" />}
         <div className="absolute inset-0 grid place-items-center text-white/40">
-          <Building2 className="h-12 w-12" />
+          <Building2 className="h-10 w-10" />
         </div>
         {Overlay}
       </div>
     );
   }
   return (
-    <div className="relative h-56 sm:h-80 lg:h-[26rem] w-full bg-muted overflow-hidden">
+    <div className={`relative ${heroHeights} w-full bg-muted overflow-hidden`}>
       <img
         src={heroImage}
         alt={name}
-        className="w-full h-full object-cover object-center"
+        className="absolute inset-0 w-full h-full object-cover object-center scale-[1.14] brightness-[0.94] saturate-[1.05]"
         loading="eager"
       />
       {Overlay}
