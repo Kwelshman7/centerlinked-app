@@ -35,27 +35,27 @@ export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8"
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border/50 overflow-hidden w-full text-foreground">
+    <div className="rounded-xl border border-border/60 bg-muted/30 overflow-hidden w-full text-foreground">
       <div
-        className="px-4 py-2.5 border-b"
-        style={{ backgroundColor: `${brand}14`, borderColor: `${brand}26` }}
+        className="px-3 py-1.5 border-b"
+        style={{ backgroundColor: `${brand}10`, borderColor: `${brand}20` }}
       >
         <p
-          className="text-[11px] font-bold uppercase tracking-wider text-center"
+          className="text-[10px] font-bold uppercase tracking-wider text-center"
           style={{ color: brand }}
         >
           {heading}
         </p>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-3">
         {contacts.map((c, i) => {
           const tel = sanitizePhone(c.phone);
           return (
-            <div key={i} className="space-y-3">
-              <div className="flex items-center gap-3">
+            <div key={i} className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className="h-11 w-11 rounded-full grid place-items-center text-sm font-bold shrink-0"
+                  className="h-9 w-9 rounded-full grid place-items-center text-xs font-bold shrink-0"
                   style={{ backgroundColor: `${brand}1f`, color: brand }}
                 >
                   {initials(c.name)}
@@ -70,25 +70,25 @@ export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8"
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 <Button
                   asChild={!!tel}
                   variant="outline"
                   disabled={!tel}
-                  className="w-full h-9 text-[13px] font-semibold"
+                  className="h-8 px-1.5 text-[11px] font-semibold bg-background"
                 >
                   {tel ? (
                     <a
                       href={`tel:${tel}`}
                       onClick={() => fire("contact_call")}
-                      className="inline-flex flex-row items-center justify-center gap-2 w-full h-full"
+                      className="inline-flex flex-row items-center justify-center gap-1 w-full h-full"
                     >
-                      <Phone className="h-4 w-4" />
+                      <Phone className="h-3.5 w-3.5" />
                       <span>Call</span>
                     </a>
                   ) : (
-                    <span className="inline-flex flex-row items-center justify-center gap-2">
-                      <Phone className="h-4 w-4" />
+                    <span className="inline-flex flex-row items-center justify-center gap-1">
+                      <Phone className="h-3.5 w-3.5" />
                       <span>Call</span>
                     </span>
                   )}
@@ -98,20 +98,20 @@ export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8"
                   asChild={!!tel}
                   variant="outline"
                   disabled={!tel}
-                  className="w-full h-9 text-[13px] font-semibold"
+                  className="h-8 px-1.5 text-[11px] font-semibold bg-background"
                 >
                   {tel ? (
                     <a
                       href={`sms:${tel}`}
                       onClick={() => fire("contact_text")}
-                      className="inline-flex flex-row items-center justify-center gap-2 w-full h-full"
+                      className="inline-flex flex-row items-center justify-center gap-1 w-full h-full"
                     >
-                      <MessageSquare className="h-4 w-4" />
+                      <MessageSquare className="h-3.5 w-3.5" />
                       <span>Text</span>
                     </a>
                   ) : (
-                    <span className="inline-flex flex-row items-center justify-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
+                    <span className="inline-flex flex-row items-center justify-center gap-1">
+                      <MessageSquare className="h-3.5 w-3.5" />
                       <span>Text</span>
                     </span>
                   )}
@@ -120,29 +120,26 @@ export function OrgHeroContactCard({ contacts, organizationId, brand = "#1A73E8"
                 <Button
                   asChild={!!c.email}
                   disabled={!c.email}
-                  className="w-full h-9 text-[13px] font-semibold hover:opacity-90"
+                  className="h-8 px-1.5 text-[11px] font-semibold hover:opacity-90"
                   style={{ backgroundColor: brand, color: "#fff" }}
                 >
                   {c.email ? (
                     <a
                       href={`mailto:${c.email}`}
                       onClick={() => fire("contact_email")}
-                      className="inline-flex flex-row items-center justify-center gap-2 w-full h-full"
+                      className="inline-flex flex-row items-center justify-center gap-1 w-full h-full"
                     >
-                      <Mail className="h-4 w-4" />
+                      <Mail className="h-3.5 w-3.5" />
                       <span>Email</span>
                     </a>
                   ) : (
-                    <span className="inline-flex flex-row items-center justify-center gap-2">
-                      <Mail className="h-4 w-4" />
+                    <span className="inline-flex flex-row items-center justify-center gap-1">
+                      <Mail className="h-3.5 w-3.5" />
                       <span>Email</span>
                     </span>
                   )}
                 </Button>
               </div>
-
-
-
             </div>
           );
         })}

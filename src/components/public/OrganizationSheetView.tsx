@@ -72,11 +72,11 @@ export function OrganizationSheetView({
     <div className={cn("space-y-6 sm:space-y-8", hasContact ? mobileContactBarPadding() : "")}>
       {/* Logo, description, and BD contact */}
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-        <div className="p-5 sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-            <div className="flex gap-4 sm:gap-5 lg:gap-6 min-w-0 flex-1">
+        <div className="p-4 sm:p-5">
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_240px] lg:items-center lg:gap-6">
+            <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
               <div
-                className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36 xl:h-40 xl:w-40 rounded-xl bg-white border shadow-md overflow-hidden grid place-items-center p-2.5 sm:p-3 shrink-0"
+                className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-xl bg-white border shadow-sm overflow-hidden grid place-items-center p-2 shrink-0"
                 style={{ borderColor: `${brand}35` }}
               >
                 {org.logo_url ? (
@@ -86,13 +86,13 @@ export function OrganizationSheetView({
                     className="w-full h-full object-contain"
                   />
                 ) : (
-                  <Building2 className="h-12 w-12 sm:h-14 sm:w-14 text-muted-foreground" />
+                  <Building2 className="h-7 w-7 text-muted-foreground" />
                 )}
               </div>
 
-              <div className="min-w-0 flex-1 pt-0.5">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <h1 className="font-heading text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight leading-tight break-words">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="font-heading text-lg sm:text-xl lg:text-2xl font-bold tracking-tight leading-tight break-words">
                     {org.name}
                   </h1>
                   {org.verified && (
@@ -107,18 +107,18 @@ export function OrganizationSheetView({
                 </div>
 
                 {briefDescription ? (
-                  <p className="text-sm sm:text-[15px] leading-relaxed text-foreground/80 whitespace-pre-line line-clamp-3">
+                  <p className="mt-1 text-sm leading-snug text-foreground/75 whitespace-pre-line line-clamp-2">
                     {briefDescription}
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Referral profile for {org.name}.
                   </p>
                 )}
               </div>
             </div>
 
-            <div id="org-contact" className="w-full lg:w-[300px] xl:w-[320px] shrink-0">
+            <div id="org-contact" className="w-full min-w-0">
               {heroContact ? (
                 <OrgHeroContactCard
                   contacts={[heroContact]}
