@@ -13,46 +13,40 @@ export function Hero() {
     <section className="relative overflow-hidden bg-hero-gradient py-10 sm:py-14 lg:pt-6 lg:pb-12">
       <div className="container relative z-10">
         <div className="grid gap-8 sm:gap-10 lg:grid-cols-2 lg:gap-12 items-center">
-          <div className="space-y-4 sm:space-y-5">
-            <div className="space-y-3 sm:space-y-4 animate-fade-up">
+          <div className="space-y-5 sm:space-y-6">
+            <div className="space-y-4 animate-fade-up">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
                 <Sparkles className="h-3.5 w-3.5 shrink-0" />
                 Built for behavioral health BD teams
               </div>
               <h1 className="font-heading text-[2rem] font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] leading-[1.05]">
-                Make your organization{" "}
-                <span className="text-primary">easier to refer to.</span>
+                Stop Resending PDFs.{" "}
+                <span className="text-primary">Update One Link.</span>
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
-                CenterLinked gives your organization one live, shareable referral profile with the information partners need to send the right referral with confidence.
+                Give referral partners a live profile — insurance, levels of care, and contacts —
+                that stays current every time you update it.
               </p>
             </div>
 
-            <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
-              <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto">
-                <Link to="/request-access">
-                  Create Your Free Profile
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </Button>
-              <p className="mt-2.5 text-xs text-muted-foreground">
-                Free early access. No credit card required.
+            <div className="animate-fade-up space-y-3" style={{ animationDelay: "100ms" }}>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto">
+                  <Link to="/request-access">
+                    Create Your Free Profile
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </Button>
+                <Button asChild variant="hero-outline" size="xl" className="w-full sm:w-auto">
+                  <a href="#how-it-works">
+                    See How It Works
+                  </a>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Free during early access · No credit card · Approved organizations only
               </p>
             </div>
-
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-xs sm:text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: "150ms" }}>
-              {[
-                "Levels of care and services offered",
-                "Program locations and service areas",
-                "In-network insurance contracts",
-                "The right BD contact for referrals",
-              ].map((t) => (
-                <li key={t} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
           </div>
 
           <div className="animate-slide-in-right relative flex justify-center">

@@ -15,7 +15,7 @@ import { OrgFooter } from "@/components/public/OrgFooter";
 import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
-import { parseBrandColor, programDisplayPath, programPublicPath, programPublicUrl } from "@/lib/public-urls";
+import { parseBrandColor, programPublicPath } from "@/lib/public-urls";
 import { trackOrgEvent } from "@/lib/track-org-event";
 
 interface Facility extends FacilitySheetData {
@@ -73,12 +73,6 @@ export default function ProgramSheet() {
   );
 
   const brand = parseBrandColor(org?.brand_color);
-  const sharePath =
-    facility?.slug && org?.slug
-      ? programPublicPath(facility.slug, org.slug)
-      : facility?.slug
-        ? programPublicPath(facility.slug)
-        : null;
 
   const loadAll = async () => {
     if (!facilitySlug) return;
@@ -178,13 +172,6 @@ export default function ProgramSheet() {
     return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
   }
 
-  const shareUrl =
-    sharePath && typeof window !== "undefined"
-      ? `${window.location.origin}${sharePath}`
-      : sharePath
-        ? programPublicUrl("https://centerlinked.com", facility.slug!, org?.slug)
-        : undefined;
-
   return (
     <div className="min-h-screen bg-muted/30">
       {org ? (
@@ -270,15 +257,22 @@ export default function ProgramSheet() {
           logoUrl={org?.logo_url ?? null}
           tagline={org?.tagline ?? null}
           brand={brand}
-          shareUrl={shareUrl}
-          shareDisplayPath={
-            facility.slug && org?.slug
-              ? programDisplayPath(facility.slug, org.slug)
-              : undefined
-          }
-          shareTitle={`${facility.name} — ${org?.name ?? "Program"}`}
-          shareLabel="Share this program"
           orgLinkLabel="View all programs"
+          contact={
+            facility.bd_contact_name || org?.bd_contact_name
+              ? {
+                  name:
+                    facility.bd_contact_name ||
+                    org?.bd_contact_name ||
+                    "Business Development",
+                  title: facility.bd_contact_name
+                    ? "Facility BD Representative"
+                    : "Director of Business Development",
+                  phone: facility.bd_contact_phone || org?.bd_contact_phone,
+                  email: facility.bd_contact_email || org?.bd_contact_email,
+                }
+              : null
+          }
         />
       </main>
     </div>

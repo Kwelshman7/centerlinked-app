@@ -228,7 +228,12 @@ export default function AdminOrgWorkspace() {
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-6">
-          <OrgDashboard organizationId={org.id} adminMode welcomeName={org.name} />
+          <OrgDashboard
+            organizationId={org.id}
+            adminMode
+            welcomeName={org.name}
+            onFacilitiesChanged={load}
+          />
         </TabsContent>
 
         <TabsContent value="links" className="mt-6">

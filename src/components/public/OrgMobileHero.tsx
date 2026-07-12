@@ -181,6 +181,16 @@ export function OrgMobileHero({
           logoUrl={org.logo_url}
           tagline={org.tagline}
           brand={brand}
+          contact={
+            primaryContact && (primaryContact.name || primaryContact.phone || primaryContact.email)
+              ? {
+                  name: primaryContact.name || "Business Development",
+                  title: "Business Development",
+                  phone: primaryContact.phone,
+                  email: primaryContact.email,
+                }
+              : null
+          }
         />
       </main>
 

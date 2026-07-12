@@ -3,6 +3,8 @@ export const LEVELS_OF_CARE = [
   "Residential",
   "PHP",
   "IOP",
+  "Mental Health Residential",
+  "Mental Health PHP/IOP",
   "Outpatient",
   "Sober Living",
   "MAT",

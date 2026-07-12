@@ -17,7 +17,6 @@ import {
 import {
   Building2,
   Search,
-  MapPin,
   X,
   SlidersHorizontal,
   Star,
@@ -26,8 +25,6 @@ import {
   Phone,
   Mail,
   MessageSquare,
-  Layers,
-  ShieldCheck,
 } from "lucide-react";
 import { US_STATES, stateDisplayName, resolveStateCode } from "@/lib/us-states";
 import { sanitizePhone } from "@/lib/phone";
@@ -54,7 +51,6 @@ interface OrgAggregate {
   count: number;
   states: Set<string>;
   levels: Set<string>;
-  payers: Map<string, number>;
 }
 
 const ANY = "__any__";
@@ -69,10 +65,8 @@ function formatStateLabel(raw: string) {
 function OrgNetworkCard({
   org: o,
   inNet,
-  facCount,
   stateList,
   levelList,
-  topPayers,
   tel,
   email,
   href,
@@ -81,10 +75,8 @@ function OrgNetworkCard({
 }: {
   org: OrgRow;
   inNet: boolean;
-  facCount: number;
   stateList: string[];
   levelList: string[];
-  topPayers: string[];
   tel: string | null;
   email: string | null;
   href: string;
@@ -93,7 +85,7 @@ function OrgNetworkCard({
 }) {
   return (
     <article
-      className={`group relative flex flex-col rounded-2xl border bg-card overflow-hidden hover:shadow-lg transition-all h-full ${
+      className={`group relative flex flex-col rounded-xl border bg-card overflow-hidden hover:shadow-md transition-all h-full ${
         inNet ? "border-primary/60 shadow-sm" : "border-border hover:border-primary/40"
       }`}
     >
@@ -105,144 +97,140 @@ function OrgNetworkCard({
         }}
         aria-label={inNet ? "Remove from network" : "Add to network"}
         title={inNet ? "Remove from network" : "Add to network"}
-        className={`absolute top-3 right-3 z-10 h-9 w-9 grid place-items-center rounded-full bg-card/90 backdrop-blur-sm border border-border/60 shadow-sm transition-colors ${
+        className={`absolute top-2 right-2 z-10 h-8 w-8 grid place-items-center rounded-full bg-card/95 backdrop-blur-sm border border-border/60 shadow-sm transition-colors ${
           inNet ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-accent"
         }`}
       >
-        <Star className={`h-4 w-4 ${inNet ? "fill-current" : ""}`} />
+        <Star className={`h-3.5 w-3.5 ${inNet ? "fill-current" : ""}`} />
       </button>
 
       <Link to={href} className="block">
-        <div className="relative aspect-[4/3] bg-muted/40 border-b border-border/60 flex items-center justify-center p-6 sm:p-8">
+        <div className="relative aspect-[5/3] bg-muted/30 border-b border-border/60 flex items-center justify-center p-3 sm:p-4">
           {o.logo_url ? (
             <img
               src={o.logo_url}
               alt={`${o.name} logo`}
               loading="lazy"
-              className="max-h-full max-w-full object-contain"
+              className="h-full w-full object-contain"
             />
           ) : (
-            <Building2 className="h-14 w-14 text-muted-foreground/70" />
+            <Building2 className="h-10 w-10 text-muted-foreground/60" />
           )}
         </div>
       </Link>
 
-      <div className="flex flex-col flex-1 p-4 sm:p-5">
+      <div className="flex flex-col flex-1 p-3 sm:p-3.5 gap-2.5 min-h-0">
         <Link to={href} className="min-w-0 group/link">
-          <h3 className="font-heading font-bold text-base sm:text-lg leading-snug break-words group-hover/link:text-primary transition-colors pr-8">
+          <h3 className="font-heading font-bold text-sm leading-snug line-clamp-2 group-hover/link:text-primary transition-colors pr-7">
             {o.name}
           </h3>
         </Link>
 
-        <div className="mt-2 space-y-3 text-sm flex-1">
-          {(o.hq_city || o.hq_state || facCount > 0) && (
-            <div className="space-y-1.5">
-              {(o.hq_city || o.hq_state) && (
-                <p className="inline-flex items-start gap-1.5 text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                  <span className="break-words">
-                    {[o.hq_city, o.hq_state ? formatStateLabel(o.hq_state) : null].filter(Boolean).join(", ")}
-                  </span>
-                </p>
-              )}
-              <p className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <Building2 className="h-3.5 w-3.5 shrink-0" />
-                {facCount} {facCount === 1 ? "facility" : "facilities"}
-              </p>
-            </div>
-          )}
-
-          {stateList.length > 0 && (
-            <div>
-              <div className="flex flex-wrap gap-1.5">
-                {stateList.map((s) => (
-                  <span
-                    key={s}
-                    className="text-[11px] font-semibold bg-muted text-foreground/80 px-2 py-0.5 rounded-md border border-border/60"
-                  >
-                    {formatStateLabel(s)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {levelList.length > 0 && (
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
-                <Layers className="h-3 w-3" /> Levels of care
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {levelList.map((l) => (
-                  <span key={l} className="text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                    {l}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {topPayers.length > 0 && (
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
-                <ShieldCheck className="h-3 w-3 text-success" /> In-network
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {topPayers.map((p) => (
-                  <span
-                    key={p}
-                    className="text-[11px] font-medium bg-success/10 text-success border border-success/20 px-2 py-0.5 rounded-full break-words"
-                  >
-                    {p}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="border-t border-border/60 bg-muted/30 px-4 sm:px-5 py-3 mt-auto">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">BD Rep</p>
-            <p className="text-sm font-semibold truncate">
-              {o.bd_contact_name || <span className="text-muted-foreground font-normal">Not listed</span>}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {tel ? (
-              <Button asChild size="icon" variant="outline" className="h-8 w-8" aria-label={`Call ${o.bd_contact_name ?? o.name}`}>
-                <a href={`tel:${tel}`}><Phone className="h-3.5 w-3.5" /></a>
-              </Button>
-            ) : (
-              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No phone"><Phone className="h-3.5 w-3.5" /></Button>
-            )}
-            {tel ? (
-              <Button asChild size="icon" variant="outline" className="h-8 w-8" aria-label={`Text ${o.bd_contact_name ?? o.name}`}>
-                <a href={`sms:${tel}`}><MessageSquare className="h-3.5 w-3.5" /></a>
-              </Button>
-            ) : (
-              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No SMS"><MessageSquare className="h-3.5 w-3.5" /></Button>
-            )}
-            {email ? (
-              <Button asChild size="icon" variant="outline" className="h-8 w-8" aria-label={`Email ${o.bd_contact_name ?? o.name}`}>
-                <a href={`mailto:${email}`}><Mail className="h-3.5 w-3.5" /></a>
-              </Button>
-            ) : (
-              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No email"><Mail className="h-3.5 w-3.5" /></Button>
-            )}
-            {inNet && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={onRemove}
-                aria-label="Remove from network"
+        {stateList.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {stateList.map((s) => (
+              <span
+                key={s}
+                className="text-[10px] font-semibold bg-muted text-foreground/80 px-1.5 py-0.5 rounded border border-border/60"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+                {formatStateLabel(s)}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {levelList.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {levelList.slice(0, 6).map((l) => (
+              <span
+                key={l}
+                className="text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded"
+              >
+                {l}
+              </span>
+            ))}
+            {levelList.length > 6 && (
+              <span className="text-[10px] font-semibold text-muted-foreground px-0.5 py-0.5">
+                +{levelList.length - 6}
+              </span>
             )}
+          </div>
+        )}
+
+        <div className="mt-auto border-t border-border/60 pt-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground">BD Rep</p>
+              <p className="text-xs font-semibold truncate">
+                {o.bd_contact_name || (
+                  <span className="text-muted-foreground font-normal">Not listed</span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {tel ? (
+                <Button
+                  asChild
+                  size="icon"
+                  variant="outline"
+                  className="h-7 w-7"
+                  aria-label={`Call ${o.bd_contact_name ?? o.name}`}
+                >
+                  <a href={`tel:${tel}`}>
+                    <Phone className="h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              ) : (
+                <Button size="icon" variant="outline" disabled className="h-7 w-7 opacity-40" aria-label="No phone">
+                  <Phone className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {tel ? (
+                <Button
+                  asChild
+                  size="icon"
+                  variant="outline"
+                  className="h-7 w-7"
+                  aria-label={`Text ${o.bd_contact_name ?? o.name}`}
+                >
+                  <a href={`sms:${tel}`}>
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              ) : (
+                <Button size="icon" variant="outline" disabled className="h-7 w-7 opacity-40" aria-label="No SMS">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {email ? (
+                <Button
+                  asChild
+                  size="icon"
+                  variant="outline"
+                  className="h-7 w-7"
+                  aria-label={`Email ${o.bd_contact_name ?? o.name}`}
+                >
+                  <a href={`mailto:${email}`}>
+                    <Mail className="h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              ) : (
+                <Button size="icon" variant="outline" disabled className="h-7 w-7 opacity-40" aria-label="No email">
+                  <Mail className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {inNet && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={onRemove}
+                  aria-label="Remove from network"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -268,41 +256,33 @@ export default function Organizations() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
 
-  // Load facility + insurance aggregates once
+  // Load facility aggregates once
   useEffect(() => {
     (async () => {
       const { data: facs } = await supabase
         .from("facilities")
         .select("id,organization_id,state,levels_of_care")
         .eq("verification_status", "approved");
-      const facList = (facs as Array<{ id: string; organization_id: string; state: string | null; levels_of_care: string[] | null }>) ?? [];
-      const facToOrg = new Map<string, string>();
+      const facList =
+        (facs as Array<{
+          id: string;
+          organization_id: string;
+          state: string | null;
+          levels_of_care: string[] | null;
+        }>) ?? [];
       const map = new Map<string, OrgAggregate>();
       facList.forEach((f) => {
         if (!f.organization_id) return;
-        facToOrg.set(f.id, f.organization_id);
-        const entry = map.get(f.organization_id) ?? { count: 0, states: new Set<string>(), levels: new Set<string>(), payers: new Map<string, number>() };
+        const entry = map.get(f.organization_id) ?? {
+          count: 0,
+          states: new Set<string>(),
+          levels: new Set<string>(),
+        };
         entry.count += 1;
         if (f.state) entry.states.add(f.state);
         (f.levels_of_care ?? []).forEach((l) => l && entry.levels.add(l));
         map.set(f.organization_id, entry);
       });
-
-      const facIds = Array.from(facToOrg.keys());
-      if (facIds.length) {
-        const { data: contracts } = await supabase
-          .from("insurance_contracts")
-          .select("facility_id,payer_name,in_network")
-          .in("facility_id", facIds)
-          .eq("in_network", true);
-        ((contracts as Array<{ facility_id: string; payer_name: string | null }>) ?? []).forEach((c) => {
-          const orgId = facToOrg.get(c.facility_id);
-          if (!orgId || !c.payer_name) return;
-          const entry = map.get(orgId);
-          if (!entry) return;
-          entry.payers.set(c.payer_name, (entry.payers.get(c.payer_name) ?? 0) + 1);
-        });
-      }
       setFacilitiesByOrg(map);
     })();
   }, []);
@@ -379,8 +359,14 @@ export default function Organizations() {
   // Reset to page 1 whenever filters or view change
   useEffect(() => { setPage(1); }, [q, city, stateFilter, view]);
 
-  const visibleOrgs = view === "network" ? filtered : filtered.slice(0, page * PAGE_SIZE);
-  const hasMore = view === "all" && visibleOrgs.length < filtered.length;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const visibleOrgs = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const showPagination = filtered.length > PAGE_SIZE;
+
+  // Keep page in range when filters shrink the list
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const partnerById = useMemo(() => {
     const m = new Map<string, (typeof partners)[number]>();
@@ -501,9 +487,9 @@ export default function Organizations() {
       </Card>
 
       {loading ? (
-        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[420px] rounded-2xl" />
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-[280px] rounded-xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -534,20 +520,24 @@ export default function Organizations() {
         </Card>
       ) : (
         <div className="space-y-5">
-          <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <p>
+              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of{" "}
+              {filtered.length}
+            </p>
+            {showPagination && (
+              <p className="tabular-nums">
+                Page {page} of {totalPages}
+              </p>
+            )}
+          </div>
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {visibleOrgs.map((o) => {
               const inNet = partnerOrgIds.has(o.id);
               const href = o.slug ? `/o/${o.slug}` : "#";
               const fac = facilitiesByOrg.get(o.id);
-              const facCount = fac?.count ?? 0;
               const stateList = fac ? Array.from(fac.states).sort() : [];
               const levelList = fac ? Array.from(fac.levels) : [];
-              const topPayers = fac
-                ? Array.from(fac.payers.entries())
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 6)
-                    .map(([name]) => name)
-                : [];
               const tel = sanitizePhone(o.bd_contact_phone);
               const email = o.bd_contact_email;
               return (
@@ -555,10 +545,8 @@ export default function Organizations() {
                   key={o.id}
                   org={o}
                   inNet={inNet}
-                  facCount={facCount}
                   stateList={stateList}
                   levelList={levelList}
-                  topPayers={topPayers}
                   tel={tel}
                   email={email}
                   href={href}
@@ -568,10 +556,28 @@ export default function Organizations() {
               );
             })}
           </div>
-          {hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={() => setPage((p) => p + 1)}>
-                Load more ({filtered.length - visibleOrgs.length} remaining)
+          {showPagination && (
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-xs text-muted-foreground tabular-nums px-2">
+                {page} / {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
               </Button>
             </div>
           )}

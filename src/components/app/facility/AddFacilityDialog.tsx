@@ -22,7 +22,13 @@ interface Props {
   triggerClassName?: string;
 }
 
-export function AddFacilityDialog({ organizationId, onCreated, triggerLabel = "Add facility", triggerClassName }: Props) {
+export function AddFacilityDialog({
+  organizationId,
+  onCreated,
+  triggerLabel = "Add facility",
+  triggerClassName,
+  triggerVariant = "default",
+}: Props & { triggerVariant?: "default" | "outline" }) {
   const { user, isSuperAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => emptyFacility());
@@ -95,7 +101,13 @@ export function AddFacilityDialog({ organizationId, onCreated, triggerLabel = "A
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <Button type="button" size="sm" className={triggerClassName} onClick={() => handleOpen(true)}>
+      <Button
+        type="button"
+        size="sm"
+        variant={triggerVariant}
+        className={triggerClassName}
+        onClick={() => handleOpen(true)}
+      >
         <Plus className="h-4 w-4" /> {triggerLabel}
       </Button>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

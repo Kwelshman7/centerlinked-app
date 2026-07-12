@@ -1,31 +1,26 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Shield, CreditCard, Link2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const riskReversals = [
-  { icon: CreditCard, text: "No credit card required" },
-  { icon: Shield, text: "You control your profile — update it anytime" },
-  { icon: Link2, text: "One link, always current" },
-];
 
 export function FinalCTA() {
   return (
-    <section className="py-16 sm:py-20 lg:py-28 relative overflow-hidden">
+    <section className="py-14 sm:py-16 lg:py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/30 to-primary/5" />
       <div className="absolute top-0 left-1/4 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
       <div className="absolute bottom-0 right-1/4 h-48 w-48 rounded-full bg-accent/40 blur-3xl" />
 
       <div className="container relative z-10">
-        <div className="mx-auto max-w-3xl text-center px-1">
+        <div className="mx-auto max-w-2xl text-center px-1">
           <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.08]">
-            Your partners want to refer to you.{" "}
-            <span className="text-primary">Make it easy for them.</span>
+            One link. Always current.{" "}
+            <span className="text-primary">Free to start.</span>
           </h2>
-          <p className="mt-5 sm:mt-6 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Give every referral partner one link that tells them exactly who you are, what you treat, who to call, and how to send a client. Setup takes about 30 minutes. Your BD team can start sharing it today.
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            Create your profile in minutes. Share it with every referral partner —
+            and stop resending PDFs.
           </p>
 
-          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button asChild variant="hero" size="xl" className="group shadow-lg shadow-primary/20 w-full sm:w-auto">
               <Link to="/request-access">
                 Create Your Free Profile
@@ -34,16 +29,9 @@ export function FinalCTA() {
             </Button>
           </div>
 
-          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-6">
-            {riskReversals.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success/20 shrink-0">
-                  <item.icon className="h-3.5 w-3.5 text-success" />
-                </div>
-                <span>{item.text}</span>
-              </div>
-            ))}
-          </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Free during early access · No credit card · Approved organizations only
+          </p>
         </div>
       </div>
     </section>

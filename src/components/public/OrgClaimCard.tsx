@@ -7,7 +7,7 @@ interface Props {
 
 export function OrgClaimCard({ organizationId, organizationName }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow-2xl border border-border/40 p-4 sm:p-5 w-full sm:w-[340px] text-foreground">
+    <div className="bg-white rounded-xl shadow-sm border border-border/40 p-4 sm:p-5 w-full h-full flex flex-col justify-center text-foreground">
       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
         Send a Referral
       </p>

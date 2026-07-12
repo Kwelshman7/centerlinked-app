@@ -1,52 +1,48 @@
-import { BadgeCheck, Search, Star } from "lucide-react";
+import { BadgeCheck, Search, Handshake } from "lucide-react";
 
 const differentiators = [
   {
     icon: BadgeCheck,
-    eyebrow: "Always accurate",
-    title: "Your profile stays verified.",
-    body: "Every 30 days, you confirm your information. One click if nothing changed. A quick update if something did. Skip it, and your profile stops showing in search until you're current. There's no such thing as stale information hiding on CenterLinked.",
+    title: "Always accurate",
+    body: "Verify every 30 days. Skip it, and search visibility pauses — stale info can't hide.",
   },
   {
     icon: Search,
-    eyebrow: "Find the right partner",
-    title: "Find the right placement fast.",
-    body: "Search by level of care, location, and insurance. When a client isn't right for your program, find a partner who fits in seconds. Not after an hour of phone calls.",
+    title: "Find placements fast",
+    body: "Search by LOC, insurance, and location when a client isn't a fit for you.",
   },
   {
-    icon: Star,
-    eyebrow: "Your referral network",
-    title: "Build your real referral network.",
-    body: "Add the organizations you already work with. See which ones refer back to you. Your real partners show up first when you search — based on your actual relationships, not who paid for a top spot.",
+    icon: Handshake,
+    title: "Real referral network",
+    body: "Your partners surface first — based on relationships, not paid placement.",
   },
 ];
 
 export function AlwaysAccurate() {
   return (
-    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/30">
+    <section className="py-14 sm:py-16 lg:py-24 bg-secondary/30">
       <div className="container">
         <div className="mx-auto max-w-3xl text-center px-1">
-          <span className="inline-block px-4 py-1.5 mb-5 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
-            Why CenterLinked works
+          <span className="inline-block px-4 py-1.5 mb-4 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
+            Why It's Different
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Three things that{" "}
-            <span className="text-primary">make it different.</span>
+            Accuracy you can{" "}
+            <span className="text-primary">count on.</span>
           </h2>
         </div>
 
-        <div className="mt-12 sm:mt-14 grid gap-4 sm:gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+        <div className="mt-10 sm:mt-12 grid gap-3 sm:gap-4 md:grid-cols-3 max-w-5xl mx-auto">
           {differentiators.map((d) => (
             <div
               key={d.title}
-              className="group p-6 sm:p-7 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300 h-full"
+              className="group p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-sm hover:border-primary/30 transition-all duration-300"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary mb-5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-4">
                 <d.icon className="h-5 w-5" />
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-2">{d.eyebrow}</p>
-              <h3 className="font-heading text-lg font-bold text-foreground">{d.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{d.body}</p>
+              <h3 className="font-heading text-base font-bold text-foreground">{d.title}</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{d.body}</p>
             </div>
           ))}
         </div>

@@ -5,16 +5,18 @@ interface Props {
   states: string[];
   selected: string;
   onSelect: (state: string) => void;
-  brand: string;
+  /** Optional brand color for the active tab. Falls back to primary. */
+  brand?: string;
+  className?: string;
 }
 
-export function OrgStateFilter({ states, selected, onSelect, brand }: Props) {
+export function OrgStateFilter({ states, selected, onSelect, brand, className }: Props) {
   if (states.length <= 1) return null;
 
   const tabs = ["all", ...states];
 
   return (
-    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-1">
+    <div className={cn("overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-1", className)}>
       <div
         role="tablist"
         aria-label="Filter facilities by state"
@@ -32,12 +34,14 @@ export function OrgStateFilter({ states, selected, onSelect, brand }: Props) {
               onClick={() => onSelect(value)}
               className={cn(
                 "inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-medium tracking-normal transition-colors",
-                "border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                "border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
                 active
-                  ? "text-white border-transparent shadow-sm"
+                  ? brand
+                    ? "text-white border-transparent shadow-sm"
+                    : "bg-primary text-primary-foreground border-transparent shadow-sm"
                   : "bg-card text-foreground/70 border-border/60 hover:text-foreground hover:border-border",
               )}
-              style={active ? { backgroundColor: brand } : undefined}
+              style={active && brand ? { backgroundColor: brand } : undefined}
             >
               {label}
             </button>

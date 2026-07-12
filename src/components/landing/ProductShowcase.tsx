@@ -132,8 +132,8 @@ export function ProductShowcase() {
             Three views.{" "}
             <span className="text-primary">One product.</span>
           </h2>
-          <p className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Here's what CenterLinked looks like for your team, your referral partners, and the people searching for a placement.
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            What your partners see, what your team manages, and how placements find you.
           </p>
         </div>
 

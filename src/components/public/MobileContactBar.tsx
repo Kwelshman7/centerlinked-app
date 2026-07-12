@@ -50,7 +50,7 @@ export function MobileContactBar({
   return (
     <>
       <div
-        className="fixed left-0 right-0 lg:hidden z-30 bg-card/95 backdrop-blur-md border-t border-border px-4 pt-3 pb-3"
+        className="fixed left-0 right-0 lg:hidden z-30 bg-card/95 backdrop-blur-md border-t border-border px-4 pt-3 pb-3 print:hidden"
         style={barStyle}
       >
         <Button

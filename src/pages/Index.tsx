@@ -4,6 +4,7 @@ import { TrustStrip } from "@/components/landing/TrustStrip";
 import { Problem } from "@/components/landing/Problem";
 import { Positioning } from "@/components/landing/Positioning";
 import { HowItWorks } from "@/components/landing/HowItWorks";
+import { OrgDashboardSection } from "@/components/landing/OrgDashboardSection";
 import { ProductShowcase } from "@/components/landing/ProductShowcase";
 import { AlwaysAccurate } from "@/components/landing/AlwaysAccurate";
 import { WhoFor } from "@/components/landing/WhoFor";
@@ -21,9 +22,8 @@ const Index = () => {
         <TrustStrip />
         <Problem />
         <Positioning />
-        <section id="how-it-works">
-          <HowItWorks />
-        </section>
+        <HowItWorks />
+        <OrgDashboardSection />
         <ProductShowcase />
         <section id="features">
           <AlwaysAccurate />

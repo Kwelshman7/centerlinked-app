@@ -272,3 +272,25 @@
 .bottom-safe { bottom: env(safe-area-inset-bottom); }
 .h-safe-tabbar { height: calc(64px + env(safe-area-inset-bottom)); }
 html, body, #root { overflow-x: hidden; max-width: 100%; }
+
+/* Print / Save as PDF — hide chrome, keep sheet content */
+@media print {
+  @page {
+    margin: 0.6in;
+  }
+
+  html, body, #root {
+    overflow: visible !important;
+    max-width: none !important;
+    background: white !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+}

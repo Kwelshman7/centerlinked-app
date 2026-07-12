@@ -68,16 +68,36 @@ export function OrganizationSheetView({
     document.getElementById("org-contact")?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
+  const heroBg = org.cover_image_url
+    ? {
+        backgroundImage: `linear-gradient(105deg, rgba(15,23,42,0.82) 0%, rgba(15,23,42,0.45) 100%), url(${org.cover_image_url})`,
+        backgroundSize: "cover" as const,
+        backgroundPosition: "center" as const,
+      }
+    : {
+        background: `linear-gradient(135deg, ${brand}18 0%, ${brand}08 50%, hsl(var(--muted)) 100%)`,
+      };
+
   return (
     <div className={cn("space-y-6 sm:space-y-8", hasContact ? mobileContactBarPadding() : "")}>
-      {/* Logo, description, and BD contact */}
+      {/* Hero + BD contact (~3/4 + 1/4) */}
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-        <div className="p-4 sm:p-5">
-          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_240px] lg:items-center lg:gap-6">
-            <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+        <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(240px,1fr)] lg:items-stretch">
+          <div
+            className="relative min-h-[180px] sm:min-h-[200px] lg:min-h-[220px] flex flex-col justify-end"
+            style={heroBg}
+          >
+            <div
+              className={cn(
+                "relative z-[1] p-4 sm:p-5 lg:p-6 flex items-end gap-3.5 sm:gap-4 min-w-0",
+                org.cover_image_url ? "text-white" : "text-foreground",
+              )}
+            >
               <div
-                className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-xl bg-white border shadow-sm overflow-hidden grid place-items-center p-2 shrink-0"
-                style={{ borderColor: `${brand}35` }}
+                className={cn(
+                  "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-xl bg-white border shadow-sm overflow-hidden grid place-items-center p-2 shrink-0",
+                )}
+                style={{ borderColor: org.cover_image_url ? "rgba(255,255,255,0.35)" : `${brand}35` }}
               >
                 {org.logo_url ? (
                   <img
@@ -92,13 +112,27 @@ export function OrganizationSheetView({
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-heading text-lg sm:text-xl lg:text-2xl font-bold tracking-tight leading-tight break-words">
+                  <h1
+                    className={cn(
+                      "font-heading text-lg sm:text-xl lg:text-2xl font-bold tracking-tight leading-tight break-words",
+                      org.cover_image_url && "drop-shadow-sm",
+                    )}
+                  >
                     {org.name}
                   </h1>
                   {org.verified && (
                     <span
-                      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0"
-                      style={{ borderColor: `${brand}40`, color: brand, backgroundColor: `${brand}10` }}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0",
+                        org.cover_image_url
+                          ? "border-white/40 bg-white/15 text-white"
+                          : "",
+                      )}
+                      style={
+                        org.cover_image_url
+                          ? undefined
+                          : { borderColor: `${brand}40`, color: brand, backgroundColor: `${brand}10` }
+                      }
                     >
                       <BadgeCheck className="h-3 w-3" />
                       Verified
@@ -107,29 +141,45 @@ export function OrganizationSheetView({
                 </div>
 
                 {briefDescription ? (
-                  <p className="mt-1 text-sm leading-snug text-foreground/75 whitespace-pre-line line-clamp-2">
+                  <p
+                    className={cn(
+                      "mt-1.5 text-sm leading-snug whitespace-pre-line line-clamp-3",
+                      org.cover_image_url ? "text-white/90" : "text-foreground/75",
+                    )}
+                  >
                     {briefDescription}
                   </p>
                 ) : (
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p
+                    className={cn(
+                      "mt-1.5 text-sm",
+                      org.cover_image_url ? "text-white/75" : "text-muted-foreground",
+                    )}
+                  >
                     Referral profile for {org.name}.
                   </p>
                 )}
               </div>
             </div>
+          </div>
 
-            <div id="org-contact" className="w-full min-w-0">
-              {heroContact ? (
-                <OrgHeroContactCard
-                  contacts={[heroContact]}
-                  organizationId={org.id}
-                  brand={brand}
-                  heading="Your Contact"
-                />
-              ) : (
+          <div
+            id="org-contact"
+            className="w-full min-w-0 border-t lg:border-t-0 lg:border-l border-border/60 p-3 sm:p-3.5 flex"
+          >
+            {heroContact ? (
+              <OrgHeroContactCard
+                contacts={[heroContact]}
+                organizationId={org.id}
+                brand={brand}
+                heading="Your Contact"
+                className="flex-1"
+              />
+            ) : (
+              <div className="flex-1 flex items-stretch">
                 <OrgClaimCard organizationId={org.id} organizationName={org.name} />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -157,15 +207,15 @@ export function OrganizationSheetView({
         </div>
 
         <div className="mt-4 sm:mt-5">
-        {filteredFacilities.length === 0 ? (
-          <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
-            {facilities.length === 0
-              ? "No facilities published yet."
-              : "No facilities in this state."}
-          </div>
-        ) : (
-          <OrgFacilityRail facilities={filteredFacilities} contracts={contracts} orgSlug={org.slug} />
-        )}
+          {filteredFacilities.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
+              {facilities.length === 0
+                ? "No facilities published yet."
+                : "No facilities in this state."}
+            </div>
+          ) : (
+            <OrgFacilityRail facilities={filteredFacilities} contracts={contracts} orgSlug={org.slug} />
+          )}
         </div>
       </section>
 
@@ -176,8 +226,7 @@ export function OrganizationSheetView({
         logoUrl={org.logo_url}
         tagline={org.tagline}
         brand={brand}
-        referralEmail={heroContact?.email}
-        referralPhone={heroContact?.phone}
+        contact={heroContact}
         onReferralFallback={scrollToContact}
       />
 

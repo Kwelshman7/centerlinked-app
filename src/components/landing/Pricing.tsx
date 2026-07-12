@@ -7,14 +7,14 @@ const plans = [
     name: "Early Access",
     price: "Free",
     period: "",
-    priceNote: null as string | null,
-    description:
-      "For approved treatment organizations joining CenterLinked during early access. Full profile, full network visibility, full feature set — no cost while we're in early access.",
+    priceNote: "For approved treatment organizations joining now.",
+    description: null as string | null,
     features: [
-      "Organization profile with all sections",
+      "Full organization profile — every section",
       "Shareable profile link for your entire BD team",
       "Verified listing in the CenterLinked network",
-      "Early access to new features as they launch",
+      "Early access to every new feature as it launches",
+      "No credit card required",
     ],
     cta: "Create Your Free Profile",
     featured: true,
@@ -24,14 +24,14 @@ const plans = [
     name: "Organization Plan",
     price: "$99",
     period: "/month",
-    priceNote: "Starts after early access ends.",
-    description:
-      "For treatment organizations that want to maintain an accurate, professional, shareable profile after early access. Your whole team is included — no per-seat fees.",
+    priceNote: "Starts only after early access ends.",
+    description: null as string | null,
     features: [
-      "Organization-controlled profile",
+      "Organization-controlled live profile",
       "Full team access — BD reps, admissions, leadership",
       "Network search visibility",
-      "Ongoing updates from your dashboard",
+      "Ongoing dashboard updates",
+      "No per-seat fees — ever",
     ],
     cta: "Create Your Free Profile",
     featured: false,
@@ -48,11 +48,11 @@ export function Pricing() {
             Pricing
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Straightforward pricing.{" "}
-            <span className="text-primary">No surprises.</span>
+            Simple pricing.{" "}
+            <span className="text-primary">Whole team included.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Join free during early access. When early access ends, keep your profile active for $99/month. Your whole team — BD reps, admissions, leadership — is included under one organization account. No per-seat fees.
+            One flat rate for BD, admissions, and leadership — no per-seat fees.
           </p>
         </div>
 
@@ -79,9 +79,6 @@ export function Pricing() {
                 <h3 className="font-heading text-xl font-bold text-foreground">
                   {plan.name}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground min-h-0 sm:min-h-[3.5rem]">
-                  {plan.description}
-                </p>
 
                 <div className="mt-5 flex items-baseline gap-1 flex-wrap">
                   <span className="text-4xl font-bold text-foreground">{plan.price}</span>
@@ -90,7 +87,7 @@ export function Pricing() {
                   )}
                 </div>
                 {plan.priceNote && (
-                  <p className="mt-1 text-xs text-muted-foreground">{plan.priceNote}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{plan.priceNote}</p>
                 )}
               </div>
 
@@ -120,7 +117,7 @@ export function Pricing() {
         </div>
 
         <p className="mt-4 sm:mt-6 text-center text-xs text-muted-foreground max-w-2xl mx-auto px-2">
-          BD reps and admissions team members are included as users under your organization account.
+          BD reps and admissions team members are included under your organization account.
         </p>
       </div>
     </section>
