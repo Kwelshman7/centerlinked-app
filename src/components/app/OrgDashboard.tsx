@@ -128,7 +128,7 @@ export function OrgDashboard({
 
   const facilityDetailHref = (id: string) => `/app/facilities/${id}`;
 
-  const reloadFacilities = useCallback(async () => {
+  const loadFacilities = useCallback(async () => {
     if (!organizationId) return;
     setFacilitiesLoading(true);
     const { data: f } = await supabase
@@ -138,8 +138,13 @@ export function OrgDashboard({
       .order("updated_at", { ascending: false });
     setAllFacilities((f as FacilityRow[]) ?? []);
     setFacilitiesLoading(false);
+  }, [organizationId]);
+
+  /** Reload local list and optionally sync parent (e.g. admin workspace) after a mutation. */
+  const reloadFacilities = useCallback(async () => {
+    await loadFacilities();
     onFacilitiesChanged?.();
-  }, [organizationId, onFacilitiesChanged]);
+  }, [loadFacilities, onFacilitiesChanged]);
 
   useEffect(() => {
     setFacilityPage(1);
@@ -156,6 +161,7 @@ export function OrgDashboard({
 
   useEffect(() => {
     if (!organizationId) return;
+    let cancelled = false;
     (async () => {
       const [{ data: o }, { count: mCount }] = await Promise.all([
         supabase
@@ -168,6 +174,7 @@ export function OrgDashboard({
           .select("user_id", { count: "exact", head: true })
           .eq("organization_id", organizationId),
       ]);
+      if (cancelled) return;
       const orgRow = o as OrgRow | null;
       setOrg(orgRow);
       setMemberCount(mCount ?? 0);
@@ -176,6 +183,7 @@ export function OrgDashboard({
         setAccentColor(orgRow.accent_color || "#E0EDFF");
         if (orgRow.logo_url) {
           const extracted = await extractLogoColor(orgRow.logo_url);
+          if (cancelled) return;
           setLogoSuggested(extracted);
           if (!orgRow.brand_color && extracted) {
             setBrandColor(extracted);
@@ -188,6 +196,7 @@ export function OrgDashboard({
       const { data: statsRows } = await supabase.rpc("get_org_engagement_stats", {
         _org_id: organizationId,
       });
+      if (cancelled) return;
       const row = Array.isArray(statsRows) ? statsRows[0] : statsRows;
       if (row) {
         setEngagement({
@@ -200,11 +209,15 @@ export function OrgDashboard({
         setEngagement({ page_views: 0, call_clicks: 0, text_clicks: 0, email_clicks: 0 });
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [organizationId]);
 
+  // Initial facility load only — do not notify parent or we can remount-loop.
   useEffect(() => {
-    void reloadFacilities();
-  }, [reloadFacilities]);
+    void loadFacilities();
+  }, [loadFacilities]);
 
   const publicUrl =
     org?.slug && typeof window !== "undefined"

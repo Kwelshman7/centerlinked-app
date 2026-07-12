@@ -101,9 +101,10 @@ export default function AdminOrgWorkspace() {
     });
   };
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { quiet?: boolean }) => {
     if (!id) return;
-    setLoading(true);
+    const quiet = opts?.quiet === true;
+    if (!quiet) setLoading(true);
     const [{ data: o }, { data: f }] = await Promise.all([
       supabase
         .from("organizations")
@@ -129,16 +130,20 @@ export default function AdminOrgWorkspace() {
     } else {
       setContracts([]);
     }
-    setLoading(false);
+    if (!quiet) setLoading(false);
   }, [id]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   useEffect(() => {
     if (id) sessionStorage.setItem("cl_managed_org_id", id);
   }, [id]);
+
+  const refreshQuiet = useCallback(() => {
+    void load({ quiet: true });
+  }, [load]);
 
   const deleteFacility = async (fid: string, name: string) => {
     const { error } = await supabase.from("facilities").delete().eq("id", fid);
@@ -147,7 +152,7 @@ export default function AdminOrgWorkspace() {
       return;
     }
     toast.success(`Deleted ${name}`);
-    load();
+    void load({ quiet: true });
   };
 
   if (authLoading) return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
@@ -232,7 +237,7 @@ export default function AdminOrgWorkspace() {
             organizationId={org.id}
             adminMode
             welcomeName={org.name}
-            onFacilitiesChanged={load}
+            onFacilitiesChanged={refreshQuiet}
           />
         </TabsContent>
 
