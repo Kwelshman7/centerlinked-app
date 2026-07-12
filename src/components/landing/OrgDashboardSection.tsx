@@ -5,17 +5,20 @@ const highlights = [
   {
     icon: Building2,
     title: "All facilities, one dashboard",
-    description: "Open any program to update insurance, LOC, and contacts.",
+    description:
+      "Open any program to update insurance, levels of care, contacts, and referral details from a single workspace.",
   },
   {
     icon: Pencil,
-    title: "Edit once",
-    description: "Every public link updates instantly — no re-email.",
+    title: "Edit once — live everywhere",
+    description:
+      "Every public org and program link updates instantly. Your BD team never re-emails a new PDF.",
   },
   {
     icon: Share2,
-    title: "Share org or program",
-    description: "Copy the link your BD team sends after every conversation.",
+    title: "Share the org or a single program",
+    description:
+      "Copy the link that fits the conversation — full network overview or one facility partners need right now.",
   },
 ];
 
@@ -32,7 +35,8 @@ export function OrgDashboardSection() {
             <span className="text-primary">one workspace.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Click a facility, update what partners need, and your shared link is current.
+            Multi-location teams manage programs, branding, and BD contacts in one place —
+            then share a single live link that always reflects what's true today.
           </p>
         </div>
 

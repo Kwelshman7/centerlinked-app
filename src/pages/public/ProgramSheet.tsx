@@ -258,21 +258,8 @@ export default function ProgramSheet() {
           tagline={org?.tagline ?? null}
           brand={brand}
           orgLinkLabel="View all programs"
-          contact={
-            facility.bd_contact_name || org?.bd_contact_name
-              ? {
-                  name:
-                    facility.bd_contact_name ||
-                    org?.bd_contact_name ||
-                    "Business Development",
-                  title: facility.bd_contact_name
-                    ? "Facility BD Representative"
-                    : "Director of Business Development",
-                  phone: facility.bd_contact_phone || org?.bd_contact_phone,
-                  email: facility.bd_contact_email || org?.bd_contact_email,
-                }
-              : null
-          }
+          referralEmail={facility.bd_contact_email || org?.bd_contact_email || null}
+          referralPhone={facility.bd_contact_phone || org?.bd_contact_phone || null}
         />
       </main>
     </div>

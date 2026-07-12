@@ -7,29 +7,54 @@ import {
 
 const faqs = [
   {
+    question: "What exactly is CenterLinked?",
+    answer:
+      "CenterLinked is a live referral profile for behavioral health organizations. You put levels of care, verified insurance, locations, BD contacts, and how-to-refer details in one place — then share a single link with professional partners. When you update the profile, every shared link stays current.",
+  },
+  {
     question: "Is this just another treatment directory?",
     answer:
-      "No. Directories help families find care online. CenterLinked is for professional referral partners who already know you — and need current insurance, LOC, and contacts fast.",
+      "No. Directories help families find care online. CenterLinked is built for professional referral partners who already know you — or are placing a client — and need current insurance, LOC, and contacts fast.",
   },
   {
     question: "How is this different from our CRM?",
     answer:
-      "Your CRM tracks your outreach. CenterLinked is what partners see about you. Most teams use both.",
+      "Your CRM tracks your outreach and pipeline. CenterLinked is what partners see about you. Most teams use both: CRM for your side of the relationship, CenterLinked for theirs.",
+  },
+  {
+    question: "Why not just keep sending PDFs?",
+    answer:
+      "PDFs go stale the moment something changes — and partners rarely open last quarter's attachment. A live link means insurance, contacts, and programs stay accurate without another mass email.",
   },
   {
     question: "What happens when our information changes?",
     answer:
-      "Update the profile once. Every shared link reflects it instantly — no mass email, no new PDF.",
+      "Update the profile once. Every shared link reflects it instantly — no new PDF, no \"please delete the old one\" follow-up.",
+  },
+  {
+    question: "Do we list specific insurance payers?",
+    answer:
+      "Yes. Partners need named in-network payers they can act on — not \"we take most insurance.\" You control what's published and keep it verified.",
+  },
+  {
+    question: "Is patient information involved? Is this HIPAA?",
+    answer:
+      "CenterLinked is built for organizational and facility referral information — programs, insurance panels, contacts — not protected health information about individual patients. You decide what your organization publishes.",
   },
   {
     question: "Who from our organization gets access?",
     answer:
-      "Everyone under one account — BD, admissions, leadership. No per-seat fees.",
+      "Everyone under one organization account — BD, admissions, and leadership. No per-seat fees.",
+  },
+  {
+    question: "Will this get us more referrals?",
+    answer:
+      "CenterLinked makes it easier for partners who already want to refer to you to do it correctly and confidently. It won't replace relationship-building — it removes friction when those relationships lead to a placement.",
   },
   {
     question: "Is CenterLinked invite-only?",
     answer:
-      "Yes during early access. We approve licensed behavioral health organizations to keep the network credible.",
+      "Yes during early access. We approve licensed behavioral health organizations so the network stays credible for professional referrals.",
   },
 ];
 
@@ -42,8 +67,11 @@ export function FAQ() {
             FAQ
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Quick answers
+            Questions BD teams actually ask
           </h2>
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            Straight answers about what CenterLinked is — and what it isn't.
+          </p>
         </div>
 
         <div className="mx-auto mt-10 sm:mt-12 max-w-3xl">

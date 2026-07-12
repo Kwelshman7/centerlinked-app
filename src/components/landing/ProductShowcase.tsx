@@ -102,19 +102,22 @@ function FacilityProfileContent() {
 const views = [
   {
     label: "What your partners see",
-    caption: "A clean, shareable profile showing your LOC, insurance, BD contact, and referral instructions.",
+    caption:
+      "A clean, shareable profile with levels of care, verified insurance, BD contact, and how to refer — ready for a clinical decision.",
     content: <FacilityProfileContent />,
     center: false,
   },
   {
     label: "Your team's dashboard",
-    caption: "Manage your network, track engagement, and see who's sharing your profile.",
+    caption:
+      "Manage facilities, keep the profile current, and see engagement so your BD team knows what's working.",
     content: <DashboardPreviewContent />,
     center: true,
   },
   {
     label: "How partners find you",
-    caption: "Search by level of care, location, and insurance — your verified profile surfaces first.",
+    caption:
+      "Search by level of care, location, and insurance. Verified profiles surface first when someone's placing a client.",
     content: <SearchResultsPreviewContent />,
     center: false,
   },
@@ -130,10 +133,11 @@ export function ProductShowcase() {
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
             Three views.{" "}
-            <span className="text-primary">One product.</span>
+            <span className="text-primary">One live profile.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            What your partners see, what your team manages, and how placements find you.
+            Here's what CenterLinked looks like for your referral partners, your team,
+            and the people searching for a placement.
           </p>
         </div>
 

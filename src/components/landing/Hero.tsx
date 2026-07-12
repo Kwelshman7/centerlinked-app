@@ -20,13 +20,27 @@ export function Hero() {
                 Built for behavioral health BD teams
               </div>
               <h1 className="font-heading text-[2rem] font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] leading-[1.05]">
-                Stop Resending PDFs.{" "}
-                <span className="text-primary">Update One Link.</span>
+                Make your organization{" "}
+                <span className="text-primary">easier to refer to.</span>
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
-                Give referral partners a live profile — insurance, levels of care, and contacts —
-                that stays current every time you update it.
+                CenterLinked is a live referral profile you share once — levels of care, verified
+                insurance, locations, and the right BD contact. Update it when something changes.
+                Partners always see the current version. No more stale PDFs.
               </p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-xl pt-1">
+                {[
+                  "Levels of care & locations",
+                  "Verified in-network payers",
+                  "BD & admissions contacts",
+                  "How to refer instructions",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-foreground/85">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <span className="font-medium">{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div className="animate-fade-up space-y-3" style={{ animationDelay: "100ms" }}>

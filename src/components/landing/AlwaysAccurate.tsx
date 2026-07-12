@@ -3,18 +3,21 @@ import { BadgeCheck, Search, Handshake } from "lucide-react";
 const differentiators = [
   {
     icon: BadgeCheck,
-    title: "Always accurate",
-    body: "Verify every 30 days. Skip it, and search visibility pauses — stale info can't hide.",
+    eyebrow: "Verification",
+    title: "Accuracy you can count on",
+    body: "Organizations verify their profile every 30 days. Miss a check-in, and search visibility pauses — so stale insurance and contact info can't quietly stick around.",
   },
   {
     icon: Search,
-    title: "Find placements fast",
-    body: "Search by LOC, insurance, and location when a client isn't a fit for you.",
+    eyebrow: "Outbound placements",
+    title: "Find the right next step fast",
+    body: "When a client isn't a fit for you, search by level of care, insurance, and location. Verified profiles surface first — so you can place with confidence, not guesswork.",
   },
   {
     icon: Handshake,
-    title: "Real referral network",
-    body: "Your partners surface first — based on relationships, not paid placement.",
+    eyebrow: "Your network",
+    title: "Relationships over paid placement",
+    body: "Preferred partners rise to the top based on who you actually work with — not who bought a featured slot. Refer out, and stay top of mind when they refer back.",
   },
 ];
 
@@ -27,9 +30,13 @@ export function AlwaysAccurate() {
             Why It's Different
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Accuracy you can{" "}
-            <span className="text-primary">count on.</span>
+            Three things that make CenterLinked{" "}
+            <span className="text-primary">work for referrals.</span>
           </h2>
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            A live profile only helps if the information is trustworthy, searchable when you need
+            a placement, and rooted in real professional relationships.
+          </p>
         </div>
 
         <div className="mt-10 sm:mt-12 grid gap-3 sm:gap-4 md:grid-cols-3 max-w-5xl mx-auto">
@@ -41,6 +48,9 @@ export function AlwaysAccurate() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-4">
                 <d.icon className="h-5 w-5" />
               </div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-1.5">
+                {d.eyebrow}
+              </p>
               <h3 className="font-heading text-base font-bold text-foreground">{d.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{d.body}</p>
             </div>

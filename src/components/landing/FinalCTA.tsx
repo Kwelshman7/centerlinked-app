@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle2, CreditCard, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const reassurances = [
+  { icon: CreditCard, text: "No credit card required" },
+  { icon: CheckCircle2, text: "You control what partners see" },
+  { icon: Link2, text: "One link — always current" },
+];
 
 export function FinalCTA() {
   return (
@@ -12,12 +18,12 @@ export function FinalCTA() {
       <div className="container relative z-10">
         <div className="mx-auto max-w-2xl text-center px-1">
           <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.08]">
-            One link. Always current.{" "}
-            <span className="text-primary">Free to start.</span>
+            Your partners want to refer to you.{" "}
+            <span className="text-primary">Make it easy for them.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Create your profile in minutes. Share it with every referral partner —
-            and stop resending PDFs.
+            Create your live referral profile in about 30 minutes. Share it with every partner —
+            and stop resending PDFs that go out of date overnight.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -29,8 +35,17 @@ export function FinalCTA() {
             </Button>
           </div>
 
+          <ul className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+            {reassurances.map((r) => (
+              <li key={r.text} className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <r.icon className="h-4 w-4 text-primary shrink-0" />
+                <span className="font-medium">{r.text}</span>
+              </li>
+            ))}
+          </ul>
+
           <p className="mt-4 text-sm text-muted-foreground">
-            Free during early access · No credit card · Approved organizations only
+            Free during early access · Approved organizations only
           </p>
         </div>
       </div>

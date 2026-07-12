@@ -25,6 +25,8 @@ import {
   Phone,
   Mail,
   MessageSquare,
+  MapPin,
+  Layers,
 } from "lucide-react";
 import { US_STATES, stateDisplayName, resolveStateCode } from "@/lib/us-states";
 import { sanitizePhone } from "@/lib/phone";
@@ -65,6 +67,7 @@ function formatStateLabel(raw: string) {
 function OrgNetworkCard({
   org: o,
   inNet,
+  facCount,
   stateList,
   levelList,
   tel,
@@ -75,6 +78,7 @@ function OrgNetworkCard({
 }: {
   org: OrgRow;
   inNet: boolean;
+  facCount: number;
   stateList: string[];
   levelList: string[];
   tel: string | null;
@@ -85,7 +89,7 @@ function OrgNetworkCard({
 }) {
   return (
     <article
-      className={`group relative flex flex-col rounded-xl border bg-card overflow-hidden hover:shadow-md transition-all h-full ${
+      className={`group relative flex flex-col rounded-2xl border bg-card overflow-hidden hover:shadow-lg transition-all h-full ${
         inNet ? "border-primary/60 shadow-sm" : "border-border hover:border-primary/40"
       }`}
     >
@@ -97,140 +101,166 @@ function OrgNetworkCard({
         }}
         aria-label={inNet ? "Remove from network" : "Add to network"}
         title={inNet ? "Remove from network" : "Add to network"}
-        className={`absolute top-2 right-2 z-10 h-8 w-8 grid place-items-center rounded-full bg-card/95 backdrop-blur-sm border border-border/60 shadow-sm transition-colors ${
+        className={`absolute top-3 right-3 z-10 h-9 w-9 grid place-items-center rounded-full bg-card/90 backdrop-blur-sm border border-border/60 shadow-sm transition-colors ${
           inNet ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-accent"
         }`}
       >
-        <Star className={`h-3.5 w-3.5 ${inNet ? "fill-current" : ""}`} />
+        <Star className={`h-4 w-4 ${inNet ? "fill-current" : ""}`} />
       </button>
 
       <Link to={href} className="block">
-        <div className="relative aspect-[5/3] bg-muted/30 border-b border-border/60 flex items-center justify-center p-3 sm:p-4">
+        <div className="relative aspect-[4/3] bg-muted/40 border-b border-border/60 flex items-center justify-center p-6 sm:p-8">
           {o.logo_url ? (
             <img
               src={o.logo_url}
               alt={`${o.name} logo`}
               loading="lazy"
-              className="h-full w-full object-contain"
+              className="max-h-full max-w-full object-contain"
             />
           ) : (
-            <Building2 className="h-10 w-10 text-muted-foreground/60" />
+            <Building2 className="h-14 w-14 text-muted-foreground/70" />
           )}
         </div>
       </Link>
 
-      <div className="flex flex-col flex-1 p-3 sm:p-3.5 gap-2.5 min-h-0">
+      <div className="flex flex-col flex-1 p-4 sm:p-5">
         <Link to={href} className="min-w-0 group/link">
-          <h3 className="font-heading font-bold text-sm leading-snug line-clamp-2 group-hover/link:text-primary transition-colors pr-7">
+          <h3 className="font-heading font-bold text-base sm:text-lg leading-snug break-words group-hover/link:text-primary transition-colors pr-8">
             {o.name}
           </h3>
         </Link>
 
-        {stateList.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {stateList.map((s) => (
-              <span
-                key={s}
-                className="text-[10px] font-semibold bg-muted text-foreground/80 px-1.5 py-0.5 rounded border border-border/60"
-              >
-                {formatStateLabel(s)}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {levelList.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {levelList.slice(0, 6).map((l) => (
-              <span
-                key={l}
-                className="text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded"
-              >
-                {l}
-              </span>
-            ))}
-            {levelList.length > 6 && (
-              <span className="text-[10px] font-semibold text-muted-foreground px-0.5 py-0.5">
-                +{levelList.length - 6}
-              </span>
-            )}
-          </div>
-        )}
-
-        <div className="mt-auto border-t border-border/60 pt-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground">BD Rep</p>
-              <p className="text-xs font-semibold truncate">
-                {o.bd_contact_name || (
-                  <span className="text-muted-foreground font-normal">Not listed</span>
-                )}
+        <div className="mt-2 space-y-3 text-sm flex-1">
+          {(o.hq_city || o.hq_state || facCount > 0) && (
+            <div className="space-y-1.5">
+              {(o.hq_city || o.hq_state) && (
+                <p className="inline-flex items-start gap-1.5 text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span className="break-words">
+                    {[o.hq_city, o.hq_state ? formatStateLabel(o.hq_state) : null]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
+                </p>
+              )}
+              <p className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <Building2 className="h-3.5 w-3.5 shrink-0" />
+                {facCount} {facCount === 1 ? "facility" : "facilities"}
               </p>
             </div>
-            <div className="flex items-center gap-1 shrink-0">
-              {tel ? (
-                <Button
-                  asChild
-                  size="icon"
-                  variant="outline"
-                  className="h-7 w-7"
-                  aria-label={`Call ${o.bd_contact_name ?? o.name}`}
+          )}
+
+          {stateList.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {stateList.map((s) => (
+                <span
+                  key={s}
+                  className="text-[11px] font-semibold bg-muted text-foreground/80 px-2 py-0.5 rounded-md border border-border/60"
                 >
-                  <a href={`tel:${tel}`}>
-                    <Phone className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
-              ) : (
-                <Button size="icon" variant="outline" disabled className="h-7 w-7 opacity-40" aria-label="No phone">
-                  <Phone className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              {tel ? (
-                <Button
-                  asChild
-                  size="icon"
-                  variant="outline"
-                  className="h-7 w-7"
-                  aria-label={`Text ${o.bd_contact_name ?? o.name}`}
-                >
-                  <a href={`sms:${tel}`}>
-                    <MessageSquare className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
-              ) : (
-                <Button size="icon" variant="outline" disabled className="h-7 w-7 opacity-40" aria-label="No SMS">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              {email ? (
-                <Button
-                  asChild
-                  size="icon"
-                  variant="outline"
-                  className="h-7 w-7"
-                  aria-label={`Email ${o.bd_contact_name ?? o.name}`}
-                >
-                  <a href={`mailto:${email}`}>
-                    <Mail className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
-              ) : (
-                <Button size="icon" variant="outline" disabled className="h-7 w-7 opacity-40" aria-label="No email">
-                  <Mail className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              {inNet && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={onRemove}
-                  aria-label="Remove from network"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
+                  {formatStateLabel(s)}
+                </span>
+              ))}
             </div>
+          )}
+
+          {levelList.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
+                <Layers className="h-3 w-3" /> Levels of care
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {levelList.slice(0, 8).map((l) => (
+                  <span
+                    key={l}
+                    className="text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                  >
+                    {l}
+                  </span>
+                ))}
+                {levelList.length > 8 && (
+                  <span className="text-[11px] font-semibold text-muted-foreground px-1 py-0.5">
+                    +{levelList.length - 8}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-border/60 bg-muted/30 px-4 sm:px-5 py-3 mt-auto">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">BD Rep</p>
+            <p className="text-sm font-semibold truncate">
+              {o.bd_contact_name || (
+                <span className="text-muted-foreground font-normal">Not listed</span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {tel ? (
+              <Button
+                asChild
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                aria-label={`Call ${o.bd_contact_name ?? o.name}`}
+              >
+                <a href={`tel:${tel}`}>
+                  <Phone className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            ) : (
+              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No phone">
+                <Phone className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {tel ? (
+              <Button
+                asChild
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                aria-label={`Text ${o.bd_contact_name ?? o.name}`}
+              >
+                <a href={`sms:${tel}`}>
+                  <MessageSquare className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            ) : (
+              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No SMS">
+                <MessageSquare className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {email ? (
+              <Button
+                asChild
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                aria-label={`Email ${o.bd_contact_name ?? o.name}`}
+              >
+                <a href={`mailto:${email}`}>
+                  <Mail className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            ) : (
+              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No email">
+                <Mail className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {inNet && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={onRemove}
+                aria-label="Remove from network"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -487,9 +517,9 @@ export default function Organizations() {
       </Card>
 
       {loading ? (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-[280px] rounded-xl" />
+        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[360px] rounded-2xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -531,11 +561,12 @@ export default function Organizations() {
               </p>
             )}
           </div>
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {visibleOrgs.map((o) => {
               const inNet = partnerOrgIds.has(o.id);
               const href = o.slug ? `/o/${o.slug}` : "#";
               const fac = facilitiesByOrg.get(o.id);
+              const facCount = fac?.count ?? 0;
               const stateList = fac ? Array.from(fac.states).sort() : [];
               const levelList = fac ? Array.from(fac.levels) : [];
               const tel = sanitizePhone(o.bd_contact_phone);
@@ -545,6 +576,7 @@ export default function Organizations() {
                   key={o.id}
                   org={o}
                   inNet={inNet}
+                  facCount={facCount}
                   stateList={stateList}
                   levelList={levelList}
                   tel={tel}

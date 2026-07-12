@@ -1,25 +1,25 @@
-import { FileText, Mail, Link2, RefreshCw } from "lucide-react";
+import { FileText, UserX, PhoneOff, ShieldAlert } from "lucide-react";
 
 const problems = [
   {
     icon: FileText,
-    title: "PDFs go stale overnight",
-    body: "Partners save last quarter's one-pager. Insurance and contacts change — they never see it.",
+    title: "The one-pager they saved is outdated",
+    body: "You emailed a PDF last quarter. Since then, insurance panels shifted and a new program opened. Partners still open the old file.",
   },
   {
-    icon: Mail,
-    title: "Mass emails get ignored",
-    body: "Update blasts land once, then disappear. Nobody searches their inbox for your latest LOC list.",
+    icon: UserX,
+    title: "Your BD rep left — their number didn't",
+    body: "Turnover happens. The contact on last year's leave-behind still gets called. Referrals bounce, or never land.",
   },
   {
-    icon: Link2,
-    title: "One link stays current",
-    body: "Share once. When you update the profile, every partner sees the right info — without another email.",
+    icon: PhoneOff,
+    title: "Mass update emails disappear",
+    body: "Discharge planners don't dig through inbox history for your latest LOC list. If the answer isn't one click away, they move on.",
   },
   {
-    icon: RefreshCw,
-    title: "Referrals shouldn't wait on you",
-    body: "Discharge planners need answers now. A live link beats phone tag and outdated attachments.",
+    icon: ShieldAlert,
+    title: "\"We take most insurance\" isn't enough",
+    body: "Partners need named payers they can act on. Vague claims force another phone call — and another chance to lose the placement.",
   },
 ];
 
@@ -32,11 +32,13 @@ export function Problem() {
             The Problem
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-[1.1]">
-            Partners look at your PDF once.{" "}
-            <span className="text-primary">Then never again.</span>
+            Referral information changes.{" "}
+            <span className="text-primary">PDFs don't.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Stale info loses placements. CenterLinked fixes that with one link you keep current.
+            Behavioral health BD teams work hard to stay top of mind — then lose placements
+            because partners are working from outdated materials. None of this is anyone's fault.
+            The tools just weren't built for how referrals actually happen.
           </p>
         </div>
 

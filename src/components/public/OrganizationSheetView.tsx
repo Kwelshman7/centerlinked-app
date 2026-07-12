@@ -226,7 +226,8 @@ export function OrganizationSheetView({
         logoUrl={org.logo_url}
         tagline={org.tagline}
         brand={brand}
-        contact={heroContact}
+        referralEmail={heroContact?.email ?? null}
+        referralPhone={heroContact?.phone ?? null}
         onReferralFallback={scrollToContact}
       />
 

@@ -2,8 +2,8 @@ import { BadgeCheck, Lock, Users } from "lucide-react";
 
 const signals = [
   { icon: BadgeCheck, text: "Verified profiles only" },
-  { icon: Lock, text: "Invite-only network" },
-  { icon: Users, text: "Built for behavioral health BD teams" },
+  { icon: Lock, text: "Invite-only early access" },
+  { icon: Users, text: "Built for behavioral health BD & admissions" },
 ];
 
 export function TrustStrip() {

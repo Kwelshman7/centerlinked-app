@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, CheckCircle2 } from "lucide-react";
+import { MapPin, ChevronDown, Building2, CheckCircle2, Users, Sparkles, Home, Award, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ContractRow } from "@/lib/derive-insurance";
 import { programPublicPath } from "@/lib/public-urls";
 
@@ -32,6 +34,9 @@ interface Props {
 }
 
 export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug }: Props) {
+  const [open, setOpen] = useState(false);
+  const [showAllPayers, setShowAllPayers] = useState(false);
+
   // Build de-duped in-network payer list for this facility.
   // Featured payer (if any) is bubbled to the front.
   const inNetwork = (() => {
@@ -56,83 +61,207 @@ export function OrgFacilityShowcaseCard({ facility: f, contracts, orgSlug }: Pro
     return names;
   })();
 
-  const topPayers = inNetwork.slice(0, 5);
-  const hasMorePayers = inNetwork.length > 5;
+  const topPayers = inNetwork.slice(0, 6);
+  const extra = Math.max(0, inNetwork.length - topPayers.length);
   const hasInNetwork = topPayers.length > 0;
+
   const programHref = f.slug ? programPublicPath(f.slug, orgSlug) : null;
 
   return (
-    <div className="bg-card rounded-xl border border-border/60 p-3.5 flex flex-col gap-2.5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="min-w-0">
-        <h3 className="font-heading font-bold text-sm leading-snug break-words">
-          {programHref ? (
-            <Link to={programHref} className="hover:text-primary transition-colors">
-              {f.name}
-            </Link>
+    <div className="bg-card rounded-xl border border-border/60 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow">
+      {programHref ? (
+        <Link
+          to={programHref}
+          className="aspect-[4/3] w-full bg-muted overflow-hidden block group"
+          aria-label={`View ${f.name}`}
+        >
+          {f.image_urls?.[0] ? (
+            <img
+              src={f.image_urls[0]}
+              alt={f.name}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            />
           ) : (
-            f.name
+            <div className="w-full h-full grid place-items-center">
+              <Building2 className="h-8 w-8 text-muted-foreground" />
+            </div>
           )}
-        </h3>
-
-        {(f.city || f.state) && (
-          <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1">
-            <MapPin className="h-3 w-3 shrink-0" />
-            <span className="truncate">{[f.city, f.state].filter(Boolean).join(", ")}</span>
-          </p>
-        )}
-      </div>
-
-      {f.levels_of_care.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {f.levels_of_care.map((l) => (
-            <span
-              key={l}
-              className="text-[9px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded"
-            >
-              {l}
-            </span>
-          ))}
+        </Link>
+      ) : (
+        <div className="aspect-[4/3] w-full bg-muted overflow-hidden">
+          {f.image_urls?.[0] ? (
+            <img
+              src={f.image_urls[0]}
+              alt={f.name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full grid place-items-center">
+              <Building2 className="h-8 w-8 text-muted-foreground" />
+            </div>
+          )}
         </div>
       )}
 
-      {hasInNetwork ? (
-        <div className="space-y-1">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 inline-flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            In-Network
-          </p>
-          <ul className="space-y-0.5">
-            {topPayers.map((p) => (
-              <li
-                key={p}
-                title={p}
-                className="text-[11px] text-foreground/80 font-medium truncate leading-snug"
-              >
-                {p}
-              </li>
-            ))}
-          </ul>
-          {hasMorePayers && (
-            programHref ? (
-              <Link
-                to={programHref}
-                className="inline-block text-[11px] font-semibold text-primary hover:underline"
-              >
-                +{inNetwork.length - 5} more
+      <div className="p-4 sm:p-5 flex flex-col gap-3">
+        <div>
+          <h3 className="font-heading font-bold text-base sm:text-[17px] leading-snug break-words line-clamp-2">
+            {programHref ? (
+              <Link to={programHref} className="hover:text-primary transition-colors">
+                {f.name}
               </Link>
             ) : (
-              <span className="text-[11px] font-semibold text-muted-foreground">
-                +{inNetwork.length - 5} more
-              </span>
-            )
+              f.name
+            )}
+          </h3>
+
+          {(f.city || f.state) && (
+            <p className="text-xs sm:text-sm text-primary mt-1 inline-flex items-center gap-1 font-medium">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              {[f.city, f.state].filter(Boolean).join(", ")}
+            </p>
           )}
         </div>
-      ) : (
-        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-orange-700">
-          <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-          Out of network only
-        </div>
-      )}
+
+        {f.levels_of_care.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {f.levels_of_care.slice(0, 4).map((l) => (
+              <span
+                key={l}
+                className="text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded"
+              >
+                {l}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {hasInNetwork ? (
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 inline-flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              In-Network Contracts
+            </p>
+            <div className="grid grid-cols-1 gap-y-1">
+              {(showAllPayers ? inNetwork : topPayers).map((p) => (
+                <div
+                  key={p}
+                  title={p}
+                  className="text-[11px] sm:text-xs text-foreground/85 font-medium break-words leading-snug"
+                >
+                  {p}
+                </div>
+              ))}
+            </div>
+            {extra > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAllPayers((v) => !v);
+                }}
+                className="text-[10px] font-semibold text-primary hover:underline"
+              >
+                {showAllPayers ? "Show less" : `+${extra} more`}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700">
+            <span className="h-2 w-2 rounded-full bg-orange-500" />
+            Out of network only
+          </div>
+        )}
+
+        {!open && (f.short_description || f.description) && (
+          <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-2">
+            {f.short_description || f.description}
+          </p>
+        )}
+
+        {open && (
+          <div className="space-y-3 pt-2 border-t border-border/60 mt-1">
+            {f.levels_of_care?.length > 4 && (
+              <DetailGroup icon={<Home className="h-3 w-3" />} label="All Levels of Care">
+                {f.levels_of_care.map((x) => (
+                  <Pill key={x}>{x}</Pill>
+                ))}
+              </DetailGroup>
+            )}
+
+            {f.population_served && f.population_served.length > 0 && (
+              <DetailGroup icon={<Users className="h-3 w-3" />} label="Population">
+                {f.population_served.map((x) => (
+                  <Pill key={x}>{x}</Pill>
+                ))}
+              </DetailGroup>
+            )}
+
+            {f.specializations && f.specializations.length > 0 && (
+              <DetailGroup icon={<Sparkles className="h-3 w-3" />} label="Type of Therapy">
+                {f.specializations.map((x) => (
+                  <Pill key={x}>{x}</Pill>
+                ))}
+              </DetailGroup>
+            )}
+
+            {f.highlights && f.highlights.length > 0 && (
+              <DetailGroup icon={<Star className="h-3 w-3" />} label="Amenities">
+                {f.highlights.map((x) => (
+                  <Pill key={x}>{x}</Pill>
+                ))}
+              </DetailGroup>
+            )}
+
+            {f.accreditations && f.accreditations.length > 0 && (
+              <DetailGroup icon={<Award className="h-3 w-3" />} label="Accreditations">
+                {f.accreditations.map((x) => (
+                  <Pill key={x}>{x}</Pill>
+                ))}
+              </DetailGroup>
+            )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline self-start"
+        >
+          {open ? "View less" : "View more"}
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+        </button>
+      </div>
     </div>
+  );
+}
+
+function DetailGroup({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1 mb-1.5">
+        {icon}
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-1">{children}</div>
+    </div>
+  );
+}
+
+function Pill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[10px] font-medium bg-muted text-foreground/80 px-1.5 py-0.5 rounded">
+      {children}
+    </span>
   );
 }

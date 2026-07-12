@@ -8,7 +8,8 @@ const plans = [
     price: "Free",
     period: "",
     priceNote: "For approved treatment organizations joining now.",
-    description: null as string | null,
+    description:
+      "Get your full live referral profile live while we grow the network — no card, no seat limits.",
     features: [
       "Full organization profile — every section",
       "Shareable profile link for your entire BD team",
@@ -25,7 +26,8 @@ const plans = [
     price: "$99",
     period: "/month",
     priceNote: "Starts only after early access ends.",
-    description: null as string | null,
+    description:
+      "One flat rate for the whole organization — BD, admissions, and leadership included.",
     features: [
       "Organization-controlled live profile",
       "Full team access — BD reps, admissions, leadership",
@@ -48,11 +50,12 @@ export function Pricing() {
             Pricing
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Simple pricing.{" "}
-            <span className="text-primary">Whole team included.</span>
+            Straightforward pricing.{" "}
+            <span className="text-primary">No surprises.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            One flat rate for BD, admissions, and leadership — no per-seat fees.
+            Start free during early access. When early access ends, approved organizations move to
+            a simple $99/month plan — whole team included, no per-seat fees.
           </p>
         </div>
 
@@ -88,6 +91,11 @@ export function Pricing() {
                 </div>
                 {plan.priceNote && (
                   <p className="mt-1 text-sm text-muted-foreground">{plan.priceNote}</p>
+                )}
+                {plan.description && (
+                  <p className="mt-3 text-sm text-foreground/80 leading-relaxed">
+                    {plan.description}
+                  </p>
                 )}
               </div>
 

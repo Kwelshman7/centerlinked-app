@@ -2,11 +2,15 @@ const audiences = [
   "Detox",
   "Residential",
   "PHP / IOP",
+  "Outpatient",
   "Dual Diagnosis",
   "Mental Health",
+  "Eating Disorder",
+  "Sober Living",
   "Multi-Location Networks",
   "BD Teams",
   "Admissions",
+  "Alumni / Aftercare",
 ];
 
 export function WhoFor() {
@@ -18,9 +22,14 @@ export function WhoFor() {
             Who It's For
           </span>
           <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Built for organizations that grow through{" "}
+            Built for behavioral health organizations that grow through{" "}
             <span className="text-primary">professional referrals.</span>
           </h2>
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            If census depends on clinicians, discharge planners, and peer BD teams — not just
+            Google ads — CenterLinked is built for how you actually fill beds: clear programs,
+            current insurance, and a contact partners can reach when it matters.
+          </p>
         </div>
 
         <div className="mt-8 sm:mt-10 flex flex-wrap justify-center gap-2 max-w-3xl mx-auto px-1">
