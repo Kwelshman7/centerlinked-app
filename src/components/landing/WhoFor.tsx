@@ -1,46 +1,47 @@
 const audiences = [
-  "Detox",
-  "Residential",
-  "PHP / IOP",
-  "Outpatient",
-  "Dual Diagnosis",
-  "Mental Health",
-  "Eating Disorder",
-  "Sober Living",
-  "Multi-Location Networks",
-  "BD Teams",
-  "Admissions",
-  "Alumni / Aftercare",
+  { group: "Treatment providers", items: ["Treatment centers", "Mental health programs", "Hospitals"] },
+  { group: "Care coordination", items: ["Emergency departments", "Case management teams", "Social work departments"] },
+  { group: "Referral partners", items: ["Employee assistance programs", "Universities", "Drug courts", "Community organizations"] },
 ];
 
 export function WhoFor() {
   return (
-    <section className="py-14 sm:py-16 lg:py-24 bg-background">
+    <section className="py-16 sm:py-20 lg:py-28 bg-background">
       <div className="container">
-        <div className="mx-auto max-w-2xl text-center px-1">
-          <span className="inline-block px-4 py-1.5 mb-4 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
-            Who It's For
-          </span>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Built for behavioral health organizations that grow through{" "}
-            <span className="text-primary">professional referrals.</span>
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            If census depends on clinicians, discharge planners, and peer BD teams — not just
-            Google ads — CenterLinked is built for how you actually fill beds: clear programs,
-            current insurance, and a contact partners can reach when it matters.
-          </p>
-        </div>
-
-        <div className="mt-8 sm:mt-10 flex flex-wrap justify-center gap-2 max-w-3xl mx-auto px-1">
-          {audiences.map((a) => (
-            <span
-              key={a}
-              className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-card border border-border text-xs sm:text-sm font-semibold text-foreground shadow-sm"
-            >
-              {a}
+        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:items-center">
+          <div className="space-y-5 max-w-lg">
+            <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
+              Built for professionals
             </span>
-          ))}
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+              Designed for teams{" "}
+              <span className="text-primary">coordinating patient care.</span>
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+              Unlike public treatment directories, CenterLinked is built for behavioral health
+              professionals who need accurate placement information — not patients browsing online.
+            </p>
+            <p className="text-base text-foreground/90 font-medium leading-relaxed">
+              Spend less time searching. More time helping patients access care.
+            </p>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-3">
+            {audiences.map((a) => (
+              <div key={a.group} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-3">
+                  {a.group}
+                </p>
+                <ul className="space-y-2.5">
+                  {a.items.map((item) => (
+                    <li key={item} className="text-sm font-medium text-foreground/90 leading-snug">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

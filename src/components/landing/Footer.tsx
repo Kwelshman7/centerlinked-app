@@ -2,20 +2,16 @@ import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 
 const productLinks = [
-  { label: "Home", href: "/" },
   { label: "How It Works", href: "#how-it-works" },
+  { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Request Access", href: "/request-access", isRoute: true },
+  { label: "Create Your Profile", href: "/request-access", isRoute: true },
   { label: "Sign In", href: "/login", isRoute: true },
 ];
 
 const legalLinks = [
   { label: "Privacy Policy", href: "/privacy", isRoute: true },
   { label: "Terms of Service", href: "/terms", isRoute: true },
-  { label: "Acceptable Use", href: "#" },
-  { label: "Cookie Policy", href: "#" },
-  { label: "Privacy Rights", href: "#" },
-  { label: "Legal Notice", href: "#" },
 ];
 
 export function Footer() {
@@ -26,7 +22,8 @@ export function Footer() {
           <div className="sm:col-span-2 lg:col-span-2">
             <Logo to="/" size="lg" />
             <p className="mt-3 text-sm text-muted-foreground max-w-md leading-relaxed">
-              The private professional network for behavioral-health and addiction-treatment organizations.
+              The professional referral network for behavioral health and addiction treatment
+              organizations.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
               Questions:{" "}
@@ -60,15 +57,9 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               {legalLinks.map((link) => (
                 <li key={link.label}>
-                  {"isRoute" in link && link.isRoute ? (
-                    <Link to={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-                      {link.label}
-                    </Link>
-                  ) : (
-                    <a href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-                      {link.label}
-                    </a>
-                  )}
+                  <Link to={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>

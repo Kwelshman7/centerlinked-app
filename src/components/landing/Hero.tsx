@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, CheckCircle2, Share2, MapPin, Phone, Mail, Globe, Shield, Users, FileText, Bell, ChevronRight } from "lucide-react";
+import { ArrowRight, Share2, MapPin, Phone, Mail, Globe, Shield, Users, FileText, Bell, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PhoneFrame } from "./PhoneFrame";
+import { OrgLogoCarousel } from "./OrgLogoCarousel";
 import northbendCover from "@/assets/northbend-cover.jpg";
 import logoNorthbend from "@/assets/logo-northbend.png";
 import logoRidgeview from "@/assets/logo-ridgeview.png";
@@ -10,65 +11,50 @@ import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-hero-gradient py-10 sm:py-14 lg:pt-6 lg:pb-12">
-      <div className="container relative z-10">
-        <div className="grid gap-8 sm:gap-10 lg:grid-cols-2 lg:gap-12 items-center">
-          <div className="space-y-5 sm:space-y-6">
-            <div className="space-y-4 animate-fade-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
-                <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                Built for behavioral health BD teams
-              </div>
-              <h1 className="font-heading text-[2rem] font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] leading-[1.05]">
-                Make your organization{" "}
-                <span className="text-primary">easier to refer to.</span>
-              </h1>
-              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
-                CenterLinked is a live referral profile you share once — levels of care, verified
-                insurance, locations, and the right BD contact. Update it when something changes.
-                Partners always see the current version. No more stale PDFs.
+    <section className="relative flex flex-col overflow-hidden bg-hero-gradient min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-4rem)] lg:min-h-0 pt-10 sm:pt-14 lg:pt-10">
+      <div className="container relative z-10 flex-1 flex flex-col justify-center pb-10 sm:pb-12 lg:pb-14">
+        <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:items-center">
+          <div className="space-y-7 max-w-xl">
+            <div className="space-y-5 animate-fade-up">
+              <p className="font-heading text-sm sm:text-base font-bold tracking-[0.08em] uppercase text-primary">
+                CenterLinked
               </p>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-xl pt-1">
-                {[
-                  "Levels of care & locations",
-                  "Verified in-network payers",
-                  "BD & admissions contacts",
-                  "How to refer instructions",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm text-foreground/85">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
+              <h1 className="font-heading text-[2.15rem] font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] leading-[1.08]">
+                The professional referral network for{" "}
+                <span className="text-primary">behavioral healthcare</span>
+              </h1>
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+                One verified organization profile your referral partners can trust — always current,
+                always shareable, built for how BD and admissions actually work.
+              </p>
             </div>
 
-            <div className="animate-fade-up space-y-3" style={{ animationDelay: "100ms" }}>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto">
-                  <Link to="/request-access">
-                    Create Your Free Profile
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </Button>
-                <Button asChild variant="hero-outline" size="xl" className="w-full sm:w-auto">
-                  <a href="#how-it-works">
-                    See How It Works
-                  </a>
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Free during early access · No credit card · Approved organizations only
-              </p>
+            <div className="animate-fade-up flex flex-col sm:flex-row gap-3" style={{ animationDelay: "100ms" }}>
+              <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto">
+                <Link to="/request-access">
+                  Create Your Organization Profile
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </Button>
+              <Button asChild variant="hero-outline" size="xl" className="w-full sm:w-auto">
+                <a href="#how-it-works">See how it works</a>
+              </Button>
             </div>
+
+            <p
+              className="animate-fade-up text-sm text-muted-foreground"
+              style={{ animationDelay: "180ms" }}
+            >
+              Free to start · Monthly verification · Built for treatment organizations
+            </p>
           </div>
 
-          <div className="animate-slide-in-right relative flex justify-center">
+          <div className="animate-slide-in-right relative flex justify-center lg:justify-end">
             <div className="relative">
               <div className="absolute -inset-16 bg-primary/8 blur-[80px] rounded-full opacity-70" />
               <div className="absolute -inset-8 bg-primary/10 blur-3xl rounded-full opacity-60" />
-              <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[70%] h-24 bg-foreground/5 blur-2xl rounded-full" />
-              <PhoneFrame className="w-[260px] sm:w-[290px] lg:w-[300px]">
+              <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-[70%] h-20 bg-foreground/5 blur-2xl rounded-full" />
+              <PhoneFrame className="w-[260px] sm:w-[290px] lg:w-[300px] animate-float">
                 <OrgDashboardContent />
               </PhoneFrame>
             </div>
@@ -76,9 +62,11 @@ export function Hero() {
         </div>
       </div>
 
+      {/* Desktop: under hero content, still above the fold. Mobile: pinned to bottom of first viewport. */}
+      <OrgLogoCarousel className="relative z-10 mt-auto" />
+
       <div className="absolute top-0 right-0 -z-10 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
       <div className="absolute bottom-0 left-0 -z-10 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute top-1/4 right-1/4 -z-10 h-48 w-48 rounded-full bg-accent/30 blur-3xl" />
     </section>
   );
 }
@@ -201,15 +189,6 @@ function OrgDashboardContent() {
                 <Mail className="h-2.5 w-2.5 text-primary" />
               </button>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="px-4 mt-4">
-        <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">Gallery</p>
-        <div className="grid grid-cols-3 gap-1">
-          {["from-emerald-300 to-teal-500","from-blue-300 to-indigo-500","from-amber-300 to-orange-500","from-rose-300 to-pink-500","from-violet-300 to-purple-500","from-cyan-300 to-sky-500"].map((g,i) => (
-            <div key={i} className={`aspect-square rounded-md bg-gradient-to-br ${g}`} />
           ))}
         </div>
       </div>

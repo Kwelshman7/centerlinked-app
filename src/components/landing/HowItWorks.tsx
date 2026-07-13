@@ -1,125 +1,65 @@
-import {
-  ShieldCheck,
-  Users,
-  Link2,
-  MapPin,
-  ClipboardList,
-  Building2,
-  ArrowRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Building2, BadgeCheck, Search } from "lucide-react";
 
-const profilePieces = [
+const steps = [
   {
     icon: Building2,
-    title: "Who you are & where you treat",
-    description: "Organization story, facilities, and locations partners can scan in seconds.",
+    title: "Build your profile",
+    body: "Showcase facilities, programs, insurance networks, specialty services, and the contacts referral partners should reach.",
   },
   {
-    icon: MapPin,
-    title: "Levels of care",
-    description: "Detox through outpatient — clear enough for a clinical referral decision.",
+    icon: BadgeCheck,
+    title: "Keep it verified",
+    body: "Each month, confirm your information is current. If nothing changed, it takes one click. If something did, update it in minutes.",
   },
   {
-    icon: ShieldCheck,
-    title: "Verified insurance",
-    description: "Named in-network payers, kept current — not \"we take most insurance.\"",
-  },
-  {
-    icon: Users,
-    title: "The right BD contact",
-    description: "Name, phone, and email. When a rep turns over, update once for everyone.",
-  },
-  {
-    icon: ClipboardList,
-    title: "How to refer",
-    description: "Referral phone, email, and next steps so partners know exactly what to do.",
-  },
-  {
-    icon: Link2,
-    title: "One shareable link",
-    description: "Send after meetings, conferences, or program updates. No attachments. No re-sends.",
-  },
-];
-
-const moments = [
-  {
-    title: "After a partner meeting",
-    body: "Text or email your CenterLinked link instead of a PDF. It stays current long after the handshake.",
-  },
-  {
-    title: "At a conference",
-    body: "Share one URL on a badge, QR, or follow-up. Every conversation points to the same live profile.",
-  },
-  {
-    title: "When something changes",
-    body: "New program, new payer, new BD rep — update the profile once. Every partner sees it immediately.",
-  },
-  {
-    title: "When a partner asks \"do you take…?\"",
-    body: "Send the link. They verify insurance and LOC themselves — without phone tag.",
+    icon: Search,
+    title: "Get discovered",
+    body: "Professionals search by the criteria that matter — level of care, location, and insurance — and find organizations they can trust.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-14 sm:py-16 lg:py-24 bg-background">
+    <section id="how-it-works" className="py-16 sm:py-20 lg:py-28 bg-background">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center px-1">
-          <span className="inline-block px-4 py-1.5 mb-4 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
-            How It Works
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
+            How it works
           </span>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            One link your partners can{" "}
-            <span className="text-primary">actually use.</span>
+          <h2 className="mt-3 font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+            Build. Verify.{" "}
+            <span className="text-primary">Get discovered.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Build your organization's live referral profile once. Share it everywhere.
-            When you update insurance, contacts, or programs, every shared link stays current —
-            no mass emails, no new PDFs.
+            Three steps from outdated materials to a live profile your partners can rely on.
           </p>
         </div>
 
-        <div className="mt-10 sm:mt-12 grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
-          {profilePieces.map((b) => (
-            <div
-              key={b.title}
-              className="group p-5 sm:p-6 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                <b.icon className="h-5 w-5" />
+        <div className="mt-12 sm:mt-14 grid gap-6 md:grid-cols-3 md:gap-5 lg:gap-8 max-w-5xl mx-auto">
+          {steps.map((step, i) => (
+            <div key={step.title} className="relative flex flex-col">
+              {i < steps.length - 1 && (
+                <div
+                  className="hidden md:block absolute top-8 left-[calc(50%+2.5rem)] right-[-1.25rem] h-px bg-border"
+                  aria-hidden
+                />
+              )}
+              <div className="flex flex-col h-full rounded-2xl border border-border bg-card p-6 sm:p-7 shadow-sm">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <step.icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                    Step {i + 1}
+                  </span>
+                </div>
+                <h3 className="font-heading text-lg font-bold text-foreground">{step.title}</h3>
+                <p className="mt-2.5 text-sm sm:text-[15px] text-muted-foreground leading-relaxed flex-1">
+                  {step.body}
+                </p>
               </div>
-              <h3 className="font-heading text-base font-bold text-foreground">{b.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{b.description}</p>
             </div>
           ))}
-        </div>
-
-        <div className="mt-14 sm:mt-16 mx-auto max-w-5xl">
-          <h3 className="font-heading text-xl sm:text-2xl font-bold text-foreground text-center tracking-tight">
-            Use it wherever referrals start
-          </h3>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {moments.map((m) => (
-              <div
-                key={m.title}
-                className="p-4 sm:p-5 rounded-xl border border-border bg-secondary/40"
-              >
-                <p className="font-semibold text-sm text-foreground">{m.title}</p>
-                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{m.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-10 sm:mt-12 text-center">
-          <Button asChild variant="hero" size="lg" className="group">
-            <Link to="/request-access">
-              Create Your Free Profile
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </Button>
         </div>
       </div>
     </section>

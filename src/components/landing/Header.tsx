@@ -2,12 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { EarlyAccessDialog } from "@/components/EarlyAccessDialog";
 import { Logo } from "@/components/Logo";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
   { label: "How It Works", href: "#how-it-works" },
+  { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ];
@@ -21,9 +20,9 @@ export function Header() {
         <Logo to="/" size="md" />
 
         <nav className="hidden md:flex items-center gap-6 lg:gap-8" aria-label="Main navigation">
-          {navLinks.map((link, idx) => (
+          {navLinks.map((link) => (
             <a
-              key={idx}
+              key={link.href}
               href={link.href}
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 whitespace-nowrap"
             >
@@ -34,13 +33,11 @@ export function Header() {
 
         <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
           <Button variant="ghost" size="sm" className="hover:bg-accent" asChild>
-            <Link to="/login">Login</Link>
+            <Link to="/login">Sign in</Link>
           </Button>
-          <EarlyAccessDialog>
-            <Button variant="default" size="sm" className="shadow-sm whitespace-nowrap">
-              Create Your Free Profile
-            </Button>
-          </EarlyAccessDialog>
+          <Button variant="default" size="sm" className="shadow-sm whitespace-nowrap" asChild>
+            <Link to="/request-access">Create Your Profile</Link>
+          </Button>
         </div>
 
         <button
@@ -57,9 +54,9 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background p-4 animate-fade-in max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
           <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
-            {navLinks.map((link, idx) => (
+            {navLinks.map((link) => (
               <a
-                key={idx}
+                key={link.href}
                 href={link.href}
                 className="text-sm font-medium text-muted-foreground hover:text-primary py-3 px-2 transition-colors rounded-lg hover:bg-accent/50"
                 onClick={() => setMobileMenuOpen(false)}
@@ -69,13 +66,13 @@ export function Header() {
             ))}
             <div className="pt-4 mt-2 border-t border-border flex flex-col gap-2">
               <Button variant="ghost" size="sm" className="w-full justify-center" asChild>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
               </Button>
-              <EarlyAccessDialog>
-                <Button variant="default" size="sm" className="w-full justify-center">
-                  Create Your Free Profile
-                </Button>
-              </EarlyAccessDialog>
+              <Button variant="default" size="sm" className="w-full justify-center" asChild>
+                <Link to="/request-access" onClick={() => setMobileMenuOpen(false)}>
+                  Create Your Profile
+                </Link>
+              </Button>
             </div>
           </nav>
         </div>

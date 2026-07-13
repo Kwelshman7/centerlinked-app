@@ -1,107 +1,87 @@
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, Sparkles } from "lucide-react";
-import { EarlyAccessDialog } from "@/components/EarlyAccessDialog";
+import { Check, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const plans = [
   {
-    name: "Early Access",
+    name: "Get started",
     price: "Free",
     period: "",
-    priceNote: "For approved treatment organizations joining now.",
+    priceNote: "For approved treatment organizations creating a profile.",
     description:
-      "Get your full live referral profile live while we grow the network — no card, no seat limits.",
+      "Build your live referral profile, invite your team, and start sharing a link partners can trust.",
     features: [
       "Full organization profile — every section",
-      "Shareable profile link for your entire BD team",
+      "Shareable profile link for your BD team",
       "Verified listing in the CenterLinked network",
-      "Early access to every new feature as it launches",
+      "Organization dashboard for ongoing updates",
       "No credit card required",
     ],
-    cta: "Create Your Free Profile",
+    cta: "Create Your Organization Profile",
     featured: true,
-    badge: "Current Offer",
   },
   {
-    name: "Organization Plan",
+    name: "Organization plan",
     price: "$99",
     period: "/month",
-    priceNote: "Starts only after early access ends.",
+    priceNote: "Simple flat rate for the whole organization.",
     description:
-      "One flat rate for the whole organization — BD, admissions, and leadership included.",
+      "One rate for BD, admissions, and leadership — no per-seat fees as your team grows.",
     features: [
       "Organization-controlled live profile",
-      "Full team access — BD reps, admissions, leadership",
+      "Full team access — BD, admissions, leadership",
       "Network search visibility",
       "Ongoing dashboard updates",
       "No per-seat fees — ever",
     ],
-    cta: "Create Your Free Profile",
+    cta: "Create Your Organization Profile",
     featured: false,
-    badge: null,
   },
 ];
 
 export function Pricing() {
   return (
-    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/30">
+    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/40">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center px-1">
-          <span className="inline-block px-4 py-1.5 mb-5 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
             Pricing
           </span>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+          <h2 className="mt-3 font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
             Straightforward pricing.{" "}
             <span className="text-primary">No surprises.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Start free during early access. When early access ends, approved organizations move to
-            a simple $99/month plan — whole team included, no per-seat fees.
+            Create your organization profile free. When you're ready for the full organization plan,
+            it's a simple $99/month — whole team included.
           </p>
         </div>
 
-        <div className="mt-12 sm:mt-16 grid gap-6 sm:gap-8 md:grid-cols-2 max-w-4xl mx-auto items-start">
-          {plans.map((plan, idx) => (
+        <div className="mt-12 sm:mt-14 grid gap-6 sm:gap-8 md:grid-cols-2 max-w-4xl mx-auto items-stretch">
+          {plans.map((plan) => (
             <div
-              key={idx}
+              key={plan.name}
               className={`relative p-6 sm:p-8 rounded-2xl border transition-all duration-300 flex flex-col h-full ${
                 plan.featured
-                  ? "bg-card border-primary/50 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
-                  : "bg-card border-border shadow-sm hover:shadow-md hover:border-primary/30"
+                  ? "bg-card border-primary/40 shadow-lg shadow-primary/10 ring-1 ring-primary/15"
+                  : "bg-card border-border shadow-sm hover:shadow-md hover:border-primary/25"
               }`}
             >
-              {plan.featured && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-semibold shadow-md">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {plan.badge}
-                  </span>
-                </div>
-              )}
-
-              <div className={plan.featured ? "pt-2" : ""}>
-                <h3 className="font-heading text-xl font-bold text-foreground">
-                  {plan.name}
-                </h3>
-
+              <div>
+                <h3 className="font-heading text-xl font-bold text-foreground">{plan.name}</h3>
                 <div className="mt-5 flex items-baseline gap-1 flex-wrap">
                   <span className="text-4xl font-bold text-foreground">{plan.price}</span>
                   {plan.period && (
                     <span className="text-sm text-muted-foreground">{plan.period}</span>
                   )}
                 </div>
-                {plan.priceNote && (
-                  <p className="mt-1 text-sm text-muted-foreground">{plan.priceNote}</p>
-                )}
-                {plan.description && (
-                  <p className="mt-3 text-sm text-foreground/80 leading-relaxed">
-                    {plan.description}
-                  </p>
-                )}
+                <p className="mt-1 text-sm text-muted-foreground">{plan.priceNote}</p>
+                <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{plan.description}</p>
               </div>
 
               <ul className="mt-6 space-y-2.5 flex-1">
-                {plan.features.map((feature, featureIdx) => (
-                  <li key={featureIdx} className="flex items-start gap-2.5">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5">
                     <div className="flex h-5 w-5 mt-0.5 shrink-0 items-center justify-center rounded-full bg-success/20">
                       <Check className="h-3 w-3 text-success" />
                     </div>
@@ -110,21 +90,22 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <EarlyAccessDialog>
-                <Button
-                  variant={plan.featured ? "hero" : "outline"}
-                  size="lg"
-                  className="mt-7 w-full group"
-                >
+              <Button
+                asChild
+                variant={plan.featured ? "hero" : "outline"}
+                size="lg"
+                className="mt-7 w-full group"
+              >
+                <Link to="/request-access">
                   {plan.cta}
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                </Button>
-              </EarlyAccessDialog>
+                </Link>
+              </Button>
             </div>
           ))}
         </div>
 
-        <p className="mt-4 sm:mt-6 text-center text-xs text-muted-foreground max-w-2xl mx-auto px-2">
+        <p className="mt-5 text-center text-xs text-muted-foreground max-w-2xl mx-auto">
           BD reps and admissions team members are included under your organization account.
         </p>
       </div>

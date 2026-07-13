@@ -102,24 +102,27 @@ function FacilityProfileContent() {
 const views = [
   {
     label: "What your partners see",
+    title: "A profile ready for clinical decisions",
     caption:
-      "A clean, shareable profile with levels of care, verified insurance, BD contact, and how to refer — ready for a clinical decision.",
+      "Levels of care, verified insurance, BD contact, and clear referral instructions — everything a partner needs before they pick up the phone.",
     content: <FacilityProfileContent />,
-    center: false,
+    reverse: false,
   },
   {
     label: "Your team's dashboard",
+    title: "Keep every detail current from one place",
     caption:
-      "Manage facilities, keep the profile current, and see engagement so your BD team knows what's working.",
+      "Manage facilities, update the live profile, and understand engagement so your BD team knows which conversations are working.",
     content: <DashboardPreviewContent />,
-    center: true,
+    reverse: true,
   },
   {
     label: "How partners find you",
+    title: "Search that matches real placement criteria",
     caption:
-      "Search by level of care, location, and insurance. Verified profiles surface first when someone's placing a client.",
+      "Professionals filter by level of care, location, and insurance. Verified profiles surface when someone is ready to place a patient.",
     content: <SearchResultsPreviewContent />,
-    center: false,
+    reverse: false,
   },
 ];
 
@@ -127,35 +130,39 @@ export function ProductShowcase() {
   return (
     <section className="py-16 sm:py-20 lg:py-28 bg-background overflow-hidden">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center mb-12 sm:mb-16 px-1">
-          <span className="inline-block px-4 py-1.5 mb-5 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
+        <div className="mx-auto max-w-2xl text-center mb-14 sm:mb-16">
+          <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
             See it in action
           </span>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Three views.{" "}
-            <span className="text-primary">One live profile.</span>
+          <h2 className="mt-3 font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+            One live profile.{" "}
+            <span className="text-primary">Three perspectives.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Here's what CenterLinked looks like for your referral partners, your team,
-            and the people searching for a placement.
+            Understand how CenterLinked works for your referral partners, your internal team,
+            and professionals searching for a placement.
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center md:items-end justify-center gap-10 lg:gap-12 max-w-5xl mx-auto">
+        <div className="space-y-16 sm:space-y-20 lg:space-y-24 max-w-5xl mx-auto">
           {views.map((v) => (
             <div
               key={v.label}
-              className={`flex flex-col items-center gap-4 sm:gap-5 w-full max-w-[280px] mx-auto md:max-w-none md:w-auto md:mx-0 ${
-                v.center ? "md:relative md:z-10" : "md:translate-y-8 md:opacity-95"
+              className={`grid gap-8 lg:gap-14 lg:items-center ${
+                v.reverse ? "lg:grid-cols-[1fr_0.9fr]" : "lg:grid-cols-[0.9fr_1fr]"
               }`}
             >
-              <div className={`w-full flex justify-center ${v.center ? "md:scale-110 origin-bottom" : ""}`}>
-                <PhoneFrame className="mx-auto">{v.content}</PhoneFrame>
+              <div className={`flex justify-center ${v.reverse ? "lg:order-2" : ""}`}>
+                <PhoneFrame className="w-[240px] sm:w-[260px]">{v.content}</PhoneFrame>
               </div>
-
-              <div className="text-center max-w-[260px] px-2">
-                <p className="font-semibold text-foreground text-sm">{v.label}</p>
-                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{v.caption}</p>
+              <div className={`max-w-md mx-auto lg:mx-0 space-y-3 ${v.reverse ? "lg:order-1" : ""}`}>
+                <p className="text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
+                  {v.label}
+                </p>
+                <h3 className="font-heading text-2xl sm:text-3xl font-bold text-foreground leading-tight">
+                  {v.title}
+                </h3>
+                <p className="text-base text-muted-foreground leading-relaxed">{v.caption}</p>
               </div>
             </div>
           ))}

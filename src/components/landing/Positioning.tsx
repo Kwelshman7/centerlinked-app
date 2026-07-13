@@ -1,79 +1,83 @@
-import { Globe2, Database, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
+const outcomes = [
+  "One live profile replaces every PDF and brochure",
+  "Partners always see current programs, payers, and contacts",
+  "Your BD team shares one link — not another attachment",
+];
+
 export function Positioning() {
   return (
-    <section className="py-14 sm:py-16 lg:py-24 bg-secondary/30">
+    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/40">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center px-1">
-          <span className="inline-block px-4 py-1.5 mb-4 text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary bg-primary/10 rounded-full border border-primary/15">
-            Not a Directory. Not a CRM.
-          </span>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            It's the missing piece between{" "}
-            <span className="text-primary">finding you</span> and{" "}
-            <span className="text-primary">referring to you.</span>
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Public directories help families search online. CRMs help your team track outreach.
-            Neither gives professional referral partners a live, verified profile they can trust
-            when a client needs a placement today.
-          </p>
-        </div>
-
-        <div className="mt-10 sm:mt-12 grid gap-3 sm:gap-4 md:grid-cols-3 max-w-5xl mx-auto">
-          <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-sm">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground mb-3">
-              <Globe2 className="h-5 w-5" />
-            </div>
-            <h3 className="font-heading text-base font-bold text-foreground">Public directories</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-              Built for consumer search — not for a discharge planner verifying insurance and
-              calling the right BD rep in under a minute.
-            </p>
-          </div>
-
-          <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-sm">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground mb-3">
-              <Database className="h-5 w-5" />
-            </div>
-            <h3 className="font-heading text-base font-bold text-foreground">Internal CRMs</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-              Essential for your pipeline. They don't help partners remember your programs,
-              payers, or who to call when you're not in the room.
-            </p>
-          </div>
-
-          <div className="relative p-5 sm:p-6 rounded-2xl border-2 border-primary/40 bg-card shadow-md">
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wide whitespace-nowrap">
-              Built for this
+        <div className="grid gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:items-center">
+          <div className="space-y-6 max-w-xl">
+            <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
+              The solution
             </span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-3 mt-1">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <h3 className="font-heading text-base font-bold text-foreground">Live referral profile</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-              One shareable link for clinicians and discharge planners — always current, always
-              actionable, owned by your organization.
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+              One organization profile.{" "}
+              <span className="text-primary">Always current.</span>
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+              CenterLinked replaces static marketing materials with a live organization profile that
+              stays accurate year-round — so referral professionals can identify the right program
+              and reach the right person with confidence.
             </p>
+
+            <ul className="space-y-3 pt-1">
+              {outcomes.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm sm:text-[15px] text-foreground/90">
+                  <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                  <span className="leading-snug">{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="pt-2">
+              <Button asChild variant="hero" size="lg" className="group">
+                <Link to="/request-access">
+                  Create Your Organization Profile
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <blockquote className="mt-10 sm:mt-12 mx-auto max-w-2xl text-center px-4">
-          <p className="font-heading text-lg sm:text-xl font-semibold text-foreground leading-snug tracking-tight">
-            Your CRM helps you remember your partners.{" "}
-            <span className="text-primary">CenterLinked helps your partners remember you.</span>
-          </p>
-        </blockquote>
-
-        <div className="mt-10 text-center">
-          <Button asChild variant="hero" size="lg" className="group">
-            <Link to="/request-access">
-              Create Your Free Profile
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </Button>
+          <div className="relative rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/40" />
+            <div className="relative space-y-6">
+              <p className="text-sm font-bold uppercase tracking-wider text-primary">
+                What changes for your team
+              </p>
+              <div className="space-y-5">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-border/80 bg-background/80 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                      Before
+                    </p>
+                    <p className="text-sm text-foreground/80 leading-relaxed">
+                      Reprint brochures. Resend PDFs. Hope partners saved the latest version.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">
+                      With CenterLinked
+                    </p>
+                    <p className="text-sm text-foreground/90 leading-relaxed">
+                      Update once in your dashboard. Every shared link stays current automatically.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed border-t border-border pt-5">
+                  Every profile includes the details professionals need to place patients
+                  appropriately — levels of care, insurance, facilities, and direct referral contacts.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

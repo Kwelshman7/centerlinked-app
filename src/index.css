@@ -175,6 +175,10 @@
     animation: ticker 22s linear infinite;
   }
 
+  .animate-logo-marquee {
+    animation: logoMarquee 45s linear infinite;
+  }
+
   .animate-shimmer {
     background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.18), transparent);
     background-size: 200% 100%;
@@ -244,6 +248,11 @@
 @keyframes ticker {
   0% { transform: translateY(0); }
   100% { transform: translateY(-50%); }
+}
+
+@keyframes logoMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 @keyframes shimmer {

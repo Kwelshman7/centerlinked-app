@@ -4,15 +4,22 @@ import { TrustStrip } from "@/components/landing/TrustStrip";
 import { Problem } from "@/components/landing/Problem";
 import { Positioning } from "@/components/landing/Positioning";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { OrgDashboardSection } from "@/components/landing/OrgDashboardSection";
+import { ProfileInventory } from "@/components/landing/ProfileInventory";
 import { ProductShowcase } from "@/components/landing/ProductShowcase";
+import { OrgDashboardSection } from "@/components/landing/OrgDashboardSection";
 import { AlwaysAccurate } from "@/components/landing/AlwaysAccurate";
+import { VerifiedMonthly } from "@/components/landing/VerifiedMonthly";
 import { WhoFor } from "@/components/landing/WhoFor";
 import { Pricing } from "@/components/landing/Pricing";
 import { FAQ } from "@/components/landing/FAQ";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 
+/**
+ * Landing journey:
+ * Hook → trust → problem → solution → how → what's included → product proof →
+ * how you manage it → why join → accuracy → who it's for → pricing → FAQ → convert
+ */
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -23,11 +30,11 @@ const Index = () => {
         <Problem />
         <Positioning />
         <HowItWorks />
-        <OrgDashboardSection />
+        <ProfileInventory />
         <ProductShowcase />
-        <section id="features">
-          <AlwaysAccurate />
-        </section>
+        <OrgDashboardSection />
+        <AlwaysAccurate />
+        <VerifiedMonthly />
         <WhoFor />
         <section id="pricing">
           <Pricing />
