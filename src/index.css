@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,10 +15,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 15%;
 
-    --primary: 197 65% 42%;
+    --primary: 191 78% 36%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 187 55% 50%;
+    --primary-glow: 187 72% 48%;
     --brand-purple: 262 45% 42%;
+    --display-accent: 187 72% 42%;
 
     --secondary: 200 25% 96%;
     --secondary-foreground: 200 30% 22%;
@@ -34,7 +35,7 @@
 
     --border: 200 18% 90%;
     --input: 200 18% 90%;
-    --ring: 197 65% 42%;
+    --ring: 191 78% 36%;
 
     --radius: 0.75rem;
 
@@ -44,15 +45,17 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     
-    --gradient-hero: linear-gradient(135deg, hsl(197 70% 98%) 0%, hsl(187 55% 96%) 50%, hsl(262 40% 97%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(187 55% 48%) 0%, hsl(197 65% 42%) 50%, hsl(262 45% 42%) 100%);
+    --gradient-hero: linear-gradient(165deg, hsl(0 0% 100%) 0%, hsl(191 60% 98%) 45%, hsl(187 50% 97%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(191 78% 36%) 0%, hsl(187 72% 48%) 50%, hsl(186 85% 55%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(191 78% 36%) 0%, hsl(187 72% 48%) 50%, hsl(186 85% 55%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(200 20% 98%) 100%);
+    --gradient-bar: linear-gradient(90deg, hsl(191 78% 42%) 0%, hsl(187 72% 52%) 55%, hsl(200 70% 60%) 100%);
     
     --shadow-sm: 0 1px 2px 0 hsl(200 30% 15% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(200 30% 15% / 0.1), 0 2px 4px -2px hsl(200 30% 15% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(200 30% 15% / 0.1), 0 4px 6px -4px hsl(200 30% 15% / 0.1);
     --shadow-xl: 0 20px 25px -5px hsl(200 30% 15% / 0.1), 0 8px 10px -6px hsl(200 30% 15% / 0.1);
-    --shadow-glow: 0 0 40px hsl(197 65% 45% / 0.18);
+    --shadow-glow: 0 0 48px hsl(187 72% 48% / 0.22);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -74,10 +77,11 @@
     --popover: 220 20% 12%;
     --popover-foreground: 220 14% 96%;
 
-    --primary: 197 70% 52%;
+    --primary: 191 72% 48%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 187 60% 55%;
+    --primary-glow: 187 70% 55%;
     --brand-purple: 262 50% 55%;
+    --display-accent: 187 70% 55%;
 
     --secondary: 200 20% 18%;
     --secondary-foreground: 200 14% 96%;
@@ -95,9 +99,11 @@
     --input: 200 20% 20%;
     --ring: 197 70% 52%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(220 20% 8%) 0%, hsl(197 50% 12%) 50%, hsl(262 40% 12%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(187 60% 50%) 0%, hsl(197 70% 48%) 50%, hsl(262 50% 50%) 100%);
+    --gradient-hero: linear-gradient(165deg, hsl(220 20% 8%) 0%, hsl(191 40% 12%) 50%, hsl(187 35% 10%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(191 72% 42%) 0%, hsl(187 70% 50%) 50%, hsl(186 80% 55%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(191 72% 42%) 0%, hsl(187 70% 50%) 50%, hsl(186 80% 55%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(220 20% 12%) 0%, hsl(220 20% 10%) 100%);
+    --gradient-bar: linear-gradient(90deg, hsl(191 72% 42%) 0%, hsl(187 70% 52%) 55%, hsl(200 65% 55%) 100%);
   }
 }
 
@@ -147,8 +153,28 @@
     background: var(--gradient-card);
   }
 
+  .bg-cta-gradient {
+    background-image: var(--gradient-cta);
+  }
+
+  .bg-bar-gradient {
+    background-image: var(--gradient-bar);
+  }
+
+  .text-display-accent {
+    color: hsl(var(--display-accent));
+  }
+
   .shadow-glow {
     box-shadow: var(--shadow-glow);
+  }
+
+  .landing-glow {
+    background: radial-gradient(ellipse 70% 55% at 50% 0%, hsl(187 72% 48% / 0.12), transparent 70%);
+  }
+
+  .landing-glow-center {
+    background: radial-gradient(ellipse 60% 50% at 50% 40%, hsl(187 72% 48% / 0.1), transparent 70%);
   }
 
   .animate-fade-up {

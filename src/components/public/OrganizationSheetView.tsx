@@ -7,7 +7,6 @@ import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { OrgFooter } from "@/components/public/OrgFooter";
 import { MobileContactBar, mobileContactBarPadding } from "@/components/public/MobileContactBar";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
-import { ContractRow } from "@/lib/derive-insurance";
 import { resolveStateCode } from "@/lib/us-states";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +37,6 @@ export interface OrgSheetData {
 interface Props {
   org: OrgSheetData;
   facilities: ShowcaseFacility[];
-  contracts: ContractRow[];
   heroContact: HeroContact | null;
   brand: string;
   facilityStates: string[];
@@ -49,7 +47,6 @@ interface Props {
 export function OrganizationSheetView({
   org,
   facilities,
-  contracts,
   heroContact,
   brand,
   facilityStates,
@@ -214,7 +211,7 @@ export function OrganizationSheetView({
                 : "No facilities in this state."}
             </div>
           ) : (
-            <OrgFacilityRail facilities={filteredFacilities} contracts={contracts} orgSlug={org.slug} />
+            <OrgFacilityRail facilities={filteredFacilities} orgSlug={org.slug} />
           )}
         </div>
       </section>

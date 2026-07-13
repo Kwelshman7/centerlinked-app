@@ -15,7 +15,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
       <div className="container flex h-14 sm:h-16 items-center justify-between gap-4">
         <Logo to="/" size="md" />
 
@@ -24,7 +24,7 @@ export function Header() {
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 whitespace-nowrap"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 whitespace-nowrap"
             >
               {link.label}
             </a>
@@ -32,10 +32,15 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
-          <Button variant="ghost" size="sm" className="hover:bg-accent" asChild>
+          <Button variant="ghost" size="sm" className="hover:bg-accent rounded-full px-4" asChild>
             <Link to="/login">Sign in</Link>
           </Button>
-          <Button variant="default" size="sm" className="shadow-sm whitespace-nowrap" asChild>
+          <Button
+            variant="hero"
+            size="sm"
+            className="shadow-sm whitespace-nowrap h-9 px-5 text-sm"
+            asChild
+          >
             <Link to="/request-access">Create Your Profile</Link>
           </Button>
         </div>
@@ -65,10 +70,12 @@ export function Header() {
               </a>
             ))}
             <div className="pt-4 mt-2 border-t border-border flex flex-col gap-2">
-              <Button variant="ghost" size="sm" className="w-full justify-center" asChild>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
+              <Button variant="ghost" size="sm" className="w-full justify-center rounded-full" asChild>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                  Sign in
+                </Link>
               </Button>
-              <Button variant="default" size="sm" className="w-full justify-center" asChild>
+              <Button variant="hero" size="sm" className="w-full justify-center" asChild>
                 <Link to="/request-access" onClick={() => setMobileMenuOpen(false)}>
                   Create Your Profile
                 </Link>

@@ -1,83 +1,108 @@
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SectionBadge } from "./SectionBadge";
+import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
-const outcomes = [
-  "One live profile replaces every PDF and brochure",
-  "Partners always see current programs, payers, and contacts",
-  "Your BD team shares one link — not another attachment",
+const rows = [
+  {
+    area: "Program details",
+    today: "Buried in PDFs and slide decks",
+    withUs: "Live levels of care, always current",
+  },
+  {
+    area: "Insurance",
+    today: "Outdated payer lists partners can't trust",
+    withUs: "Verified in-network coverage, updated in minutes",
+  },
+  {
+    area: "BD & admissions contacts",
+    today: "Business cards and old email signatures",
+    withUs: "Direct phones and emails on one shareable profile",
+  },
+  {
+    area: "Facility locations",
+    today: "Scattered across websites and one-pagers",
+    withUs: "Every facility under one organization link",
+  },
+  {
+    area: "Partner confidence",
+    today: "“Is this still accurate?”",
+    withUs: "Verified monthly — accuracy is the product",
+  },
 ];
 
 export function Positioning() {
   return (
-    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/40">
-      <div className="container">
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:items-center">
-          <div className="space-y-6 max-w-xl">
-            <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
-              The solution
-            </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-              One organization profile.{" "}
-              <span className="text-primary">Always current.</span>
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              CenterLinked replaces static marketing materials with a live organization profile that
-              stays accurate year-round — so referral professionals can identify the right program
-              and reach the right person with confidence.
-            </p>
+    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-secondary/30">
+      <div className="pointer-events-none absolute inset-0 landing-glow-center opacity-70" aria-hidden />
+      <div className="container relative z-10">
+        <div className="mx-auto max-w-3xl text-center space-y-5 mb-12 sm:mb-14">
+          <SectionBadge icon={ArrowLeftRight}>The shift</SectionBadge>
+          <DisplayHeading as="h2" align="center">
+            Imagine referral partners who never ask{" "}
+            <DisplayAccent>whether your information is current.</DisplayAccent>
+          </DisplayHeading>
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            One organization profile replaces the stack of materials. Update once in your
+            dashboard — every shared link stays accurate automatically.
+          </p>
+        </div>
 
-            <ul className="space-y-3 pt-1">
-              {outcomes.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm sm:text-[15px] text-foreground/90">
-                  <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                  <span className="leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="pt-2">
-              <Button asChild variant="hero" size="lg" className="group">
-                <Link to="/request-access">
-                  Create Your Organization Profile
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </Button>
-            </div>
+        {/* Desktop table */}
+        <div className="hidden md:block max-w-4xl mx-auto rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="grid grid-cols-[1.1fr_1.2fr_auto_1.2fr] gap-4 px-6 py-4 bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span>Area</span>
+            <span>Today</span>
+            <span className="w-8" aria-hidden />
+            <span className="text-primary">With CenterLinked</span>
           </div>
+          {rows.map((row) => (
+            <div
+              key={row.area}
+              className="grid grid-cols-[1.1fr_1.2fr_auto_1.2fr] gap-4 px-6 py-5 border-b border-border last:border-b-0 items-center"
+            >
+              <p className="font-semibold text-foreground text-sm">{row.area}</p>
+              <p className="text-sm text-muted-foreground leading-snug">{row.today}</p>
+              <ArrowRight className="h-4 w-4 text-primary/50 justify-self-center" aria-hidden />
+              <p className="text-sm font-medium text-foreground leading-snug">{row.withUs}</p>
+            </div>
+          ))}
+        </div>
 
-          <div className="relative rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/40" />
-            <div className="relative space-y-6">
-              <p className="text-sm font-bold uppercase tracking-wider text-primary">
-                What changes for your team
+        {/* Mobile stacked cards */}
+        <div className="md:hidden space-y-3 max-w-lg mx-auto">
+          {rows.map((row) => (
+            <div
+              key={row.area}
+              className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3"
+            >
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
+                {row.area}
               </p>
-              <div className="space-y-5">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="rounded-xl border border-border/80 bg-background/80 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                      Before
-                    </p>
-                    <p className="text-sm text-foreground/80 leading-relaxed">
-                      Reprint brochures. Resend PDFs. Hope partners saved the latest version.
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">
-                      With CenterLinked
-                    </p>
-                    <p className="text-sm text-foreground/90 leading-relaxed">
-                      Update once in your dashboard. Every shared link stays current automatically.
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed border-t border-border pt-5">
-                  Every profile includes the details professionals need to place patients
-                  appropriately — levels of care, insurance, facilities, and direct referral contacts.
+              <div className="rounded-xl bg-muted/50 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                  Today
                 </p>
+                <p className="text-sm text-foreground/80 leading-snug">{row.today}</p>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
+                  With CenterLinked
+                </p>
+                <p className="text-sm text-foreground leading-snug">{row.withUs}</p>
               </div>
             </div>
-          </div>
+          ))}
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <Button asChild variant="hero" size="lg" className="group rounded-full">
+            <Link to="/request-access">
+              Create Your Organization Profile
+              <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

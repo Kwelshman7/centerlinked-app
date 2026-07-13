@@ -23,9 +23,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { shareOrCopyUrl } from "@/lib/share";
 import { orgPublicPath } from "@/lib/public-urls";
-import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
+import { resolveStateCode } from "@/lib/us-states";
 import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
+import { FacilityGrid, FacilityGridCard } from "@/components/FacilityGridCard";
 import { extractLogoColor } from "@/lib/extract-logo-color";
 import { cn } from "@/lib/utils";
 
@@ -496,62 +497,15 @@ export function OrgDashboard({
           <div className="text-center py-8 text-sm text-muted-foreground">No facilities in this state.</div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {pageFacilities.map((f) => {
-                const stateLabel = f.state
-                  ? stateDisplayName(resolveStateCode(f.state) ?? f.state)
-                  : null;
-                return (
-                  <Link
-                    key={f.id}
-                    to={facilityDetailHref(f.id)}
-                    className="group rounded-xl border border-border/60 bg-card overflow-hidden hover:border-primary/40 hover:shadow-md transition-all"
-                  >
-                    <div className="aspect-[16/10] bg-muted overflow-hidden">
-                      {f.image_urls?.[0] ? (
-                        <img
-                          src={f.image_urls[0]}
-                          alt={f.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform"
-                        />
-                      ) : (
-                        <div className="w-full h-full grid place-items-center">
-                          <Building2 className="h-7 w-7 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-2.5 space-y-1.5">
-                      <p className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                        {f.name}
-                      </p>
-                      {(f.city || stateLabel) && (
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {[f.city, stateLabel].filter(Boolean).join(", ")}
-                        </p>
-                      )}
-                      {(f.levels_of_care?.length ?? 0) > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {(f.levels_of_care ?? []).slice(0, 3).map((l) => (
-                            <span
-                              key={l}
-                              className="text-[9px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded"
-                            >
-                              {l}
-                            </span>
-                          ))}
-                          {(f.levels_of_care?.length ?? 0) > 3 && (
-                            <span className="text-[9px] text-muted-foreground font-semibold">
-                              +{(f.levels_of_care?.length ?? 0) - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            <FacilityGrid>
+              {pageFacilities.map((f) => (
+                <FacilityGridCard
+                  key={f.id}
+                  facility={f}
+                  href={facilityDetailHref(f.id)}
+                />
+              ))}
+            </FacilityGrid>
 
             {showFacilityPagination && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 mt-1 border-t border-border/60">

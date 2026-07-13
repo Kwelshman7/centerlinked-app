@@ -9,7 +9,6 @@ import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { OrgFooter } from "@/components/public/OrgFooter";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
-import { ContractRow } from "@/lib/derive-insurance";
 import { toast } from "sonner";
 import { shareOrCopyUrl } from "@/lib/share";
 
@@ -31,7 +30,6 @@ interface Props {
   };
   facilities: ShowcaseFacility[];
   filteredFacilities: ShowcaseFacility[];
-  contracts: ContractRow[];
   brand: string;
   heroContacts: HeroContact[];
   facilityStates: string[];
@@ -43,7 +41,6 @@ export function OrgMobileHero({
   org,
   facilities,
   filteredFacilities,
-  contracts,
   brand,
   heroContacts,
   facilityStates,
@@ -168,7 +165,6 @@ export function OrgMobileHero({
           ) : (
             <OrgFacilityRail
               facilities={filteredFacilities}
-              contracts={contracts}
               orgSlug={org.slug}
             />
           )}

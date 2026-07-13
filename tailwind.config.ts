@@ -81,6 +81,7 @@ export default {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         heading: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["Playfair Display", "Georgia", "serif"],
       },
       boxShadow: {
         sm: "var(--shadow-sm)",

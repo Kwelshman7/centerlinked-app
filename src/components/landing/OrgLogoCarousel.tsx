@@ -57,7 +57,7 @@ export function OrgLogoCarousel({ className }: OrgLogoCarouselProps) {
   return (
     <div
       className={cn(
-        "w-full border-t border-border/60 bg-background/70 backdrop-blur-sm",
+        "w-full border-t border-border/50 bg-background/60 backdrop-blur-sm",
         className,
       )}
       aria-label="Organization logos"

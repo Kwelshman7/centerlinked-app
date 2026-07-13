@@ -1,4 +1,6 @@
 import { Building2, Shield, Users, Award } from "lucide-react";
+import { SectionBadge } from "./SectionBadge";
+import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const groups = [
   {
@@ -49,20 +51,18 @@ const groups = [
 
 export function ProfileInventory() {
   return (
-    <section id="features" className="py-16 sm:py-20 lg:py-28 bg-secondary/40">
+    <section id="features" className="py-16 sm:py-20 lg:py-28 bg-secondary/30">
       <div className="container">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14 lg:items-start">
           <div className="lg:sticky lg:top-24 space-y-5 max-w-md">
-            <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
-              Organization profile
-            </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+            <SectionBadge>Organization profile</SectionBadge>
+            <DisplayHeading as="h2">
               Everything referral partners need{" "}
-              <span className="text-primary">in one place.</span>
-            </h2>
+              <DisplayAccent>in one place.</DisplayAccent>
+            </DisplayHeading>
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Stop asking partners to dig through emails and outdated materials. Give them a single,
-              professional source of truth they can open in seconds.
+              Stop asking partners to dig through emails and outdated materials. Give them a
+              single, professional source of truth they can open in seconds.
             </p>
           </div>
 
@@ -73,10 +73,10 @@ export function ProfileInventory() {
                 className="rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-sm"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <g.icon className="h-5 w-5" />
                   </div>
-                  <h3 className="font-heading text-base font-bold text-foreground">{g.title}</h3>
+                  <h3 className="font-display text-lg text-foreground leading-snug">{g.title}</h3>
                 </div>
                 <ul className="space-y-2">
                   {g.items.map((item) => (

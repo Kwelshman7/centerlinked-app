@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SectionBadge } from "./SectionBadge";
+import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const plans = [
   {
@@ -41,19 +43,17 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/40">
+    <section className="py-16 sm:py-20 lg:py-28 bg-secondary/30">
       <div className="container">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
-            Pricing
-          </span>
-          <h2 className="mt-3 font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+        <div className="mx-auto max-w-2xl text-center space-y-5">
+          <SectionBadge>Pricing</SectionBadge>
+          <DisplayHeading as="h2" align="center">
             Straightforward pricing.{" "}
-            <span className="text-primary">No surprises.</span>
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Create your organization profile free. When you're ready for the full organization plan,
-            it's a simple $99/month — whole team included.
+            <DisplayAccent>No surprises.</DisplayAccent>
+          </DisplayHeading>
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+            Create your organization profile free. When you&apos;re ready for the full
+            organization plan, it&apos;s a simple $99/month — whole team included.
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export function Pricing() {
               }`}
             >
               <div>
-                <h3 className="font-heading text-xl font-bold text-foreground">{plan.name}</h3>
+                <h3 className="font-display text-xl text-foreground">{plan.name}</h3>
                 <div className="mt-5 flex items-baseline gap-1 flex-wrap">
                   <span className="text-4xl font-bold text-foreground">{plan.price}</span>
                   {plan.period && (
@@ -92,13 +92,13 @@ export function Pricing() {
 
               <Button
                 asChild
-                variant={plan.featured ? "hero" : "outline"}
+                variant={plan.featured ? "hero" : "hero-outline"}
                 size="lg"
-                className="mt-7 w-full group"
+                className="mt-7 w-full group rounded-full"
               >
                 <Link to="/request-access">
                   {plan.cta}
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </Button>
             </div>

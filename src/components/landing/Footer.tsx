@@ -34,16 +34,22 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-foreground">Product</h4>
+            <h4 className="font-semibold text-foreground text-sm tracking-wide">Product</h4>
             <ul className="mt-4 space-y-3">
               {productLinks.map((link) => (
                 <li key={link.label}>
                   {"isRoute" in link && link.isRoute ? (
-                    <Link to={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                    <Link
+                      to={link.href}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+                    >
                       {link.label}
                     </Link>
                   ) : (
-                    <a href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                    <a
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+                    >
                       {link.label}
                     </a>
                   )}
@@ -53,11 +59,14 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-foreground">Legal</h4>
+            <h4 className="font-semibold text-foreground text-sm tracking-wide">Legal</h4>
             <ul className="mt-4 space-y-3">
               {legalLinks.map((link) => (
                 <li key={link.label}>
-                  <Link to={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                  <Link
+                    to={link.href}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+                  >
                     {link.label}
                   </Link>
                 </li>

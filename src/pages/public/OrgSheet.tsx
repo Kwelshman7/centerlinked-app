@@ -6,7 +6,6 @@ import { OrganizationSheetView, OrgSheetData } from "@/components/public/Organiz
 import { HeroContact } from "@/components/public/OrgHeroContactCard";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
-import { ContractRow } from "@/lib/derive-insurance";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
@@ -32,7 +31,6 @@ export default function OrgSheet() {
   const { slug } = useParams<{ slug: string }>();
   const [org, setOrg] = useState<OrgSheetData | null>(null);
   const [facilities, setFacilities] = useState<ShowcaseFacility[]>([]);
-  const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [heroContact, setHeroContact] = useState<HeroContact | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [selectedState, setSelectedState] = useState("all");
@@ -85,19 +83,6 @@ export default function OrgSheet() {
 
       const facs = ((f as unknown) as ShowcaseFacility[]) ?? [];
       setFacilities(facs);
-
-      if (facs.length > 0) {
-        const { data: c } = await supabase
-          .from("insurance_contracts")
-          .select("facility_id,payer_name,in_network")
-          .in(
-            "facility_id",
-            facs.map((x) => x.id),
-          );
-        setContracts(((c as unknown) as ContractRow[]) ?? []);
-      } else {
-        setContracts([]);
-      }
 
       if (orgData.bd_contact_name && (orgData.bd_contact_phone || orgData.bd_contact_email)) {
         setHeroContact({
@@ -158,7 +143,6 @@ export default function OrgSheet() {
         <OrganizationSheetView
           org={org}
           facilities={facilities}
-          contracts={contracts}
           heroContact={heroContact}
           brand={brand}
           facilityStates={facilityStates}

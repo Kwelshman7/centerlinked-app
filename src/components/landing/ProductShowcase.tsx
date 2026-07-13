@@ -8,6 +8,8 @@ import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
 import { PhoneFrame } from "./PhoneFrame";
 import { DashboardPreviewContent } from "./DashboardPreview";
 import { SearchResultsPreviewContent } from "./SearchResultsPreview";
+import { SectionBadge } from "./SectionBadge";
+import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 function FacilityProfileContent() {
   return (
@@ -128,17 +130,16 @@ const views = [
 
 export function ProductShowcase() {
   return (
-    <section className="py-16 sm:py-20 lg:py-28 bg-background overflow-hidden">
-      <div className="container">
-        <div className="mx-auto max-w-2xl text-center mb-14 sm:mb-16">
-          <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
-            See it in action
-          </span>
-          <h2 className="mt-3 font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-background">
+      <div className="pointer-events-none absolute inset-0 landing-glow opacity-60" aria-hidden />
+      <div className="container relative z-10">
+        <div className="mx-auto max-w-2xl text-center mb-14 sm:mb-16 space-y-5">
+          <SectionBadge>See it in action</SectionBadge>
+          <DisplayHeading as="h2" align="center">
             One live profile.{" "}
-            <span className="text-primary">Three perspectives.</span>
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            <DisplayAccent>Three perspectives.</DisplayAccent>
+          </DisplayHeading>
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
             Understand how CenterLinked works for your referral partners, your internal team,
             and professionals searching for a placement.
           </p>
@@ -153,13 +154,13 @@ export function ProductShowcase() {
               }`}
             >
               <div className={`flex justify-center ${v.reverse ? "lg:order-2" : ""}`}>
-                <PhoneFrame className="w-[240px] sm:w-[260px]">{v.content}</PhoneFrame>
+                <PhoneFrame className="w-[240px] sm:w-[260px] max-w-full">{v.content}</PhoneFrame>
               </div>
               <div className={`max-w-md mx-auto lg:mx-0 space-y-3 ${v.reverse ? "lg:order-1" : ""}`}>
-                <p className="text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
+                <p className="text-[11px] sm:text-xs font-bold tracking-[0.12em] uppercase text-primary">
                   {v.label}
                 </p>
-                <h3 className="font-heading text-2xl sm:text-3xl font-bold text-foreground leading-tight">
+                <h3 className="font-display text-2xl sm:text-3xl text-foreground leading-tight">
                   {v.title}
                 </h3>
                 <p className="text-base text-muted-foreground leading-relaxed">{v.caption}</p>

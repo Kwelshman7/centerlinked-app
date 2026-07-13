@@ -1,4 +1,6 @@
 import { Search, FileText, Handshake, Target, Clock } from "lucide-react";
+import { SectionBadge } from "./SectionBadge";
+import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const reasons = [
   {
@@ -35,13 +37,11 @@ export function AlwaysAccurate() {
       <div className="container">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14 lg:items-start">
           <div className="space-y-5 max-w-md lg:sticky lg:top-24">
-            <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
-              Why organizations join
-            </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+            <SectionBadge>Why organizations join</SectionBadge>
+            <DisplayHeading as="h2">
               Easier to find. Easier to trust.{" "}
-              <span className="text-primary">Easier to refer to.</span>
-            </h2>
+              <DisplayAccent>Easier to refer to.</DisplayAccent>
+            </DisplayHeading>
             <p className="text-base text-muted-foreground leading-relaxed">
               CenterLinked helps treatment organizations become the clear, accurate option when a
               partner needs to place a patient quickly.
@@ -57,14 +57,14 @@ export function AlwaysAccurate() {
                 }`}
               >
                 <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 ${
                     r.featured ? "mb-0" : "mb-4"
                   }`}
                 >
                   <r.icon className="h-5 w-5" />
                 </div>
                 <div className={r.featured ? "mt-4 sm:mt-0" : ""}>
-                  <h3 className="font-heading text-base font-bold text-foreground">{r.title}</h3>
+                  <h3 className="font-display text-lg text-foreground leading-snug">{r.title}</h3>
                   <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{r.body}</p>
                 </div>
               </div>

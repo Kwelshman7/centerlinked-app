@@ -4,6 +4,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { SectionBadge } from "./SectionBadge";
+import { DisplayHeading } from "./DisplayHeading";
 
 const faqs = [
   {
@@ -44,14 +46,11 @@ export function FAQ() {
       <div className="container">
         <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-14 lg:items-start">
           <div className="space-y-4 max-w-sm lg:sticky lg:top-24">
-            <span className="inline-block text-[12px] sm:text-[13px] font-bold tracking-wider uppercase text-primary">
-              FAQ
-            </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-              Questions teams ask before joining
-            </h2>
+            <SectionBadge>FAQ</SectionBadge>
+            <DisplayHeading as="h2">Questions teams ask before joining</DisplayHeading>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Clear answers about accuracy, control, and how CenterLinked fits into referral workflows.
+              Clear answers about accuracy, control, and how CenterLinked fits into referral
+              workflows.
             </p>
           </div>
 
@@ -60,7 +59,7 @@ export function FAQ() {
               <AccordionItem
                 key={faq.question}
                 value={`item-${idx}`}
-                className="border border-border rounded-xl px-4 sm:px-6 bg-card shadow-sm hover:shadow-md hover:border-primary/25 transition-all duration-300 data-[state=open]:border-primary/30 data-[state=open]:shadow-md"
+                className="border border-border rounded-2xl px-4 sm:px-6 bg-card shadow-sm hover:shadow-md hover:border-primary/25 transition-all duration-300 data-[state=open]:border-primary/30 data-[state=open]:shadow-md"
               >
                 <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-4 sm:py-5 hover:text-primary transition-colors text-sm sm:text-base">
                   {faq.question}
