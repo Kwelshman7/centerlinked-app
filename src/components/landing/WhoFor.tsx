@@ -3,20 +3,20 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const audiences = [
   {
-    group: "Treatment providers",
-    items: ["Treatment centers", "Mental health programs", "Hospitals"],
+    group: "Treatment organizations",
+    items: ["Treatment centers", "Mental health programs", "Multi-facility networks", "Hospital systems"],
   },
   {
-    group: "Care coordination",
-    items: ["Emergency departments", "Case management teams", "Social work departments"],
+    group: "Teams who share the link",
+    items: ["Business development", "Admissions", "Outreach & partnerships", "Leadership"],
   },
   {
-    group: "Referral partners",
+    group: "Partners who open it",
     items: [
-      "Employee assistance programs",
-      "Universities",
-      "Drug courts",
-      "Community organizations",
+      "Hospitals & EDs",
+      "Case management",
+      "EAPs & universities",
+      "Courts & community orgs",
     ],
   },
 ];
@@ -27,18 +27,14 @@ export function WhoFor() {
       <div className="container">
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:items-center">
           <div className="space-y-5 max-w-lg">
-            <SectionBadge>Built for professionals</SectionBadge>
+            <SectionBadge>Who it’s for</SectionBadge>
             <DisplayHeading as="h2">
-              Designed for teams{" "}
-              <DisplayAccent>coordinating patient care.</DisplayAccent>
+              Built for professionals{" "}
+              <DisplayAccent>coordinating care — not browsing patients.</DisplayAccent>
             </DisplayHeading>
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Unlike public treatment directories, CenterLinked is built for behavioral health
-              professionals who need accurate placement information — not patients browsing
-              online.
-            </p>
-            <p className="text-base text-foreground/90 font-medium leading-relaxed">
-              Spend less time searching. More time helping patients access care.
+              CenterLinked is a professional referral network. Organizations share their link;
+              partners use it to confirm facilities and place with confidence.
             </p>
           </div>
 

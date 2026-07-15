@@ -9,34 +9,34 @@ import { DisplayHeading } from "./DisplayHeading";
 
 const faqs = [
   {
-    question: "Is CenterLinked available to the public?",
+    question: "Is CenterLinked a public treatment directory?",
     answer:
-      "No. CenterLinked is built specifically for behavioral healthcare professionals and organizations involved in the referral process — not as a public patient directory.",
+      "No. CenterLinked is a professional referral network for behavioral healthcare organizations and the partners who place patients — not a patient-facing directory.",
+  },
+  {
+    question: "What do I share with referral partners?",
+    answer:
+      "Your organization link. It’s a live profile with facilities, insurance, contacts, and how to refer. When you update the dashboard, every partner who opens that link sees the latest information.",
   },
   {
     question: "How is information kept accurate?",
     answer:
-      "Organizations verify their information every month. Profiles that are not verified are temporarily removed from search results until they have been confirmed.",
+      "Organizations verify their profile every month. Profiles that aren’t verified are temporarily removed from search until they’re confirmed again.",
   },
   {
-    question: "Who controls my organization's information?",
+    question: "Who controls our organization’s information?",
     answer:
-      "Your organization controls its own profile through a secure organization dashboard. Updates can be made at any time.",
+      "You do. Your team manages the profile through a secure organization dashboard and can update it anytime.",
   },
   {
-    question: "Can organizations have multiple facilities?",
+    question: "Can we list multiple facilities?",
     answer:
-      "Yes. Organizations can manage multiple facilities, each with its own levels of care, locations, and referral information.",
+      "Yes. Organizations can manage multiple facilities — each with its own levels of care, location, and referral details — under one organization link.",
   },
   {
-    question: "How do I create an organization profile?",
+    question: "Does CenterLinked guarantee placements?",
     answer:
-      "Request access, create your account, and build your organization profile from the dashboard. Once live, you can share a single link with referral partners and keep it current month to month.",
-  },
-  {
-    question: "Does CenterLinked guarantee patient placement?",
-    answer:
-      "No. CenterLinked helps professionals identify organizations that may be appropriate based on the information organizations provide. Final admission decisions remain with each organization.",
+      "No. CenterLinked helps partners confirm fit based on the information you provide. Final admission decisions stay with each organization.",
   },
 ];
 
@@ -47,10 +47,10 @@ export function FAQ() {
         <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-14 lg:items-start">
           <div className="space-y-4 max-w-sm lg:sticky lg:top-24">
             <SectionBadge>FAQ</SectionBadge>
-            <DisplayHeading as="h2">Questions teams ask before joining</DisplayHeading>
+            <DisplayHeading as="h2">Questions before you share your first link</DisplayHeading>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Clear answers about accuracy, control, and how CenterLinked fits into referral
-              workflows.
+              How CenterLinked fits referral workflows — accuracy, control, and what the
+              network is (and isn’t).
             </p>
           </div>
 

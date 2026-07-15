@@ -17,10 +17,11 @@ import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 
 /**
- * Landing journey (RVKAI-inspired layout, CenterLinked content):
- * Hero + carousel → trust → problem → shift → system → inventory →
- * product proof → dashboard → why join → accuracy → who → boundary →
- * pricing → FAQ → convert
+ * Landing journey:
+ * Hero (professional referral network) → trust → materials we replace →
+ * the shift (one link) → how it works → what’s on the profile →
+ * product proof → dashboard → why join → monthly verification → who →
+ * boundaries → pricing → FAQ → convert
  */
 const Index = () => {
   return (

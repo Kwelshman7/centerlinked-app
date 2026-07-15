@@ -9,14 +9,14 @@ const plans = [
     name: "Get started",
     price: "Free",
     period: "",
-    priceNote: "For approved treatment organizations creating a profile.",
+    priceNote: "For approved treatment organizations.",
     description:
-      "Build your live referral profile, invite your team, and start sharing a link partners can trust.",
+      "Create your live organization profile, invite your team, and start sharing a link partners can trust.",
     features: [
-      "Full organization profile — every section",
-      "Shareable profile link for your BD team",
-      "Verified listing in the CenterLinked network",
-      "Organization dashboard for ongoing updates",
+      "Full organization profile",
+      "Shareable link for your BD team",
+      "Verified listing in the network",
+      "Dashboard for ongoing updates",
       "No credit card required",
     ],
     cta: "Create Your Organization Profile",
@@ -26,12 +26,12 @@ const plans = [
     name: "Organization plan",
     price: "$99",
     period: "/month",
-    priceNote: "Simple flat rate for the whole organization.",
+    priceNote: "Flat rate for the whole organization.",
     description:
       "One rate for BD, admissions, and leadership — no per-seat fees as your team grows.",
     features: [
       "Organization-controlled live profile",
-      "Full team access — BD, admissions, leadership",
+      "Full team access",
       "Network search visibility",
       "Ongoing dashboard updates",
       "No per-seat fees — ever",
@@ -48,12 +48,12 @@ export function Pricing() {
         <div className="mx-auto max-w-2xl text-center space-y-5">
           <SectionBadge>Pricing</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            Straightforward pricing.{" "}
-            <DisplayAccent>No surprises.</DisplayAccent>
+            Start free.{" "}
+            <DisplayAccent>Scale with your team.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Create your organization profile free. When you&apos;re ready for the full
-            organization plan, it&apos;s a simple $99/month — whole team included.
+            Create your profile at no cost. When you&apos;re ready for the full organization
+            plan, it&apos;s $99/month — whole team included.
           </p>
         </div>
 

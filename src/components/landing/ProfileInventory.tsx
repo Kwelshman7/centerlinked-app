@@ -5,14 +5,14 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 const groups = [
   {
     icon: Building2,
-    title: "Organization information",
+    title: "Organization & facilities",
     items: [
       "Organization overview",
-      "Facility locations",
+      "Every facility location",
       "Levels of care",
-      "Housing availability",
       "Specialty programs",
-      "Age populations served",
+      "Populations served",
+      "Housing availability",
     ],
   },
   {
@@ -21,30 +21,29 @@ const groups = [
     items: [
       "In-network contracts",
       "Out-of-network accepted plans",
-      "Medicaid & Medicare participation",
+      "Medicaid & Medicare",
       "State-specific networks",
     ],
   },
   {
     icon: Users,
-    title: "Referral contacts",
+    title: "Who to contact",
     items: [
-      "Business development representatives",
+      "Business development reps",
       "Admissions contacts",
       "Direct phone numbers",
       "Email addresses",
-      "Referral instructions",
+      "How to refer",
     ],
   },
   {
     icon: Award,
-    title: "Credentials & details",
+    title: "Credentials & extras",
     items: [
       "Accreditations",
       "Licensure",
-      "Accepted patient populations",
       "Languages spoken",
-      "Transportation availability",
+      "Transportation",
     ],
   },
 ];
@@ -55,14 +54,14 @@ export function ProfileInventory() {
       <div className="container">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14 lg:items-start">
           <div className="lg:sticky lg:top-24 space-y-5 max-w-md">
-            <SectionBadge>Organization profile</SectionBadge>
+            <SectionBadge>What’s on your link</SectionBadge>
             <DisplayHeading as="h2">
-              Everything referral partners need{" "}
-              <DisplayAccent>in one place.</DisplayAccent>
+              Everything a partner needs before they{" "}
+              <DisplayAccent>make the call.</DisplayAccent>
             </DisplayHeading>
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Stop asking partners to dig through emails and outdated materials. Give them a
-              single, professional source of truth they can open in seconds.
+              Your organization profile is the live page behind the link you share — facilities,
+              coverage, contacts, and referral steps in one place.
             </p>
           </div>
 

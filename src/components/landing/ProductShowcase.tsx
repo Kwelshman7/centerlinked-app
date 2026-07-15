@@ -103,26 +103,26 @@ function FacilityProfileContent() {
 
 const views = [
   {
-    label: "What your partners see",
-    title: "A profile ready for clinical decisions",
+    label: "What partners open",
+    title: "Your organization link, ready to place from",
     caption:
-      "Levels of care, verified insurance, BD contact, and clear referral instructions — everything a partner needs before they pick up the phone.",
+      "Facilities, levels of care, verified insurance, and who to call — the page behind the link you share with referral partners.",
     content: <FacilityProfileContent />,
     reverse: false,
   },
   {
-    label: "Your team's dashboard",
-    title: "Keep every detail current from one place",
+    label: "Your team’s workspace",
+    title: "Update once. Every shared link stays current.",
     caption:
-      "Manage facilities, update the live profile, and understand engagement so your BD team knows which conversations are working.",
+      "Manage facilities and contacts from one dashboard. When something changes, partners already have the new version — no re-send.",
     content: <DashboardPreviewContent />,
     reverse: true,
   },
   {
     label: "How partners find you",
-    title: "Search that matches real placement criteria",
+    title: "Search built for real placement criteria",
     caption:
-      "Professionals filter by level of care, location, and insurance. Verified profiles surface when someone is ready to place a patient.",
+      "Professionals filter by level of care, location, and insurance. Verified profiles surface when someone is ready to refer.",
     content: <SearchResultsPreviewContent />,
     reverse: false,
   },
@@ -136,12 +136,12 @@ export function ProductShowcase() {
         <div className="mx-auto max-w-2xl text-center mb-14 sm:mb-16 space-y-5">
           <SectionBadge>See it in action</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            One live profile.{" "}
-            <DisplayAccent>Three perspectives.</DisplayAccent>
+            The link you share.{" "}
+            <DisplayAccent>The network behind it.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Understand how CenterLinked works for your referral partners, your internal team,
-            and professionals searching for a placement.
+            How CenterLinked looks for the partners you send your link to, the team that keeps
+            it accurate, and professionals searching for a fit.
           </p>
         </div>
 

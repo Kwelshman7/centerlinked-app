@@ -6,26 +6,26 @@ const stages = [
   {
     num: "01",
     icon: Building2,
-    title: "Build",
-    body: "Showcase facilities, programs, insurance networks, specialty services, and the contacts referral partners should reach.",
+    title: "Build your profile",
+    body: "Add facilities, levels of care, insurance networks, specialty programs, and the contacts partners should reach.",
   },
   {
     num: "02",
     icon: BadgeCheck,
-    title: "Verify",
-    body: "Each month, confirm your information is current. If nothing changed, it takes one click. If something did, update it in minutes.",
+    title: "Verify monthly",
+    body: "Confirm everything is still accurate. Nothing changed? One click. Something did? Update it in minutes.",
   },
   {
     num: "03",
     icon: Share2,
-    title: "Share",
-    body: "Send one live link to BD partners, hospitals, and care coordinators — instead of another PDF or brochure.",
+    title: "Share your link",
+    body: "Send one organization URL to BD partners, hospitals, and care coordinators — instead of another PDF.",
   },
   {
     num: "04",
     icon: Search,
-    title: "Discover",
-    body: "Professionals search by level of care, location, and insurance — and find organizations they can trust.",
+    title: "Get discovered",
+    body: "Professionals search by level of care, location, and insurance — and find profiles they can trust.",
   },
 ];
 
@@ -37,16 +37,15 @@ export function HowItWorks() {
         <div className="mx-auto max-w-2xl text-center space-y-5">
           <SectionBadge>How it works</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            One system.{" "}
-            <DisplayAccent>Always current.</DisplayAccent>
+            From collateral stack to{" "}
+            <DisplayAccent>professional referral network.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Four coordinated stages — from building your profile to getting discovered by the
-            professionals placing patients.
+            Build once, verify monthly, share your link — and stay findable when partners need
+            to place.
           </p>
         </div>
 
-        {/* Stage pills */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           {stages.map((s, i) => (
             <div key={s.title} className="flex items-center gap-2 sm:gap-3">
@@ -54,7 +53,7 @@ export function HowItWorks() {
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
                   {s.num}
                 </span>
-                {s.title}
+                {s.title.split(" ")[0]}
               </span>
               {i < stages.length - 1 && (
                 <span className="hidden sm:block h-px w-6 bg-border" aria-hidden />

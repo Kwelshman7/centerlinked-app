@@ -12,7 +12,6 @@ import {
   Calendar,
 } from "lucide-react";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
-import { PhoneFrame } from "./PhoneFrame";
 
 const partners = [
   { initials: "SR", name: "Sarah Reyes", org: "Sunrise Recovery", color: "from-blue-500 to-indigo-600", status: "active" },
@@ -158,18 +157,5 @@ export function DashboardPreviewContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-interface Props {
-  contentOnly?: boolean;
-}
-
-export function DashboardPreview({ contentOnly = false }: Props) {
-  if (contentOnly) return <DashboardPreviewContent />;
-  return (
-    <PhoneFrame>
-      <DashboardPreviewContent />
-    </PhoneFrame>
   );
 }

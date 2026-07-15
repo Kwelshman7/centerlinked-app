@@ -11,7 +11,6 @@ import logoCoastalBridge from "@/assets/logo-coastal-bridge.png";
 import logoEverglade from "@/assets/logo-everglade.png";
 import logoAtlanticSands from "@/assets/logo-atlantic-sands.png";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
-import { PhoneFrame } from "./PhoneFrame";
 
 const SELECTED_PAYER = "Aetna";
 const SELECTED_STATE = "Florida";
@@ -159,18 +158,5 @@ export function SearchResultsPreviewContent() {
         ))}
       </div>
     </div>
-  );
-}
-
-interface Props {
-  contentOnly?: boolean;
-}
-
-export function SearchResultsPreview({ contentOnly = false }: Props) {
-  if (contentOnly) return <SearchResultsPreviewContent />;
-  return (
-    <PhoneFrame>
-      <SearchResultsPreviewContent />
-    </PhoneFrame>
   );
 }

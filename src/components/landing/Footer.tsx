@@ -22,13 +22,13 @@ export function Footer() {
           <div className="sm:col-span-2 lg:col-span-2">
             <Logo to="/" size="lg" />
             <p className="mt-3 text-sm text-muted-foreground max-w-md leading-relaxed">
-              The professional referral network for behavioral health and addiction treatment
-              organizations.
+              The professional referral network for behavioral healthcare. Share your
+              organization&apos;s link so partners always have accurate facility information.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
               Questions:{" "}
-              <a href="mailto:legal@centerlinked.com" className="text-primary hover:underline">
-                legal@centerlinked.com
+              <a href="mailto:support@centerlinked.com" className="text-primary hover:underline">
+                support@centerlinked.com
               </a>
             </p>
           </div>

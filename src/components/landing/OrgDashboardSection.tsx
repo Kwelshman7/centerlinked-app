@@ -8,19 +8,19 @@ const highlights = [
     icon: Building2,
     title: "All facilities, one workspace",
     description:
-      "Open any program to update insurance, levels of care, contacts, and referral details without hunting through files.",
+      "Open any program to update insurance, levels of care, contacts, and referral details — no hunting through files.",
   },
   {
     icon: Pencil,
-    title: "Edit once — live everywhere",
+    title: "Edit once — live on every link",
     description:
-      "Every public organization and program link updates instantly. Your BD team never re-emails a new PDF.",
+      "Public organization and facility links update instantly. Your BD team never re-emails a new PDF.",
   },
   {
     icon: Share2,
-    title: "Share the org or a single program",
+    title: "Share the org or one facility",
     description:
-      "Send the link that fits the conversation — a full network overview or the one facility partners need right now.",
+      "Send the full network overview or the single program a partner needs for that conversation.",
   },
 ];
 
@@ -33,12 +33,12 @@ export function OrgDashboardSection() {
             <SectionBadge>Organization dashboard</SectionBadge>
             <DisplayHeading as="h2">
               Keep every facility accurate from{" "}
-              <DisplayAccent>one workspace.</DisplayAccent>
+              <DisplayAccent>one place.</DisplayAccent>
             </DisplayHeading>
           </div>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl lg:pb-1">
-            Update facilities, programs, insurance, and referral contacts from your organization
-            dashboard — so the profile partners open is always the latest version.
+            Your dashboard is how the link stays true. Update facilities, programs, insurance,
+            and contacts — partners always open the latest version.
           </p>
         </div>
 

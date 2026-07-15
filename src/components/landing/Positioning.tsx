@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowLeftRight } from "lucide-react";
+import { ArrowRight, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { SectionBadge } from "./SectionBadge";
@@ -6,29 +6,29 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const rows = [
   {
-    area: "Program details",
-    today: "Buried in PDFs and slide decks",
-    withUs: "Live levels of care, always current",
+    area: "How you share",
+    today: "PDFs, brochures, and email attachments",
+    withUs: "One organization link partners reopen anytime",
+  },
+  {
+    area: "Facility details",
+    today: "Scattered across one-pagers and websites",
+    withUs: "Every facility under a single live profile",
   },
   {
     area: "Insurance",
-    today: "Outdated payer lists partners can't trust",
-    withUs: "Verified in-network coverage, updated in minutes",
+    today: "Payer sheets no one trusts",
+    withUs: "In-network coverage updated in minutes",
   },
   {
-    area: "BD & admissions contacts",
-    today: "Business cards and old email signatures",
-    withUs: "Direct phones and emails on one shareable profile",
+    area: "Who to call",
+    today: "Business cards and old signatures",
+    withUs: "Current BD and admissions contacts on the profile",
   },
   {
-    area: "Facility locations",
-    today: "Scattered across websites and one-pagers",
-    withUs: "Every facility under one organization link",
-  },
-  {
-    area: "Partner confidence",
+    area: "Partner trust",
     today: "“Is this still accurate?”",
-    withUs: "Verified monthly — accuracy is the product",
+    withUs: "Verified monthly — they stop guessing",
   },
 ];
 
@@ -38,18 +38,17 @@ export function Positioning() {
       <div className="pointer-events-none absolute inset-0 landing-glow-center opacity-70" aria-hidden />
       <div className="container relative z-10">
         <div className="mx-auto max-w-3xl text-center space-y-5 mb-12 sm:mb-14">
-          <SectionBadge icon={ArrowLeftRight}>The shift</SectionBadge>
+          <SectionBadge icon={Link2}>The shift</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            Imagine referral partners who never ask{" "}
-            <DisplayAccent>whether your information is current.</DisplayAccent>
+            One link.{" "}
+            <DisplayAccent>Every facility. Always accurate.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            One organization profile replaces the stack of materials. Update once in your
-            dashboard — every shared link stays accurate automatically.
+            Update once in your dashboard. Every partner who has your link sees the latest
+            programs, payers, locations, and contacts — without another send.
           </p>
         </div>
 
-        {/* Desktop table */}
         <div className="hidden md:block max-w-4xl mx-auto rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="grid grid-cols-[1.1fr_1.2fr_auto_1.2fr] gap-4 px-6 py-4 bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
             <span>Area</span>
@@ -70,7 +69,6 @@ export function Positioning() {
           ))}
         </div>
 
-        {/* Mobile stacked cards */}
         <div className="md:hidden space-y-3 max-w-lg mx-auto">
           {rows.map((row) => (
             <div

@@ -5,18 +5,18 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 const points = [
   {
     icon: MousePointerClick,
-    title: "One-click when nothing changed",
+    title: "One click when nothing changed",
     body: "Each month your team confirms the profile is still accurate. If it is, verification takes a single click.",
   },
   {
     icon: BadgeCheck,
     title: "Minutes when something did",
-    body: "Need to update a payer, program, or contact? Make the change in your dashboard and verify in the same flow.",
+    body: "Update a payer, program, or contact in the dashboard — then verify in the same flow.",
   },
   {
     icon: ShieldAlert,
-    title: "Search stays trustworthy",
-    body: "Organizations that miss verification are temporarily removed from search until they confirm — so partners aren't relying on stale data.",
+    title: "Stale profiles leave search",
+    body: "Organizations that miss verification are temporarily removed from search until they confirm — so partners aren’t relying on old data.",
   },
 ];
 
@@ -28,12 +28,12 @@ export function VerifiedMonthly() {
         <div className="mx-auto max-w-2xl text-center space-y-5">
           <SectionBadge icon={BadgeCheck}>Verified monthly</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            Because outdated referral information{" "}
-            <DisplayAccent>helps no one.</DisplayAccent>
+            Accuracy isn’t a feature.{" "}
+            <DisplayAccent>It’s the product.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Accuracy is the product. Monthly verification keeps CenterLinked useful for the
-            professionals placing patients — and fair to the organizations they trust.
+            Monthly verification keeps your shared link trustworthy — and keeps the network
+            useful for professionals placing patients.
           </p>
         </div>
 

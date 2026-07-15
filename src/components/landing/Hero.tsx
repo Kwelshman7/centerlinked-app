@@ -38,14 +38,12 @@ export function Hero() {
                 CenterLinked
               </p>
               <DisplayHeading as="h1">
-                One live profile.{" "}
-                <DisplayAccent>Always current.</DisplayAccent>
-                <br className="hidden sm:block" /> Always shareable.
+                Professional{" "}
+                <DisplayAccent>Referral Network</DisplayAccent>
               </DisplayHeading>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
-                The professional referral network for behavioral healthcare — one verified
-                organization profile your partners can trust, built for how BD and admissions
-                actually work.
+                Share your organization&apos;s link so your partners always have the most accurate
+                information about your facilities.
               </p>
             </div>
 
@@ -59,19 +57,13 @@ export function Hero() {
                   <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </Button>
-              <Button asChild variant="hero-outline" size="xl" className="w-full sm:w-auto">
-                <a href="#how-it-works">
-                  See how it works
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </a>
-              </Button>
             </div>
 
             <p
               className="animate-fade-up text-sm text-muted-foreground"
               style={{ animationDelay: "180ms" }}
             >
-              Free to start · Monthly verification · Built for treatment organizations
+              Free to start · Verified monthly · Built for treatment organizations
             </p>
           </div>
 

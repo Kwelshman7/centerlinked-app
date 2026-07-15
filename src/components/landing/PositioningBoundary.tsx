@@ -4,11 +4,11 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const does = [
   "Hosts live organization referral profiles",
-  "Keeps programs, payers, and contacts current",
+  "Keeps facilities, payers, and contacts current",
+  "Gives you one shareable link instead of PDFs",
   "Connects BD and admissions to referral partners",
   "Supports search by level of care, location, and insurance",
   "Requires monthly verification for network visibility",
-  "Gives orgs one shareable link instead of PDFs",
 ];
 
 const doesNot = [
@@ -16,7 +16,7 @@ const doesNot = [
   "Replace your CRM or EMR",
   "Substitute for your organization website",
   "Guarantee patient placement",
-  "Publish unverified or stale profiles in search",
+  "Publish unverified profiles in search",
   "Sell consumer leads or ads",
 ];
 
@@ -28,12 +28,12 @@ export function PositioningBoundary() {
         <div className="mx-auto max-w-3xl text-center space-y-5 mb-12 sm:mb-14">
           <SectionBadge icon={Shield}>Professional network</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            Built for referrals.{" "}
-            <DisplayAccent>Never a public directory.</DisplayAccent>
+            A referral network.{" "}
+            <DisplayAccent>Not a public directory.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            In behavioral healthcare, trust is the product. CenterLinked is the external
-            profile partners see — professionals-only, always current, and organization-controlled.
+            CenterLinked is the external profile partners open when you share your link —
+            professionals-only, organization-controlled, and verified monthly.
           </p>
         </div>
 

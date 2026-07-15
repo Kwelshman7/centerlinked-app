@@ -14,12 +14,12 @@ export function FinalCTA() {
       <div className="container relative z-10">
         <div className="mx-auto max-w-2xl text-center space-y-5">
           <DisplayHeading as="h2" align="center">
-            Give partners information{" "}
-            <DisplayAccent>they can trust.</DisplayAccent>
+            Share one link.{" "}
+            <DisplayAccent>Keep every facility accurate.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Create your organization profile and become easier to find, easier to verify, and
-            easier to refer to.
+            Create your organization profile and join the professional referral network built
+            for behavioral healthcare.
           </p>
 
           <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">

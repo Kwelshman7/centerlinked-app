@@ -1,33 +1,33 @@
-import { Search, FileText, Handshake, Target, Clock } from "lucide-react";
+import { Link2, Handshake, Target, Clock, Search } from "lucide-react";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const reasons = [
   {
-    icon: Search,
-    title: "Increase referral visibility",
-    body: "Appear when professionals search for organizations that match a patient's clinical and insurance needs.",
+    icon: Link2,
+    title: "One link for every partner",
+    body: "Stop redistributing materials. Share your organization URL once — partners always reopen the accurate version.",
     featured: true,
   },
   {
-    icon: FileText,
-    title: "Replace outdated materials",
-    body: "Stop redistributing brochures every time something changes. Maintain one profile that's always current.",
+    icon: Search,
+    title: "Get found when it matters",
+    body: "Appear when professionals search by level of care, location, and insurance — not buried in last year’s PDF.",
   },
   {
     icon: Handshake,
-    title: "Strengthen partner trust",
-    body: "Give referral partners one reliable place to access your latest information whenever they need it.",
+    title: "Earn partner confidence",
+    body: "Give referral partners one place they can trust for facilities, coverage, and who to call.",
   },
   {
     icon: Target,
-    title: "Improve referral accuracy",
-    body: "Help professionals confirm fit — level of care, coverage, and contacts — before they make the call.",
+    title: "Fewer wrong-fit referrals",
+    body: "Partners confirm fit — programs, payers, contacts — before they pick up the phone.",
   },
   {
     icon: Clock,
-    title: "Save your team time",
-    body: "Reduce repetitive questions about insurance, programs, locations, and who to contact for a referral.",
+    title: "Less time answering the same questions",
+    body: "Reduce “are you still in-network?” and “who do I call?” — it’s already on the profile.",
   },
 ];
 
@@ -39,12 +39,12 @@ export function AlwaysAccurate() {
           <div className="space-y-5 max-w-md lg:sticky lg:top-24">
             <SectionBadge>Why organizations join</SectionBadge>
             <DisplayHeading as="h2">
-              Easier to find. Easier to trust.{" "}
-              <DisplayAccent>Easier to refer to.</DisplayAccent>
+              Become the organization partners{" "}
+              <DisplayAccent>actually trust to refer to.</DisplayAccent>
             </DisplayHeading>
             <p className="text-base text-muted-foreground leading-relaxed">
-              CenterLinked helps treatment organizations become the clear, accurate option when a
-              partner needs to place a patient quickly.
+              CenterLinked turns your referral marketing into a live network presence — easier
+              to share, easier to verify, easier to place from.
             </p>
           </div>
 
