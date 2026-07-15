@@ -1,5 +1,8 @@
 import { OrgFacilityShowcaseCard, ShowcaseFacility } from "./OrgFacilityShowcaseCard";
-import { FacilityGrid } from "@/components/FacilityGridCard";
+import {
+  FacilityGrid,
+  facilityGridDensityForCount,
+} from "@/components/FacilityGridCard";
 
 interface Props {
   facilities: ShowcaseFacility[];
@@ -7,10 +10,20 @@ interface Props {
 }
 
 export function OrgFacilityRail({ facilities, orgSlug }: Props) {
+  const count = facilities.length;
+  const density = facilityGridDensityForCount(count);
+  const layout = count === 1 ? "split" : "stack";
+
   return (
-    <FacilityGrid>
+    <FacilityGrid count={count}>
       {facilities.map((f) => (
-        <OrgFacilityShowcaseCard key={f.id} facility={f} orgSlug={orgSlug} />
+        <OrgFacilityShowcaseCard
+          key={f.id}
+          facility={f}
+          orgSlug={orgSlug}
+          density={density}
+          layout={layout}
+        />
       ))}
     </FacilityGrid>
   );

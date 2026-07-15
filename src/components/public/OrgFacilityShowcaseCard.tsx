@@ -1,4 +1,7 @@
-import { FacilityGridCard } from "@/components/FacilityGridCard";
+import {
+  FacilityGridCard,
+  FacilityGridDensity,
+} from "@/components/FacilityGridCard";
 import { programPublicPath } from "@/lib/public-urls";
 
 export interface ShowcaseFacility {
@@ -26,11 +29,20 @@ export interface ShowcaseFacility {
 interface Props {
   facility: ShowcaseFacility;
   orgSlug?: string | null;
+  density?: FacilityGridDensity;
+  layout?: "stack" | "split";
 }
 
-/** Public org sheet facility card — matches the org dashboard grid card. */
-export function OrgFacilityShowcaseCard({ facility: f, orgSlug }: Props) {
+/** Public org sheet facility card — density adapts to how many facilities the org has. */
+export function OrgFacilityShowcaseCard({
+  facility: f,
+  orgSlug,
+  density = "compact",
+  layout = "stack",
+}: Props) {
   const href = f.slug ? programPublicPath(f.slug, orgSlug) : null;
 
-  return <FacilityGridCard facility={f} href={href} />;
+  return (
+    <FacilityGridCard facility={f} href={href} density={density} layout={layout} />
+  );
 }
