@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: centerlinked
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node server/app.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: SITE_URL
+        sync: false
