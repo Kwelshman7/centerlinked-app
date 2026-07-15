@@ -5,18 +5,18 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 const points = [
   {
     icon: MousePointerClick,
-    title: "One click when nothing changed",
-    body: "Each month your team confirms the profile is still accurate. If it is, verification takes a single click.",
+    title: "Nothing changed?",
+    body: "Each month, organizations receive a quick verification request. If nothing has changed, simply click “No Changes.”",
   },
   {
     icon: BadgeCheck,
-    title: "Minutes when something did",
-    body: "Update a payer, program, or contact in the dashboard — then verify in the same flow.",
+    title: "Need an update?",
+    body: "If updates are needed, edit your profile in seconds — then confirm everything is current.",
   },
   {
     icon: ShieldAlert,
-    title: "Stale profiles leave search",
-    body: "Organizations that miss verification are temporarily removed from search until they confirm — so partners aren’t relying on old data.",
+    title: "Unverified profiles are flagged",
+    body: "Organizations that don’t verify their information are flagged until their profile is confirmed, helping keep referral information accurate and trustworthy.",
   },
 ];
 
@@ -26,14 +26,14 @@ export function VerifiedMonthly() {
       <div className="pointer-events-none absolute inset-0 landing-glow-center opacity-70" aria-hidden />
       <div className="container relative z-10">
         <div className="mx-auto max-w-2xl text-center space-y-5">
-          <SectionBadge icon={BadgeCheck}>Verified monthly</SectionBadge>
+          <SectionBadge icon={BadgeCheck}>Monthly verification</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            Accuracy isn’t a feature.{" "}
-            <DisplayAccent>It’s the product.</DisplayAccent>
+            One of the biggest problems in healthcare directories is{" "}
+            <DisplayAccent>outdated information.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Monthly verification keeps your shared link trustworthy — and keeps the network
-            useful for professionals placing patients.
+            CenterLinked solves this differently. Monthly verification keeps your shared profile
+            accurate — so referral partners can trust what they open.
           </p>
         </div>
 

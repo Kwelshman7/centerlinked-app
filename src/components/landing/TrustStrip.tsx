@@ -1,10 +1,10 @@
 import { BadgeCheck, Link2, Building2, Users } from "lucide-react";
 
 const signals = [
-  { icon: Link2, text: "One shareable org link" },
-  { icon: Building2, text: "Every facility, always current" },
+  { icon: Link2, text: "One live referral profile" },
+  { icon: Building2, text: "Always current information" },
   { icon: BadgeCheck, text: "Verified monthly" },
-  { icon: Users, text: "Built for referral partners" },
+  { icon: Users, text: "Built for behavioral healthcare" },
 ];
 
 export function TrustStrip() {

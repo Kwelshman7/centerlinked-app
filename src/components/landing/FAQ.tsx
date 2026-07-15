@@ -21,7 +21,7 @@ const faqs = [
   {
     question: "How is information kept accurate?",
     answer:
-      "Organizations verify their profile every month. Profiles that aren’t verified are temporarily removed from search until they’re confirmed again.",
+      "Organizations verify their profile every month. Profiles that aren’t verified are flagged until they’re confirmed again — so partners aren’t relying on outdated information.",
   },
   {
     question: "Who controls our organization’s information?",

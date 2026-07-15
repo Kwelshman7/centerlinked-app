@@ -5,7 +5,7 @@ const productLinks = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Create Your Profile", href: "/request-access", isRoute: true },
+  { label: "Claim Your Profile", href: "/request-access", isRoute: true },
   { label: "Sign In", href: "/login", isRoute: true },
 ];
 
@@ -22,8 +22,8 @@ export function Footer() {
           <div className="sm:col-span-2 lg:col-span-2">
             <Logo to="/" size="lg" />
             <p className="mt-3 text-sm text-muted-foreground max-w-md leading-relaxed">
-              The professional referral network for behavioral healthcare. Share your
-              organization&apos;s link so partners always have accurate facility information.
+              One live referral profile that stays current, is easy to share, and helps
+              referral partners quickly determine if you&apos;re the right fit.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
               Questions:{" "}

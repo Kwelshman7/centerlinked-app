@@ -130,18 +130,21 @@ const views = [
 
 export function ProductShowcase() {
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-background">
+    <section
+      id="example"
+      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-background scroll-mt-20"
+    >
       <div className="pointer-events-none absolute inset-0 landing-glow opacity-60" aria-hidden />
       <div className="container relative z-10">
         <div className="mx-auto max-w-2xl text-center mb-14 sm:mb-16 space-y-5">
-          <SectionBadge>See it in action</SectionBadge>
+          <SectionBadge>Example profile</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            The link you share.{" "}
-            <DisplayAccent>The network behind it.</DisplayAccent>
+            See what partners open when you{" "}
+            <DisplayAccent>share your link.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            How CenterLinked looks for the partners you send your link to, the team that keeps
-            it accurate, and professionals searching for a fit.
+            A professional public profile with facilities, insurance, contacts, and referral
+            details — always current, always shareable.
           </p>
         </div>
 

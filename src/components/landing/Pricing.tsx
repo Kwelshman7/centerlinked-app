@@ -1,43 +1,48 @@
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const plans = [
   {
-    name: "Get started",
-    price: "Free",
-    period: "",
-    priceNote: "For approved treatment organizations.",
-    description:
-      "Create your live organization profile, invite your team, and start sharing a link partners can trust.",
-    features: [
-      "Full organization profile",
-      "Shareable link for your BD team",
-      "Verified listing in the network",
-      "Dashboard for ongoing updates",
-      "No credit card required",
-    ],
-    cta: "Create Your Organization Profile",
-    featured: true,
-  },
-  {
-    name: "Organization plan",
+    name: "Build It Yourself",
     price: "$99",
     period: "/month",
-    priceNote: "Flat rate for the whole organization.",
+    priceNote: "Organization Profile",
     description:
-      "One rate for BD, admissions, and leadership — no per-seat fees as your team grows.",
+      "Perfect for organizations that want to manage their own live referral profile.",
     features: [
-      "Organization-controlled live profile",
-      "Full team access",
-      "Network search visibility",
-      "Ongoing dashboard updates",
-      "No per-seat fees — ever",
+      "Organization Dashboard",
+      "Public Shareable Profile",
+      "Unlimited Profile Updates",
+      "Monthly Verification",
+      "Team Access",
+      "Referral Contact Management",
+      "Insurance & Level of Care Listings",
     ],
-    cta: "Create Your Organization Profile",
+    cta: "Get Started",
     featured: false,
+    badge: null as string | null,
+  },
+  {
+    name: "Done For You",
+    price: "$499",
+    period: "",
+    priceNote: "One-Time Setup",
+    description:
+      "We’ll build your entire CenterLinked profile for you. Simply send us your materials — then log in anytime to make future updates.",
+    features: [
+      "Professional Profile Setup",
+      "Logo, facility information & photos",
+      "Insurance contracts & programs",
+      "Contact information included",
+      "Share-ready profile for referral partners",
+      "Recommended for busy organizations",
+    ],
+    cta: "Get Started",
+    featured: true,
+    badge: "Recommended",
   },
 ];
 
@@ -48,12 +53,11 @@ export function Pricing() {
         <div className="mx-auto max-w-2xl text-center space-y-5">
           <SectionBadge>Pricing</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            Start free.{" "}
-            <DisplayAccent>Scale with your team.</DisplayAccent>
+            Simple{" "}
+            <DisplayAccent>Pricing</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Create your profile at no cost. When you&apos;re ready for the full organization
-            plan, it&apos;s $99/month — whole team included.
+            Build your live referral profile yourself — or let us set it up for you.
           </p>
         </div>
 
@@ -67,15 +71,21 @@ export function Pricing() {
                   : "bg-card border-border shadow-sm hover:shadow-md hover:border-primary/25"
               }`}
             >
+              {plan.badge && (
+                <div className="absolute -top-3 left-6 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground shadow-sm">
+                  <Star className="h-3 w-3 fill-current" aria-hidden />
+                  {plan.badge}
+                </div>
+              )}
               <div>
                 <h3 className="font-display text-xl text-foreground">{plan.name}</h3>
+                <p className="mt-1 text-sm font-medium text-primary">{plan.priceNote}</p>
                 <div className="mt-5 flex items-baseline gap-1 flex-wrap">
                   <span className="text-4xl font-bold text-foreground">{plan.price}</span>
                   {plan.period && (
                     <span className="text-sm text-muted-foreground">{plan.period}</span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">{plan.priceNote}</p>
                 <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{plan.description}</p>
               </div>
 
@@ -104,10 +114,6 @@ export function Pricing() {
             </div>
           ))}
         </div>
-
-        <p className="mt-5 text-center text-xs text-muted-foreground max-w-2xl mx-auto">
-          BD reps and admissions team members are included under your organization account.
-        </p>
       </div>
     </section>
   );

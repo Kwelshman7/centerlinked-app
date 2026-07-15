@@ -1,74 +1,45 @@
-import { Check, X, Shield } from "lucide-react";
+import { Check, Shield } from "lucide-react";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
-const does = [
-  "Hosts live organization referral profiles",
-  "Keeps facilities, payers, and contacts current",
-  "Gives you one shareable link instead of PDFs",
-  "Connects BD and admissions to referral partners",
-  "Supports search by level of care, location, and insurance",
-  "Requires monthly verification for network visibility",
-];
-
-const doesNot = [
-  "Act as a patient-facing treatment directory",
-  "Replace your CRM or EMR",
-  "Substitute for your organization website",
-  "Guarantee patient placement",
-  "Publish unverified profiles in search",
-  "Sell consumer leads or ads",
+const knows = [
+  "Who you are",
+  "What you offer",
+  "Who you help",
+  "Which insurance you accept",
+  "How to contact you",
 ];
 
 export function PositioningBoundary() {
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-secondary/30">
+    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-background">
       <div className="pointer-events-none absolute inset-0 landing-glow-center opacity-60" aria-hidden />
       <div className="container relative z-10">
         <div className="mx-auto max-w-3xl text-center space-y-5 mb-12 sm:mb-14">
-          <SectionBadge icon={Shield}>Professional network</SectionBadge>
+          <SectionBadge icon={Shield}>Why CenterLinked?</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            A referral network.{" "}
-            <DisplayAccent>Not a public directory.</DisplayAccent>
+            Because referral partners shouldn&apos;t have to{" "}
+            <DisplayAccent>wonder.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            CenterLinked is the external profile partners open when you share your link —
-            professionals-only, organization-controlled, and verified monthly.
+            When someone is looking for the right program, they should immediately know:
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 max-w-4xl mx-auto">
-          <div className="rounded-2xl border border-border bg-card p-6 sm:p-7 shadow-sm">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary mb-5">
-              What CenterLinked does
-            </p>
-            <ul className="space-y-3.5">
-              {does.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-foreground/90">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-                    <Check className="h-3 w-3" />
-                  </span>
-                  <span className="leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-6 sm:p-7 shadow-sm">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-5">
-              What CenterLinked never does
-            </p>
-            <ul className="space-y-3.5">
-              {doesNot.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-foreground/90">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <X className="h-3 w-3" />
-                  </span>
-                  <span className="leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="max-w-xl mx-auto rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+          <ul className="space-y-3.5">
+            {knows.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm sm:text-base text-foreground">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                  <Check className="h-3 w-3" />
+                </span>
+                <span className="leading-snug font-medium">{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 pt-5 border-t border-border text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Without digging through emails or outdated brochures.
+          </p>
         </div>
       </div>
     </section>

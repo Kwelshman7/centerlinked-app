@@ -1,27 +1,25 @@
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { TrustStrip } from "@/components/landing/TrustStrip";
-import { Problem } from "@/components/landing/Problem";
-import { Positioning } from "@/components/landing/Positioning";
-import { HowItWorks } from "@/components/landing/HowItWorks";
 import { ProfileInventory } from "@/components/landing/ProfileInventory";
+import { AlwaysAccurate } from "@/components/landing/AlwaysAccurate";
+import { WhoFor } from "@/components/landing/WhoFor";
+import { Problem } from "@/components/landing/Problem";
+import { HowItWorks } from "@/components/landing/HowItWorks";
 import { ProductShowcase } from "@/components/landing/ProductShowcase";
 import { OrgDashboardSection } from "@/components/landing/OrgDashboardSection";
-import { AlwaysAccurate } from "@/components/landing/AlwaysAccurate";
 import { VerifiedMonthly } from "@/components/landing/VerifiedMonthly";
-import { WhoFor } from "@/components/landing/WhoFor";
-import { PositioningBoundary } from "@/components/landing/PositioningBoundary";
 import { Pricing } from "@/components/landing/Pricing";
+import { PositioningBoundary } from "@/components/landing/PositioningBoundary";
 import { FAQ } from "@/components/landing/FAQ";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 
 /**
  * Landing journey:
- * Hero (professional referral network) → trust → materials we replace →
- * the shift (one link) → how it works → what’s on the profile →
- * product proof → dashboard → why join → monthly verification → who →
- * boundaries → pricing → FAQ → convert
+ * Hero → trust → trusted/current profile → why join → who it’s for →
+ * replace outdated materials → how it works → product proof → dashboard →
+ * monthly verification → pricing → why CenterLinked → FAQ → convert
  */
 const Index = () => {
   return (
@@ -30,19 +28,18 @@ const Index = () => {
       <main>
         <Hero />
         <TrustStrip />
-        <Problem />
-        <Positioning />
-        <HowItWorks />
         <ProfileInventory />
+        <AlwaysAccurate />
+        <WhoFor />
+        <Problem />
+        <HowItWorks />
         <ProductShowcase />
         <OrgDashboardSection />
-        <AlwaysAccurate />
         <VerifiedMonthly />
-        <WhoFor />
-        <PositioningBoundary />
         <section id="pricing">
           <Pricing />
         </section>
+        <PositioningBoundary />
         <section id="faq">
           <FAQ />
         </section>

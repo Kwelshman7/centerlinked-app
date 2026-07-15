@@ -14,12 +14,12 @@ export function FinalCTA() {
       <div className="container relative z-10">
         <div className="mx-auto max-w-2xl text-center space-y-5">
           <DisplayHeading as="h2" align="center">
-            Share one link.{" "}
-            <DisplayAccent>Keep every facility accurate.</DisplayAccent>
+            Your Next Referral Could Start With{" "}
+            <DisplayAccent>One Link.</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Create your organization profile and join the professional referral network built
-            for behavioral healthcare.
+            Replace outdated referral materials with a professional profile your entire
+            organization can confidently share.
           </p>
 
           <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -30,12 +30,9 @@ export function FinalCTA() {
               className="group shadow-lg shadow-primary/20 w-full sm:w-auto"
             >
               <Link to="/request-access">
-                Create Your Organization Profile
+                Claim Your Organization Profile Today
                 <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
               </Link>
-            </Button>
-            <Button asChild variant="hero-outline" size="xl" className="w-full sm:w-auto">
-              <Link to="/login">Sign in</Link>
             </Button>
           </div>
         </div>

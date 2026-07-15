@@ -38,13 +38,24 @@ export function Hero() {
                 CenterLinked
               </p>
               <DisplayHeading as="h1">
-                Professional{" "}
-                <DisplayAccent>Referral Network</DisplayAccent>
+                Stop Sending Outdated{" "}
+                <DisplayAccent>Referral Brochures.</DisplayAccent>
               </DisplayHeading>
-              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
-                Share your organization&apos;s link so your partners always have the most accurate
-                information about your facilities.
-              </p>
+              <div className="space-y-3 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
+                <p>
+                  Give your organization one live referral profile that stays current, is easy
+                  to share, and helps referral partners quickly determine if you&apos;re the
+                  right fit.
+                </p>
+                <p className="text-sm sm:text-base">
+                  Instead of emailing PDFs, outdated one-pagers, and answering the same referral
+                  questions over and over, simply share your CenterLinked profile.
+                </p>
+                <p className="text-sm sm:text-base">
+                  Every profile is managed from your organization dashboard and can be updated
+                  anytime.
+                </p>
+              </div>
             </div>
 
             <div
@@ -53,18 +64,14 @@ export function Hero() {
             >
               <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto">
                 <Link to="/request-access">
-                  Create Your Organization Profile
+                  Claim Your Organization Profile
                   <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </Button>
+              <Button asChild variant="hero-outline" size="xl" className="w-full sm:w-auto">
+                <a href="#example">View Example Profile</a>
+              </Button>
             </div>
-
-            <p
-              className="animate-fade-up text-sm text-muted-foreground"
-              style={{ animationDelay: "180ms" }}
-            >
-              Free to start · Verified monthly · Built for treatment organizations
-            </p>
           </div>
 
           <div className="animate-slide-in-right relative flex justify-center lg:justify-end">

@@ -1,46 +1,14 @@
-import {
-  FileText,
-  BookOpen,
-  ClipboardList,
-  CreditCard,
-  Mail,
-  Presentation,
-  Replace,
-} from "lucide-react";
+import { FileText, Link2, Replace } from "lucide-react";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
-const materials = [
-  {
-    icon: FileText,
-    title: "Program one-pagers & PDFs",
-    body: "Sent once, stale forever — partners keep working from last month’s attachment.",
-  },
-  {
-    icon: BookOpen,
-    title: "Brochures & leave-behinds",
-    body: "Printed, handed out, and impossible to update when a facility or payer changes.",
-  },
-  {
-    icon: ClipboardList,
-    title: "Insurance & payer sheets",
-    body: "Static coverage lists partners bookmark — then call on contracts that no longer apply.",
-  },
-  {
-    icon: CreditCard,
-    title: "Business cards",
-    body: "Names and direct lines change. The card in someone’s desk drawer does not.",
-  },
-  {
-    icon: Mail,
-    title: "Email blasts & “latest info” threads",
-    body: "Another forward, another version — nobody knows which message is current.",
-  },
-  {
-    icon: Presentation,
-    title: "Slide decks & capability decks",
-    body: "Recycled presentations with last quarter’s programs, team, and network status.",
-  },
+const replaceItems = [
+  "Outdated PDFs",
+  "Referral Brochures",
+  "One-pagers",
+  "Email Attachments",
+  "Spreadsheet Directories",
+  'Constant “Can you send me…” requests',
 ];
 
 export function Problem() {
@@ -48,39 +16,49 @@ export function Problem() {
     <section className="relative overflow-hidden bg-background py-16 sm:py-20 lg:py-28">
       <div className="pointer-events-none absolute inset-0 landing-glow-center" aria-hidden />
       <div className="container relative z-10">
-        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14 lg:items-start">
-          <div className="space-y-5 max-w-md lg:sticky lg:top-24">
-            <SectionBadge icon={Replace}>What we replace</SectionBadge>
-            <DisplayHeading as="h2">
-              Your referral marketing still lives in{" "}
-              <DisplayAccent>materials that go stale.</DisplayAccent>
-            </DisplayHeading>
-            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              BD and admissions teams keep redistributing PDFs, brochures, and payer lists.
-              Partners open whatever they saved last — not what’s true today.
+        <div className="mx-auto max-w-3xl text-center space-y-5 mb-12 sm:mb-14">
+          <SectionBadge icon={Replace}>The shift</SectionBadge>
+          <DisplayHeading as="h2" align="center">
+            Replace This…{" "}
+            <DisplayAccent>With One Live Link</DisplayAccent>
+          </DisplayHeading>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2 max-w-5xl mx-auto items-stretch">
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-5">
+              Replace this…
             </p>
-            <p className="text-sm font-semibold text-foreground pt-1">
-              CenterLinked replaces the stack with one organization link.
-            </p>
+            <ul className="space-y-3.5">
+              {replaceItems.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm sm:text-base text-foreground/90">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <FileText className="h-3.5 w-3.5" aria-hidden />
+                  </span>
+                  <span className="leading-snug pt-1.5 font-medium">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <ul className="divide-y divide-border border-y border-border">
-            {materials.map((item) => (
-              <li key={item.title} className="flex gap-4 py-5 sm:gap-5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                  <item.icon className="h-4 w-4" aria-hidden />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="font-display text-lg sm:text-xl text-foreground leading-snug">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 text-sm sm:text-[15px] text-muted-foreground leading-relaxed">
-                    {item.body}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 sm:p-8 shadow-sm flex flex-col justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary mb-5">
+              <Link2 className="h-5 w-5" aria-hidden />
+            </div>
+            <h3 className="font-display text-2xl sm:text-3xl text-foreground leading-snug">
+              With One Live Link
+            </h3>
+            <ul className="mt-6 space-y-3">
+              {["Always current.", "Always professional.", "Always shareable."].map((line) => (
+                <li
+                  key={line}
+                  className="text-base sm:text-lg font-medium text-foreground leading-snug"
+                >
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </section>

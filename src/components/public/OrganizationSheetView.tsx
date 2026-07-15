@@ -61,10 +61,6 @@ export function OrganizationSheetView({
   const briefDescription = org.description || org.tagline;
   const hasContact = !!(heroContact && (heroContact.phone || heroContact.email));
 
-  const scrollToContact = () => {
-    document.getElementById("org-contact")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
-
   const heroBg = org.cover_image_url
     ? {
         backgroundImage: `linear-gradient(105deg, rgba(15,23,42,0.82) 0%, rgba(15,23,42,0.45) 100%), url(${org.cover_image_url})`,
@@ -223,9 +219,7 @@ export function OrganizationSheetView({
         logoUrl={org.logo_url}
         tagline={org.tagline}
         brand={brand}
-        referralEmail={heroContact?.email ?? null}
-        referralPhone={heroContact?.phone ?? null}
-        onReferralFallback={scrollToContact}
+        contact={heroContact}
       />
 
       {hasContact && heroContact && (

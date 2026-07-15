@@ -16,7 +16,7 @@ export function DisplayHeading({
   return (
     <Tag
       className={cn(
-        "font-display font-normal tracking-tight text-foreground leading-[1.12]",
+        "font-display font-semibold tracking-tight text-foreground leading-[1.12]",
         Tag === "h1" &&
           "text-[2.35rem] sm:text-5xl lg:text-[3.75rem] xl:text-[4.25rem] leading-[1.05]",
         Tag === "h2" && "text-3xl sm:text-4xl lg:text-[2.75rem]",
@@ -30,7 +30,7 @@ export function DisplayHeading({
   );
 }
 
-/** Italic teal emphasis clause used inside display headlines */
+/** Brand-colored emphasis clause used inside display headlines */
 export function DisplayAccent({
   children,
   className,
@@ -39,6 +39,6 @@ export function DisplayAccent({
   className?: string;
 }) {
   return (
-    <em className={cn("italic text-display-accent", className)}>{children}</em>
+    <span className={cn("text-display-accent", className)}>{children}</span>
   );
 }

@@ -177,8 +177,7 @@ export function OrgMobileHero({
           logoUrl={org.logo_url}
           tagline={org.tagline}
           brand={brand}
-          referralEmail={primaryContact?.email ?? null}
-          referralPhone={primaryContact?.phone ?? null}
+          contact={primaryContact}
         />
       </main>
 

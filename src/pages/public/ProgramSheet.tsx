@@ -258,8 +258,22 @@ export default function ProgramSheet() {
           tagline={org?.tagline ?? null}
           brand={brand}
           orgLinkLabel="View all programs"
-          referralEmail={facility.bd_contact_email || org?.bd_contact_email || null}
-          referralPhone={facility.bd_contact_phone || org?.bd_contact_phone || null}
+          contact={
+            (facility.bd_contact_name || org?.bd_contact_name) &&
+            (facility.bd_contact_phone ||
+              facility.bd_contact_email ||
+              org?.bd_contact_phone ||
+              org?.bd_contact_email)
+              ? {
+                  name:
+                    facility.bd_contact_name ||
+                    org?.bd_contact_name ||
+                    "BD Representative",
+                  phone: facility.bd_contact_phone || org?.bd_contact_phone || null,
+                  email: facility.bd_contact_email || org?.bd_contact_email || null,
+                }
+              : null
+          }
         />
       </main>
     </div>
