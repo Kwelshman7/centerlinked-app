@@ -23,6 +23,9 @@ import logoRidgeview from "@/assets/logo-ridgeview.png";
 import logoNorthbendPhp from "@/assets/logo-northbend-php.png";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
 
+/** Set to true to show partner logos under the hero. */
+const SHOW_ORG_LOGO_CAROUSEL = false;
+
 export function Hero() {
   return (
     <section className="relative flex flex-col overflow-hidden bg-hero-gradient min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-4rem)] lg:min-h-0 pt-10 sm:pt-14 lg:pt-12">
@@ -34,43 +37,46 @@ export function Hero() {
         <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:items-center">
           <div className="space-y-7 max-w-xl">
             <div className="space-y-5 animate-fade-up">
-              <p className="font-sans text-sm sm:text-base font-semibold tracking-[0.1em] uppercase text-primary">
-                CenterLinked
+              <p className="font-sans text-xs sm:text-sm font-semibold tracking-[0.12em] uppercase text-primary">
+                Built for behavioral health business development
               </p>
               <DisplayHeading as="h1">
-                Stop Sending Outdated{" "}
-                <DisplayAccent>Referral Brochures.</DisplayAccent>
+                Your Treatment Center Needs a{" "}
+                <DisplayAccent>Referral Link.</DisplayAccent>
               </DisplayHeading>
-              <div className="space-y-3 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
-                <p>
-                  Give your organization one live referral profile that stays current, is easy
-                  to share, and helps referral partners quickly determine if you&apos;re the
-                  right fit.
-                </p>
-                <p className="text-sm sm:text-base">
-                  Instead of emailing PDFs, outdated one-pagers, and answering the same referral
-                  questions over and over, simply share your CenterLinked profile.
-                </p>
-                <p className="text-sm sm:text-base">
-                  Every profile is managed from your organization dashboard and can be updated
-                  anytime.
-                </p>
-              </div>
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
+                Replace PDFs, brochures, and business cards with one link that gives referral
+                partners exactly what they need to know.
+              </p>
             </div>
 
             <div
-              className="animate-fade-up flex flex-col sm:flex-row gap-3"
+              className="animate-fade-up flex flex-col gap-5"
               style={{ animationDelay: "100ms" }}
             >
               <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto">
                 <Link to="/request-access">
-                  Claim Your Organization Profile
+                  Create Your Organization Profile
                   <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </Button>
-              <Button asChild variant="hero-outline" size="xl" className="w-full sm:w-auto">
-                <a href="#example">View Example Profile</a>
-              </Button>
+
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 max-w-md">
+                {[
+                  "Levels of care",
+                  "In-network insurance",
+                  "Locations",
+                  "Who to contact",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-2 text-sm sm:text-base text-foreground font-medium"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
@@ -87,7 +93,9 @@ export function Hero() {
         </div>
       </div>
 
-      <OrgLogoCarousel className="relative z-10 mt-auto" />
+      {SHOW_ORG_LOGO_CAROUSEL ? (
+        <OrgLogoCarousel className="relative z-10 mt-auto" />
+      ) : null}
     </section>
   );
 }

@@ -12,6 +12,9 @@ interface OrgLogoCarouselProps {
   className?: string;
 }
 
+/** Set to true to show the trademark disclaimer under the logo strip. */
+const SHOW_LOGO_DISCLAIMER = false;
+
 export function OrgLogoCarousel({ className }: OrgLogoCarouselProps) {
   const [logos, setLogos] = useState<OrgLogo[]>([]);
 
@@ -86,10 +89,12 @@ export function OrgLogoCarousel({ className }: OrgLogoCarouselProps) {
         </div>
       </div>
 
-      <p className="px-4 pb-3 text-center text-[10px] sm:text-[11px] italic leading-snug text-muted-foreground/80 max-w-3xl mx-auto">
-        Logos are trademarks of their respective owners and are displayed for identification
-        purposes only. Their appearance does not constitute or imply endorsement of CenterLinked.
-      </p>
+      {SHOW_LOGO_DISCLAIMER ? (
+        <p className="px-4 pb-3 text-center text-[10px] sm:text-[11px] italic leading-snug text-muted-foreground/80 max-w-3xl mx-auto">
+          Logos are trademarks of their respective owners and are displayed for identification
+          purposes only. Their appearance does not constitute or imply endorsement of CenterLinked.
+        </p>
+      ) : null}
     </div>
   );
 }

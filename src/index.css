@@ -230,6 +230,23 @@
     opacity: 0;
     animation: popIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
+
+  .step-number-shine {
+    background-image: linear-gradient(
+      105deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary)) 35%,
+      hsl(0 0% 100%) 50%,
+      hsl(var(--primary-glow)) 65%,
+      hsl(var(--primary)) 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: stepNumberShine 2.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px hsl(var(--primary-glow) / 0.45));
+  }
 }
 
 @keyframes fadeUp {
@@ -305,6 +322,12 @@
 @keyframes popIn {
   0% { opacity: 0; transform: translateY(8px) scale(0.96); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes stepNumberShine {
+  0% { background-position: 120% 50%; }
+  50% { background-position: 0% 50%; }
+  100% { background-position: -120% 50%; }
 }
 
 /* iOS safe-area utilities */

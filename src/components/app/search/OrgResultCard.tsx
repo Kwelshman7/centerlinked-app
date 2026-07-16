@@ -31,13 +31,6 @@ export function OrgResultCard({ o }: { o: OrgSearchResult }) {
         o.in_your_network ? "border-primary/60 shadow-sm" : ""
       }`}
     >
-      {o.in_your_network && (
-        <div className="absolute top-0 right-0 z-10 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-bl-md flex items-center gap-1">
-          <Star className="h-2.5 w-2.5 fill-current" /> Preferred
-        </div>
-      )}
-
-
       <Link to={orgHref} className="block hover:bg-accent/30 transition-colors">
         <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
           <div className="shrink-0">
@@ -51,7 +44,16 @@ export function OrgResultCard({ o }: { o: OrgSearchResult }) {
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="font-heading font-bold text-base leading-snug truncate pr-16">{o.org_name}</h3>
+            <div className="flex items-start justify-between gap-2 min-w-0">
+              <h3 className="font-heading font-bold text-base leading-snug line-clamp-2 min-w-0 flex-1">
+                {o.org_name}
+              </h3>
+              {o.in_your_network && (
+                <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1 mt-0.5">
+                  <Star className="h-2.5 w-2.5 fill-current" /> Preferred
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
               {(o.hq_city || o.hq_state) && (
                 <span className="inline-flex items-center gap-1">

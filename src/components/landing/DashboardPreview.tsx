@@ -1,161 +1,232 @@
+/**
+ * Mobile mock of the real org dashboard (/app/dashboard → OrgDashboard).
+ * Uses the same structure, labels, and Northbend demo data as OrgDashboardDesktopPreview.
+ */
 import {
-  Bell,
-  CheckCircle2,
+  Building2,
   Users,
-  TrendingUp,
+  BarChart3,
+  Pencil,
   Phone,
   MessageSquare,
+  Mail,
+  ExternalLink,
+  Palette,
+  UserPlus,
+  Plus,
   Share2,
-  ArrowUpRight,
-  Sparkles,
-  Building2,
-  Calendar,
 } from "lucide-react";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
+import logoNorthbend from "@/assets/logo-northbend.png";
+import { DEMO_FACILITIES } from "./OrgDashboardDesktopPreview";
 
-const partners = [
-  { initials: "SR", name: "Sarah Reyes", org: "Sunrise Recovery", color: "from-blue-500 to-indigo-600", status: "active" },
-  { initials: "MT", name: "Marcus Thompson", org: "Coastal Health", color: "from-emerald-500 to-teal-600", status: "active" },
-  { initials: "JL", name: "Jordan Lee", org: "Horizon Behavioral", color: "from-amber-500 to-orange-600", status: "new" },
-  { initials: "AK", name: "Amara Khan", org: "Beacon Wellness", color: "from-rose-500 to-pink-600", status: "active" },
-];
-
-const activity = [
-  { who: "Sarah R.", action: "verified 3 contracts", time: "12m", icon: CheckCircle2, tone: "text-success" },
-  { who: "You", action: "shared Sunrise PHP with Marcus", time: "1h", icon: Share2, tone: "text-primary" },
-  { who: "Jordan L.", action: "joined your network", time: "3h", icon: Sparkles, tone: "text-amber-600" },
+const quickActions = [
+  { label: "Add facility", icon: Plus },
+  { label: "Edit facilities", icon: Pencil },
+  { label: "Manage team", icon: UserPlus },
+  { label: "Full branding", icon: Palette },
+  { label: "Share link", icon: Share2 },
+  { label: "Public page", icon: ExternalLink },
 ];
 
 export function DashboardPreviewContent() {
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="relative px-4 pt-3 pb-5 bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground overflow-hidden shrink-0">
-        <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/25 rounded-md px-1.5 py-1">
-            <img
-              src={centerlinkedLogo}
-              alt="CenterLinked"
-              className="h-3 w-auto object-contain brightness-0 invert"
-              draggable={false}
-            />
-          </div>
-          <button type="button" className="relative h-7 w-7 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-            <Bell className="h-3 w-3" />
-            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-amber-300" />
-          </button>
-        </div>
-
-        <div className="relative mt-3">
-          <p className="text-[9.5px] font-medium opacity-80">Good morning, Alex</p>
-          <h2 className="text-[17px] font-bold font-heading leading-tight mt-0.5">
-            Your network is <br />growing.
-          </h2>
-        </div>
-
-        <div className="relative mt-3 grid grid-cols-3 gap-1.5">
-          {[
-            { label: "Connections", value: "128", sub: "+12 wk" },
-            { label: "Shares", value: "47", sub: "+8 wk" },
-            { label: "Verified", value: "100%", sub: "Current" },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-lg bg-white/15 backdrop-blur-sm border border-white/20 p-1.5">
-              <p className="text-[8px] opacity-80 font-medium">{stat.label}</p>
-              <p className="text-[14px] font-bold leading-none mt-0.5">{stat.value}</p>
-              <p className="text-[7.5px] flex items-center gap-0.5 mt-0.5 opacity-90">
-                <TrendingUp className="h-2 w-2" /> {stat.sub}
-              </p>
-            </div>
-          ))}
+    <div className="flex flex-col h-full min-h-0 bg-background text-foreground select-none">
+      {/* Compact app header */}
+      <div className="px-3 pt-2 pb-2 border-b border-border/60 shrink-0 flex items-center justify-between gap-2 min-w-0">
+        <img
+          src={centerlinkedLogo}
+          alt="CenterLinked"
+          className="h-3.5 w-auto max-w-[55%] object-contain object-left"
+          draggable={false}
+        />
+        <div className="h-6 w-6 rounded-md bg-white border border-border overflow-hidden p-0.5 shrink-0">
+          <img
+            src={logoNorthbend}
+            alt=""
+            className="h-full w-full object-contain"
+            draggable={false}
+          />
         </div>
       </div>
 
-      <div className="flex-1 px-3.5 pt-3 pb-3 space-y-3 overflow-hidden -mt-2">
-        <div className="rounded-2xl bg-card border border-border shadow-sm p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <Users className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-bold text-foreground">Your BD network</span>
-            </div>
-            <span className="text-[8.5px] font-semibold text-primary inline-flex items-center gap-0.5">
-              View all <ArrowUpRight className="h-2 w-2" />
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 py-2.5 space-y-2.5">
+        {/* Welcome — mirrors OrgDashboard header */}
+        <div className="flex items-start justify-between gap-2 min-w-0">
+          <div className="min-w-0">
+            <h1 className="font-heading text-[13px] font-bold tracking-tight leading-tight truncate">
+              Welcome back, Elena
+            </h1>
+            <p className="text-[9px] text-muted-foreground truncate mt-0.5">
+              Northbend Recovery
+            </p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="inline-flex items-center gap-0.5 h-6 px-1.5 rounded-md border border-border bg-background text-[8px] font-semibold whitespace-nowrap">
+              <ExternalLink className="h-2.5 w-2.5 shrink-0" aria-hidden />
+              Public
+            </span>
+            <span className="inline-flex items-center gap-0.5 h-6 px-1.5 rounded-md bg-primary text-primary-foreground text-[8px] font-semibold whitespace-nowrap shadow-sm">
+              <Plus className="h-2.5 w-2.5 shrink-0" aria-hidden />
+              Add
             </span>
           </div>
-          <div className="space-y-1.5">
-            {partners.map((p) => (
-              <div key={p.name} className="flex items-center gap-2">
-                <div className={`relative h-7 w-7 rounded-full bg-gradient-to-br ${p.color} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
-                  {p.initials}
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success border border-card" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold text-foreground truncate leading-tight">{p.name}</p>
-                  <p className="text-[8.5px] text-muted-foreground truncate leading-tight">{p.org}</p>
-                </div>
-                {p.status === "new" ? (
-                  <span className="text-[7.5px] font-bold text-amber-700 bg-amber-100 rounded-full px-1.5 py-0.5">NEW</span>
-                ) : (
-                  <div className="flex gap-0.5">
-                    <button type="button" className="h-5 w-5 rounded-md bg-muted flex items-center justify-center">
-                      <MessageSquare className="h-2.5 w-2.5 text-foreground" />
-                    </button>
-                    <button type="button" className="h-5 w-5 rounded-md bg-primary/10 flex items-center justify-center">
-                      <Phone className="h-2.5 w-2.5 text-primary" />
-                    </button>
-                  </div>
-                )}
+        </div>
+
+        {/* Compact KPIs — 2×2 on mobile like real OrgDashboard */}
+        <div className="grid grid-cols-2 gap-1.5">
+          <KpiTile label="Facilities" value="4" hint="Active" icon={Building2} />
+          <KpiTile label="Team" value="6" hint="Members" icon={Users} />
+          <KpiTile label="Engagement" value="83" hint="312 views" icon={BarChart3} />
+          <div className="rounded-lg border border-border/60 bg-card p-2 flex items-center justify-around gap-0.5 min-w-0">
+            {[
+              { label: "Calls", value: "24", icon: Phone },
+              { label: "Texts", value: "18", icon: MessageSquare },
+              { label: "Emails", value: "41", icon: Mail },
+            ].map((m) => (
+              <div key={m.label} className="text-center min-w-0 px-0.5">
+                <m.icon className="h-2.5 w-2.5 text-primary mx-auto" aria-hidden />
+                <p className="font-heading text-[11px] font-bold leading-none tabular-nums mt-0.5">
+                  {m.value}
+                </p>
+                <p className="text-[7px] text-muted-foreground truncate">{m.label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-2xl bg-card border border-border shadow-sm p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-bold text-foreground">Today</span>
-            </div>
-            <span className="text-[8.5px] text-muted-foreground font-medium">Live</span>
-          </div>
-          <div className="space-y-1.5">
-            {activity.map((a, i) => {
+        {/* Quick actions */}
+        <div className="rounded-lg border border-border/60 bg-card p-2 shadow-sm">
+          <p className="font-heading text-[10px] font-bold mb-1.5">Quick actions</p>
+          <div className="grid grid-cols-2 gap-1">
+            {quickActions.map((a) => {
               const Icon = a.icon;
               return (
-                <div key={i} className="flex items-start gap-2">
-                  <div className={`h-5 w-5 rounded-full bg-muted flex items-center justify-center shrink-0 ${a.tone}`}>
-                    <Icon className="h-2.5 w-2.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[9.5px] text-foreground leading-tight">
-                      <span className="font-bold">{a.who}</span>{" "}
-                      <span className="text-muted-foreground">{a.action}</span>
-                    </p>
-                    <p className="text-[8px] text-muted-foreground mt-0.5">{a.time} ago</p>
-                  </div>
+                <div
+                  key={a.label}
+                  className="h-7 rounded-md border border-border/70 bg-background px-1.5 inline-flex items-center gap-1 text-[8.5px] font-semibold text-foreground/90 min-w-0"
+                >
+                  <Icon className="h-3 w-3 text-primary shrink-0" aria-hidden />
+                  <span className="truncate">{a.label}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="rounded-2xl bg-gradient-to-br from-foreground to-foreground/85 text-background p-3 shadow-lg">
-          <div className="flex items-center justify-between">
+        {/* Theme colors */}
+        <div className="rounded-lg border border-border/60 bg-card p-2 shadow-sm">
+          <p className="font-heading text-[10px] font-bold mb-1.5 inline-flex items-center gap-1">
+            <Palette className="h-3 w-3 text-primary shrink-0" aria-hidden />
+            Theme colors
+          </p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="h-5 w-5 rounded border border-border bg-[#0E7490] shrink-0" />
+            <span className="h-5 w-5 rounded border border-border bg-[#E0EDFF] shrink-0" />
+            <div
+              className="h-5 flex-1 min-w-0 rounded-md border border-border/60"
+              style={{ background: "linear-gradient(135deg, #0E7490 0%, #E0EDFF 100%)" }}
+            />
+            <span className="h-5 px-2 rounded-md bg-primary text-primary-foreground text-[8px] font-bold grid place-items-center shrink-0">
+              Save
+            </span>
+          </div>
+        </div>
+
+        {/* Facilities — mirrors OrgDashboard facilities card */}
+        <div className="rounded-lg border border-border/60 bg-card p-2 shadow-sm">
+          <div className="flex items-center justify-between gap-2 mb-1.5 min-w-0">
             <div className="min-w-0">
-              <div className="flex items-center gap-1 mb-0.5">
-                <Building2 className="h-2.5 w-2.5 opacity-70" />
-                <p className="text-[8px] uppercase tracking-wider opacity-70 font-semibold">My program</p>
-              </div>
-              <p className="text-[11px] font-bold leading-tight">Sunrise Detox of Boca</p>
-              <p className="text-[8.5px] opacity-70 mt-0.5">Shared 14 times this week</p>
+              <h2 className="font-heading text-[11px] font-bold leading-tight">Facilities</h2>
+              <p className="text-[8px] text-muted-foreground">4 locations</p>
             </div>
-            <button type="button" className="h-8 px-2.5 rounded-lg bg-primary text-primary-foreground text-[9.5px] font-bold flex items-center gap-1 shrink-0 shadow-md">
-              <Share2 className="h-2.5 w-2.5" /> Share
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="inline-flex items-center gap-0.5 h-5 px-1.5 rounded-md bg-primary text-primary-foreground text-[7.5px] font-semibold">
+                <Plus className="h-2.5 w-2.5" aria-hidden /> Add
+              </span>
+              <span className="inline-flex items-center gap-0.5 h-5 px-1.5 rounded-md border border-border text-[7.5px] font-semibold">
+                <Pencil className="h-2.5 w-2.5" aria-hidden /> Manage
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 mb-1.5 overflow-x-auto min-w-0">
+            {["All Locations", "NC", "SC"].map((s, i) => (
+              <span
+                key={s}
+                className={`px-1.5 py-0.5 rounded-full text-[7.5px] font-semibold shrink-0 whitespace-nowrap ${
+                  i === 0
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            {DEMO_FACILITIES.map((f) => (
+              <div
+                key={f.name}
+                className="rounded-lg border border-border/60 bg-card overflow-hidden min-w-0"
+              >
+                <div className="aspect-[16/10] bg-muted overflow-hidden">
+                  <img
+                    src={f.image}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
+                </div>
+                <div className="p-1.5 space-y-0.5 min-w-0">
+                  <p className="font-semibold text-[8.5px] leading-snug line-clamp-2">
+                    {f.name}
+                  </p>
+                  <p className="text-[7.5px] text-muted-foreground truncate">{f.loc}</p>
+                  <div className="flex flex-wrap gap-0.5">
+                    {f.levels.slice(0, 2).map((l) => (
+                      <span
+                        key={l}
+                        className="text-[6.5px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-1 py-px rounded"
+                      >
+                        {l}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function KpiTile({
+  label,
+  value,
+  hint,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  icon: typeof Building2;
+}) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-card p-2 shadow-sm min-w-0">
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-[8px] font-medium text-muted-foreground truncate">{label}</p>
+        <span className="h-5 w-5 rounded bg-primary/10 text-primary grid place-items-center shrink-0">
+          <Icon className="h-2.5 w-2.5" aria-hidden />
+        </span>
+      </div>
+      <p className="mt-0.5 font-heading text-base font-bold tracking-tight leading-none tabular-nums">
+        {value}
+      </p>
+      <p className="text-[7.5px] text-muted-foreground mt-0.5 truncate">{hint}</p>
     </div>
   );
 }

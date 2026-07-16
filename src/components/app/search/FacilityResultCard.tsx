@@ -33,12 +33,6 @@ export function FacilityResultCard({ f }: { f: FacilityResult }) {
         f.preferred_provider ? "border-primary/60 shadow-sm" : ""
       }`}
     >
-      {f.preferred_provider && (
-        <div className="absolute top-0 right-0 z-10 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-bl-md flex items-center gap-1">
-          <Star className="h-2.5 w-2.5 fill-current" /> Preferred
-        </div>
-      )}
-
       <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
         <Link to={`/app/facilities/${f.id}`} className="shrink-0">
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white border border-border flex items-center justify-center p-1.5">
@@ -57,7 +51,16 @@ export function FacilityResultCard({ f }: { f: FacilityResult }) {
 
         <div className="min-w-0 flex-1">
           <Link to={`/app/facilities/${f.id}`} className="block">
-            <h3 className="font-semibold text-base leading-snug truncate pr-16">{f.name}</h3>
+            <div className="flex items-start justify-between gap-2 min-w-0">
+              <h3 className="font-semibold text-base leading-snug line-clamp-2 min-w-0 flex-1">
+                {f.name}
+              </h3>
+              {f.preferred_provider && (
+                <span className="shrink-0 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1 mt-0.5">
+                  <Star className="h-2.5 w-2.5 fill-current" /> Preferred
+                </span>
+              )}
+            </div>
             {f.organization_name && (
               <p className="text-xs text-muted-foreground truncate mt-0.5">
                 by {f.organization_name}

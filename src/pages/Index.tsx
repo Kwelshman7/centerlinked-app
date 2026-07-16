@@ -1,10 +1,7 @@
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
-import { TrustStrip } from "@/components/landing/TrustStrip";
 import { ProfileInventory } from "@/components/landing/ProfileInventory";
-import { AlwaysAccurate } from "@/components/landing/AlwaysAccurate";
 import { WhoFor } from "@/components/landing/WhoFor";
-import { Problem } from "@/components/landing/Problem";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { ProductShowcase } from "@/components/landing/ProductShowcase";
 import { OrgDashboardSection } from "@/components/landing/OrgDashboardSection";
@@ -17,9 +14,9 @@ import { Footer } from "@/components/landing/Footer";
 
 /**
  * Landing journey:
- * Hero → trust → trusted/current profile → why join → who it’s for →
- * replace outdated materials → how it works → product proof → dashboard →
- * monthly verification → pricing → why CenterLinked → FAQ → convert
+ * Hero → trusted/current profile → who it’s for → how it works →
+ * product proof → dashboard → monthly verification → pricing →
+ * why CenterLinked → FAQ → convert
  */
 const Index = () => {
   return (
@@ -27,11 +24,8 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
-        <TrustStrip />
         <ProfileInventory />
-        <AlwaysAccurate />
         <WhoFor />
-        <Problem />
         <HowItWorks />
         <ProductShowcase />
         <OrgDashboardSection />
