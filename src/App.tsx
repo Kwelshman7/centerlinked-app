@@ -10,7 +10,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RequestAccess from "./pages/RequestAccess";
 import CreateOrganization from "./pages/CreateOrganization";
+import SetupOrganization from "./pages/SetupOrganization";
 import NotFound from "./pages/NotFound";
+import JoinRequests from "./pages/app/admin/JoinRequests";
 import Dashboard from "./pages/app/Dashboard";
 import Search from "./pages/app/Search";
 import Facilities from "./pages/app/Facilities";
@@ -54,6 +56,7 @@ const App = () => (
             <Route path="/o/:orgSlug/p/:programSlug" element={<ProgramSheet />} />
             <Route path="/p/:slug" element={<ProgramSheet />} />
             <Route path="/o/:slug" element={<OrgSheet />} />
+            <Route path="/setup-organization" element={<ProtectedRoute><SetupOrganization /></ProtectedRoute>} />
             <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
             <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
@@ -63,6 +66,7 @@ const App = () => (
               <Route path="network" element={<Navigate to="/app/organizations" replace />} />
               <Route path="admin/insurance" element={<AdminRoute><InsuranceDatabase /></AdminRoute>} />
               <Route path="admin/requests" element={<AdminRoute><AccessRequests /></AdminRoute>} />
+              <Route path="admin/join-requests" element={<AdminRoute><JoinRequests /></AdminRoute>} />
               <Route path="admin/claims" element={<AdminRoute><OrganizationClaims /></AdminRoute>} />
               <Route path="admin/organizations" element={<AdminRoute><AdminOrganizations /></AdminRoute>} />
               <Route path="admin/organizations/new" element={<AdminRoute><AdminCreateOrganization /></AdminRoute>} />

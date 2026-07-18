@@ -66,6 +66,12 @@ export type Database = {
         Update: { accepted_at?: string | null; created_at?: string; email?: string; id?: string; invited_by?: string | null; organization_id?: string; role_at_org?: string; status?: string }
         Relationships: []
       }
+      organization_join_requests: {
+        Row: { created_at: string; email: string; email_domain: string; id: string; organization_id: string; reviewed_at: string | null; reviewed_by: string | null; role_at_org: string; status: string; updated_at: string; user_id: string }
+        Insert: { created_at?: string; email: string; email_domain: string; id?: string; organization_id: string; reviewed_at?: string | null; reviewed_by?: string | null; role_at_org?: string; status?: string; updated_at?: string; user_id: string }
+        Update: { created_at?: string; email?: string; email_domain?: string; id?: string; organization_id?: string; reviewed_at?: string | null; reviewed_by?: string | null; role_at_org?: string; status?: string; updated_at?: string; user_id?: string }
+        Relationships: [{ foreignKeyName: 'organization_join_requests_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] }]
+      }
       organization_claims: {
         Row: { claimant_email: string; claimant_name: string; claimant_phone: string | null; claimant_role: string | null; claimant_user_id: string | null; created_at: string; id: string; notes: string | null; organization_id: string; proof_url: string | null; reviewed_at: string | null; reviewed_by: string | null; status: string; updated_at: string }
         Insert: { claimant_email: string; claimant_name: string; claimant_phone?: string | null; claimant_role?: string | null; claimant_user_id?: string | null; created_at?: string; id?: string; notes?: string | null; organization_id: string; proof_url?: string | null; reviewed_at?: string | null; reviewed_by?: string | null; status?: string; updated_at?: string }
@@ -138,8 +144,17 @@ export type Database = {
       admin_create_organization: { Args: { _bd_contact_email?: string; _bd_contact_name?: string; _bd_contact_phone?: string; _description?: string; _email_domain?: string; _hq_city?: string; _hq_state?: string; _logo_url?: string; _name: string; _num_facilities?: number; _phone?: string; _verified?: boolean; _website?: string }; Returns: string }
       bootstrap_super_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_bootstrap_admin_candidate: { Args: Record<PropertyKey, never>; Returns: boolean }
+      claim_pending_org_invite: { Args: Record<PropertyKey, never>; Returns: Json }
       create_organization_with_owner: { Args: { _description?: string; _email_domain: string; _hq_city?: string; _hq_state?: string; _logo_url?: string; _name: string; _num_facilities?: number; _phone?: string; _website?: string }; Returns: string }
       email_signup_eligible: { Args: { _email: string }; Returns: boolean }
+      get_org_setup_options: { Args: Record<PropertyKey, never>; Returns: Json }
+      is_org_facility_admin: { Args: { _org_id: string; _user_id: string }; Returns: boolean }
+      link_user_to_organization: { Args: { _user_id: string; _organization_id: string; _role_at_org?: string; _invited_by?: string }; Returns: undefined }
+      list_org_join_requests: { Args: { _organization_id: string }; Returns: { id: string; organization_id: string; user_id: string; email: string; email_domain: string; status: string; role_at_org: string; created_at: string; full_name: string | null }[] }
+      list_superadmin_join_requests: { Args: Record<PropertyKey, never>; Returns: { id: string; organization_id: string; organization_name: string; user_id: string; email: string; email_domain: string; status: string; role_at_org: string; created_at: string; full_name: string | null; org_has_admin: boolean }[] }
+      org_has_facility_admin: { Args: { _org_id: string }; Returns: boolean }
+      request_to_join_organization: { Args: { _organization_id: string }; Returns: string }
+      review_organization_join_request: { Args: { _request_id: string; _approve: boolean }; Returns: boolean }
       freeze_stale_facilities: { Args: Record<PropertyKey, never>; Returns: number }
       get_networked_org_ids: { Args: Record<PropertyKey, never>; Returns: string[] }
       get_or_create_direct_conversation: { Args: { _other_user_id: string }; Returns: string }

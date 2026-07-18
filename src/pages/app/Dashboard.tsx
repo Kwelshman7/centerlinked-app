@@ -110,12 +110,12 @@ export default function Dashboard() {
       <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
       <h1 className="font-heading text-2xl font-bold">No organization linked</h1>
       <p className="text-muted-foreground mt-2">
-        Get your network on CenterLinked by creating your organization. Takes about a minute.
+        Join your company&apos;s organization if it already exists, or create a new one.
       </p>
       <div className="flex items-center justify-center gap-3 mt-6">
         <Button asChild size="lg">
-          <Link to="/create-organization">
-            <Plus className="h-4 w-4" /> Create your organization
+          <Link to="/setup-organization">
+            <Plus className="h-4 w-4" /> Join or create organization
           </Link>
         </Button>
       </div>

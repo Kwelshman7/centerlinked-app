@@ -3,6 +3,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { bootstrapSuperAdmin, checkBootstrapAdminCandidate } from "@/lib/bootstrap-admin";
 import { ensureProfile } from "@/lib/ensure-profile";
+import { claimPendingOrgInvite } from "@/lib/org-setup";
 
 type AppRole = "super_admin" | "facility_admin" | "bd_rep";
 
@@ -51,6 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         checkBootstrapAdminCandidate(),
       ]);
       setIsBootstrapAdmin(bootstrapCandidate);
+
+      try {
+        await claimPendingOrgInvite();
+      } catch {
+        // Invite claim is best-effort; setup page retries if needed.
+      }
+
       const [{ data: prof }, { data: rolesData }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", authUser.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", authUser.id),

@@ -115,7 +115,7 @@ export default function AuthCallback() {
       }
 
       if (!profile?.organization_id) {
-        navigate("/create-organization", { replace: true });
+        navigate("/setup-organization", { replace: true });
         return;
       }
 

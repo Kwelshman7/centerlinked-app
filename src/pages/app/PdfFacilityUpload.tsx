@@ -108,7 +108,7 @@ export default function PdfFacilityUpload() {
         <p className="text-sm text-muted-foreground">
           PDF uploads are linked to your organization. Set yours up — it takes a minute — then come back.
         </p>
-        <Button asChild><Link to="/create-organization">Create organization</Link></Button>
+        <Button asChild><Link to="/setup-organization">Join or create organization</Link></Button>
       </Card>
     );
   }

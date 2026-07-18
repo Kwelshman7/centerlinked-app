@@ -9,24 +9,38 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Mail, Trash2, UserPlus, Users } from "lucide-react";
+import { Check, Loader2, Mail, Trash2, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { isPersonalEmail } from "@/lib/email-domains";
+import { reviewJoinRequest } from "@/lib/org-setup";
 
 interface MemberRow { id: string; user_id: string; role_at_org: string; created_at: string; }
 interface ProfileLite { user_id: string; full_name: string | null; avatar_url: string | null; job_title: string | null; email: string | null; }
 interface InviteRow { id: string; email: string; role_at_org: string; status: string; created_at: string; }
+interface JoinRequestRow {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  email: string;
+  email_domain: string;
+  status: string;
+  role_at_org: string;
+  created_at: string;
+  full_name: string | null;
+}
 
 export default function Members() {
   const { profile, user, isFacilityAdmin } = useAuth();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
   const [invites, setInvites] = useState<InviteRow[]>([]);
+  const [joinRequests, setJoinRequests] = useState<JoinRequestRow[]>([]);
   const [orgDomain, setOrgDomain] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<MemberRow | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
 
   const load = async () => {
     if (!profile?.organization_id) return;
@@ -45,9 +59,34 @@ export default function Members() {
       (profs ?? []).forEach((p) => { map[(p as ProfileLite).user_id] = p as ProfileLite; });
       setProfiles(map);
     }
+    if (isFacilityAdmin) {
+      const { data: reqs, error } = await supabase.rpc("list_org_join_requests", {
+        _organization_id: profile.organization_id,
+      });
+      if (error) {
+        setJoinRequests([]);
+      } else {
+        setJoinRequests((reqs as JoinRequestRow[]) ?? []);
+      }
+    } else {
+      setJoinRequests([]);
+    }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [profile?.organization_id]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [profile?.organization_id, isFacilityAdmin]);
+
+  const handleReviewJoin = async (id: string, approve: boolean) => {
+    setReviewingId(id);
+    try {
+      await reviewJoinRequest(id, approve);
+      toast.success(approve ? "Member approved" : "Request denied");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't update request");
+    } finally {
+      setReviewingId(null);
+    }
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +112,7 @@ export default function Members() {
       toast.error(error.message.includes("duplicate") ? "Already invited" : error.message);
       return;
     }
-    toast.success("Invite added", { description: "They'll join automatically when they sign up with this email." });
+    toast.success("Invite added", { description: "They'll be added automatically when they sign up with this email." });
     setInviteEmail("");
     load();
   };
@@ -104,6 +143,47 @@ export default function Members() {
         <h1 className="font-heading text-2xl font-bold">Members</h1>
         <p className="text-sm text-muted-foreground">BD reps in your organization. Invites must use your work email domain{orgDomain ? ` (@${orgDomain})` : ""}.</p>
       </div>
+
+      {isFacilityAdmin && joinRequests.length > 0 && (
+        <Card className="p-5 space-y-3">
+          <h2 className="font-heading text-base font-semibold flex items-center gap-2">
+            <Users className="h-4 w-4" /> Pending join requests
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            People with your @{orgDomain || "company"} email asked to join. Approve to grant access.
+          </p>
+          <div className="divide-y divide-border rounded-md border">
+            {joinRequests.map((r) => (
+              <div key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{r.full_name || "New user"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={reviewingId === r.id}
+                    onClick={() => handleReviewJoin(r.id, false)}
+                  >
+                    <X className="h-4 w-4" /> Deny
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={reviewingId === r.id}
+                    onClick={() => handleReviewJoin(r.id, true)}
+                  >
+                    {reviewingId === r.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    Approve
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {isFacilityAdmin && profile?.organization_id && (
         <Card className="p-5">

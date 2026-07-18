@@ -62,9 +62,10 @@ export default function CreateOrganization() {
           ? "Someone from your domain already created an organization"
           : error.message,
         isDuplicate
-          ? { description: "Ask a colleague to invite you from the Members page instead of creating a new one." }
+          ? { description: "Request to join the existing organization for your email domain." }
           : undefined,
       );
+      if (isDuplicate) navigate("/setup-organization", { replace: true });
       return;
     }
 
@@ -87,7 +88,7 @@ export default function CreateOrganization() {
       <div className="absolute bottom-0 -left-10 h-80 w-80 rounded-full bg-accent/40 blur-3xl -z-10" />
 
       <div className="max-w-2xl mx-auto">
-        <Link to="/app" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6">
+        <Link to="/setup-organization" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
 
@@ -97,7 +98,8 @@ export default function CreateOrganization() {
           </div>
           <h1 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">Create your organization</h1>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">
-            You're the first person from <span className="font-semibold text-foreground">{domain || "your company"}</span>. Set up your network — anyone with that email domain can join after.
+            Set up the organization for <span className="font-semibold text-foreground">@{domain || "your company"}</span>.
+            Teammates with the same work email domain can request to join after — you&apos;ll approve them.
           </p>
         </div>
 

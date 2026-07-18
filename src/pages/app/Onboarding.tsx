@@ -100,7 +100,7 @@ export default function Onboarding() {
     if (!user) return;
     if (!profile?.organization_id) {
       toast.error("Your account isn't linked to an organization yet.");
-      navigate("/create-organization", { replace: true });
+      navigate("/setup-organization", { replace: true });
       return;
     }
     setSaving(true);

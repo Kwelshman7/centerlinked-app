@@ -32,7 +32,7 @@ export default function Login() {
   useEffect(() => {
     if (authLoading || !user) return;
     if (!profile?.organization_id && !isSuperAdmin) {
-      navigate("/create-organization", { replace: true });
+      navigate("/setup-organization", { replace: true });
       return;
     }
     if (from && from !== "/login") {

@@ -74,7 +74,7 @@ export default function Signup() {
     }
     if (data.session) {
       toast.success("Welcome to CenterLinked");
-      navigate("/create-organization");
+      navigate("/setup-organization");
     } else {
       toast.success("Check your inbox", {
         description: "We sent you a confirmation email. Click the link to activate your account, then come back to sign in.",
