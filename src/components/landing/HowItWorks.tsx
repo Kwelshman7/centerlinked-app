@@ -30,7 +30,7 @@ const stages: {
     num: "03",
     icon: Share2,
     title: "Share Your Link",
-    body: "Get one live profile link your BD, admissions, and marketing teams can share with every referral partner — always current.",
+    body: "Get one live profile link your BD, admissions, and marketing teams can share with every referral partner.",
     details: ["BD & admissions", "Marketing teams", "Referral partners"],
   },
 ];
@@ -67,7 +67,7 @@ export function HowItWorks() {
     <section
       ref={sectionRef}
       id="how-it-works"
-      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-background"
+      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-muted/40"
     >
       <div className="pointer-events-none absolute inset-0 landing-glow opacity-80" aria-hidden />
       <div className="container relative z-10">

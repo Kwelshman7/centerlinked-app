@@ -17,6 +17,8 @@ interface Props {
   organizationId?: string;
   brand?: string;
   heading?: string;
+  /** Elevated card for hero overlay placement. */
+  variant?: "default" | "floating";
   className?: string;
 }
 
@@ -34,6 +36,7 @@ export function OrgHeroContactCard({
   organizationId,
   brand = "#1A73E8",
   heading = "For Referrals",
+  variant = "default",
   className,
 }: Props) {
   if (!contacts.length) return null;
@@ -45,7 +48,10 @@ export function OrgHeroContactCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/60 bg-card overflow-hidden w-full h-full text-foreground flex flex-col shadow-sm",
+        "rounded-xl border overflow-hidden w-full h-full text-foreground flex flex-col",
+        variant === "floating"
+          ? "rounded-2xl border-white/25 bg-card/97 backdrop-blur-md shadow-2xl ring-1 ring-white/15"
+          : "border-border/60 bg-card shadow-sm",
         className,
       )}
     >

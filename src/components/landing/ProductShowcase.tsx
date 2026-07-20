@@ -7,24 +7,23 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const views = [
   {
-    label: "What partners open",
-    title: "Your facility page, ready to place from",
-    caption:
-      "The same live facility sheet partners open from your link — insurance, levels of care, photos, program details, and BD contact.",
-    content: <PublicFacilitySheetPreviewContent />,
-    reverse: false,
-  },
-  {
     label: "Your organization dashboard",
     title: "Update once. Every shared link stays current.",
     caption:
       "Manage facilities, team, engagement, and branding from one dashboard — the same view your organization uses after onboarding.",
     content: <DashboardPreviewContent />,
+    reverse: false,
+  },
+  {
+    label: "What partners open",
+    title: "Each facility has its own page.",
+    caption: "Giving those who refer to you exactly what they need.",
+    content: <PublicFacilitySheetPreviewContent />,
     reverse: true,
   },
   {
     label: "How partners find you",
-    title: "Search built for real placement criteria",
+    title: "Search by Insurance, Location, and Level of Care.",
     caption:
       "Professionals filter by level of care, location, and insurance. Verified profiles surface when someone is ready to refer.",
     content: <SearchResultsPreviewContent />,
@@ -36,7 +35,7 @@ export function ProductShowcase() {
   return (
     <section
       id="example"
-      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-background scroll-mt-20"
+      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 bg-secondary/40 scroll-mt-20"
     >
       <div className="pointer-events-none absolute inset-0 landing-glow opacity-60" aria-hidden />
       <div className="container relative z-10">

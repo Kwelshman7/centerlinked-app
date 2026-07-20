@@ -337,6 +337,20 @@
 .h-safe-tabbar { height: calc(64px + env(safe-area-inset-bottom)); }
 html, body, #root { overflow-x: hidden; max-width: 100%; }
 
+/* Landing dashboard demo — scale facility cards inside laptop/phone mocks */
+.demo-facility-grid .font-semibold.text-sm {
+  font-size: 8px;
+  line-height: 1.25;
+}
+
+.demo-facility-grid .text-\[11px\] {
+  font-size: 7px;
+}
+
+.demo-facility-grid .text-\[9px\] {
+  font-size: 6px;
+}
+
 /* Print / Save as PDF — hide chrome, keep sheet content */
 @media print {
   @page {

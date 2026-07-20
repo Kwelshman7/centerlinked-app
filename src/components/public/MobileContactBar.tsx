@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Phone, MessageSquare, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -12,6 +12,8 @@ interface Props {
   brand: string;
   organizationId?: string;
   contextLabel?: string;
+  /** Optional share button shown beside Contact on mobile (e.g. Share Facility). */
+  shareAction?: ReactNode;
   /** Pixels to lift the bar above a bottom tab bar (e.g. 64 in the logged-in app). */
   bottomOffset?: number;
 }
@@ -30,13 +32,14 @@ export function MobileContactBar({
   brand,
   organizationId,
   contextLabel = "Reach the business development representative.",
+  shareAction,
   bottomOffset = 0,
 }: Props) {
   const [open, setOpen] = useState(false);
   const tel = sanitizePhone(repPhone);
-  const hasAny = !!(tel || repEmail);
+  const hasContact = !!(tel || repEmail);
 
-  if (!hasAny) return null;
+  if (!hasContact && !shareAction) return null;
 
   const fire = (kind: "contact_call" | "contact_text" | "contact_email") => {
     if (organizationId) trackOrgEvent(organizationId, kind);
@@ -53,17 +56,27 @@ export function MobileContactBar({
         className="fixed left-0 right-0 lg:hidden z-30 bg-card/95 backdrop-blur-md border-t border-border px-4 pt-3 pb-3 print:hidden"
         style={barStyle}
       >
-        <Button
-          size="lg"
-          className="w-full shadow-md text-[15px] font-semibold"
-          style={{ backgroundColor: brand, borderColor: brand }}
-          onClick={() => setOpen(true)}
-        >
-          <User className="h-4 w-4" />
-          Contact
-        </Button>
+        <div className={shareAction ? "flex gap-2" : undefined}>
+          {shareAction && (
+            <div className="flex-1 min-w-0 [&_button]:w-full [&_button]:shadow-md [&_button]:text-[15px] [&_button]:font-semibold">
+              {shareAction}
+            </div>
+          )}
+          {hasContact && (
+            <Button
+              size="lg"
+              className={shareAction ? "flex-1 min-w-0 shadow-md text-[15px] font-semibold" : "w-full shadow-md text-[15px] font-semibold"}
+              style={{ backgroundColor: brand, borderColor: brand }}
+              onClick={() => setOpen(true)}
+            >
+              <User className="h-4 w-4" />
+              Contact
+            </Button>
+          )}
+        </div>
       </div>
 
+      {hasContact && (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl max-w-lg mx-auto pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <SheetHeader className="text-left">
@@ -130,6 +143,7 @@ export function MobileContactBar({
           </div>
         </SheetContent>
       </Sheet>
+      )}
     </>
   );
 }

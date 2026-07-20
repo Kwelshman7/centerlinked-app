@@ -211,6 +211,7 @@ export function FacilitySheetView({
   const repEmail = facility.bd_contact_email || org?.bd_contact_email || null;
   const cleanPhone = sanitizePhone(repPhone) || null;
   const hasContact = !!(cleanPhone || repEmail);
+  const showMobileActionBar = !!(hasContact || shareNode);
 
   const summaryText =
     facility.short_description ||
@@ -257,11 +258,22 @@ export function FacilitySheetView({
   const tabBarOffset = mode === "internal" ? 64 : 0;
 
   return (
-    <div className={`space-y-5 lg:space-y-6 min-w-0 ${hasContact ? mobileContactBarPadding(tabBarOffset) : ""}`}>
+    <div className={`space-y-5 lg:space-y-6 min-w-0 ${showMobileActionBar ? mobileContactBarPadding(tabBarOffset) : ""}`}>
       {/* Hero */}
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
         <div className="grid lg:grid-cols-2 lg:items-start">
-          <div className="p-4 sm:p-6 lg:p-7 flex flex-col gap-3 min-w-0 self-start">
+          <HeroGallery
+            images={facility.image_urls ?? []}
+            fallbackImage={coverImageUrl}
+            facilityName={facility.name}
+            brand={brand}
+            canEdit={canEditPhotos}
+            facilityId={facilityId ?? facility.id}
+            onPhotosUpdated={onPhotosUpdated}
+            className="order-1 lg:order-2"
+          />
+
+          <div className="p-4 sm:p-6 lg:p-7 flex flex-col gap-3 min-w-0 self-start order-2 lg:order-1">
             {mode === "public" && org?.slug && (
               <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
                 <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline">
@@ -306,18 +318,8 @@ export function FacilitySheetView({
               )}
             </div>
 
-            {shareNode && <div className="pt-1">{shareNode}</div>}
+            {shareNode && <div className="pt-1 hidden lg:block">{shareNode}</div>}
           </div>
-
-          <HeroGallery
-            images={facility.image_urls ?? []}
-            fallbackImage={coverImageUrl}
-            facilityName={facility.name}
-            brand={brand}
-            canEdit={canEditPhotos}
-            facilityId={facilityId ?? facility.id}
-            onPhotosUpdated={onPhotosUpdated}
-          />
         </div>
 
         {updatedByName && (
@@ -536,7 +538,7 @@ export function FacilitySheetView({
         </section>
       )}
 
-      {hasContact && (
+      {showMobileActionBar && (
         <MobileContactBar
           repName={repName}
           repPhone={repPhone}
@@ -545,6 +547,7 @@ export function FacilitySheetView({
           organizationId={org?.id}
           contextLabel={`Reach the BD rep for ${facility.name}.`}
           bottomOffset={tabBarOffset}
+          shareAction={shareNode ? <div className="lg:hidden w-full">{shareNode}</div> : undefined}
         />
       )}
     </div>
@@ -581,6 +584,7 @@ function HeroGallery({
   canEdit,
   facilityId,
   onPhotosUpdated,
+  className,
 }: {
   images: string[];
   fallbackImage?: string | null;
@@ -589,6 +593,7 @@ function HeroGallery({
   canEdit: boolean;
   facilityId: string;
   onPhotosUpdated?: (images: string[]) => void;
+  className?: string;
 }) {
   const list = (images ?? []).filter(Boolean);
   const heroImage = list[0] ?? fallbackImage ?? null;
@@ -606,7 +611,7 @@ function HeroGallery({
   }, [activeIndex, displayImages.length]);
 
   return (
-    <div className="relative bg-muted shrink-0 self-start w-full border-t lg:border-t-0 lg:border-l border-border/60">
+    <div className={`relative bg-muted shrink-0 self-start w-full border-b lg:border-b-0 lg:border-l border-border/60 ${className ?? ""}`}>
       {canEdit && (
         <Button
           type="button"

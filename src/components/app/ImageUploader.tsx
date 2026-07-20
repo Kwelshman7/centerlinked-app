@@ -12,8 +12,10 @@ interface ImageUploaderProps {
   label?: string;
   /** Override the default recommended dimensions hint for this bucket. */
   recommendedSize?: string;
-  /** When true, the first image is treated as the cover/profile image and users can promote any image to cover. */
+  /** When true, users can mark one image as the cover/hero photo. */
   allowCover?: boolean;
+  /** Label for the selected cover badge (default: Cover). */
+  coverLabel?: string;
 }
 
 const BUCKET_RECOMMENDED_SIZES: Record<ImageUploaderProps["bucket"], string> = {
@@ -33,6 +35,7 @@ export function ImageUploader({
   label = "Add images",
   recommendedSize,
   allowCover = bucket === "facility-images",
+  coverLabel = "Cover",
 }: ImageUploaderProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -72,7 +75,7 @@ export function ImageUploader({
   const setCover = (url: string) => {
     if (value[0] === url) return;
     onChange([url, ...value.filter((u) => u !== url)]);
-    toast.success("Cover photo updated");
+    toast.success(`${coverLabel} photo updated`);
   };
 
   return (
@@ -88,7 +91,7 @@ export function ImageUploader({
               <img src={url} alt="" className="w-full h-full object-cover" />
               {isCover && (
                 <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground text-[10px] font-semibold flex items-center gap-1 shadow">
-                  <Star className="h-3 w-3 fill-current" /> Cover
+                  <Star className="h-3 w-3 fill-current" /> {coverLabel}
                 </div>
               )}
               {allowCover && !isCover && (
@@ -96,10 +99,10 @@ export function ImageUploader({
                   type="button"
                   onClick={() => setCover(url)}
                   className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-md bg-foreground/70 text-background text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-                  aria-label="Set as cover"
-                  title="Set as cover photo"
+                  aria-label={`Set as ${coverLabel.toLowerCase()}`}
+                  title={`Set as ${coverLabel.toLowerCase()} photo`}
                 >
-                  <Star className="h-3 w-3" /> Set cover
+                  <Star className="h-3 w-3" /> Set {coverLabel.toLowerCase()}
                 </button>
               )}
               <button
@@ -136,7 +139,7 @@ export function ImageUploader({
       </div>
       {allowCover && value.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          The cover photo is shown as the facility's main image. Hover any photo and click "Set cover" to change it.
+          The {coverLabel.toLowerCase()} photo is shown as the main image. Hover any photo and click &quot;Set {coverLabel.toLowerCase()}&quot; to change it.
         </p>
       )}
     </div>

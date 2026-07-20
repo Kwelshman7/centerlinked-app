@@ -1,0 +1,276 @@
+{
+  "org": {
+    "name": "Banyan Treatment Centers",
+    "slug": "banyan-treatment-centers",
+    "logoUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/org-logos/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783124574807-lgp6c0rnyxd.png",
+    "brandColor": "#27aa41",
+    "accentColor": "#000000",
+    "hqCity": "Gulf Breeze",
+    "hqState": "FL",
+    "bdContactName": "Chris Kaufteil",
+    "bdContactEmail": "ckaufteil@banyancenters.com",
+    "facilityCount": 15,
+    "coverUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/org-logos/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783536938437-82kkjlcuy13.jpg"
+  },
+  "states": [
+    "AK",
+    "CA",
+    "CO",
+    "Delaware",
+    "FL",
+    "IL",
+    "MA",
+    "PA",
+    "TX"
+  ],
+  "facilities": [
+    {
+      "id": "a61fcc3a-ca72-421f-987d-890baf93a8ca",
+      "name": "Banyan Alaska",
+      "slug": "banyan-alaska-wasilla-e8260a",
+      "city": "Wasilla",
+      "state": "AK",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783530586522-az9dk5cocil.webp",
+      "levelsOfCare": [
+        "PHP",
+        "IOP",
+        "Outpatient",
+        "Mental Health PHP/IOP",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Banyan Treatment Centers Alaska is located in Wasilla, a vibrant city in the Mat-Su Valley between two lakes. Known for being the headquarters of the renowned Iditarod Sled Dog Race, Wasilla serves as a hub for the region. Banyan Alaska provides outpatient treatment for substance use disorders and mental health disorders, specializing in treatment plans tailored for civilians and military personnel.\n\nThe facility offers day treatment (PHP), intensive outpatient (IOP), outpatient mental health services, and telehealth virtual IOP — recognizing Alaska's unique geographic challenges that make remote access to care essential. The program integrates trauma-informed care, PTSD support, and culturally sensitive approaches. Community housing is also available.\n\nBanyan Alaska treats alcohol, opioid, cocaine, meth, benzodiazepine, prescription drug, fentanyl, heroin, and methadone addiction, as well as co-occurring disorders including depression, PTSD, bipolar disorder, OCD, and schizophrenia. A Sunday church service, family therapy, and recreational outings supplement core clinical services.\n\nBanyan Alaska accepts Medicaid and most major insurances. The facility is part of the nationally recognized, Joint Commission-accredited Banyan Treatment Centers network. Transportation assistance is available for those within approximately three hours of the facility."
+    },
+    {
+      "id": "28949ad9-6b2d-465d-bf0a-81622bb0e605",
+      "name": "Banyan Boca",
+      "slug": "banyan-boca-boca-raton-442f70",
+      "city": "Boca Raton",
+      "state": "FL",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/pipeline/28949ad9-6b2d-465d-bf0a-81622bb0e605/1783517186349-b66wehawwmv.jpg",
+      "levelsOfCare": [
+        "Mental Health Residential",
+        "Mental Health PHP/IOP",
+        "Dual Diagnosis"
+      ],
+      "description": "Located in tranquil Boca Raton, Florida, Banyan Boca offers a state-of-the-art facility providing residential mental health treatment in a safe, supportive environment. The licensed team delivers personalized care for primary and co-occurring mental health conditions including anxiety, depression, PTSD, bipolar disorder, OCD, and schizophrenia.\n\nBanyan Boca offers a residential mental health program providing 24/7 clinical support, tailored therapy, and a daily routine built around stability, wellness, and growth. A telehealth Intensive Outpatient Program (IOP) extends care virtually for those needing flexible access to treatment. The Alumni and Family Program supports ongoing healing through community events, family workshops, and peer-led meetings.\n\nTreatment modalities include individual and group therapy, Accelerated Resolution Therapy (ART), CBT, medication management, equine therapy, and life skills development. The multidisciplinary team of licensed clinicians, therapists, nurses, and case managers work together to create individualized plans.\n\nBanyan Boca is part of the nationally recognized, Joint Commission-accredited Banyan Treatment Centers network. Transportation support is available for individuals within three hours of the facility, serving South Florida and surrounding regions."
+    },
+    {
+      "id": "4d10ef21-7808-4f33-8eb2-dd9a3199f5b4",
+      "name": "Banyan Castle Rock",
+      "slug": "banyan-castle-rock-castle-rock-e0f663",
+      "city": "Castle Rock",
+      "state": "CO",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783526375746-9cx5ksp66vh.webp",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "Mental Health Residential",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Banyan Castle Rock in Colorado offers a serene and supportive environment for individuals seeking recovery from substance abuse and mental health disorders. Nestled in the beautiful landscape of Castle Rock, the facility combines state-of-the-art amenities with the natural beauty and tranquility of Colorado, providing an ideal setting for recovery.\n\nThe campus features residential monitored detox, residential addiction treatment, a residential mental health program, and telehealth virtual IOP. On-site amenities include chef-prepared meals, an outdoor putting green, off-site gym access, and recreational outings. Clinical services include EMDR, Accelerated Resolution Therapy, art and music therapy, yoga and mindfulness, family therapy, biofeedback, and psychoeducation groups.\n\nBanyan Castle Rock treats alcohol, opioid, cocaine, meth, benzodiazepine, prescription drug, fentanyl, heroin, and methadone addiction, as well as depression, PTSD, bipolar disorder, OCD, schizophrenia, mood and anxiety disorders, and dual diagnosis. The multidisciplinary team provides 24/7 medical and emotional support.\n\nBanyan Castle Rock is part of a nationally recognized, Joint Commission-accredited network. The facility serves individuals across Castle Rock, Denver, and the greater Colorado region, with transportation support available within a reasonable driving distance."
+    },
+    {
+      "id": "d6399e9b-d030-449a-9758-1e176bbf6064",
+      "name": "Banyan Delaware",
+      "slug": "banyan-delaware-milford-78fad7",
+      "city": "Milford",
+      "state": "Delaware",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783190120462-evzi05b6xqf.webp",
+      "levelsOfCare": [
+        "Detox",
+        "Residential"
+      ],
+      "description": "Banyan Treatment Center in Milford, Delaware provides compassionate, comprehensive care for individuals seeking freedom from addiction. Their continuum of services includes medically supported detoxification, residential treatment, and outpatient programming designed to meet clients at different stages of recovery.\n\nThrough evidence-based therapies, individualized treatment planning, relapse-prevention support, and a focus on whole-person wellness, Banyan helps clients build the stability, coping skills, and support systems needed for lasting change. Their goal is to help each person move beyond substance use and toward a healthier, more fulfilling, and productive life in recovery."
+    },
+    {
+      "id": "0ece749b-f9b7-481a-af16-e5b70111b3b8",
+      "name": "Banyan Gulf Breeze",
+      "slug": "banyan-gulf-breeze-gulf-breeze-3112b6",
+      "city": "Gulf Breeze",
+      "state": "FL",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/pipeline/0ece749b-f9b7-481a-af16-e5b70111b3b8/1783517249737-oerkbqkf6ml.jpg",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "PHP",
+        "IOP",
+        "Outpatient",
+        "Mental Health PHP/IOP",
+        "Dual Diagnosis",
+        "MAT",
+        "Detox",
+        "Residential"
+      ],
+      "description": "Located along the Gulf Coast in peaceful Gulf Breeze, FL, Banyan Gulf Breeze offers a calm, restorative environment where individuals can step away from daily pressures and focus fully on healing. The facility sits minutes from the water, surrounded by natural landscapes and quiet neighborhoods, providing patients with a setting that fosters emotional stability and clarity throughout their recovery journey.\n\nBanyan Gulf Breeze provides a full continuum of care including medical detox, residential treatment, PHP, IOP, outpatient mental health services, and telehealth IOP. Licensed clinicians, therapists, and nurses provide continuous medical and emotional support. The facility offers chef-prepared meals, outdoor wellness areas, and spaces designed to support reflection and growth.\n\nTreatment addresses a wide range of conditions including alcohol, opioid, cocaine, meth, benzodiazepine, and prescription drug addiction, as well as co-occurring disorders such as depression, anxiety, PTSD, bipolar disorder, and dual diagnosis. Every patient receives an individualized treatment plan integrating evidence-based therapies.\n\nBanyan Gulf Breeze is part of a nationally recognized, Joint Commission-accredited network. The facility proudly serves the Florida Panhandle and neighboring communities, with transportation support available for those within a three-hour radius."
+    },
+    {
+      "id": "24c953a4-8d50-4d48-b96f-61058595787c",
+      "name": "Banyan Heartland",
+      "slug": "banyan-heartland-gilman-d53d09",
+      "city": "Gilman",
+      "state": "IL",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783526711330-p8lyb24qx1k.webp",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "Mental Health Residential",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Located across 33 sprawling acres in the peaceful Illinois countryside, Banyan Heartland offers a serene retreat for men and women seeking to overcome addiction and manage mental health disorders. The licensed residential treatment facility provides a personal approach to addiction treatment and mental health care, ensuring compassionate care and support every step of the way.\n\nBanyan Heartland provides residential monitored detox, residential addiction treatment, an inpatient mental health program, and telehealth virtual IOP. On-site amenities include catered meals, a gym, walking trails, relaxing pond views, and an indoor basketball court. Art and music therapy, faith-based groups, and family therapy sessions complement evidence-based clinical care.\n\nThe facility treats alcohol, opioid, meth, cocaine, heroin, fentanyl, crack, benzo, and prescription drug addiction, as well as co-occurring disorders including depression, anxiety, bipolar disorder, OCD, PTSD, and schizophrenia. Individualized recovery plans blend evidence-based methods with experiential therapies.\n\nBanyan Heartland is part of a nationally recognized, Joint Commission-accredited network. The facility supports individuals throughout Central and Northern Illinois and nearby parts of Indiana, with transportation support available within approximately three hours."
+    },
+    {
+      "id": "4978479a-b6ce-4d90-b7ca-1ed940b1bbeb",
+      "name": "Banyan Palm Springs",
+      "slug": "banyan-palm-springs-cathedral-city-394a05",
+      "city": "Cathedral City",
+      "state": "CA",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/pipeline/4978479a-b6ce-4d90-b7ca-1ed940b1bbeb/1783517301879-6q6898ctvf4.jpg",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Banyan Palm Springs, a 42-bed campus nestled in the California foothills near Cathedral City, features palm tree-lined landscapes, desert mountain views, and resort-like accommodations. The facility provides a relaxing, recovery-focused environment with 24/7 security, supervision, and on-site medical staff.\n\nThe facility offers medical detox and inpatient residential treatment for substance use disorders and co-occurring disorders. Telehealth IOP is also available. Clinical programming includes CBT, DBT, EMDR, Motivational Interviewing, Accelerated Resolution Therapy, biofeedback therapy, faith-based recovery, gender-specific groups, equine therapy, and music therapy.\n\nBanyan Palm Springs treats alcohol, opioid, meth, cocaine, heroin, fentanyl, crack, benzo, and prescription drug addiction, as well as co-occurring disorders. On-site amenities include a pool and jacuzzi, off-site gym, on-site basketball and volleyball, chef-prepared meals, and recreational outings. Family therapy and a strong alumni program round out the care continuum.\n\nBanyan Palm Springs is part of the nationally recognized, Joint Commission-accredited Banyan Treatment Centers network. The facility serves individuals from the Palm Springs area and throughout Southern California, with transportation assistance available within three hours."
+    },
+    {
+      "id": "aea03120-0fc4-46dc-a033-454a746dea0d",
+      "name": "Banyan Philadelphia",
+      "slug": "banyan-philadelphia-langhorne-34cd8c",
+      "city": "Langhorne",
+      "state": "PA",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/pipeline/aea03120-0fc4-46dc-a033-454a746dea0d/1783517320746-s6h29xqbp.jpg",
+      "levelsOfCare": [
+        "PHP",
+        "IOP",
+        "Outpatient",
+        "Mental Health PHP/IOP",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Located just outside the city in Langhorne (Bucks County), Banyan Philadelphia offers a calm, professional outpatient setting where individuals can focus on recovery while maintaining everyday routines. The facility is designed to feel welcoming and supportive, with comfortable therapy rooms and dedicated spaces for group care.\n\nBanyan Philadelphia provides PHP, IOP, telehealth IOP, and mental health outpatient services. Specialty programs include family counseling and support, a military and veterans program, faith-based recovery track, Acceptance and Commitment Therapy (ACT), grief and loss management, equine therapy, and relapse prevention. The facility also offers Accelerated Resolution Therapy, CBT, DBT, and Motivational Interviewing.\n\nThe facility treats alcohol, opioid, cocaine, meth, benzodiazepine, prescription drug, fentanyl, and heroin addiction, as well as co-occurring disorders including depression, anxiety, PTSD, bipolar disorder, OCD, and schizophrenia. A dedicated alumni community offers long-term recovery support.\n\nBanyan Philadelphia is part of the nationally recognized, Joint Commission-accredited Banyan Treatment Centers network. The facility serves the greater Philadelphia region including Allentown, Bethlehem, Norristown, Doylestown, Trenton (NJ), and surrounding communities."
+    },
+    {
+      "id": "7dd55155-8a71-4d35-8257-46df5c8c3438",
+      "name": "Banyan Pompano",
+      "slug": "banyan-pompano-pompano-beach-23e165",
+      "city": "Pompano Beach",
+      "state": "FL",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/pipeline/7dd55155-8a71-4d35-8257-46df5c8c3438/1783517354358-hlhyu3iye7g.jpg",
+      "levelsOfCare": [
+        "PHP",
+        "IOP",
+        "Outpatient",
+        "Mental Health PHP/IOP",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Nestled in the heart of South Florida, Banyan Pompano is located in the vibrant community of Pompano Beach, renowned for its stunning coastline, beautiful weather, and welcoming atmosphere. This serene environment provides the perfect backdrop for healing and personal growth, with scenic beaches, lush parks, and a variety of recreational activities that enhance the recovery journey.\n\nBanyan Pompano offers PHP, IOP, mental health outpatient services, and telehealth virtual IOP for both addiction and mental health treatment. Clinical approaches include CBT, DBT, Motivational Interviewing, EMDR, Accelerated Resolution Therapy, equine therapy, and faith-based recovery. A stabilization program with two-week PHP is available for individuals experiencing relapse.\n\nThe facility treats alcohol, opioid, meth, cocaine, heroin, fentanyl, crack, benzo, and prescription drug addiction, as well as co-occurring mental health conditions including bipolar disorder, depression, PTSD, and schizophrenia. Program amenities include gym membership, beach sand walks, church outings, barbecues, and recreational outings.\n\nBanyan Pompano is part of the nationally recognized, Joint Commission-accredited Banyan Treatment Centers network. The facility serves the Tri-County South Florida area including Pompano Beach, Fort Lauderdale, Miami, and surrounding communities."
+    },
+    {
+      "id": "4e5215cc-b213-470f-a4e8-a58f3f2574c7",
+      "name": "Banyan Sebring",
+      "slug": "banyan-sebring-sebring-b75e9f",
+      "city": "Sebring",
+      "state": "FL",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783531329598-iyrik2nq9w.webp",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "Mental Health Residential",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Located in the heart of Highlands County, Banyan Sebring offers a peaceful, retreat-like setting where individuals can step away from the chaos of daily life and focus fully on healing. Situated on a lakefront property surrounded by quiet residential areas and open Florida landscape, the environment naturally supports rest, clarity, and emotional renewal for people struggling with mental health concerns or substance use disorders.\n\nThe facility features comfortable living areas, shared community spaces, a pool, in-house gym, volleyball and horseshoe pit, and dedicated therapy rooms. Private rooms are available. Chef-prepared meals are provided and outdoor wellness areas support reflection and growth. Licensed clinicians, therapists, and nursing staff provide continuous medical and emotional support.\n\nBanyan Sebring provides comprehensive inpatient treatment for both substance use disorders and co-occurring mental health conditions, including alcohol, opioid, cocaine, meth, benzodiazepine, heroin, and fentanyl addiction, as well as depression, anxiety, PTSD, bipolar disorder, OCD, schizophrenia, and dual diagnosis. Accelerated Resolution Therapy, mindfulness, and family sessions supplement evidence-based care.\n\nBanyan Sebring is part of a nationally recognized, Joint Commission-accredited network. Transportation support is available for those within a three-hour radius, and the facility serves individuals throughout Central and South Florida."
+    },
+    {
+      "id": "04840520-8a0a-4b25-8248-40f9605780e5",
+      "name": "Banyan Stuart",
+      "slug": "banyan-stuart-stuart-3556c2",
+      "city": "Stuart",
+      "state": "FL",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783527975998-iluafva7gi.webp",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Nestled on the picturesque banks of the St. Lucie River in Stuart, Florida, Banyan Stuart offers a tranquil setting ideal for recovery. The soothing waters and lush greenery surrounding the facility create a peaceful atmosphere perfect for reflection and healing. All meals are catered by a certified chef and prepared with the freshest, healthiest ingredients.\n\nBanyan Stuart offers medical detox with 24/7 medical and nursing oversight, intensive inpatient addiction rehab, and residential treatment. The program combines evidence-based therapies including CBT, DBT, EMDR, and Motivational Interviewing with unique modalities including pet therapy, faith-based tracks, yoga, meditation, art therapy, equine therapy, and recreational outings.\n\nThe facility treats alcohol, opioid, meth, cocaine, heroin, fentanyl, crack, benzo, and prescription drug addiction, as well as co-occurring disorders. A multidisciplinary team of licensed therapists, medical professionals, and addiction specialists provides compassionate, individualized care.\n\nAccredited by the Joint Commission, Banyan Stuart serves individuals throughout Southern Florida, with transportation assistance for those within three hours. The facility is part of the nationally recognized Banyan Treatment Centers network."
+    },
+    {
+      "id": "ac1eb978-79ca-426d-971a-ea9d3a09ae76",
+      "name": "Banyan Texas",
+      "slug": "banyan-texas-waelder-102fda",
+      "city": "Waelder",
+      "state": "TX",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/pipeline/ac1eb978-79ca-426d-971a-ea9d3a09ae76/1783517436975-6yxb7kxpm17.jpg",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "PHP",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Located in the quiet town of Waelder, Texas, Banyan Texas provides a peaceful, retreat-style environment where individuals can step away from daily stress and focus fully on addiction recovery. Surrounded by open countryside and natural landscape, the setting supports clarity, stability, and emotional healing for individuals struggling with substance use disorders or co-occurring mental health conditions.\n\nThe facility offers comfortable residential living areas, dedicated therapy spaces, outdoor recreation areas, an on-site pool, gym, fishing pond, pickleball and disc golf, basketball court, and sand volleyball. Patients have access to 24/7 nursing support, chef-prepared meals, and a relaxation room. Licensed clinicians, therapists, and nursing staff provide continuous medical and emotional support.\n\nBanyan Texas provides comprehensive addiction treatment for alcohol, opioids, cocaine, meth, benzodiazepines, prescription drugs, fentanyl, and heroin, as well as co-occurring disorders. Accelerated Resolution Therapy is also offered alongside CBT, DBT, and MAT.\n\nAs a centrally located treatment center, Banyan Texas supports individuals across Central and South Texas. Transportation assistance is available for people within a three-hour radius. The facility is part of the nationally recognized, Joint Commission-accredited Banyan Treatment Centers network."
+    },
+    {
+      "id": "964d283d-3077-44f1-bb15-4df6807582be",
+      "name": "Behavioral Health of the Palm Beaches (BHOPB)",
+      "slug": "behavioral-health-of-the-palm-beaches-bhopb-lake-worth-53ddd8",
+      "city": "Lake Worth",
+      "state": "FL",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/pipeline/964d283d-3077-44f1-bb15-4df6807582be/1783517474639-lcgr2szxk6q.jpg",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "PHP",
+        "IOP",
+        "Mental Health Residential",
+        "Mental Health PHP/IOP",
+        "Dual Diagnosis",
+        "MAT"
+      ],
+      "description": "Behavioral Health of the Palm Beaches (BHOPB) has been a leading force in behavioral health for over 20 years, offering expert treatment, support, and advocacy for substance use disorders and mental illness. Nestled in the tranquil setting of Lake Worth Beach, Florida, the facility integrates the latest evidence-based practices into clinical treatment. BHOPB is part of the Banyan Treatment Center network.\n\nBHOPB provides a full continuum of care including medically monitored detox, residential treatment, partial hospitalization (PHP), intensive outpatient (IOP), mental health inpatient and outpatient programming, and telehealth IOP. Specialty programs include art therapy and equine therapy. An integrated approach addresses both addiction and co-occurring mental health conditions simultaneously.\n\nThe facility treats alcohol, opioid, cocaine, meth, benzodiazepine, prescription drug, fentanyl, and heroin addiction, as well as co-occurring disorders including depression, anxiety, PTSD, bipolar disorder, OCD, schizophrenia, and mood disorders. CBT, DBT, Motivational Interviewing, Accelerated Resolution Therapy, solution-focused therapy, medication-assisted treatment, and trauma-informed care are all offered.\n\nBHOPB serves individuals from across South Florida including Miami, Orlando, Fort Myers, Naples, Fort Lauderdale, and Boca Raton. Transportation is provided for those within a two to three hour drive. The facility is accredited by The Joint Commission."
+    },
+    {
+      "id": "a0e74c23-49b2-4338-b33e-fd52fafc8dca",
+      "name": "Clearbrook Massachusetts",
+      "slug": "clearbrook-massachusetts-baldwinville-91720d",
+      "city": "Baldwinville",
+      "state": "MA",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783731023913-576pdjqi26t.webp",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "Mental Health Residential",
+        "Dual Diagnosis",
+        "Detox",
+        "Residential"
+      ],
+      "description": "Clearbrook Massachusetts is located in the peaceful community of Baldwinville, surrounded by trees, open space, and a sense of calm that supports recovery. The facility is designed to feel safe and welcoming, with comfortable rooms, dedicated therapy spaces, and round-the-clock staff presence. Patients receive support from licensed clinicians, nurses, case managers, and behavioral health professionals.\n\nClearbrook Massachusetts provides medically monitored detox, residential addiction treatment, and a residential mental health program. Specialty programs include family therapy, a dedicated First Responders program, a military and veterans track, faith-in-recovery programming, biofeedback, and trauma-informed counseling. Clinical therapies include CBT, DBT, EMDR, Motivational Interviewing, Solution-Focused Brief Therapy, and Accelerated Resolution Therapy.\n\nThe facility treats alcohol, opioid, cocaine, meth, benzodiazepine, prescription drug, fentanyl, and heroin addiction, as well as co-occurring mental health conditions including depression, anxiety, PTSD, bipolar disorder, OCD, schizophrenia, and mood disorders. On-site amenities include hiking and walking paths, an on-site gym, recreational outings, and chef-prepared meals.\n\nClearbrook Massachusetts is part of the nationally recognized, Joint Commission-accredited Banyan Treatment Centers network. The facility serves individuals from across Massachusetts and surrounding regions including Gardner, Fitchburg, Worcester, Springfield, Lowell, and Manchester (NH). Transportation assistance may be available within approximately three hours."
+    },
+    {
+      "id": "10094eda-df7f-4721-997b-0452c60d6d75",
+      "name": "Clearbrook Pennsylvania",
+      "slug": "clearbrook-pennsylvania-laurel-run-23c481",
+      "city": "Laurel Run",
+      "state": "PA",
+      "imageUrl": "https://ugxdmpctujlaunpdebmd.supabase.co/storage/v1/object/public/facility-images/b9604ecb-d6bf-4251-ba0f-44bbdbc35ed8/1783501112119-xzqe3djtl3.webp",
+      "levelsOfCare": [
+        "Medical Detox",
+        "Residential/Inpatient",
+        "PHP",
+        "Mental Health Residential",
+        "Dual Diagnosis",
+        "MAT",
+        "Detox",
+        "Residential"
+      ],
+      "description": "Located in the peaceful mountain town of Laurel Run in Northeastern Pennsylvania, Clearbrook Pennsylvania offers a beautiful, tranquil setting overlooking the scenic Wyoming Valley. The campus is surrounded by tree-lined hills and provides a calm, restorative environment removed from everyday distractions. On-site amenities include mountain views, a dietitian consultant, off-site gym access, a walking path, on-site barber, and a small cozy library.\n\nClearbrook Pennsylvania provides medically monitored detox, residential addiction treatment, a residential mental health program, partial hospitalization (PHP), and telehealth IOP. Clinical programming includes CBT, DBT, EMDR, Accelerated Resolution Therapy, Motivational Interviewing, art therapy, Tai Chi and mindfulness, faith-in-recovery groups, SMART Recovery, NA/AA meetings, Celebrate Recovery, and Refuge Recovery. Family therapy and life skills are also offered.\n\nThe facility treats alcohol, opioid, meth, cocaine, heroin, fentanyl, crack, benzo, and prescription drug addiction, as well as co-occurring mental health conditions including depression, anxiety, bipolar disorder, schizophrenia, PTSD, and trauma-related conditions. Every client receives an individualized plan tailored to their unique history and clinical needs.\n\nClearbrook Pennsylvania is the primary Pennsylvania facility in the Banyan Treatment Centers network. As part of the nationally recognized, Joint Commission-accredited network, it serves individuals throughout Pennsylvania and the surrounding region including Hazleton, Scranton, Allentown, and New York."
+    }
+  ]
+}

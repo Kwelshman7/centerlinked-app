@@ -10,6 +10,7 @@ import { ImageUploader } from "@/components/app/ImageUploader";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { orgDisplayPath } from "@/lib/public-urls";
+import { mergeOrgImages } from "@/lib/org-hero";
 
 interface Props {
   organizationId: string;
@@ -35,7 +36,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [tagline, setTagline] = useState("");
   const [brandColor, setBrandColor] = useState("#1A73E8");
   const [accentColor, setAccentColor] = useState("#E0EDFF");
-  const [coverImage, setCoverImage] = useState<string[]>([]);
+  const [orgImages, setOrgImages] = useState<string[]>([]);
   const [announcement, setAnnouncement] = useState("");
   const [programBadgesText, setProgramBadgesText] = useState("");
   const [ctaPrimary, setCtaPrimary] = useState("");
@@ -64,7 +65,8 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         setBrandColor((data as { brand_color?: string | null }).brand_color || "#1A73E8");
         setAccentColor((data as { accent_color?: string | null }).accent_color || "#E0EDFF");
         const cover = (data as { cover_image_url?: string | null }).cover_image_url;
-        setCoverImage(cover ? [cover] : []);
+        const gallery = (data as { image_urls?: string[] | null }).image_urls;
+        setOrgImages(mergeOrgImages(gallery, cover));
         setAnnouncement((data as { announcement?: string | null }).announcement || "");
         const badges = ((data as { program_badges?: string[] | null }).program_badges) || [];
         setProgramBadgesText(badges.join(", "));
@@ -124,7 +126,8 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         tagline: tagline.trim() || null,
         brand_color: brandColor.trim() || null,
         accent_color: accentColor.trim() || null,
-        cover_image_url: coverImage[0] || null,
+        cover_image_url: orgImages[0] || null,
+        image_urls: orgImages,
         announcement: announcement.trim() || null,
         program_badges,
         cta_primary_label: ctaPrimary.trim() || null,
@@ -268,8 +271,20 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Cover image</Label>
-            <ImageUploader bucket="org-logos" value={coverImage} onChange={setCoverImage} max={1} label="Upload cover" recommendedSize="Recommended: 1920×1080 px (16:9) banner. JPG or PNG, max 5 MB." />
+            <Label>Organization photos</Label>
+            <p className="text-xs text-muted-foreground">
+              Upload photos and mark one as the hero banner on the public org page.
+            </p>
+            <ImageUploader
+              bucket="org-logos"
+              value={orgImages}
+              onChange={setOrgImages}
+              max={8}
+              label="Add photo"
+              allowCover
+              coverLabel="Hero"
+              recommendedSize="Recommended: 1920×1080 px (16:9) hero; JPG or PNG, max 5 MB each."
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="ann">Announcement banner</Label>

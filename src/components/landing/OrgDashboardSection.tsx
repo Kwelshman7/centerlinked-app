@@ -26,7 +26,7 @@ const highlights = [
 
 export function OrgDashboardSection() {
   return (
-    <section id="org-dashboard" className="py-16 sm:py-20 lg:py-28 bg-secondary/30 overflow-hidden">
+    <section id="org-dashboard" className="py-16 sm:py-20 lg:py-28 bg-muted/30 overflow-hidden">
       <div className="container">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:items-end mb-10 sm:mb-12">
           <div className="max-w-xl space-y-4">
@@ -42,7 +42,7 @@ export function OrgDashboardSection() {
           </p>
         </div>
 
-        <div className="w-full max-w-full overflow-x-auto">
+        <div className="w-full max-w-full md:overflow-x-auto">
           <OrgDashboardInteractiveDemo />
         </div>
 

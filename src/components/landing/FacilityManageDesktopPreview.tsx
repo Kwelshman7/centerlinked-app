@@ -23,9 +23,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
-import facility1 from "@/assets/facility-1.jpg";
-import facility2 from "@/assets/facility-2.jpg";
-import facility3 from "@/assets/facility-3.jpg";
+import { BANYAN_DEMO, FEATURED_FACILITY } from "./banyanDemoData";
 
 const navPrimary = [
   { label: "Home", icon: LayoutDashboard, active: true },
@@ -38,16 +36,6 @@ const navManage = [
   { label: "Members", icon: Users },
   { label: "Import", icon: Upload },
 ];
-
-const payers = ["Aetna PPO", "Cigna PPO", "BCBS of NC", "United Healthcare", "Magellan"];
-const levels = ["Detox", "Residential", "PHP"];
-const features = [
-  "24/7 nursing support",
-  "Dual-diagnosis capable",
-  "Private & semi-private rooms",
-  "Family programming",
-];
-const treat = ["Substance Use", "Co-Occurring", "Alcohol Use"];
 
 export function FacilityManageDesktopPreview() {
   return (
@@ -98,8 +86,8 @@ export function FacilityManageDesktopPreview() {
         </nav>
 
         <div className="border-t border-border/50 px-2.5 py-2.5">
-          <p className="text-[9px] font-medium truncate">Elena Martinez</p>
-          <p className="text-[8px] text-muted-foreground truncate">elena@northbend.com</p>
+          <p className="text-[9px] font-medium truncate">{BANYAN_DEMO.userFullName}</p>
+          <p className="text-[8px] text-muted-foreground truncate">{BANYAN_DEMO.userEmail}</p>
         </div>
       </aside>
 
@@ -119,30 +107,30 @@ export function FacilityManageDesktopPreview() {
             <div className="p-2.5 sm:p-3 space-y-2 min-w-0">
               <div>
                 <h1 className="font-heading text-sm sm:text-[15px] font-bold tracking-tight leading-tight">
-                  Northbend Detox Center
+                  {FEATURED_FACILITY.name}
                 </h1>
                 <p className="mt-1 text-[9px] text-muted-foreground inline-flex items-center gap-1">
                   <MapPin className="h-3 w-3 text-primary shrink-0" />
-                  Asheville, NC 28801
+                  {FEATURED_FACILITY.location}
                 </p>
               </div>
               <p className="text-[8.5px] sm:text-[9px] text-foreground/80 leading-snug line-clamp-2">
-                Medically supervised detox with 24/7 nursing in the Blue Ridge mountains.
+                {FEATURED_FACILITY.description}
               </p>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
-                <Meta icon={Calendar} label="Founded" value="2014" />
-                <Meta icon={Building2} label="Facility Type" value="Detox" />
-                <Meta icon={Award} label="Accreditation" value="Joint Commission" />
-                <Meta icon={Clock} label="Last Updated" value="2 days ago" />
+                <Meta icon={Calendar} label="Founded" value={FEATURED_FACILITY.founded} />
+                <Meta icon={Building2} label="Facility Type" value={FEATURED_FACILITY.facilityType} />
+                <Meta icon={Award} label="Accreditation" value={FEATURED_FACILITY.accreditation} />
+                <Meta icon={Clock} label="Last Updated" value={FEATURED_FACILITY.lastUpdated} />
               </div>
             </div>
 
             <div className="p-2 min-w-0">
               <div className="aspect-[16/10] rounded-lg overflow-hidden bg-muted">
-                <img src={facility1} alt="" className="w-full h-full object-cover" draggable={false} />
+                <img src={FEATURED_FACILITY.gallery[0]} alt="" className="w-full h-full object-cover" draggable={false} />
               </div>
               <div className="mt-1.5 flex gap-1">
-                {[facility1, facility2, facility3].map((src, i) => (
+                {FEATURED_FACILITY.gallery.map((src, i) => (
                   <div
                     key={i}
                     className={`h-8 flex-1 rounded-md overflow-hidden border ${
@@ -167,7 +155,7 @@ export function FacilityManageDesktopPreview() {
                     In-Network Contracts
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {payers.map((p) => (
+                    {FEATURED_FACILITY.payers.map((p) => (
                       <span
                         key={p}
                         className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-[7.5px] font-semibold"
@@ -183,7 +171,7 @@ export function FacilityManageDesktopPreview() {
                     Levels of Care
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {levels.map((l) => (
+                    {FEATURED_FACILITY.levels.map((l) => (
                       <span
                         key={l}
                         className="inline-flex items-center rounded-md bg-primary/10 text-primary px-1.5 py-0.5 text-[7.5px] font-semibold"
@@ -200,7 +188,7 @@ export function FacilityManageDesktopPreview() {
                   Program Details
                 </p>
                 <ul className="grid grid-cols-2 gap-x-2 gap-y-1 mb-2">
-                  {features.map((item) => (
+                  {FEATURED_FACILITY.features.map((item) => (
                     <li key={item} className="flex items-start gap-1 min-w-0">
                       <Sparkles className="h-2.5 w-2.5 text-primary shrink-0 mt-0.5" />
                       <span className="text-[8px] text-foreground/85 leading-snug truncate">{item}</span>
@@ -211,7 +199,7 @@ export function FacilityManageDesktopPreview() {
                   What We Treat
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {treat.map((t) => (
+                  {FEATURED_FACILITY.treat.map((t) => (
                     <span
                       key={t}
                       className="px-1.5 py-0.5 rounded-md border border-border bg-background text-[7.5px] font-medium"
@@ -229,11 +217,11 @@ export function FacilityManageDesktopPreview() {
               </p>
               <div className="flex items-center gap-1.5">
                 <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary/70 grid place-items-center text-primary-foreground text-[8px] font-bold shrink-0">
-                  EM
+                  {BANYAN_DEMO.userInitials}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] font-semibold truncate leading-tight">Elena Martinez</p>
-                  <p className="text-[7px] text-muted-foreground truncate">Director of BD</p>
+                  <p className="text-[9px] font-semibold truncate leading-tight">{BANYAN_DEMO.userFullName}</p>
+                  <p className="text-[7px] text-muted-foreground truncate">{BANYAN_DEMO.userTitle}</p>
                 </div>
               </div>
               <div className="space-y-1 mt-auto">

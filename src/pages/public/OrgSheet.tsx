@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { OrgAppHeader } from "@/components/public/OrgAppHeader";
+import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
 import { HeroContact } from "@/components/public/OrgHeroContactCard";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
@@ -41,7 +42,7 @@ export default function OrgSheet() {
       const { data: o } = await supabase
         .from("organizations")
         .select(
-          "id,name,logo_url,description,tagline,website,hq_city,hq_state,slug,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url,verified,created_at,updated_at,program_badges,announcement,why_refer",
+          "id,name,logo_url,description,tagline,website,hq_city,hq_state,slug,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url,image_urls,verified,created_at,updated_at,program_badges,announcement,why_refer",
         )
         .eq("slug", slug)
         .maybeSingle();
@@ -139,7 +140,9 @@ export default function OrgSheet() {
     <div id="top" className="min-h-screen bg-muted/30">
       <OrgAppHeader brand={brand} />
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <OrgHeroSection org={org} heroContact={heroContact} brand={brand} />
+
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
         <OrganizationSheetView
           org={org}
           facilities={facilities}

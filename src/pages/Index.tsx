@@ -7,7 +7,6 @@ import { ProductShowcase } from "@/components/landing/ProductShowcase";
 import { OrgDashboardSection } from "@/components/landing/OrgDashboardSection";
 import { VerifiedMonthly } from "@/components/landing/VerifiedMonthly";
 import { Pricing } from "@/components/landing/Pricing";
-import { PositioningBoundary } from "@/components/landing/PositioningBoundary";
 import { FAQ } from "@/components/landing/FAQ";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
@@ -15,8 +14,7 @@ import { Footer } from "@/components/landing/Footer";
 /**
  * Landing journey:
  * Hero → trusted/current profile → who it’s for → how it works →
- * product proof → dashboard → monthly verification → pricing →
- * why CenterLinked → FAQ → convert
+ * product proof → dashboard → monthly verification → pricing → FAQ → convert
  */
 const Index = () => {
   return (
@@ -33,7 +31,6 @@ const Index = () => {
         <section id="pricing">
           <Pricing />
         </section>
-        <PositioningBoundary />
         <section id="faq">
           <FAQ />
         </section>

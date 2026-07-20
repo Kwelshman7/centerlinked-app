@@ -37,7 +37,7 @@ const staleReasons = [
 
 export function ProfileInventory() {
   return (
-    <section id="features" className="py-16 sm:py-20 lg:py-28 bg-secondary/30">
+    <section id="features" className="py-16 sm:py-20 lg:py-28 bg-secondary/35">
       <div className="container">
         <div className="grid gap-10 sm:gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:items-center">
           <div className="space-y-6 max-w-lg min-w-0">
@@ -63,11 +63,6 @@ export function ProfileInventory() {
                 </li>
               ))}
             </ul>
-
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed pt-1">
-              CenterLinked replaces that static one-pager with one live referral link — always
-              current, always shareable.
-            </p>
           </div>
 
           <div className="relative flex justify-center lg:justify-end w-full min-w-0">
