@@ -482,7 +482,8 @@ export function FacilitySheetView({
               )}
             </div>
 
-            <aside className="border-t lg:border-t-0 lg:border-l border-border/50 bg-muted/15 px-4 sm:px-5 py-4 sm:py-5 lg:sticky lg:top-20 lg:self-start">
+            {/* Desktop sidebar contact — mobile uses sticky Contact now bar + footer card */}
+            <aside className="hidden lg:block lg:border-l border-border/50 bg-muted/15 px-4 sm:px-5 py-4 sm:py-5 lg:sticky lg:top-20 lg:self-start">
               <p className="text-[11px] uppercase tracking-wider font-bold mb-3" style={{ color: brand }}>
                 For Referrals
               </p>
@@ -509,7 +510,7 @@ export function FacilitySheetView({
                 </div>
               )}
 
-              <div className="mt-3 space-y-2 hidden lg:block">
+              <div className="mt-3 space-y-2">
                 {repEmail && (
                   <Button asChild className="w-full h-9 text-sm hover:opacity-90" style={{ backgroundColor: brand, borderColor: brand }}>
                     <a href={`mailto:${repEmail}`}>

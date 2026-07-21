@@ -70,7 +70,7 @@ export function MobileContactBar({
               onClick={() => setOpen(true)}
             >
               <User className="h-4 w-4" />
-              Contact
+              Contact now
             </Button>
           )}
         </div>

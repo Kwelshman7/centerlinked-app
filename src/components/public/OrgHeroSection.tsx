@@ -33,7 +33,7 @@ export function OrgHeroSection({ org, heroContact, brand }: Props) {
 
   return (
     <section className="relative w-full overflow-hidden">
-      <div className="relative min-h-[280px] sm:min-h-[340px] lg:min-h-[400px]">
+      <div className="relative min-h-[220px] sm:min-h-[300px] lg:min-h-[400px]">
         {heroImage ? (
           <img
             src={heroImage}
@@ -62,7 +62,7 @@ export function OrgHeroSection({ org, heroContact, brand }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-slate-950/10" />
 
         <div className="relative z-[1] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-10 min-h-[220px] sm:min-h-[260px] lg:min-h-[320px]">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 lg:gap-10 min-h-[160px] sm:min-h-[220px] lg:min-h-[320px]">
             {/* Org identity — left */}
             <div className="flex-1 min-w-0 flex flex-col justify-end lg:justify-center lg:max-w-[min(100%,720px)]">
               <div className="flex items-end gap-4 sm:gap-5">
@@ -99,15 +99,15 @@ export function OrgHeroSection({ org, heroContact, brand }: Props) {
               )}
             </div>
 
-            {/* Contact card — floats on the right over the hero (desktop) */}
-            <div
-              id="org-contact"
-              className={cn(
-                "w-full shrink-0 lg:w-[min(100%,360px)]",
-                "lg:shadow-[0_24px_60px_-12px_rgba(0,0,0,0.45)]",
-              )}
-            >
-              {heroContact ? (
+            {/* Contact card — desktop only; mobile uses sticky Contact now bar + footer card */}
+            {heroContact ? (
+              <div
+                id="org-contact"
+                className={cn(
+                  "hidden lg:block w-full shrink-0 lg:w-[min(100%,360px)]",
+                  "lg:shadow-[0_24px_60px_-12px_rgba(0,0,0,0.45)]",
+                )}
+              >
                 <OrgHeroContactCard
                   contacts={[heroContact]}
                   organizationId={org.id}
@@ -116,12 +116,17 @@ export function OrgHeroSection({ org, heroContact, brand }: Props) {
                   variant="floating"
                   className="w-full"
                 />
-              ) : (
+              </div>
+            ) : (
+              <div
+                id="org-contact"
+                className="w-full shrink-0 lg:w-[min(100%,360px)] lg:shadow-[0_24px_60px_-12px_rgba(0,0,0,0.45)]"
+              >
                 <div className="rounded-2xl bg-card/95 backdrop-blur-md border border-white/20 shadow-xl p-1">
                   <OrgClaimCard organizationId={org.id} organizationName={org.name} />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

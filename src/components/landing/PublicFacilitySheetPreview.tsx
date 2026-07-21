@@ -178,7 +178,7 @@ export function PublicFacilitySheetPreviewContent() {
             style={{ backgroundColor: BRAND }}
           >
             <User className="h-3 w-3" aria-hidden />
-            Contact
+            Contact now
           </div>
         </div>
       </div>
