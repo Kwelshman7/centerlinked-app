@@ -11,10 +11,13 @@ import {
 } from "lucide-react";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
-import northbendCover from "@/assets/northbend-cover.jpg";
-import logoNorthbend from "@/assets/logo-northbend.png";
-import logoRidgeview from "@/assets/logo-ridgeview.png";
-import logoNorthbendPhp from "@/assets/logo-northbend-php.png";
+import {
+  BANYAN_DEMO,
+  BANYAN_GRID_FACILITIES,
+} from "./banyanDemoData";
+import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
+
+const BRAND = BANYAN_DEMO.brandColor;
 
 const staleReasons = [
   {
@@ -34,6 +37,22 @@ const staleReasons = [
     text: "You now offer a specialized track for veterans",
   },
 ];
+
+const ONE_PAGER_FACILITIES = BANYAN_GRID_FACILITIES.slice(0, 6).map((f) => {
+  const state = f.state
+    ? stateDisplayName(resolveStateCode(f.state) ?? f.state)
+    : "";
+  return {
+    name: f.name,
+    place: [f.city, state].filter(Boolean).join(", "),
+    care: (f.levels_of_care ?? []).slice(0, 2).join(" · ") || "Treatment",
+    image: f.image_urls?.[0] ?? null,
+  };
+});
+
+const LEVELS = ["Detox", "Residential", "PHP", "IOP", "Outpatient", "Mental Health"];
+
+const PAYERS = ["Aetna", "Cigna", "BCBS", "United", "Magellan", "Optum"];
 
 export function ProfileInventory() {
   return (
@@ -78,112 +97,90 @@ export function ProfileInventory() {
   );
 }
 
-const facilities = [
-  {
-    name: "Northbend Detox",
-    city: "Asheville, NC",
-    care: "Detox · Medical",
-    logo: logoNorthbend,
-  },
-  {
-    name: "Ridgeview Residential",
-    city: "Black Mountain, NC",
-    care: "Residential",
-    logo: logoRidgeview,
-  },
-  {
-    name: "Northbend PHP/IOP",
-    city: "Asheville, NC",
-    care: "PHP · IOP · OP",
-    logo: logoNorthbendPhp,
-  },
-] as const;
-
 function OnePagerPdfMockup() {
   return (
-    <div className="relative w-full max-w-[min(100%,400px)] mx-auto lg:mx-0 lg:ml-auto">
-      {/* Straight paper stack (offset only, no tilt) */}
+    <div className="relative w-full max-w-[min(100%,420px)] mx-auto lg:mx-0 lg:ml-auto">
+      {/* Paper stack */}
       <div
-        className="absolute inset-x-0 top-2 bottom-[-4px] translate-x-1.5 rounded-[2px] bg-[#d9d6cf] shadow-md"
+        className="absolute inset-x-0 top-2.5 bottom-[-5px] translate-x-2 rounded-[3px] bg-[#cfcbc2] shadow-md"
         aria-hidden
       />
       <div
-        className="absolute inset-x-0 top-1 bottom-[-2px] translate-x-0.5 rounded-[2px] bg-[#f0eee8] border border-black/[0.06] shadow-md"
+        className="absolute inset-x-0 top-1.5 bottom-[-2.5px] translate-x-1 rounded-[3px] bg-[#ebe8e0] border border-black/[0.06] shadow-md"
         aria-hidden
       />
 
       <article
-        className="relative rounded-[2px] border border-black/10 bg-[#fbfaf7] overflow-hidden ring-1 ring-black/5"
-        aria-label="Sample outdated treatment center one-pager PDF"
+        className="relative rounded-[3px] border border-black/10 bg-white overflow-hidden ring-1 ring-black/5"
+        aria-label="Sample outdated Banyan Treatment Centers referral one-pager PDF"
         style={{
           boxShadow:
-            "0 25px 50px -12px rgba(15, 23, 42, 0.28), 0 8px 16px -8px rgba(15, 23, 42, 0.18)",
+            "0 28px 56px -14px rgba(15, 23, 42, 0.32), 0 10px 20px -10px rgba(15, 23, 42, 0.2)",
         }}
       >
-        {/* PDF viewer chrome */}
-        <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 bg-gradient-to-b from-[#eceae4] to-[#e2dfd7] border-b border-black/10">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[3px] bg-rose-600 shadow-sm">
-              <FileText className="h-3 w-3 text-white" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[9px] sm:text-[10px] font-semibold text-[#2a2f38] truncate leading-tight">
-                Northbend_Recovery_OnePager.pdf
-              </p>
-              <p className="text-[7.5px] sm:text-[8px] text-[#6b7280] leading-tight truncate">
-                1 page · Email attachment
-              </p>
-            </div>
-          </div>
-          <span className="text-[7.5px] sm:text-[8.5px] font-bold uppercase tracking-[0.1em] text-rose-800 bg-rose-100/90 border border-rose-200 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
-            32 days old
-          </span>
-        </div>
-
-        {/* Document */}
-        <div className="relative text-[#1a2332]">
-          <div className="relative h-[64px] sm:h-[80px] overflow-hidden">
+        {/* Document body */}
+        <div className="relative text-[#14201a]">
+          {/* Hero — logo left, photo reads cleanly on the right */}
+          <div className="relative h-[72px] sm:h-[88px] overflow-hidden">
             <img
-              src={northbendCover}
+              src={BANYAN_DEMO.cover}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover object-[70%_center]"
               draggable={false}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0f2438]/90 via-[#0f2438]/45 to-[#0f2438]/20" />
-            <div className="absolute inset-x-0 bottom-0 px-2.5 sm:px-3.5 pb-2 sm:pb-2.5 flex items-end justify-between gap-2 sm:gap-3">
-              <div className="min-w-0">
-                <p className="text-[7.5px] sm:text-[8px] font-bold uppercase tracking-[0.16em] text-white/75">
-                  Referral one-pager
-                </p>
-                <h3 className="font-display text-[13px] sm:text-[15px] font-bold text-white leading-tight truncate">
-                  Northbend Recovery
-                </h3>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-white p-1 shadow-md border border-white/80 shrink-0">
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(90deg, rgba(12,22,16,0.88) 0%, rgba(12,22,16,0.55) 42%, rgba(12,22,16,0.18) 72%, transparent 100%)",
+              }}
+            />
+            <div className="absolute inset-0 px-3 sm:px-3.5 flex items-center gap-2.5 sm:gap-3">
+              <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-md bg-white p-1 shadow-md border border-white/95 shrink-0">
                 <img
-                  src={logoNorthbend}
-                  alt="Northbend Recovery"
+                  src={BANYAN_DEMO.logo}
+                  alt={BANYAN_DEMO.orgName}
                   className="h-full w-full object-contain"
                   draggable={false}
                 />
               </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[7.5px] sm:text-[8px] font-bold uppercase tracking-[0.18em] text-white/75">
+                  Referral one-pager
+                </p>
+                <h3 className="font-heading text-[13px] sm:text-[15px] font-bold text-white leading-tight truncate drop-shadow-sm">
+                  {BANYAN_DEMO.orgName}
+                </h3>
+                <p className="mt-0.5 text-[8px] text-white/80 truncate">
+                  {BANYAN_DEMO.facilityCount} locations · HQ {BANYAN_DEMO.hqLabel}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="px-2.5 sm:px-3.5 pt-2.5 sm:pt-3 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3">
-            <p className="text-[9px] sm:text-[9.5px] text-[#4a5568] leading-snug">
-              Dual-diagnosis continuum of care across Western North Carolina
+          <div className="px-3 sm:px-3.5 pt-2.5 sm:pt-3 pb-3 sm:pb-3.5 space-y-2.5">
+            <p className="text-[9px] sm:text-[9.5px] text-[#3d4a42] leading-snug">
+              Joint Commission–accredited network offering detox, residential, PHP, IOP, and
+              mental health programs nationwide.
             </p>
 
             <section>
-              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#1e4a6e] mb-1.5">
+              <p
+                className="text-[8px] font-bold uppercase tracking-[0.14em] mb-1.5"
+                style={{ color: BRAND }}
+              >
                 Levels of care
               </p>
               <div className="flex flex-wrap gap-1">
-                {["Detox", "Residential", "PHP", "IOP", "OP", "MAT"].map((level) => (
+                {LEVELS.map((level) => (
                   <span
                     key={level}
-                    className="text-[8px] sm:text-[8.5px] font-semibold bg-[#1e4a6e]/[0.08] text-[#1e4a6e] px-1.5 py-[3px] rounded-[2px] border border-[#1e4a6e]/10"
+                    className="text-[8px] font-semibold px-1.5 py-[3px] rounded-[3px] border"
+                    style={{
+                      color: BRAND,
+                      backgroundColor: `${BRAND}12`,
+                      borderColor: `${BRAND}22`,
+                    }}
                   >
                     {level}
                   </span>
@@ -192,33 +189,48 @@ function OnePagerPdfMockup() {
             </section>
 
             <section>
-              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#1e4a6e] mb-1.5">
-                Locations
-              </p>
-              <ul className="space-y-1.5">
-                {facilities.map((loc) => (
+              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                <p
+                  className="text-[8px] font-bold uppercase tracking-[0.14em]"
+                  style={{ color: BRAND }}
+                >
+                  Facilities
+                </p>
+                <p className="text-[7.5px] font-medium text-[#6b7280]">
+                  Showing 6 of {BANYAN_DEMO.facilityCount}
+                </p>
+              </div>
+              <ul className="grid grid-cols-1 gap-1">
+                {ONE_PAGER_FACILITIES.map((loc) => (
                   <li
                     key={loc.name}
-                    className="flex items-center gap-1.5 sm:gap-2 rounded-[3px] border border-[#d8dde6] bg-white px-1.5 py-1.5 shadow-[0_1px_0_rgba(15,23,42,0.03)] min-w-0"
+                    className="flex items-center gap-2 rounded-[4px] border border-[#e2e6e3] bg-[#fafbfa] px-1.5 py-1 min-w-0"
                   >
-                    <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-[3px] bg-white border border-[#e5e7eb] flex items-center justify-center p-0.5 shrink-0 overflow-hidden">
-                      <img
-                        src={loc.logo}
-                        alt=""
-                        className="h-full w-full object-contain"
-                        draggable={false}
-                      />
+                    <div className="h-8 w-10 rounded-[3px] bg-[#eef1ef] border border-[#e5e7eb] overflow-hidden shrink-0">
+                      {loc.image ? (
+                        <img
+                          src={loc.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="h-full w-full grid place-items-center">
+                          <Building2 className="h-3.5 w-3.5 text-[#9ca3af]" aria-hidden />
+                        </div>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9.5px] sm:text-[10px] font-bold text-[#1a2332] leading-tight truncate">
+                      <p className="text-[9.5px] sm:text-[10px] font-bold text-[#14201a] leading-tight truncate">
                         {loc.name}
                       </p>
-                      <p className="text-[8px] sm:text-[8.5px] text-[#6b7280] leading-tight mt-0.5 truncate">
+                      <p className="text-[8px] text-[#6b7280] leading-tight mt-0.5 truncate">
                         <MapPin
-                          className="inline h-2.5 w-2.5 mr-0.5 -mt-px text-[#1e4a6e]/70"
+                          className="inline h-2.5 w-2.5 mr-0.5 -mt-px"
+                          style={{ color: BRAND }}
                           aria-hidden
                         />
-                        {loc.city}
+                        {loc.place}
                         <span className="text-[#c4c9d2] mx-0.5">·</span>
                         {loc.care}
                       </p>
@@ -226,63 +238,96 @@ function OnePagerPdfMockup() {
                   </li>
                 ))}
               </ul>
+              <p className="mt-1 text-[7.5px] text-[#6b7280] italic">
+                +{BANYAN_DEMO.facilityCount - ONE_PAGER_FACILITIES.length} additional locations
+                nationwide
+              </p>
             </section>
 
-            <div className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2 sm:gap-2.5">
-              <section className="min-w-0">
-                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#1e4a6e] mb-1.5">
+            <div className="grid grid-cols-2 gap-2">
+              <section className="min-w-0 rounded-[4px] border border-[#e2e6e3] bg-[#fafbfa] px-2 py-1.5">
+                <p
+                  className="text-[8px] font-bold uppercase tracking-[0.14em] mb-1"
+                  style={{ color: BRAND }}
+                >
                   In-network
                 </p>
-                <ul className="grid grid-cols-2 min-[340px]:grid-cols-1 gap-x-2 gap-y-0.5">
-                  {["Aetna", "Cigna", "BCBS NC", "United", "Magellan", "Optum"].map((payer) => (
+                <ul className="space-y-0.5">
+                  {PAYERS.map((payer) => (
                     <li
                       key={payer}
-                      className="flex items-center gap-1 text-[8.5px] sm:text-[9px] text-[#1a2332] leading-snug min-w-0"
+                      className="flex items-center gap-1 text-[8.5px] text-[#14201a] leading-snug min-w-0"
                     >
-                      <Check className="h-2.5 w-2.5 text-[#1e4a6e] shrink-0" aria-hidden />
+                      <Check
+                        className="h-2.5 w-2.5 shrink-0"
+                        style={{ color: BRAND }}
+                        aria-hidden
+                      />
                       <span className="truncate">{payer}</span>
                     </li>
                   ))}
                 </ul>
               </section>
 
-              <section className="rounded-[3px] bg-[#eef2f6] border border-[#d8dde6] px-2 py-1.5 min-w-0">
-                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#1e4a6e] mb-1">
+              <section
+                className="rounded-[4px] border px-2 py-1.5 min-w-0"
+                style={{
+                  backgroundColor: `${BRAND}0d`,
+                  borderColor: `${BRAND}28`,
+                }}
+              >
+                <p
+                  className="text-[8px] font-bold uppercase tracking-[0.14em] mb-1"
+                  style={{ color: BRAND }}
+                >
                   BD contact
                 </p>
-                <p className="text-[9.5px] sm:text-[10px] font-bold leading-tight">Elena Martinez</p>
-                <p className="text-[8px] text-[#6b7280] leading-tight mt-0.5">
-                  Director of BD
+                <p className="text-[9.5px] sm:text-[10px] font-bold leading-tight">
+                  Chris K
+                </p>
+                <p className="text-[8px] text-[#5b6560] leading-tight mt-0.5">
+                  {BANYAN_DEMO.userTitle}
                 </p>
                 <div className="mt-1.5 space-y-0.5">
-                  <p className="flex items-center gap-1 text-[8px] text-[#1a2332]">
-                    <Phone className="h-2.5 w-2.5 text-[#1e4a6e] shrink-0" aria-hidden />
-                    (828) 555-0142
+                  <p className="flex items-center gap-1 text-[8px] text-[#14201a]">
+                    <Phone
+                      className="h-2.5 w-2.5 shrink-0"
+                      style={{ color: BRAND }}
+                      aria-hidden
+                    />
+                    ###-###-####
                   </p>
-                  <p className="flex items-center gap-1 text-[8px] text-[#1a2332] min-w-0">
-                    <Mail className="h-2.5 w-2.5 text-[#1e4a6e] shrink-0" aria-hidden />
-                    <span className="truncate">referrals@northbend.co</span>
+                  <p className="flex items-center gap-1 text-[7.5px] sm:text-[8px] text-[#14201a] min-w-0">
+                    <Mail
+                      className="h-2.5 w-2.5 shrink-0"
+                      style={{ color: BRAND }}
+                      aria-hidden
+                    />
+                    <span className="truncate">email@banyantreatment.com</span>
                   </p>
                 </div>
               </section>
             </div>
 
-            <footer className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-2 border-t border-[#d5d9e0]">
+            <footer className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-2 border-t border-[#e2e6e3]">
               <p className="text-[7px] sm:text-[7.5px] text-[#6b7280]">
-                Printed materials · Last revised Jan 14, 2026
+                Printed materials · Last revised Jun 22, 2026
               </p>
-              <p className="text-[7px] sm:text-[7.5px] font-bold tracking-[0.12em] text-[#1e4a6e]">
+              <p
+                className="text-[7px] sm:text-[7.5px] font-bold tracking-[0.12em]"
+                style={{ color: BRAND }}
+              >
                 CONFIDENTIAL
               </p>
             </footer>
           </div>
 
-          {/* Stamp keeps a slight angle — document itself is straight */}
+          {/* Outdated stamp */}
           <div
-            className="pointer-events-none absolute right-1.5 sm:right-2.5 top-[48%] -translate-y-1/2 rotate-[-16deg] select-none"
+            className="pointer-events-none absolute right-2 sm:right-3 top-[46%] -translate-y-1/2 rotate-[-14deg] select-none"
             aria-hidden
           >
-            <span className="inline-block border-2 sm:border-[2.5px] border-rose-500/65 text-rose-600/75 px-2 sm:px-2.5 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-[2px] bg-rose-50/50 shadow-sm backdrop-blur-[1px]">
+            <span className="inline-block border-[2.5px] border-rose-500/70 text-rose-600/80 px-2.5 py-1 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.22em] rounded-[2px] bg-rose-50/55 shadow-sm backdrop-blur-[1px]">
               Outdated
             </span>
           </div>

@@ -51,50 +51,56 @@ export function OrgHeroContactCard({
         "rounded-xl border overflow-hidden w-full h-full text-foreground flex flex-col",
         variant === "floating"
           ? "rounded-2xl border-white/25 bg-card/97 backdrop-blur-md shadow-2xl ring-1 ring-white/15"
-          : "border-border/60 bg-card shadow-sm",
+          : "border-border/70 bg-card shadow-[0_8px_30px_-18px_rgba(15,23,42,0.35)]",
         className,
       )}
     >
       <div
-        className="px-3 py-2.5 border-b shrink-0"
-        style={{ backgroundColor: `${brand}12`, borderColor: `${brand}22` }}
+        className="px-4 py-2.5 border-b shrink-0"
+        style={{ backgroundColor: `${brand}10`, borderColor: `${brand}18` }}
       >
         <p
-          className="text-[10px] font-bold uppercase tracking-wider text-center"
+          className="text-[10px] font-bold uppercase tracking-[0.14em] text-center"
           style={{ color: brand }}
         >
           {heading}
         </p>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col justify-center gap-4 min-h-0">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-4 min-h-0">
         {contacts.map((c, i) => {
           const tel = sanitizePhone(c.phone);
           return (
-            <div key={i} className="space-y-3.5">
-              <div className="flex items-center gap-3">
+            <div key={i} className="space-y-4 flex-1 flex flex-col justify-between min-h-0">
+              <div className="flex items-center gap-3.5">
                 <div
-                  className="h-12 w-12 rounded-full grid place-items-center text-sm font-bold shrink-0"
-                  style={{ backgroundColor: `${brand}1f`, color: brand }}
+                  className="h-12 w-12 rounded-full grid place-items-center text-sm font-bold shrink-0 border"
+                  style={{
+                    backgroundColor: `${brand}14`,
+                    color: brand,
+                    borderColor: `${brand}28`,
+                  }}
                 >
                   {initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="font-semibold text-base leading-tight truncate">{c.name}</p>
+                  <p className="font-semibold text-[15px] sm:text-base leading-tight truncate">
+                    {c.name}
+                  </p>
                   {c.title && (
                     <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">
                       {c.title}
                     </p>
                   )}
                   {c.location && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                    <p className="text-[11px] text-muted-foreground/90 mt-0.5 truncate">
                       {c.location}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 mt-auto">
                 <Button
                   asChild={!!tel}
                   variant="outline"

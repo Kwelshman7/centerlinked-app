@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { OrgAppHeader } from "@/components/public/OrgAppHeader";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
-import { HeroContact } from "@/components/public/OrgHeroContactCard";
+import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
+import { OrgClaimCard } from "@/components/public/OrgClaimCard";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
 import { trackOrgEvent } from "@/lib/track-org-event";
@@ -136,13 +137,35 @@ export default function OrgSheet() {
     return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
   }
 
+  const briefDescription =
+    org.tagline && org.description && org.description !== org.tagline
+      ? org.description
+      : !org.tagline
+        ? org.description
+        : null;
+
+  const contactAside = heroContact ? (
+    <OrgHeroContactCard
+      contacts={[heroContact]}
+      organizationId={org.id}
+      brand={brand}
+      heading="Your Contact"
+      variant="default"
+      className="w-full h-full"
+    />
+  ) : (
+    <div className="rounded-xl border border-border/60 bg-card shadow-sm p-1 h-full">
+      <OrgClaimCard organizationId={org.id} organizationName={org.name} />
+    </div>
+  );
+
   return (
     <div id="top" className="min-h-screen bg-muted/30">
       <OrgAppHeader brand={brand} />
 
-      <OrgHeroSection org={org} heroContact={heroContact} brand={brand} />
+      <OrgHeroSection org={org} brand={brand} />
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-9 lg:py-11">
         <OrganizationSheetView
           org={org}
           facilities={facilities}
@@ -151,6 +174,8 @@ export default function OrgSheet() {
           facilityStates={facilityStates}
           selectedState={selectedState}
           onStateChange={setSelectedState}
+          description={briefDescription}
+          contactAside={contactAside}
         />
       </main>
     </div>

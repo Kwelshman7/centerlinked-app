@@ -1,23 +1,23 @@
 import { PhoneFrame } from "./PhoneFrame";
-import { DashboardPreviewContent } from "./DashboardPreview";
-import { SearchResultsPreviewContent } from "./SearchResultsPreview";
+import { PublicOrgSheetPreviewContent } from "./PublicOrgSheetPreview";
+import { SearchInteractiveDemo } from "./SearchInteractiveDemo";
 import { PublicFacilitySheetPreviewContent } from "./PublicFacilitySheetPreview";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 const views = [
   {
-    label: "Your organization dashboard",
-    title: "Update once. Every shared link stays current.",
+    label: "What partners open",
+    title: "Your organization profile — one shared link.",
     caption:
-      "Manage facilities, team, engagement, and branding from one dashboard — the same view your organization uses after onboarding.",
-    content: <DashboardPreviewContent />,
+      "Partners land on your live Banyan-style org page: branding, BD contact, and every facility in one place — the same view inside the app.",
+    content: <PublicOrgSheetPreviewContent />,
     reverse: false,
   },
   {
-    label: "What partners open",
-    title: "Each facility has its own page.",
-    caption: "Giving those who refer to you exactly what they need.",
+    label: "Each facility page",
+    title: "Each location has its own page.",
+    caption: "Giving those who refer to you exactly what they need for that program.",
     content: <PublicFacilitySheetPreviewContent />,
     reverse: true,
   },
@@ -25,8 +25,8 @@ const views = [
     label: "How partners find you",
     title: "Search by Insurance, Location, and Level of Care.",
     caption:
-      "Professionals filter by level of care, location, and insurance. Verified profiles surface when someone is ready to refer.",
-    content: <SearchResultsPreviewContent />,
+      "Professionals filter by insurance and state — then verified partners like Banyan surface ready to refer.",
+    content: <SearchInteractiveDemo />,
     reverse: false,
   },
 ];
@@ -39,7 +39,7 @@ export function ProductShowcase() {
     >
       <div className="pointer-events-none absolute inset-0 landing-glow opacity-60" aria-hidden />
       <div className="container relative z-10">
-        <div className="mx-auto max-w-2xl text-center mb-14 sm:mb-16 space-y-5">
+        <div className="mx-auto max-w-2xl text-center mb-12 sm:mb-14 space-y-5">
           <SectionBadge>Example profile</SectionBadge>
           <DisplayHeading as="h2" align="center">
             See what partners open when you{" "}
@@ -51,25 +51,46 @@ export function ProductShowcase() {
           </p>
         </div>
 
-        <div className="space-y-16 sm:space-y-20 lg:space-y-24 max-w-5xl mx-auto">
+        <div className="space-y-10 sm:space-y-12 lg:space-y-14 max-w-5xl mx-auto">
           {views.map((v) => (
             <div
               key={v.label}
-              className={`grid gap-8 lg:gap-14 lg:items-center ${
-                v.reverse ? "lg:grid-cols-[1fr_0.9fr]" : "lg:grid-cols-[0.9fr_1fr]"
+              className={`grid gap-5 sm:gap-6 lg:gap-10 lg:items-center ${
+                v.reverse ? "lg:grid-cols-[1.05fr_0.85fr]" : "lg:grid-cols-[0.85fr_1.05fr]"
               }`}
             >
-              <div className={`flex justify-center w-full min-w-0 px-2 sm:px-0 ${v.reverse ? "lg:order-2" : ""}`}>
-                <PhoneFrame className="w-[min(100%,280px)] sm:w-[290px]">{v.content}</PhoneFrame>
+              <div
+                className={`flex justify-center w-full min-w-0 ${
+                  v.reverse ? "lg:order-2" : ""
+                }`}
+              >
+                <div className="relative" style={{ perspective: "1400px" }}>
+                  <div
+                    className="relative transform-gpu"
+                    style={{ transform: "rotateX(2deg)" }}
+                  >
+                    <div
+                      className="pointer-events-none absolute left-1/2 top-[72%] h-8 w-[65%] -translate-x-1/2 rounded-[100%] bg-black/12 blur-xl"
+                      aria-hidden
+                    />
+                    <PhoneFrame className="w-[255px] sm:w-[270px]">{v.content}</PhoneFrame>
+                  </div>
+                </div>
               </div>
-              <div className={`max-w-md mx-auto lg:mx-0 space-y-3 ${v.reverse ? "lg:order-1" : ""}`}>
+              <div
+                className={`max-w-md mx-auto lg:mx-0 space-y-3 text-center lg:text-left ${
+                  v.reverse ? "lg:order-1" : ""
+                }`}
+              >
                 <p className="text-[11px] sm:text-xs font-bold tracking-[0.12em] uppercase text-primary">
                   {v.label}
                 </p>
-                <h3 className="font-display text-2xl sm:text-3xl text-foreground leading-tight">
+                <h3 className="font-display text-xl sm:text-2xl lg:text-3xl text-foreground leading-tight">
                   {v.title}
                 </h3>
-                <p className="text-base text-muted-foreground leading-relaxed">{v.caption}</p>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  {v.caption}
+                </p>
               </div>
             </div>
           ))}

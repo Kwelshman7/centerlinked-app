@@ -12,8 +12,15 @@ import { cn } from "@/lib/utils";
 type Phase = "dashboard" | "moving" | "click" | "facility" | "returning";
 
 const TARGET_FACILITY = FEATURED_FACILITY_INDEX;
-const MOVE_MS = 1200;
+const MOVE_MS = 1800;
 const MD_BREAKPOINT = 768;
+
+const HOLD = {
+  dashboard: 4200,
+  click: 650,
+  facility: 7200,
+  returning: 900,
+} as const;
 
 function useIsDesktopDemo() {
   const [isDesktop, setIsDesktop] = useState(
@@ -52,7 +59,7 @@ function DemoStage({
     <div ref={stageRef} data-demo-stage className="relative h-full w-full overflow-hidden">
       <div
         className={cn(
-          "absolute inset-0 transition-all duration-500 ease-out",
+          "absolute inset-0 transition-all duration-700 ease-out",
           showFacility
             ? "opacity-0 -translate-x-6 scale-[0.98]"
             : "opacity-100 translate-x-0 scale-100",
@@ -68,7 +75,7 @@ function DemoStage({
 
       <div
         className={cn(
-          "absolute inset-0 transition-all duration-500 ease-out",
+          "absolute inset-0 transition-all duration-700 ease-out",
           showFacility
             ? "opacity-100 translate-x-0 scale-100"
             : "opacity-0 translate-x-6 scale-[0.98] pointer-events-none",
@@ -230,7 +237,7 @@ export function OrgDashboardInteractiveDemo() {
         setPhase("dashboard");
         setCursor(home);
         measurePositions();
-        await wait(1100);
+        await wait(HOLD.dashboard);
         if (cancelled) break;
 
         measurePositions();
@@ -253,15 +260,15 @@ export function OrgDashboardInteractiveDemo() {
         if (cancelled) break;
 
         setPhase("click");
-        await wait(420);
+        await wait(HOLD.click);
         if (cancelled) break;
 
         setPhase("facility");
-        await wait(4000);
+        await wait(HOLD.facility);
         if (cancelled) break;
 
         setPhase("returning");
-        await wait(650);
+        await wait(HOLD.returning);
         if (cancelled) break;
       }
     };

@@ -381,12 +381,30 @@
   animation: logoBallPulse 2.4s ease-out infinite;
 }
 
+@keyframes whoForSpokeFlow {
+  to { stroke-dashoffset: -36; }
+}
+
+.animate-who-for-spoke {
+  animation: whoForSpokeFlow 1.35s linear infinite;
+}
+
+/* Marks start invisible until motion begins; SMIL handles position */
+.who-for-share-mark {
+  opacity: 0.92;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-live-line,
   .animate-logo-ball-pulse,
   .animate-converge-line,
-  .animate-logo-arrive {
+  .animate-logo-arrive,
+  .animate-who-for-spoke {
     animation: none;
+  }
+
+  .who-for-share-mark animateMotion {
+    display: none;
   }
 
   .animate-converge-line {

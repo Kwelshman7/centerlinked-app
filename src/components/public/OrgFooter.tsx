@@ -174,7 +174,7 @@ export function OrgFooter({
           </div>
 
           {hasContact && contact && (
-            <div className="w-full min-w-0 border-t lg:border-t-0 lg:border-l border-white/15 p-3 sm:p-3.5 flex">
+            <div className="hidden lg:flex w-full min-w-0 border-t lg:border-t-0 lg:border-l border-white/15 p-3 sm:p-3.5">
               <OrgHeroContactCard
                 contacts={[contact]}
                 organizationId={orgId}

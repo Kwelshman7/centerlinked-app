@@ -60,10 +60,12 @@ export function toGridFacility(
 
 export const BANYAN_GRID_FACILITIES: FacilityGridCardData[] = facilities.map(toGridFacility);
 
-/** Demo click target — Banyan Boca. */
-export const FEATURED_FACILITY_INDEX = facilities.findIndex((f) => f.slug.startsWith("banyan-boca"));
+/** Demo click target for org-dashboard interactive — Castle Rock (not Boca). */
+export const FEATURED_FACILITY_INDEX = facilities.findIndex((f) =>
+  f.slug.startsWith("banyan-castle-rock"),
+);
 
-const featured = facilities[FEATURED_FACILITY_INDEX >= 0 ? FEATURED_FACILITY_INDEX : 1];
+const featured = facilities[FEATURED_FACILITY_INDEX >= 0 ? FEATURED_FACILITY_INDEX : 2];
 
 export const FEATURED_FACILITY = {
   id: featured.id,
@@ -75,19 +77,19 @@ export const FEATURED_FACILITY = {
   founded: "2014",
   accreditation: "Joint Commission",
   lastUpdated: "2 days ago",
-  payers: ["Aetna PPO", "Cigna PPO", "BCBS of FL", "United Healthcare", "Magellan"],
-  levels: featured.levelsOfCare.slice(0, 4),
+  payers: ["Aetna PPO", "Cigna PPO", "BCBS", "United Healthcare", "Magellan"],
+  levels: featured.levelsOfCare.slice(0, 5),
   features: [
     "24/7 clinical support",
     "Dual-diagnosis capable",
-    "Co-occurring disorder care",
     "Family programming",
+    "Trauma-informed care",
   ],
   treat: ["Substance Use", "Co-Occurring", "Mental Health"],
   gallery: [
     featured.imageUrl ?? banyanCover,
     facilities[0]?.imageUrl,
-    facilities[2]?.imageUrl,
+    facilities[4]?.imageUrl,
   ].filter(Boolean) as string[],
 } as const;
 

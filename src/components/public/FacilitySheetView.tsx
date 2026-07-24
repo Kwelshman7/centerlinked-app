@@ -4,9 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Building2,
   MapPin,
-  Mail,
-  Phone,
-  MessageCircle,
   ShieldCheck,
   ChevronRight,
   User,
@@ -23,9 +20,11 @@ import {
 import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 import { EditPhotosDialog } from "@/components/public/FacilityPhotoGallery";
 import { MobileContactBar, mobileContactBarPadding } from "@/components/public/MobileContactBar";
+import { OrgHeroContactCard } from "@/components/public/OrgHeroContactCard";
+import { ExpandableText } from "@/components/public/ExpandableText";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { useNearbyCities } from "@/hooks/useNearbyCities";
-import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
+import { sanitizePhone } from "@/lib/phone";
 
 /** Fixed hero gallery dimensions — identical for every facility/org. */
 const HERO_IMAGE_HEIGHT = "h-[280px]";
@@ -120,13 +119,6 @@ function fmtYear(d: string | null | undefined) {
   }
 }
 
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 function SectionHeading({
   title,
   headerExtra,
@@ -142,40 +134,6 @@ function SectionHeading({
   );
 }
 
-function ExpandableText({
-  text,
-  brand,
-  className = "",
-}: {
-  text: string;
-  brand: string;
-  className?: string;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const needsToggle = text.length > 320 || text.split("\n").length > 4;
-
-  return (
-    <div className={className}>
-      <p
-        className={`text-sm leading-relaxed whitespace-pre-line text-foreground/80 break-words ${
-          !expanded && needsToggle ? "line-clamp-4" : ""
-        }`}
-      >
-        {text}
-      </p>
-      {needsToggle && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="mt-2 text-xs font-semibold hover:underline"
-          style={{ color: brand }}
-        >
-          {expanded ? "Show less" : "Read more"}
-        </button>
-      )}
-    </div>
-  );
-}
 
 export function FacilitySheetView({
   facility,
@@ -211,6 +169,21 @@ export function FacilitySheetView({
   const repEmail = facility.bd_contact_email || org?.bd_contact_email || null;
   const cleanPhone = sanitizePhone(repPhone) || null;
   const hasContact = !!(cleanPhone || repEmail);
+
+  const shareNode =
+    canShare && facility.slug ? (
+      <ShareSheetButton
+        slug={facility.slug}
+        orgSlug={org?.slug}
+        kind="facility"
+        variant="default"
+        size="default"
+        label="Share Facility"
+        hideCopy
+        className="shadow-sm hover:opacity-90"
+        style={{ backgroundColor: brand, borderColor: brand }}
+      />
+    ) : null;
   const showMobileActionBar = !!(hasContact || shareNode);
 
   const summaryText =
@@ -229,21 +202,6 @@ export function FacilitySheetView({
     ...(facility.highlights ?? []),
     ...(facility.specializations ?? []),
   ].filter((item, index, arr) => arr.indexOf(item) === index);
-
-  const shareNode =
-    canShare && facility.slug ? (
-      <ShareSheetButton
-        slug={facility.slug}
-        orgSlug={org?.slug}
-        kind="facility"
-        variant="default"
-        size="default"
-        label="Share Facility"
-        hideCopy
-        className="shadow-sm hover:opacity-90"
-        style={{ backgroundColor: brand, borderColor: brand }}
-      />
-    ) : null;
 
   const hasProgramDetails =
     facility.description ||
@@ -482,58 +440,42 @@ export function FacilitySheetView({
               )}
             </div>
 
-            {/* Desktop sidebar contact — mobile uses sticky Contact now bar + footer card */}
-            <aside className="hidden lg:block lg:border-l border-border/50 bg-muted/15 px-4 sm:px-5 py-4 sm:py-5 lg:sticky lg:top-20 lg:self-start">
-              <p className="text-[11px] uppercase tracking-wider font-bold mb-3" style={{ color: brand }}>
-                For Referrals
-              </p>
-
-              {repName ? (
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="h-11 w-11 rounded-full grid place-items-center shrink-0 font-heading font-bold text-sm border"
-                    style={{ backgroundColor: `${brand}14`, color: brand, borderColor: `${brand}30` }}
-                  >
-                    {getInitials(repName)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm break-words">{repName}</p>
-                    <p className="text-xs text-muted-foreground">BD Representative</p>
-                  </div>
-                </div>
+            {/* Desktop sidebar contact — mobile uses sticky Contact now bar */}
+            <aside className="hidden lg:block lg:border-l border-border/50 bg-muted/10 p-4 sm:p-5 lg:sticky lg:top-20 lg:self-start">
+              {repName && hasContact ? (
+                <OrgHeroContactCard
+                  contacts={[
+                    {
+                      name: repName,
+                      title: "BD Representative",
+                      location: cityStateZip || null,
+                      phone: repPhone,
+                      email: repEmail,
+                    },
+                  ]}
+                  organizationId={org?.id}
+                  brand={brand}
+                  heading="For Referrals"
+                  className="shadow-none border-border/60"
+                />
               ) : (
-                <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
-                    <User className="h-5 w-5" />
+                <div className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-[0.14em] text-center"
+                    style={{ color: brand }}
+                  >
+                    For Referrals
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      No BD contact on file yet.
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">No BD contact on file yet.</p>
                 </div>
               )}
-
-              <div className="mt-3 space-y-2">
-                {repEmail && (
-                  <Button asChild className="w-full h-9 text-sm hover:opacity-90" style={{ backgroundColor: brand, borderColor: brand }}>
-                    <a href={`mailto:${repEmail}`}>
-                      <Mail className="h-4 w-4" /> Email
-                    </a>
-                  </Button>
-                )}
-                {repPhone && cleanPhone && (
-                  <Button asChild variant="outline" className="w-full h-9 text-sm">
-                    <a href={`sms:${cleanPhone}`}>
-                      <MessageCircle className="h-4 w-4" /> Text
-                    </a>
-                  </Button>
-                )}
-                {repPhone && cleanPhone && (
-                  <Button asChild variant="outline" className="w-full h-9 text-sm">
-                    <a href={`tel:${cleanPhone}`}>
-                      <Phone className="h-4 w-4" /> Call
-                      {formatPhoneDisplay(repPhone) ? ` (${formatPhoneDisplay(repPhone)})` : ""}
-                    </a>
-                  </Button>
-                )}
-              </div>
             </aside>
           </div>
         </section>

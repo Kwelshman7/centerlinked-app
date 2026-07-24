@@ -44,33 +44,33 @@ export function FAQ() {
   return (
     <section className="py-16 sm:py-20 lg:py-28 bg-muted/35">
       <div className="container">
-        <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-14 lg:items-start">
-          <div className="space-y-4 max-w-sm lg:sticky lg:top-24">
-            <SectionBadge>FAQ</SectionBadge>
-            <DisplayHeading as="h2">Questions before you share your first link</DisplayHeading>
-            <p className="text-base text-muted-foreground leading-relaxed">
-              How CenterLinked fits referral workflows — accuracy, control, and what the
-              network is (and isn’t).
-            </p>
-          </div>
-
-          <Accordion type="single" collapsible className="space-y-3">
-            {faqs.map((faq, idx) => (
-              <AccordionItem
-                key={faq.question}
-                value={`item-${idx}`}
-                className="border border-border rounded-2xl px-4 sm:px-6 bg-card shadow-sm hover:shadow-md hover:border-primary/25 transition-all duration-300 data-[state=open]:border-primary/30 data-[state=open]:shadow-md"
-              >
-                <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-4 sm:py-5 hover:text-primary transition-colors text-sm sm:text-base">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-4 sm:pb-5 leading-relaxed text-sm sm:text-[15px]">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+        <div className="mx-auto max-w-2xl text-center space-y-4 mb-10 sm:mb-12">
+          <SectionBadge>FAQ</SectionBadge>
+          <DisplayHeading as="h2" align="center">
+            Questions before you share your first link
+          </DisplayHeading>
+          <p className="text-base text-muted-foreground leading-relaxed">
+            How CenterLinked fits referral workflows — accuracy, control, and what the network is
+            (and isn’t).
+          </p>
         </div>
+
+        <Accordion type="single" collapsible className="mx-auto max-w-2xl space-y-3">
+          {faqs.map((faq, idx) => (
+            <AccordionItem
+              key={faq.question}
+              value={`item-${idx}`}
+              className="border border-border rounded-2xl px-4 sm:px-6 bg-card shadow-sm hover:shadow-md hover:border-primary/25 transition-all duration-300 data-[state=open]:border-primary/30 data-[state=open]:shadow-md"
+            >
+              <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-4 sm:py-5 hover:text-primary transition-colors text-sm sm:text-base">
+                {faq.question}
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground pb-4 sm:pb-5 leading-relaxed text-sm sm:text-[15px]">
+                {faq.answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     </section>
   );

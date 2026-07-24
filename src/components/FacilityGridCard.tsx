@@ -98,13 +98,7 @@ export function FacilityGridCard({
         featuredPayer={f.featured_payer}
       />
     ) : (
-      <CompactBody
-        name={f.name}
-        imageUrl={imageUrl}
-        locationLine={locationLine}
-        levels={levels}
-        levelLimit={levelLimit}
-      />
+      <CompactBody name={f.name} imageUrl={imageUrl} locationLine={locationLine} />
     );
 
   if (href) {
@@ -122,28 +116,23 @@ function CompactBody({
   name,
   imageUrl,
   locationLine,
-  levels,
-  levelLimit,
 }: {
   name: string;
   imageUrl: string | null;
   locationLine: string;
-  levels: string[];
-  levelLimit: number;
 }) {
   return (
-    <>
-      <FacilityImage imageUrl={imageUrl} name={name} aspect="aspect-[16/10]" iconClass="h-7 w-7" />
-      <div className="p-2.5 space-y-1.5">
-        <p className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+    <div className="flex flex-col">
+      <FacilityImage imageUrl={imageUrl} name={name} aspect="aspect-[4/3]" iconClass="h-7 w-7" />
+      <div className="px-2.5 py-2 space-y-0.5">
+        <p className="font-semibold text-xs sm:text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors">
           {name}
         </p>
         {locationLine && (
-          <p className="text-[11px] text-muted-foreground truncate">{locationLine}</p>
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{locationLine}</p>
         )}
-        <LevelChips levels={levels} limit={levelLimit} size="sm" />
       </div>
-    </>
+    </div>
   );
 }
 

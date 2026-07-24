@@ -1,14 +1,22 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+
+/** Logical CSS width of the in-phone app (iPhone 14/15 class). */
+export const PHONE_LOGICAL_WIDTH = 393;
 
 interface PhoneFrameProps {
   children: React.ReactNode;
   className?: string;
 }
 
+/**
+ * Device chrome around a true-width mobile viewport.
+ * Children should use real mobile layout sizes — the frame scales them to fit.
+ */
 export function PhoneFrame({ children, className }: PhoneFrameProps) {
   return (
     <div
-      className={cn("relative mx-auto shrink-0 w-[260px]", className)}
+      className={cn("relative mx-auto shrink-0 w-[393px]", className)}
       style={{ aspectRatio: "393 / 852" }}
     >
       {/* Device shell */}
@@ -47,9 +55,9 @@ export function PhoneFrame({ children, className }: PhoneFrameProps) {
           {/* Dynamic Island */}
           <div className="absolute top-[10px] left-1/2 -translate-x-1/2 h-[24px] w-[84px] rounded-full bg-black z-40 ring-1 ring-white/5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.08)]" />
 
-          {/* App viewport */}
+          {/* App viewport — scale real mobile UI into the screen */}
           <div className="absolute inset-0 pt-11 overflow-hidden bg-background">
-            <div className="h-full min-h-0 overflow-hidden">{children}</div>
+            <ScaledMobileViewport>{children}</ScaledMobileViewport>
           </div>
 
           {/* Home indicator */}
@@ -62,6 +70,44 @@ export function PhoneFrame({ children, className }: PhoneFrameProps) {
         className="pointer-events-none absolute -bottom-6 left-1/2 -translate-x-1/2 w-[72%] h-8 rounded-full bg-black/15 blur-xl"
         aria-hidden
       />
+    </div>
+  );
+}
+
+function ScaledMobileViewport({ children }: { children: ReactNode }) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+
+  useEffect(() => {
+    const el = hostRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.clientWidth;
+      if (w > 0) setScale(w / PHONE_LOGICAL_WIDTH);
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const ready = scale > 0;
+
+  return (
+    <div ref={hostRef} className="relative h-full w-full overflow-hidden">
+      <div
+        className="absolute left-0 top-0 origin-top-left will-change-transform"
+        style={{
+          width: PHONE_LOGICAL_WIDTH,
+          height: ready ? `${100 / scale}%` : "100%",
+          transform: ready ? `scale(${scale})` : "scale(1)",
+          visibility: ready ? "visible" : "hidden",
+        }}
+      >
+        <div className="h-full min-h-0 overflow-hidden">{children}</div>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Building2, ChevronDown, LogOut } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface Props {
   brand: string;
@@ -22,7 +24,18 @@ const NAV_LINKS = [
 ] as const;
 
 export function OrgAppHeader({ brand }: Props) {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    setMenuOpen(false);
+    await signOut();
+    navigate("/login");
+  };
+
+  const displayName = profile?.full_name || user?.email || "Account";
+  const avatarSrc = profile?.avatar_url || null;
 
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/60 print:hidden">
@@ -46,27 +59,69 @@ export function OrgAppHeader({ brand }: Props) {
 
           <div className="flex items-center gap-2 shrink-0">
             {user && profile ? (
-              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                <div
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full grid place-items-center text-xs font-bold shrink-0 border"
-                  style={{ backgroundColor: `${brand}14`, color: brand, borderColor: `${brand}30` }}
-                >
-                  {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    initials(profile.full_name || user.email || "?")
-                  )}
-                </div>
-                <div className="min-w-0 hidden sm:block text-left max-w-[10rem] lg:max-w-none">
-                  <p className="text-sm font-semibold truncate leading-tight">
-                    {profile.full_name || user.email}
-                  </p>
-                  {profile.job_title && (
-                    <p className="text-[11px] text-muted-foreground truncate">{profile.job_title}</p>
-                  )}
-                </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block shrink-0" />
-              </div>
+              <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 sm:gap-2.5 min-w-0 rounded-full sm:rounded-lg px-0.5 sm:px-1.5 py-0.5 hover:bg-muted/70 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Account menu"
+                  >
+                    <div
+                      className="h-8 w-8 sm:h-9 sm:w-9 rounded-full overflow-hidden grid place-items-center text-xs font-bold shrink-0 border"
+                      style={{
+                        backgroundColor: `${brand}14`,
+                        color: brand,
+                        borderColor: `${brand}30`,
+                      }}
+                    >
+                      {avatarSrc ? (
+                        <img
+                          src={avatarSrc}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        initials(displayName)
+                      )}
+                    </div>
+                    <div className="min-w-0 hidden sm:block text-left max-w-[10rem] lg:max-w-none">
+                      <p className="text-sm font-semibold truncate leading-tight">
+                        {displayName}
+                      </p>
+                      {profile.job_title && (
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {profile.job_title}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-56 p-1.5" sideOffset={8}>
+                  <div className="px-2.5 py-2 border-b border-border/60 mb-1 sm:hidden">
+                    <p className="text-sm font-semibold truncate">{displayName}</p>
+                    {profile.job_title && (
+                      <p className="text-xs text-muted-foreground truncate">{profile.job_title}</p>
+                    )}
+                  </div>
+                  <Link
+                    to="/app/dashboard"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    Return to my organization
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <LogOut className="h-4 w-4 text-muted-foreground shrink-0" />
+                    Log out
+                  </button>
+                </PopoverContent>
+              </Popover>
             ) : (
               <Link
                 to="/login"
