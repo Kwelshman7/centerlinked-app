@@ -139,48 +139,54 @@ export function Hero() {
       <div className="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" aria-hidden />
       <div className="pointer-events-none absolute -left-16 bottom-32 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden />
 
-      {/* Mobile: top-aligned under header. Desktop: open height, centered. */}
-      <div className="relative z-10 flex flex-col min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-4rem)] lg:min-h-0 pt-6 sm:pt-8 lg:pt-12 pb-4 sm:pb-8 lg:pb-14">
-        <div className="container flex flex-1 flex-col justify-start lg:justify-center">
-          <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:items-center">
-            <div className="flex flex-col gap-4 sm:gap-7 lg:gap-0 max-w-xl w-full mx-auto lg:mx-0 text-center lg:text-left items-center lg:items-start">
-              <div className="space-y-2.5 sm:space-y-5 animate-fade-up w-full">
-                <p className="font-sans text-[11px] sm:text-sm font-semibold tracking-[0.12em] uppercase text-primary">
+      {/*
+        Hero spacing: content-sized (no forced viewport stretch), generous section
+        padding, clear copy rhythm, and a stable gutter beside the mockup.
+      */}
+      <div className="relative z-10 px-0 pt-8 pb-12 sm:pt-10 sm:pb-16 lg:pt-16 lg:pb-20 xl:pt-[4.5rem] xl:pb-24">
+        <div className="container">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center lg:flex-row lg:items-center lg:justify-between gap-10 sm:gap-12 lg:gap-12 xl:gap-16">
+            {/* Copy column */}
+            <div className="flex w-full max-w-xl flex-col items-center text-center lg:items-start lg:text-left lg:max-w-[32rem] xl:max-w-[34rem]">
+              <div className="animate-fade-up w-full space-y-4 sm:space-y-5">
+                <p className="font-sans text-[11px] sm:text-xs font-semibold tracking-[0.14em] uppercase text-primary">
                   Built for behavioral health business development
                 </p>
-                <DisplayHeading as="h1" className="text-center lg:text-left text-[2.05rem] sm:text-5xl">
+                <DisplayHeading
+                  as="h1"
+                  className="text-center lg:text-left text-[1.9rem] leading-[1.12] sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem] xl:text-[3.5rem]"
+                >
                   Your Treatment Center Needs a{" "}
                   <DisplayAccent>Referral Link.</DisplayAccent>
                 </DisplayHeading>
-
-                <p className="text-[15px] sm:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0">
+                <p className="text-[15px] sm:text-lg text-muted-foreground leading-relaxed max-w-md sm:max-w-lg mx-auto lg:mx-0">
                   {heroSubheader}
                 </p>
               </div>
 
-              {/* Mobile: 3 across → lines into CenterLinked logo */}
-              <div className="lg:hidden w-full">
+              {/* Mobile-only replace graphic — spaced as its own beat */}
+              <div className="lg:hidden w-full mt-8 sm:mt-10">
                 <ReplaceIntoLogo />
               </div>
 
               <div
-                className="animate-fade-up w-full flex flex-col gap-3 sm:gap-5 items-center lg:items-start lg:mt-7"
+                className="animate-fade-up w-full mt-8 sm:mt-10 flex flex-col items-center lg:items-start gap-5 sm:gap-6"
                 style={{ animationDelay: "100ms" }}
               >
-                <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto">
+                <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto min-h-12 px-7">
                   <Link to="/request-access">
                     Create Your Organization Profile
                     <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
                 </Button>
 
-                <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 sm:gap-x-4 sm:gap-y-2.5 max-w-md w-full text-left">
+                <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 sm:gap-x-5 sm:gap-y-3 max-w-sm sm:max-w-md w-full text-left">
                   {helperItems.map((item) => (
                     <li
                       key={item}
-                      className="flex items-center gap-1.5 sm:gap-2 text-[13px] sm:text-base text-foreground font-medium"
+                      className="flex items-center gap-2 text-sm sm:text-[15px] text-foreground font-medium"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success shrink-0" aria-hidden />
+                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden />
                       {item}
                     </li>
                   ))}
@@ -188,16 +194,17 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="animate-slide-in-right relative hidden lg:flex justify-end">
+            {/* Desktop mockup */}
+            <div className="animate-slide-in-right relative hidden lg:flex shrink-0 justify-center">
               <HeroPhone />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Mobile phone — below the fold */}
-      <div className="relative z-10 lg:hidden flex justify-center px-4 pb-10 pt-1">
-        <HeroPhone className="w-[240px] sm:w-[270px]" />
+          {/* Mobile mockup — clear separation from copy, never cramped under CTA */}
+          <div className="lg:hidden mt-10 sm:mt-12 flex justify-center">
+            <HeroPhone className="w-[220px] sm:w-[260px]" />
+          </div>
+        </div>
       </div>
 
       {SHOW_ORG_LOGO_CAROUSEL ? (
@@ -210,10 +217,15 @@ export function Hero() {
 function HeroPhone({ className }: { className?: string }) {
   return (
     <div className="relative">
-      <div className="absolute -inset-16 bg-primary/8 blur-[80px] rounded-full opacity-70" />
-      <div className="absolute -inset-8 bg-primary/10 blur-3xl rounded-full opacity-60" />
-      <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-[70%] h-20 bg-foreground/5 blur-2xl rounded-full" />
-      <PhoneFrame className={cn("w-[260px] sm:w-[290px] lg:w-[300px] animate-float", className)}>
+      <div className="absolute -inset-12 sm:-inset-16 bg-primary/8 blur-[80px] rounded-full opacity-70" />
+      <div className="absolute -inset-6 sm:-inset-8 bg-primary/10 blur-3xl rounded-full opacity-60" />
+      <div className="absolute -bottom-12 sm:-bottom-16 left-1/2 -translate-x-1/2 w-[70%] h-16 sm:h-20 bg-foreground/5 blur-2xl rounded-full" />
+      <PhoneFrame
+        className={cn(
+          "w-[260px] sm:w-[280px] lg:w-[300px] xl:w-[320px] animate-float",
+          className,
+        )}
+      >
         <PublicOrgSheetPreviewContent />
       </PhoneFrame>
     </div>

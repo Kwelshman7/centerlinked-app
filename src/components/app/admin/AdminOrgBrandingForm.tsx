@@ -17,6 +17,28 @@ interface Props {
   onSaved?: () => void;
 }
 
+function SectionCard({
+  title,
+  description,
+  children,
+  className = "",
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card className={`overflow-hidden ${className}`}>
+      <div className="border-b border-border/60 px-4 py-3.5 sm:px-5">
+        <h3 className="font-heading text-sm font-semibold sm:text-base">{title}</h3>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{description}</p>}
+      </div>
+      <div className="space-y-4 p-4 sm:p-5">{children}</div>
+    </Card>
+  );
+}
+
 export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,10 +60,6 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [accentColor, setAccentColor] = useState("#E0EDFF");
   const [orgImages, setOrgImages] = useState<string[]>([]);
   const [announcement, setAnnouncement] = useState("");
-  const [programBadgesText, setProgramBadgesText] = useState("");
-  const [ctaPrimary, setCtaPrimary] = useState("");
-  const [ctaSecondary, setCtaSecondary] = useState("");
-  const [whyRefer, setWhyRefer] = useState<{ title: string; body: string }[]>([]);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -68,28 +86,10 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         const gallery = (data as { image_urls?: string[] | null }).image_urls;
         setOrgImages(mergeOrgImages(gallery, cover));
         setAnnouncement((data as { announcement?: string | null }).announcement || "");
-        const badges = ((data as { program_badges?: string[] | null }).program_badges) || [];
-        setProgramBadgesText(badges.join(", "));
-        setCtaPrimary((data as { cta_primary_label?: string | null }).cta_primary_label || "");
-        setCtaSecondary((data as { cta_secondary_label?: string | null }).cta_secondary_label || "");
-        const wr = ((data as { why_refer?: unknown }).why_refer) as unknown;
-        if (Array.isArray(wr)) {
-          setWhyRefer(
-            wr.filter(
-              (x): x is { title: string; body: string } =>
-                !!x && typeof x === "object" && "title" in x && "body" in x,
-            ),
-          );
-        }
       }
       setLoading(false);
     })();
   }, [organizationId]);
-
-  const addWhy = () => setWhyRefer((arr) => (arr.length >= 4 ? arr : [...arr, { title: "", body: "" }]));
-  const updateWhy = (i: number, field: "title" | "body", v: string) =>
-    setWhyRefer((arr) => arr.map((r, idx) => (idx === i ? { ...r, [field]: v } : r)));
-  const removeWhy = (i: number) => setWhyRefer((arr) => arr.filter((_, idx) => idx !== i));
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,15 +98,6 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
       return;
     }
     setSaving(true);
-    const program_badges = programBadgesText
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 6);
-    const cleanWhyRefer = whyRefer
-      .map((r) => ({ title: r.title.trim(), body: r.body.trim() }))
-      .filter((r) => r.title && r.body)
-      .slice(0, 4);
     const slug = orgSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "") || null;
     const { error } = await supabase
       .from("organizations")
@@ -129,10 +120,6 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         cover_image_url: orgImages[0] || null,
         image_urls: orgImages,
         announcement: announcement.trim() || null,
-        program_badges,
-        cta_primary_label: ctaPrimary.trim() || null,
-        cta_secondary_label: ctaSecondary.trim() || null,
-        why_refer: cleanWhyRefer,
       })
       .eq("id", organizationId);
     setSaving(false);
@@ -148,101 +135,172 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
     return <div className="py-12 text-center text-muted-foreground">Loading branding…</div>;
   }
 
+  const previewSlug = orgSlug.trim().toLowerCase();
+
   return (
-    <Card className="p-6 max-w-3xl">
-      <form onSubmit={save} className="space-y-6">
+    <form onSubmit={save} className="space-y-5 pb-24 lg:pb-6">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-heading text-lg font-semibold">Organization profile</h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Full branding editor — same fields customers see in Settings.
+          <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">Organization profile</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Provider directory details shown on your public referral page.
           </p>
         </div>
+        <Button type="submit" disabled={saving} className="mt-3 hidden sm:inline-flex">
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save organization
+        </Button>
+      </div>
 
-        <div className="space-y-2">
-          <Label>Logo</Label>
-          <ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB." />
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2 space-y-2">
-            <Label htmlFor="on">Name</Label>
-            <Input id="on" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-2 lg:items-start">
+        <SectionCard
+          title="Identity"
+          description="Logo, legal name, and how partners find your public page."
+        >
+          <div className="space-y-2">
+            <Label>Logo</Label>
+            <ImageUploader
+              bucket="org-logos"
+              value={orgLogo}
+              onChange={setOrgLogo}
+              max={1}
+              label="Upload"
+              recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB."
+            />
           </div>
-          <div className="sm:col-span-2 space-y-2">
-            <Label htmlFor="oslug">URL slug</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="on">Organization name</Label>
+            <Input
+              id="on"
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              autoComplete="organization"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="oslug">Public URL slug</Label>
             <Input
               id="oslug"
               value={orgSlug}
               onChange={(e) => setOrgSlug(e.target.value)}
               placeholder="recovery-solutions"
+              inputMode="text"
+              autoCapitalize="none"
+              autoCorrect="off"
             />
-            {orgSlug.trim() && (
-              <p className="text-xs text-muted-foreground font-mono">{orgDisplayPath(orgSlug.trim().toLowerCase())}</p>
+            {previewSlug && (
+              <p className="font-mono text-xs text-muted-foreground">{orgDisplayPath(previewSlug)}</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="odomain">Email domain</Label>
-            <Input id="odomain" value={emailDomain} onChange={(e) => setEmailDomain(e.target.value)} placeholder="example.com" />
-          </div>
-          <div className="space-y-2 flex items-end pb-2">
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={verified} onCheckedChange={(v) => setVerified(!!v)} />
-              <span>Verified organization</span>
-            </label>
-          </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="od">Description</Label>
-          <Textarea id="od" rows={3} value={orgDesc} onChange={(e) => setOrgDesc(e.target.value)} />
-        </div>
-
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div className="space-y-2 sm:col-span-1">
-            <Label htmlFor="ow">Website</Label>
-            <Input id="ow" value={orgWebsite} onChange={(e) => setOrgWebsite(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="oc">HQ City</Label>
-            <Input id="oc" value={orgCity} onChange={(e) => setOrgCity(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ost">HQ State</Label>
-            <Input id="ost" value={orgState} onChange={(e) => setOrgState(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-border/60 space-y-3">
-          <div>
-            <p className="font-heading font-semibold text-sm">Referral contact</p>
-            <p className="text-xs text-muted-foreground">Shown on the public org page.</p>
-          </div>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="bdn">BD rep name</Label>
-              <Input id="bdn" value={bdName} onChange={(e) => setBdName(e.target.value)} />
+              <Label htmlFor="odomain">Email domain</Label>
+              <Input
+                id="odomain"
+                value={emailDomain}
+                onChange={(e) => setEmailDomain(e.target.value)}
+                placeholder="example.com"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="bdp">BD phone</Label>
-              <Input id="bdp" value={bdPhone} onChange={(e) => setBdPhone(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bde">BD email</Label>
-              <Input id="bde" type="email" value={bdEmail} onChange={(e) => setBdEmail(e.target.value)} />
+            <div className="flex items-end">
+              <label className="flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <Checkbox checked={verified} onCheckedChange={(v) => setVerified(!!v)} />
+                <span>Verified organization</span>
+              </label>
             </div>
           </div>
-        </div>
+        </SectionCard>
 
-        <div className="pt-4 border-t border-border/60 space-y-4">
-          <div>
-            <p className="font-heading font-semibold text-sm">Branded mini-homepage</p>
-            <p className="text-xs text-muted-foreground">Public page at /o/your-slug</p>
-          </div>
+        <SectionCard title="About & location" description="What referring partners see first about your network.">
           <div className="space-y-2">
             <Label htmlFor="tg">Tagline</Label>
-            <Input id="tg" maxLength={140} value={tagline} onChange={(e) => setTagline(e.target.value)} />
+            <Input
+              id="tg"
+              maxLength={140}
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              placeholder="Detox, residential, and outpatient programs across the region."
+            />
           </div>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="od">Description</Label>
+            <Textarea
+              id="od"
+              rows={5}
+              value={orgDesc}
+              onChange={(e) => setOrgDesc(e.target.value)}
+              className="min-h-[7.5rem] resize-y"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2 sm:col-span-1">
+              <Label htmlFor="ow">Website</Label>
+              <Input
+                id="ow"
+                value={orgWebsite}
+                onChange={(e) => setOrgWebsite(e.target.value)}
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder="https://"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="oc">HQ city</Label>
+              <Input id="oc" value={orgCity} onChange={(e) => setOrgCity(e.target.value)} autoComplete="address-level2" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ost">HQ state</Label>
+              <Input id="ost" value={orgState} onChange={(e) => setOrgState(e.target.value)} autoComplete="address-level1" />
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Referral contact"
+          description="Business development contact shown when partners need to get in touch."
+        >
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="bdn">BD rep name</Label>
+              <Input id="bdn" value={bdName} onChange={(e) => setBdName(e.target.value)} autoComplete="name" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="bdp">Phone</Label>
+                <Input
+                  id="bdp"
+                  value={bdPhone}
+                  onChange={(e) => setBdPhone(e.target.value)}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bde">Email</Label>
+                <Input
+                  id="bde"
+                  type="email"
+                  inputMode="email"
+                  value={bdEmail}
+                  onChange={(e) => setBdEmail(e.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Brand & announcement"
+          description="Colors and banner copy for your public mini-homepage."
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="bc">Brand color</Label>
               <div className="flex items-center gap-2">
@@ -251,9 +309,9 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                   type="color"
                   value={brandColor}
                   onChange={(e) => setBrandColor(e.target.value)}
-                  className="h-10 w-12 rounded-md border border-input bg-background cursor-pointer"
+                  className="h-11 w-12 shrink-0 cursor-pointer rounded-md border border-input bg-background"
                 />
-                <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} />
+                <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="min-w-0" />
               </div>
             </div>
             <div className="space-y-2">
@@ -264,73 +322,49 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                   type="color"
                   value={accentColor}
                   onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-10 w-12 rounded-md border border-input bg-background cursor-pointer"
+                  className="h-11 w-12 shrink-0 cursor-pointer rounded-md border border-input bg-background"
                 />
-                <Input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} />
+                <Input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="min-w-0" />
               </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Organization photos</Label>
-            <p className="text-xs text-muted-foreground">
-              Upload photos and mark one as the hero banner on the public org page.
-            </p>
-            <ImageUploader
-              bucket="org-logos"
-              value={orgImages}
-              onChange={setOrgImages}
-              max={8}
-              label="Add photo"
-              allowCover
-              coverLabel="Hero"
-              recommendedSize="Recommended: 1920×1080 px (16:9) hero; JPG or PNG, max 5 MB each."
-            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="ann">Announcement banner</Label>
-            <Textarea id="ann" rows={2} maxLength={240} value={announcement} onChange={(e) => setAnnouncement(e.target.value)} />
+            <Textarea
+              id="ann"
+              rows={3}
+              maxLength={240}
+              value={announcement}
+              onChange={(e) => setAnnouncement(e.target.value)}
+              placeholder="New PHP program now accepting referrals."
+              className="resize-y"
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="pb">Program badges</Label>
-            <Input id="pb" value={programBadgesText} onChange={(e) => setProgramBadgesText(e.target.value)} placeholder="Comma-separated, max 6" />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cta1">Primary CTA label</Label>
-              <Input id="cta1" value={ctaPrimary} onChange={(e) => setCtaPrimary(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cta2">Secondary CTA label</Label>
-              <Input id="cta2" value={ctaSecondary} onChange={(e) => setCtaSecondary(e.target.value)} />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Why refer</Label>
-              <Button type="button" size="sm" variant="outline" onClick={addWhy} disabled={whyRefer.length >= 4}>
-                + Add reason
-              </Button>
-            </div>
-            {whyRefer.map((r, i) => (
-              <div key={i} className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
-                <Input placeholder="Title" value={r.title} onChange={(e) => updateWhy(i, "title", e.target.value)} />
-                <Textarea rows={2} placeholder="Body" value={r.body} onChange={(e) => updateWhy(i, "body", e.target.value)} />
-                <div className="flex justify-end">
-                  <Button type="button" size="sm" variant="ghost" onClick={() => removeWhy(i)} className="text-destructive">
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        </SectionCard>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={saving}>
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save organization
-          </Button>
-        </div>
-      </form>
-    </Card>
+        <SectionCard
+          className="lg:col-span-2"
+          title="Organization photos"
+          description="Upload photos and mark one as the hero banner on the public org page."
+        >
+          <ImageUploader
+            bucket="org-logos"
+            value={orgImages}
+            onChange={setOrgImages}
+            max={8}
+            label="Add photo"
+            allowCover
+            coverLabel="Hero"
+            recommendedSize="Recommended: 1920×1080 px (16:9) hero; JPG or PNG, max 5 MB each."
+          />
+        </SectionCard>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:hidden pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <Button type="submit" disabled={saving} className="h-11 w-full text-base">
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save organization
+        </Button>
+      </div>
+    </form>
   );
 }

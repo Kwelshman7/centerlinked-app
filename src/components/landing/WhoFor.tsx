@@ -107,8 +107,7 @@ export function WhoFor() {
               <DisplayAccent>ALL</DisplayAccent> their relationships.
             </DisplayHeading>
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              CenterLinked makes it easy to keep referral relationships up to date with the most
-              accurate information.
+              CenterLinked makes it easy to keep referral relationships updated.
             </p>
           </div>
 
@@ -126,10 +125,11 @@ export function WhoFor() {
           <div className="mx-auto max-w-2xl text-center space-y-3 mb-10 sm:mb-12">
             <SectionBadge icon={Send}>When to send your link</SectionBadge>
             <DisplayHeading as="h2" align="center" className="text-2xl sm:text-3xl lg:text-[2.15rem]">
-              Ready in every conversation
+              Never miss an opportunity to build a new relationship.
             </DisplayHeading>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              The same profile works across BD, admissions, and marketing.
+              One link connects your partners with everything your organization has
+              to offer.
             </p>
           </div>
 
@@ -158,14 +158,9 @@ export function WhoFor() {
                         <Icon className="h-5 w-5" aria-hidden />
                       </span>
                       <div className="min-w-0 flex-1 pt-0.5">
-                        <div className="flex items-baseline gap-2.5 mb-2">
-                          <span className="font-display text-[10px] font-bold tracking-[0.14em] text-primary/55 tabular-nums">
-                            {String(i + 1).padStart(2, "0")}
-                          </span>
-                          <h3 className="text-[15px] sm:text-base font-semibold text-foreground leading-snug">
-                            {moment.title}
-                          </h3>
-                        </div>
+                        <h3 className="text-[15px] sm:text-base font-semibold text-foreground leading-snug mb-2">
+                          {moment.title}
+                        </h3>
                         <p className="text-sm text-muted-foreground leading-relaxed">
                           {moment.body}
                         </p>
@@ -201,7 +196,9 @@ export function WhoFor() {
               Everything your referral partners need
             </DisplayHeading>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Without digging through emails or outdated brochures.
+              Case managers refer to the centers that make their jobs easier. That
+              all starts with having access to the most up to date information about
+              your program.
             </p>
           </div>
 

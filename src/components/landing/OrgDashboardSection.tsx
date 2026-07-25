@@ -1,28 +1,6 @@
-import { Building2, Pencil, Share2 } from "lucide-react";
 import { OrgDashboardInteractiveDemo } from "./OrgDashboardInteractiveDemo";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
-
-const highlights = [
-  {
-    icon: Building2,
-    title: "All facilities, one workspace",
-    description:
-      "Open any program to update insurance, levels of care, contacts, and referral details — no hunting through files.",
-  },
-  {
-    icon: Pencil,
-    title: "Edit once — live on every link",
-    description:
-      "Public organization and facility links update instantly. Your BD team never re-emails a new PDF.",
-  },
-  {
-    icon: Share2,
-    title: "Share the org or one facility",
-    description:
-      "Send the full network overview or the single program a partner needs for that conversation.",
-  },
-];
 
 export function OrgDashboardSection() {
   return (
@@ -42,23 +20,6 @@ export function OrgDashboardSection() {
 
         <div className="w-full max-w-full md:overflow-x-auto">
           <OrgDashboardInteractiveDemo />
-        </div>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-3 max-w-5xl mx-auto">
-          {highlights.map((h) => (
-            <div
-              key={h.title}
-              className="flex gap-3.5 p-5 rounded-2xl bg-card border border-border shadow-sm"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <h.icon className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-foreground text-sm">{h.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground leading-snug">{h.description}</p>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </section>

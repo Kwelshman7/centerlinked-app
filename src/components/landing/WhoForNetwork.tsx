@@ -3,10 +3,8 @@ import {
   Brain,
   BriefcaseBusiness,
   Building2,
-  Link2,
   Shield,
   Users,
-  UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,19 +14,83 @@ const PARTNERS: {
   id: string;
   label: string;
   icon: LucideIcon;
-  /** Path end X in viewBox 0 0 1000 320 — centers of 6 equal columns. */
+  /** Path end X in viewBox 0 0 1000 280 — centers of 5 equal columns. */
   x: number;
 }[] = [
-  { id: "community", label: "Community Partners", icon: UsersRound, x: 83 },
-  { id: "hospitals", label: "Hospitals", icon: Building2, x: 250 },
-  { id: "therapists", label: "Therapists", icon: Brain, x: 417 },
-  { id: "case-managers", label: "Case Managers", icon: BriefcaseBusiness, x: 583 },
-  { id: "other-bd", label: "Other BD Reps", icon: Users, x: 750 },
-  { id: "probation", label: "Probation Officers", icon: Shield, x: 917 },
+  { id: "hospitals", label: "Hospitals", icon: Building2, x: 100 },
+  { id: "therapists", label: "Therapists", icon: Brain, x: 300 },
+  { id: "case-managers", label: "Case Managers", icon: BriefcaseBusiness, x: 500 },
+  { id: "other-bd", label: "Other BD Reps", icon: Users, x: 700 },
+  { id: "probation", label: "Probation Officers", icon: Shield, x: 900 },
 ];
 
+/** Spokes leave from the hub ball center. */
 function sharePath(toX: number) {
-  return `M500 4 C500 70 ${toX} 130 ${toX} 250`;
+  return `M500 44 C500 100 ${toX} 160 ${toX} 268`;
+}
+
+/** Stroke bust for avatar chips — short hair / blazer. */
+function MaleRepIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="16" cy="11" r="4.25" />
+      <path d="M8.5 25.5c1.2-4.2 3.9-6.2 7.5-6.2s6.3 2 7.5 6.2" />
+      <path d="M12.2 14.6c.4 1.4 1.8 2.4 3.8 2.4s3.4-1 3.8-2.4" opacity="0.55" />
+    </svg>
+  );
+}
+
+/** Stroke bust for avatar chips — longer hair. */
+function FemaleRepIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="16" cy="11" r="4.25" />
+      <path d="M11.2 12.8c-.3 1.6-.2 3.2.6 4.2 1.1.2 2.5.4 4.2.4s3.1-.2 4.2-.4c.8-1 .9-2.6.6-4.2" />
+      <path d="M8.5 25.5c1.2-4.2 3.9-6.2 7.5-6.2s6.3 2 7.5 6.2" />
+    </svg>
+  );
+}
+
+function BdTeamAvatar({
+  variant,
+  className,
+}: {
+  variant: "male" | "female";
+  className?: string;
+}) {
+  const Icon = variant === "male" ? MaleRepIcon : FemaleRepIcon;
+  return (
+    <span
+      className={cn(
+        "relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full ring-[2.5px] ring-white shadow-[0_6px_14px_-4px_rgba(0,48,72,0.35)]",
+        variant === "male"
+          ? "bg-gradient-to-br from-[#0a4a66] to-[#2088b8] text-white"
+          : "bg-gradient-to-br from-[#1a6b72] to-[#54a89c] text-white",
+        className,
+      )}
+      aria-hidden
+    >
+      <Icon className="h-[1.35rem] w-[1.35rem] sm:h-6 sm:w-6" />
+    </span>
+  );
 }
 
 export function WhoForNetwork({ className }: { className?: string }) {
@@ -54,70 +116,84 @@ export function WhoForNetwork({ className }: { className?: string }) {
       ref={rootRef}
       className={cn("relative w-full", className)}
       role="img"
-      aria-label="Mind map: BD Teams share one live profile with therapists, case managers, hospitals, probation officers, community partners, and other BD reps"
+      aria-label="Mind map: BD Teams share one live profile with therapists, case managers, hospitals, probation officers, and other BD reps"
     >
       <div className="mx-auto flex max-w-5xl flex-col items-center">
-        {/* CenterLinked hub — logo only */}
+        {/* BD Teams — product-style team chip */}
         <div
-          className={cn("relative z-[3] opacity-0", active && "animate-fade-up")}
+          className={cn(
+            "relative z-[4] opacity-0",
+            active && "animate-fade-up",
+          )}
           style={active ? { animationFillMode: "forwards" } : undefined}
         >
-          <div className="relative">
-            <div
-              className="pointer-events-none absolute -inset-5 rounded-[1.75rem] bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary-glow)/0.3),transparent_68%)] blur-md"
-              aria-hidden
-            />
-            <div className="relative rounded-2xl sm:rounded-3xl border border-[#2088b8]/35 bg-gradient-to-br from-white via-[#f4fbfd] to-[#e8f5f9] px-6 py-4 sm:px-8 sm:py-5 shadow-[0_22px_50px_-20px_rgba(0,48,72,0.45),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#3ca8b4]/20">
-              <p className="font-display text-lg sm:text-xl font-extrabold tracking-[0.04em] text-[#003048] uppercase leading-none text-center">
+          <div className="inline-flex items-center gap-3 sm:gap-3.5 rounded-2xl border border-[#2088b8]/20 bg-gradient-to-br from-white via-[#f7fbfd] to-[#eef7fa] pl-2.5 pr-4 sm:pl-3 sm:pr-5 py-2.5 sm:py-3 shadow-[0_14px_32px_-14px_rgba(0,48,72,0.4),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.02]">
+            <div className="flex -space-x-2.5" aria-hidden>
+              <BdTeamAvatar variant="male" />
+              <BdTeamAvatar variant="female" />
+            </div>
+            <div className="min-w-0 text-left">
+              <p className="font-display text-[15px] sm:text-base font-bold tracking-tight text-[#003048] leading-none">
                 BD Teams
+              </p>
+              <p className="mt-1 text-[11px] sm:text-xs font-medium text-[#003048]/55 leading-none">
+                Business development
               </p>
             </div>
           </div>
         </div>
 
-        {/* Shares-with chip */}
-        <div className="relative z-[2] mt-3 mb-1 flex justify-center" aria-hidden>
-          <span className="rounded-full bg-background px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#54a89c] border border-[#54a89c]/30 shadow-sm inline-flex items-center gap-1">
-            <Link2 className="h-3 w-3" />
-            shares with
-          </span>
-        </div>
-
-        {/* 3 — Fan + partners */}
-        <div className="relative z-[1] w-full">
+        {/* Ball sits on the spoke origin; lines fan to partner cards */}
+        <div className="relative z-[1] w-full mt-3 sm:mt-4">
           <div
-            className="pointer-events-none absolute left-1/2 top-[8%] h-[40%] w-[85%] -translate-x-1/2 rounded-[100%] bg-[#003048]/[0.06] blur-3xl"
+            className="pointer-events-none absolute left-1/2 top-[8%] h-[42%] w-[85%] -translate-x-1/2 rounded-[100%] bg-[#003048]/[0.06] blur-3xl"
             aria-hidden
           />
 
-          {/* Fan paths — only when partners sit in one 6-col row */}
+          {/* Hub ball — centered in flow so spokes meet the mark */}
+          <div
+            className={cn(
+              "relative z-[3] mx-auto flex justify-center opacity-0",
+              active && "animate-fade-up",
+            )}
+            style={active ? { animationDelay: "60ms", animationFillMode: "forwards" } : undefined}
+          >
+            <div className="relative h-12 w-12 sm:h-14 sm:w-14">
+              <div
+                className="pointer-events-none absolute -inset-2.5 rounded-full bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary-glow)/0.35),transparent_68%)] blur-md"
+                aria-hidden
+              />
+              <div className="relative h-full w-full overflow-hidden rounded-full bg-white shadow-[0_12px_28px_-8px_rgba(0,48,72,0.45),inset_0_1px_0_rgba(255,255,255,0.95)] ring-2 ring-[#2088b8]/35">
+                <img
+                  src={logoFull}
+                  alt="CenterLinked"
+                  className="pointer-events-none absolute left-1/2 top-1/2 h-[112%] w-auto max-w-none -translate-x-[13%] -translate-y-1/2 select-none"
+                  draggable={false}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Fan paths — desktop; origin aligns with ball center */}
           <svg
-            className="pointer-events-none absolute inset-x-0 top-0 hidden h-[9.5rem] w-full overflow-visible lg:block"
-            viewBox="0 0 1000 260"
+            className="pointer-events-none absolute inset-x-0 top-0 hidden h-[11rem] w-full overflow-visible lg:block"
+            viewBox="0 0 1000 280"
             fill="none"
             preserveAspectRatio="none"
             aria-hidden
           >
             <defs>
               <linearGradient id={`${uid}-fan`} x1="50%" y1="0%" x2="50%" y2="100%">
-                <stop offset="0%" stopColor="#2088b8" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#2088b8" stopOpacity="0.95" />
                 <stop offset="100%" stopColor="#54a89c" stopOpacity="0.4" />
               </linearGradient>
-              <filter id={`${uid}-soft`} x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#003048" floodOpacity="0.22" />
-              </filter>
-              <clipPath id={`${uid}-mark-clip`}>
-                <circle cx="0" cy="0" r="15" />
-              </clipPath>
             </defs>
 
             {PARTNERS.map((p, i) => {
               const d = sharePath(p.x);
-              const pathId = `${uid}-path-${p.id}`;
               return (
                 <g key={p.id}>
                   <path
-                    id={pathId}
                     d={d}
                     stroke={`url(#${uid}-fan)`}
                     strokeWidth="2.5"
@@ -134,79 +210,40 @@ export function WhoForNetwork({ className }: { className?: string }) {
                     opacity="0.85"
                     style={{ animationDelay: `${i * 0.12}s` }}
                   />
-
-                  <g opacity={active ? 1 : 0} filter={`url(#${uid}-soft)`}>
-                    <circle
-                      r="16"
-                      fill="#fff"
-                      stroke="#2088b8"
-                      strokeWidth="1.3"
-                      strokeOpacity="0.35"
-                    />
-                    <image
-                      href={logoFull}
-                      x="-15"
-                      y="-15"
-                      width="50"
-                      height="30"
-                      preserveAspectRatio="xMinYMid slice"
-                      clipPath={`url(#${uid}-mark-clip)`}
-                    />
-                    {active ? (
-                      <>
-                        <animate
-                          attributeName="opacity"
-                          values="0;1;1;0"
-                          keyTimes="0;0.1;0.78;1"
-                          dur="3.6s"
-                          repeatCount="indefinite"
-                          begin={`${0.2 + i * 0.35}s`}
-                        />
-                        <animateMotion
-                          dur="3.6s"
-                          repeatCount="indefinite"
-                          begin={`${0.2 + i * 0.35}s`}
-                          rotate="0"
-                          calcMode="spline"
-                          keyTimes="0;1"
-                          keySplines="0.4 0 0.2 1"
-                        >
-                          <mpath href={`#${pathId}`} />
-                        </animateMotion>
-                      </>
-                    ) : null}
-                  </g>
                 </g>
               );
             })}
           </svg>
 
           {/* Compact trunk into the grid below lg */}
-          <div className="lg:hidden flex justify-center pb-3 pt-1" aria-hidden>
+          <div className="lg:hidden flex justify-center pt-3 pb-3" aria-hidden>
             <div className="h-8 w-0.5 rounded-full bg-gradient-to-b from-[#2088b8]/70 to-[#54a89c]/40" />
           </div>
 
-          <ul className="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 pt-0 lg:pt-[9.5rem]">
+          <ul className="relative flex flex-wrap justify-center gap-3 sm:gap-3.5 pt-1 lg:pt-[7.75rem]">
             {PARTNERS.map((p, i) => {
               const Icon = p.icon;
               return (
                 <li
                   key={p.id}
-                  className={cn("opacity-0", active && "animate-fade-up")}
+                  className={cn(
+                    "w-[calc(50%-0.375rem)] max-w-[11.5rem] sm:w-[calc(33.333%-0.625rem)] sm:max-w-[12.5rem] lg:w-[calc(20%-0.7rem)] lg:max-w-none opacity-0",
+                    active && "animate-fade-up",
+                  )}
                   style={
                     active
                       ? {
-                          animationDelay: `${120 + i * 65}ms`,
+                          animationDelay: `${140 + i * 65}ms`,
                           animationFillMode: "forwards",
                         }
                       : undefined
                   }
                 >
-                  <div className="h-full flex sm:flex-col items-center sm:items-center gap-2.5 sm:gap-2 rounded-xl sm:rounded-2xl border border-[#2088b8]/22 bg-background/95 backdrop-blur-sm px-3 py-2.5 sm:px-2.5 sm:py-3.5 sm:text-center shadow-[0_12px_28px_-14px_rgba(0,48,72,0.4),inset_0_1px_0_rgba(255,255,255,0.8)] ring-1 ring-black/[0.02] transition-transform duration-300 hover:-translate-y-0.5">
-                    <span className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-[#003048]/[0.07] text-[#003048]">
-                      <Icon className="h-4 w-4" aria-hidden />
+                  <div className="h-full flex flex-col items-center gap-2.5 sm:gap-3 rounded-2xl border border-[#2088b8]/20 bg-background px-3 py-4 sm:px-3 sm:py-5 text-center shadow-[0_18px_36px_-14px_rgba(0,48,72,0.42),0_8px_16px_-10px_rgba(0,48,72,0.28),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.03] transition-[transform,box-shadow] duration-300 hover:-translate-y-1.5 hover:shadow-[0_28px_48px_-16px_rgba(0,48,72,0.48),0_12px_22px_-12px_rgba(0,48,72,0.32)]">
+                    <span className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#003048]/[0.08] to-[#2088b8]/10 text-[#003048] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                      <Icon className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden strokeWidth={1.75} />
                     </span>
-                    <span className="font-display text-[12px] sm:text-[13px] font-bold tracking-tight text-[#003048] leading-snug">
+                    <span className="font-display text-[13px] sm:text-sm font-bold tracking-tight text-[#003048] leading-snug">
                       {p.label}
                     </span>
                   </div>

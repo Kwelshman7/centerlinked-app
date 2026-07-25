@@ -1,8 +1,17 @@
 import type { Plugin } from "vite";
 import fs from "fs";
 import path from "path";
-import { isPublicSharePath, renderPreviewHtml } from "./server/og-meta.mjs";
+import {
+  isPublicSharePath,
+  isSocialPreviewBot,
+  renderPreviewHtml,
+} from "./server/og-meta.mjs";
 
+/**
+ * Dev-only OG preview for crawlers. Must NOT intercept normal browsers —
+ * ending the response with raw index.html skips Vite's transformIndexHtml
+ * (React Refresh preamble / client), which leaves public pages as a blank root.
+ */
 export function socialPreviewPlugin(): Plugin {
   let indexHtml = "";
 
@@ -17,6 +26,9 @@ export function socialPreviewPlugin(): Plugin {
 
         const pathname = new URL(req.url, "http://localhost").pathname;
         if (!isPublicSharePath(pathname)) return next();
+
+        const userAgent = req.headers["user-agent"] ?? "";
+        if (!isSocialPreviewBot(userAgent)) return next();
 
         try {
           const html = await renderPreviewHtml(pathname, indexHtml);

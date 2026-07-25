@@ -283,7 +283,7 @@ function OnePagerPdfMockup() {
                   BD contact
                 </p>
                 <p className="text-[9.5px] sm:text-[10px] font-bold leading-tight">
-                  Chris K
+                  {BANYAN_DEMO.userFullName}
                 </p>
                 <p className="text-[8px] text-[#5b6560] leading-tight mt-0.5">
                   {BANYAN_DEMO.userTitle}
@@ -295,7 +295,7 @@ function OnePagerPdfMockup() {
                       style={{ color: BRAND }}
                       aria-hidden
                     />
-                    ###-###-####
+                    {BANYAN_DEMO.userPhone}
                   </p>
                   <p className="flex items-center gap-1 text-[7.5px] sm:text-[8px] text-[#14201a] min-w-0">
                     <Mail
@@ -303,7 +303,7 @@ function OnePagerPdfMockup() {
                       style={{ color: BRAND }}
                       aria-hidden
                     />
-                    <span className="truncate">email@banyantreatment.com</span>
+                    <span className="truncate">{BANYAN_DEMO.userEmail}</span>
                   </p>
                 </div>
               </section>

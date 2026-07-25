@@ -1,6 +1,6 @@
 /**
  * Animated mobile search demo for ProductShowcase.
- * Types Aetna → selects Florida → shows Banyan results.
+ * Types Aetna → selects Florida → shows multiple in-network orgs.
  */
 import { useEffect, useRef, useState } from "react";
 import {
@@ -20,6 +20,7 @@ import {
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { BANYAN_DEMO, BANYAN_GRID_FACILITIES } from "./banyanDemoData";
+import logoPalmHarbor from "@/assets/logo-palm-harbor.png";
 
 const PAYER = "Aetna";
 const STATE_LABEL = "Florida";
@@ -27,20 +28,59 @@ const STATE_CODE = "FL";
 
 const FL_MATCHES = BANYAN_GRID_FACILITIES.filter((f) => f.state === "FL").slice(0, 3);
 
-const BANYAN_RESULT = {
-  org_name: BANYAN_DEMO.orgName,
-  hq: BANYAN_DEMO.hqLabel,
-  logo: BANYAN_DEMO.logo,
-  facilities: FL_MATCHES.map((f) => ({
-    name: f.name,
-    place: [f.city, f.state].filter(Boolean).join(", "),
-    level: f.levels_of_care?.[0] ?? "Residential",
-    payer: PAYER,
-  })),
+type DemoFacility = {
+  name: string;
+  place: string;
+  level: string;
+  payer: string;
 };
 
-const TOTAL_ORGS = 3;
-const TOTAL_FACILITIES = BANYAN_RESULT.facilities.length + 2;
+type DemoOrgResult = {
+  org_name: string;
+  hq: string;
+  logo: string;
+  preferred?: boolean;
+  inNetwork?: boolean;
+  facilities: DemoFacility[];
+};
+
+const SEARCH_RESULTS: DemoOrgResult[] = [
+  {
+    org_name: BANYAN_DEMO.orgName,
+    hq: BANYAN_DEMO.hqLabel,
+    logo: BANYAN_DEMO.logo,
+    preferred: true,
+    inNetwork: true,
+    facilities: FL_MATCHES.map((f) => ({
+      name: f.name,
+      place: [f.city, f.state].filter(Boolean).join(", "),
+      level: f.levels_of_care?.[0] ?? "Residential",
+      payer: PAYER,
+    })),
+  },
+  {
+    org_name: "Palm Harbor Recovery",
+    hq: "Palm Harbor, FL",
+    logo: logoPalmHarbor,
+    facilities: [
+      {
+        name: "Palm Harbor Detox",
+        place: "Palm Harbor, FL",
+        level: "Detox",
+        payer: PAYER,
+      },
+      {
+        name: "Palm Harbor Residential",
+        place: "Palm Harbor, FL",
+        level: "Residential",
+        payer: PAYER,
+      },
+    ],
+  },
+];
+
+const TOTAL_ORGS = SEARCH_RESULTS.length;
+const TOTAL_FACILITIES = SEARCH_RESULTS.reduce((n, o) => n + o.facilities.length, 0);
 
 const TABS = [
   { label: "Home", icon: LayoutDashboard, active: false },
@@ -224,9 +264,87 @@ function SearchFormScreen({
   );
 }
 
+function OrgResultCard({ org }: { org: DemoOrgResult }) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl bg-card shadow-sm overflow-hidden border",
+        org.preferred ? "border-primary/60" : "border-border/70",
+      )}
+    >
+      <div className="flex gap-3 p-3 min-w-0">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white border border-border flex items-center justify-center p-2 shrink-0">
+          <img
+            src={org.logo}
+            alt=""
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            <h3 className="font-heading font-bold text-[15px] leading-snug line-clamp-2 min-w-0 flex-1">
+              {org.org_name}
+            </h3>
+            {org.preferred ? (
+              <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1 mt-0.5">
+                <Star className="h-2.5 w-2.5 fill-current" aria-hidden />
+                Preferred
+              </span>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 min-w-0">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{org.hq}</span>
+            </span>
+            <span className="inline-flex items-center gap-1 text-foreground/80 font-semibold">
+              <ShieldCheck className="h-3 w-3 text-success shrink-0" aria-hidden />
+              {org.facilities.length} matches
+            </span>
+            {org.inNetwork ? (
+              <span className="inline-flex items-center gap-1 text-primary font-semibold">
+                <Users className="h-3 w-3 shrink-0" aria-hidden />
+                In your network
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-3 pb-3">
+        <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-muted/30 overflow-hidden">
+          {org.facilities.map((f) => (
+            <li key={f.name}>
+              <div className="flex items-center justify-between gap-3 px-3 py-2 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate">{f.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {f.place} · {f.level}
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold bg-success/10 text-success border border-success/20 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                  {f.payer}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="px-3 pb-3">
+        <div className="h-9 w-full rounded-md bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2">
+          View organization page
+          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ResultsScreen() {
   return (
-    <div className="h-full overflow-hidden px-4 py-5 space-y-4 pb-20 animate-in fade-in slide-in-from-right-4 duration-500">
+    <div className="h-full overflow-hidden px-4 py-5 space-y-3.5 pb-20 animate-in fade-in slide-in-from-right-4 duration-500">
       <div className="flex items-center justify-between gap-3">
         <div className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-medium text-muted-foreground">
           <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
@@ -247,69 +365,10 @@ function ResultsScreen() {
         </p>
       </div>
 
-      <div className="rounded-xl bg-card border border-primary/60 shadow-sm overflow-hidden">
-        <div className="flex gap-3 p-3 min-w-0">
-          <div className="w-28 h-28 rounded-xl overflow-hidden bg-white border border-border flex items-center justify-center p-2.5 shrink-0">
-            <img
-              src={BANYAN_RESULT.logo}
-              alt=""
-              className="w-full h-full object-contain"
-              draggable={false}
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2 min-w-0">
-              <h3 className="font-heading font-bold text-base leading-snug line-clamp-2 min-w-0 flex-1">
-                {BANYAN_RESULT.org_name}
-              </h3>
-              <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1 mt-0.5">
-                <Star className="h-2.5 w-2.5 fill-current" aria-hidden />
-                Preferred
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1 min-w-0">
-                <MapPin className="h-3 w-3 shrink-0" aria-hidden />
-                <span className="truncate">{BANYAN_RESULT.hq}</span>
-              </span>
-              <span className="inline-flex items-center gap-1 text-foreground/80 font-semibold">
-                <ShieldCheck className="h-3 w-3 text-success shrink-0" aria-hidden />
-                {BANYAN_RESULT.facilities.length} matches
-              </span>
-              <span className="inline-flex items-center gap-1 text-primary font-semibold">
-                <Users className="h-3 w-3 shrink-0" aria-hidden />
-                In your network
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="px-3 pb-3">
-          <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-muted/30 overflow-hidden">
-            {BANYAN_RESULT.facilities.map((f) => (
-              <li key={f.name}>
-                <div className="flex items-center justify-between gap-3 px-3 py-2 min-w-0">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{f.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {f.place} · {f.level}
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-bold bg-success/10 text-success border border-success/20 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
-                    {f.payer}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="px-3 pb-3">
-          <div className="h-9 w-full rounded-md bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2">
-            View organization page
-            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-          </div>
-        </div>
+      <div className="space-y-3">
+        {SEARCH_RESULTS.map((org) => (
+          <OrgResultCard key={org.org_name} org={org} />
+        ))}
       </div>
     </div>
   );

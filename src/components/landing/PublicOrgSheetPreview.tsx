@@ -1,6 +1,6 @@
 /**
  * Mobile mock of /o/:slug — compact logo mark, description + Read more,
- * natural 2×2 facility cards (not squished), sticky Contact now.
+ * natural 2×2 facility cards (not squished), sticky Refer a Patient.
  */
 import { BadgeCheck, User } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -27,7 +27,8 @@ const demoOrg = {
   logo_url: BANYAN_DEMO.logo,
   description: DESCRIPTION,
   tagline: null as string | null,
-  cover_image_url: null as string | null,
+  /** Cover photo reads better in the hero mock than a logo-on-empty-band. */
+  cover_image_url: BANYAN_DEMO.cover,
   image_urls: null as string[] | null,
   verified: true,
 };
@@ -45,7 +46,7 @@ export function PublicOrgSheetPreviewContent() {
       </header>
 
       <div className="flex-1 min-h-0 overflow-hidden pb-[3.75rem]">
-        <OrgHeroSection org={demoOrg} brand={BRAND} />
+        <OrgHeroSection org={demoOrg} brand={BRAND} compact />
 
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
           <header className="space-y-1">
@@ -97,7 +98,7 @@ export function PublicOrgSheetPreviewContent() {
           style={{ backgroundColor: BRAND }}
         >
           <User className="h-4 w-4" aria-hidden />
-          Contact now
+          Refer a Patient
         </div>
       </div>
     </div>

@@ -49,10 +49,6 @@ export function FAQ() {
           <DisplayHeading as="h2" align="center">
             Questions before you share your first link
           </DisplayHeading>
-          <p className="text-base text-muted-foreground leading-relaxed">
-            How CenterLinked fits referral workflows — accuracy, control, and what the network is
-            (and isn’t).
-          </p>
         </div>
 
         <Accordion type="single" collapsible className="mx-auto max-w-2xl space-y-3">

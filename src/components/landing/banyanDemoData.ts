@@ -14,16 +14,12 @@ export const BANYAN_DEMO = {
   accentColor: org.accentColor,
   logo: logoBanyan,
   cover: banyanCover,
-  userName: org.bdContactName?.split(" ")[0] ?? "Chris",
-  userFullName: org.bdContactName ?? "Chris Kaufteil",
-  userEmail: org.bdContactEmail ?? "ckaufteil@banyancenters.com",
-  userInitials:
-    org.bdContactName
-      ?.split(" ")
-      .map((p) => p[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() ?? "CK",
+  /** Demo-only identity — never surface real BD contact details on the landing page. */
+  userName: "Chris",
+  userFullName: "Chris K",
+  userEmail: "chris.k@example.com",
+  userPhone: "(555) 010-4821",
+  userInitials: "CK",
   userTitle: "Director of Business Development",
   facilityCount: org.facilityCount,
   teamCount: 8,
