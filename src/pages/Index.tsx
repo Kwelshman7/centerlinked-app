@@ -13,7 +13,7 @@ import { Footer } from "@/components/landing/Footer";
 
 /**
  * Landing journey:
- * Hero → trusted/current profile → who it’s for → how it works →
+ * Hero → who it’s for → PDF / stale profile → how it works →
  * product proof → dashboard → monthly verification → pricing → FAQ → convert
  */
 const Index = () => {
@@ -22,8 +22,8 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
-        <ProfileInventory />
         <WhoFor />
+        <ProfileInventory />
         <HowItWorks />
         <ProductShowcase />
         <OrgDashboardSection />

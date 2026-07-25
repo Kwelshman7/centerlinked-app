@@ -29,70 +29,6 @@ function sharePath(toX: number) {
   return `M500 44 C500 100 ${toX} 160 ${toX} 268`;
 }
 
-/** Stroke bust for avatar chips — short hair / blazer. */
-function MaleRepIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <circle cx="16" cy="11" r="4.25" />
-      <path d="M8.5 25.5c1.2-4.2 3.9-6.2 7.5-6.2s6.3 2 7.5 6.2" />
-      <path d="M12.2 14.6c.4 1.4 1.8 2.4 3.8 2.4s3.4-1 3.8-2.4" opacity="0.55" />
-    </svg>
-  );
-}
-
-/** Stroke bust for avatar chips — longer hair. */
-function FemaleRepIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <circle cx="16" cy="11" r="4.25" />
-      <path d="M11.2 12.8c-.3 1.6-.2 3.2.6 4.2 1.1.2 2.5.4 4.2.4s3.1-.2 4.2-.4c.8-1 .9-2.6.6-4.2" />
-      <path d="M8.5 25.5c1.2-4.2 3.9-6.2 7.5-6.2s6.3 2 7.5 6.2" />
-    </svg>
-  );
-}
-
-function BdTeamAvatar({
-  variant,
-  className,
-}: {
-  variant: "male" | "female";
-  className?: string;
-}) {
-  const Icon = variant === "male" ? MaleRepIcon : FemaleRepIcon;
-  return (
-    <span
-      className={cn(
-        "relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full ring-[2.5px] ring-white shadow-[0_6px_14px_-4px_rgba(0,48,72,0.35)]",
-        variant === "male"
-          ? "bg-gradient-to-br from-[#0a4a66] to-[#2088b8] text-white"
-          : "bg-gradient-to-br from-[#1a6b72] to-[#54a89c] text-white",
-        className,
-      )}
-      aria-hidden
-    >
-      <Icon className="h-[1.35rem] w-[1.35rem] sm:h-6 sm:w-6" />
-    </span>
-  );
-}
-
 export function WhoForNetwork({ className }: { className?: string }) {
   const uid = useId().replace(/:/g, "");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -127,11 +63,7 @@ export function WhoForNetwork({ className }: { className?: string }) {
           )}
           style={active ? { animationFillMode: "forwards" } : undefined}
         >
-          <div className="inline-flex items-center gap-3 sm:gap-3.5 rounded-2xl border border-[#2088b8]/20 bg-gradient-to-br from-white via-[#f7fbfd] to-[#eef7fa] pl-2.5 pr-4 sm:pl-3 sm:pr-5 py-2.5 sm:py-3 shadow-[0_14px_32px_-14px_rgba(0,48,72,0.4),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.02]">
-            <div className="flex -space-x-2.5" aria-hidden>
-              <BdTeamAvatar variant="male" />
-              <BdTeamAvatar variant="female" />
-            </div>
+          <div className="inline-flex items-center rounded-2xl border border-[#2088b8]/20 bg-gradient-to-br from-white via-[#f7fbfd] to-[#eef7fa] px-4 sm:px-5 py-2.5 sm:py-3 shadow-[0_14px_32px_-14px_rgba(0,48,72,0.4),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.02]">
             <div className="min-w-0 text-left">
               <p className="font-display text-[15px] sm:text-base font-bold tracking-tight text-[#003048] leading-none">
                 BD Teams
