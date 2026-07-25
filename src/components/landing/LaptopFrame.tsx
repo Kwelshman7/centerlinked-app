@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface LaptopFrameProps {
@@ -6,6 +7,9 @@ interface LaptopFrameProps {
   /** Optional browser URL shown in the chrome bar. */
   url?: string;
 }
+
+/** Logical width the desktop dashboard mock is designed for (px). */
+export const LAPTOP_DESIGN_WIDTH = 980;
 
 export function LaptopFrame({
   children,
@@ -46,6 +50,70 @@ export function LaptopFrame({
         <div className="h-2 sm:h-2.5 bg-gradient-to-b from-neutral-700 to-neutral-800 rounded-b-sm" />
         <div className="mx-auto h-3 sm:h-4 w-[108%] -translate-x-[3.7%] rounded-b-xl bg-gradient-to-b from-neutral-600 to-neutral-800 shadow-lg" />
         <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-16 sm:w-24 rounded-full bg-neutral-500/40" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Renders a full desktop laptop mock at a fixed design width, then scales it
+ * down to fit the available width — so phones still see the complete desktop UI.
+ */
+export function ScaledLaptopFrame({
+  children,
+  url,
+  className,
+  designWidth = LAPTOP_DESIGN_WIDTH,
+}: {
+  children: ReactNode;
+  url?: string;
+  className?: string;
+  designWidth?: number;
+}) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    const content = contentRef.current;
+    if (!host || !content) return;
+
+    const update = () => {
+      const w = host.clientWidth;
+      const h = content.offsetHeight;
+      if (w > 0) setScale(Math.min(1, w / designWidth));
+      if (h > 0) setContentHeight(h);
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(host);
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [designWidth, url]);
+
+  const ready = scale > 0 && contentHeight > 0;
+
+  return (
+    <div
+      ref={hostRef}
+      className={cn("relative mx-auto w-full max-w-5xl", className)}
+      style={{ height: ready ? contentHeight * scale : undefined }}
+    >
+      <div
+        ref={contentRef}
+        className="origin-top-left will-change-transform"
+        style={{
+          width: designWidth,
+          transform: ready ? `scale(${scale})` : "scale(1)",
+          visibility: ready ? "visible" : "hidden",
+        }}
+      >
+        <LaptopFrame url={url} className="max-w-none w-full">
+          {children}
+        </LaptopFrame>
       </div>
     </div>
   );

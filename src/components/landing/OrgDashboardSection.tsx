@@ -4,7 +4,7 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 
 export function OrgDashboardSection() {
   return (
-    <section id="org-dashboard" className="py-16 sm:py-20 lg:py-28 bg-muted/30 overflow-hidden">
+    <section id="org-dashboard" className="py-16 sm:py-20 lg:py-28 bg-muted/30 overflow-x-clip">
       <div className="container">
         <div className="mx-auto max-w-2xl text-center space-y-4 mb-10 sm:mb-12">
           <SectionBadge>Organization dashboard</SectionBadge>
@@ -18,7 +18,7 @@ export function OrgDashboardSection() {
           </p>
         </div>
 
-        <div className="w-full max-w-full md:overflow-x-auto">
+        <div className="w-full max-w-full">
           <OrgDashboardInteractiveDemo />
         </div>
       </div>

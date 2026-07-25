@@ -1,19 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MousePointer2 } from "lucide-react";
-import { LaptopFrame } from "./LaptopFrame";
-import { PhoneFrame } from "./PhoneFrame";
+import { ScaledLaptopFrame } from "./LaptopFrame";
 import { OrgDashboardDesktopPreview } from "./OrgDashboardDesktopPreview";
 import { FacilityManageDesktopPreview } from "./FacilityManageDesktopPreview";
-import { DashboardPreviewContent } from "./DashboardPreview";
-import { FacilityManageMobilePreview } from "./FacilityManageMobilePreview";
-import { BANYAN_DEMO, FEATURED_FACILITY, FEATURED_FACILITY_INDEX } from "./banyanDemoData";
+import { FEATURED_FACILITY, FEATURED_FACILITY_INDEX } from "./banyanDemoData";
 import { cn } from "@/lib/utils";
 
 type Phase = "dashboard" | "moving" | "click" | "facility" | "returning";
 
 const TARGET_FACILITY = FEATURED_FACILITY_INDEX;
 const MOVE_MS = 1800;
-const MD_BREAKPOINT = 768;
 
 const HOLD = {
   dashboard: 4200,
@@ -22,24 +18,7 @@ const HOLD = {
   returning: 900,
 } as const;
 
-function useIsDesktopDemo() {
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= MD_BREAKPOINT,
-  );
-
-  useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`);
-    const onChange = () => setIsDesktop(mq.matches);
-    onChange();
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  return isDesktop;
-}
-
 function DemoStage({
-  isDesktop,
   showFacility,
   highlight,
   showCursor,
@@ -47,7 +26,6 @@ function DemoStage({
   cursor,
   stageRef,
 }: {
-  isDesktop: boolean;
   showFacility: boolean;
   highlight: number | null;
   showCursor: boolean;
@@ -66,11 +44,7 @@ function DemoStage({
         )}
         aria-hidden={showFacility}
       >
-        {isDesktop ? (
-          <OrgDashboardDesktopPreview highlightFacilityIndex={highlight} />
-        ) : (
-          <DashboardPreviewContent demo highlightFacilityIndex={highlight} />
-        )}
+        <OrgDashboardDesktopPreview highlightFacilityIndex={highlight} />
       </div>
 
       <div
@@ -82,7 +56,7 @@ function DemoStage({
         )}
         aria-hidden={!showFacility}
       >
-        {isDesktop ? <FacilityManageDesktopPreview /> : <FacilityManageMobilePreview />}
+        <FacilityManageDesktopPreview />
       </div>
 
       {showCursor && (
@@ -101,10 +75,7 @@ function DemoStage({
         >
           <div className="relative">
             <MousePointer2
-              className={cn(
-                "text-foreground drop-shadow-md fill-white",
-                isDesktop ? "h-5 w-5 sm:h-6 sm:w-6" : "h-6 w-6",
-              )}
+              className="h-5 w-5 sm:h-6 sm:w-6 text-foreground drop-shadow-md fill-white"
               strokeWidth={1.75}
             />
             {phase === "click" && (
@@ -120,12 +91,11 @@ function DemoStage({
 export function OrgDashboardInteractiveDemo() {
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const isDesktop = useIsDesktopDemo();
   const [inView, setInView] = useState(false);
   const [phase, setPhase] = useState<Phase>("dashboard");
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [cursor, setCursor] = useState({ x: 82, y: 86 });
-  const [home, setHome] = useState({ x: 82, y: 86 });
+  const [cursor, setCursor] = useState({ x: 88, y: 90 });
+  const [home, setHome] = useState({ x: 88, y: 90 });
   const [target, setTarget] = useState({ x: 42, y: 72 });
 
   useEffect(() => {
@@ -141,7 +111,7 @@ export function OrgDashboardInteractiveDemo() {
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.35 },
+      { threshold: 0.25 },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -183,7 +153,7 @@ export function OrgDashboardInteractiveDemo() {
       `[data-demo-facility="${TARGET_FACILITY}"]`,
     ) as HTMLElement | null;
 
-    const nextHome = isDesktop ? { x: 88, y: 90 } : { x: 78, y: 88 };
+    const nextHome = { x: 88, y: 90 };
 
     if (facility) {
       const fr = facility.getBoundingClientRect();
@@ -202,7 +172,7 @@ export function OrgDashboardInteractiveDemo() {
       setHome(nextHome);
       setTarget({ x: 36, y: 68 });
     }
-  }, [phase, isDesktop, scrollTargetIntoView]);
+  }, [phase, scrollTargetIntoView]);
 
   useLayoutEffect(() => {
     measurePositions();
@@ -216,7 +186,7 @@ export function OrgDashboardInteractiveDemo() {
       ro.disconnect();
       window.removeEventListener("resize", measurePositions);
     };
-  }, [measurePositions, inView, isDesktop]);
+  }, [measurePositions, inView]);
 
   useEffect(() => {
     if (!inView || reduceMotion) {
@@ -280,44 +250,31 @@ export function OrgDashboardInteractiveDemo() {
     };
     // home/target intentionally omitted — loop uses live DOM measure
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView, reduceMotion, isDesktop]);
+  }, [inView, reduceMotion]);
 
   const showFacility = phase === "facility" || phase === "returning";
   const highlight = phase === "click" || phase === "moving" ? TARGET_FACILITY : null;
   const showCursor =
     !reduceMotion && (phase === "dashboard" || phase === "moving" || phase === "click");
 
-  const stageProps = {
-    isDesktop,
-    showFacility,
-    highlight,
-    showCursor,
-    phase,
-    cursor,
-    stageRef,
-  };
-
   return (
-    <div ref={rootRef} className="relative w-full mx-auto">
-      {isDesktop ? (
-        <div className="max-w-5xl mx-auto">
-          <LaptopFrame
-            url={
-              showFacility
-                ? `app.centerlinked.com/facilities/${FEATURED_FACILITY.slug}`
-                : "app.centerlinked.com/dashboard"
-            }
-          >
-            <DemoStage {...stageProps} />
-          </LaptopFrame>
-        </div>
-      ) : (
-        <div className="flex justify-center py-2">
-          <PhoneFrame>
-            <DemoStage {...stageProps} />
-          </PhoneFrame>
-        </div>
-      )}
+    <div ref={rootRef} className="relative w-full mx-auto px-1 sm:px-0">
+      <ScaledLaptopFrame
+        url={
+          showFacility
+            ? `app.centerlinked.com/facilities/${FEATURED_FACILITY.slug}`
+            : "app.centerlinked.com/dashboard"
+        }
+      >
+        <DemoStage
+          showFacility={showFacility}
+          highlight={highlight}
+          showCursor={showCursor}
+          phase={phase}
+          cursor={cursor}
+          stageRef={stageRef}
+        />
+      </ScaledLaptopFrame>
     </div>
   );
 }

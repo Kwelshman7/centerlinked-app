@@ -48,13 +48,13 @@ export function BanyanDashboardPreviewBody({
     <div
       className={cn(
         "flex flex-col bg-muted/30 text-foreground select-none pointer-events-none min-h-0",
-        isMobile ? "gap-2.5 p-2.5" : "gap-1.5 p-2 sm:p-2.5",
+        isMobile ? "gap-2.5 p-2.5" : "gap-1.5 p-2.5",
       )}
     >
       <div className={cn("flex items-start justify-between gap-2 shrink-0", isMobile && "px-0.5")}>
         <div className="min-w-0 flex items-center gap-2">
           {!isMobile && (
-            <div className="h-6 w-6 rounded-md bg-white border border-border/60 overflow-hidden p-0.5 shrink-0 hidden sm:grid place-items-center">
+            <div className="h-6 w-6 rounded-md bg-white border border-border/60 overflow-hidden p-0.5 shrink-0 grid place-items-center">
               <img src={BANYAN_DEMO.logo} alt="" className="h-full w-full object-contain" draggable={false} />
             </div>
           )}
@@ -62,7 +62,7 @@ export function BanyanDashboardPreviewBody({
             <h1
               className={cn(
                 "font-heading font-bold tracking-tight truncate",
-                isMobile ? "text-[13px]" : "text-xs sm:text-sm",
+                isMobile ? "text-[13px]" : "text-sm",
               )}
             >
               Welcome back, {BANYAN_DEMO.userName}
@@ -70,14 +70,14 @@ export function BanyanDashboardPreviewBody({
             <p
               className={cn(
                 "text-muted-foreground truncate",
-                isMobile ? "text-[9px] mt-0.5" : "text-[8px] sm:text-[9px]",
+                isMobile ? "text-[9px] mt-0.5" : "text-[9px]",
               )}
             >
               {BANYAN_DEMO.orgName}
             </p>
           </div>
         </div>
-        <div className={cn("flex items-center gap-1 shrink-0", isMobile ? "" : "hidden sm:flex")}>
+        <div className="flex items-center gap-1 shrink-0">
           <span
             className={cn(
               "inline-flex items-center gap-1 rounded-md border border-border bg-background font-semibold",
@@ -184,7 +184,10 @@ export function BanyanDashboardPreviewBody({
           data-demo-scroll
           className={cn("flex-1 min-h-0 overflow-y-auto overscroll-contain", isMobile ? "pr-0.5" : "")}
         >
-          <FacilityGrid count={BANYAN_GRID_FACILITIES.length} className="demo-facility-grid gap-1.5 sm:gap-1">
+          <FacilityGrid
+            count={BANYAN_GRID_FACILITIES.length}
+            className="demo-facility-grid !grid-cols-3 sm:!grid-cols-3 md:!grid-cols-3 lg:!grid-cols-3 gap-1.5"
+          >
             {BANYAN_GRID_FACILITIES.map((f, i) => (
               <div
                 key={f.id}

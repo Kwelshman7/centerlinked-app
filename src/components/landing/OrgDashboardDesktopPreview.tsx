@@ -36,7 +36,7 @@ export function OrgDashboardDesktopPreview({
 }) {
   return (
     <div className="flex h-full w-full bg-muted/30 text-foreground select-none pointer-events-none">
-      <aside className="hidden sm:flex w-[20%] max-w-[180px] min-w-[132px] flex-col bg-card border-r border-border/50 shrink-0">
+      <aside className="flex w-[20%] max-w-[180px] min-w-[132px] flex-col bg-card border-r border-border/50 shrink-0">
         <div className="flex items-center justify-between gap-2 px-2.5 py-3 border-b border-border/50">
           <img
             src={centerlinkedLogo}
