@@ -63,8 +63,8 @@ export function WhoForNetwork({ className }: { className?: string }) {
           )}
           style={active ? { animationFillMode: "forwards" } : undefined}
         >
-          <div className="inline-flex items-center rounded-2xl border border-[#2088b8]/20 bg-gradient-to-br from-white via-[#f7fbfd] to-[#eef7fa] px-4 sm:px-5 py-2.5 sm:py-3 shadow-[0_14px_32px_-14px_rgba(0,48,72,0.4),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.02]">
-            <div className="min-w-0 text-left">
+          <div className="inline-flex items-center justify-center rounded-2xl border border-[#2088b8]/20 bg-gradient-to-br from-white via-[#f7fbfd] to-[#eef7fa] px-4 sm:px-5 py-2.5 sm:py-3 shadow-[0_14px_32px_-14px_rgba(0,48,72,0.4),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.02]">
+            <div className="min-w-0 text-center">
               <p className="font-display text-[15px] sm:text-base font-bold tracking-tight text-[#003048] leading-none">
                 BD Teams
               </p>
