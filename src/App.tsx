@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -43,6 +44,7 @@ import TermsOfService from "./pages/TermsOfService";
 const App = () => (
     <TooltipProvider>
       <Sonner />
+      <Analytics />
       <BrowserRouter>
         <AuthProvider>
           <Routes>

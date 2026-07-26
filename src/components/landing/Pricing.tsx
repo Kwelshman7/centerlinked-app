@@ -7,9 +7,10 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 const plans = [
   {
     name: "Build It Yourself",
+    priceNote: "Self-serve setup",
     price: "$99",
     period: "/month",
-    priceNote: "Organization Profile",
+    priceDetail: null as string | null,
     description:
       "Perfect for organizations that want to manage their own live referral profile.",
     features: [
@@ -27,13 +28,15 @@ const plans = [
   },
   {
     name: "Done For You",
+    priceNote: "We build your profile",
     price: "$499",
-    period: "",
-    priceNote: "One-Time Setup",
+    period: " one-time setup",
+    priceDetail: "then $99/month",
     description:
-      "We’ll build your entire CenterLinked profile for you. Simply send us your materials — then log in anytime to make future updates.",
+      "We’ll build your entire CenterLinked profile for you. After setup, you stay on the same $99/month membership — and can update anytime.",
     features: [
-      "Professional Profile Setup",
+      "Everything in Build It Yourself",
+      "Professional profile setup by our team",
       "Logo, facility information & photos",
       "Insurance contracts & programs",
       "Contact information included",
@@ -57,7 +60,7 @@ export function Pricing() {
             <DisplayAccent>Pricing</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Build your live referral profile yourself — or let us set it up for you.
+            Every organization is $99/month. Choose self-serve, or add a one-time $499 setup and we’ll build it for you.
           </p>
         </div>
 
@@ -86,6 +89,11 @@ export function Pricing() {
                     <span className="text-sm text-muted-foreground">{plan.period}</span>
                   )}
                 </div>
+                {plan.priceDetail && (
+                  <p className="mt-1.5 text-base font-semibold text-foreground">
+                    {plan.priceDetail}
+                  </p>
+                )}
                 <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{plan.description}</p>
               </div>
 
