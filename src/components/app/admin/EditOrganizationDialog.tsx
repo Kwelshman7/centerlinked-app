@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
 import { toast } from "sonner";
 import { Pencil, Loader2, Upload, Building2 } from "lucide-react";
 
@@ -93,12 +94,37 @@ export function EditOrganizationDialog({ org, onSaved, triggerLabel = "Edit orga
         bd_contact_email: form.bd_contact_email?.trim() || null,
         verified: !!form.verified,
       };
+      const becameVerified = !org.verified && !!form.verified;
       const { error } = await supabase.from("organizations").update(patch).eq("id", org.id);
       if (error) {
         toast.error(error.message);
         return;
       }
-      toast.success("Organization updated");
+
+      if (becameVerified) {
+        try {
+          const result = await sendOrgWelcomeEmail({
+            organization_id: org.id,
+            to_email: form.bd_contact_email?.trim() || undefined,
+            to_name: form.bd_contact_name?.trim() || undefined,
+          });
+          toast.success("Organization verified", {
+            description: result.to
+              ? `Welcome email sent to ${result.to}`
+              : "Welcome email sent",
+          });
+        } catch (emailErr) {
+          toast.success("Organization updated", {
+            description:
+              emailErr instanceof Error
+                ? `Verified, but welcome email failed: ${emailErr.message}`
+                : "Verified, but welcome email failed",
+          });
+        }
+      } else {
+        toast.success("Organization updated");
+      }
+
       setOpen(false);
       onSaved();
     } finally {

@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { orgDisplayPath } from "@/lib/public-urls";
 import { mergeOrgImages } from "@/lib/org-hero";
+import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
 
 interface Props {
   organizationId: string;
@@ -52,6 +53,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [orgLogo, setOrgLogo] = useState<string[]>([]);
   const [emailDomain, setEmailDomain] = useState("");
   const [verified, setVerified] = useState(false);
+  const [wasVerified, setWasVerified] = useState(false);
   const [bdName, setBdName] = useState("");
   const [bdPhone, setBdPhone] = useState("");
   const [bdEmail, setBdEmail] = useState("");
@@ -75,7 +77,9 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         setOrgState(data.hq_state || "");
         setOrgLogo(data.logo_url ? [data.logo_url] : []);
         setEmailDomain(data.email_domain || "");
-        setVerified(!!data.verified);
+        const v = !!data.verified;
+        setVerified(v);
+        setWasVerified(v);
         setBdName(data.bd_contact_name || "");
         setBdPhone(data.bd_contact_phone || "");
         setBdEmail(data.bd_contact_email || "");
@@ -127,7 +131,34 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
       toast.error(error.message);
       return;
     }
-    toast.success("Organization updated");
+
+    const becameVerified = !wasVerified && verified;
+    if (becameVerified) {
+      try {
+        const result = await sendOrgWelcomeEmail({
+          organization_id: organizationId,
+          to_email: bdEmail.trim() || undefined,
+          to_name: bdName.trim() || undefined,
+        });
+        setWasVerified(true);
+        toast.success("Organization verified", {
+          description: result.to
+            ? `Welcome email sent to ${result.to}`
+            : "Welcome email sent",
+        });
+      } catch (emailErr) {
+        setWasVerified(true);
+        toast.success("Organization updated", {
+          description:
+            emailErr instanceof Error
+              ? `Verified, but welcome email failed: ${emailErr.message}`
+              : "Verified, but welcome email failed",
+        });
+      }
+    } else {
+      setWasVerified(verified);
+      toast.success("Organization updated");
+    }
     onSaved?.();
   };
 

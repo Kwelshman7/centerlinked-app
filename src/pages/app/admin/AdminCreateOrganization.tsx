@@ -23,6 +23,7 @@ import {
 import { fileToBase64 } from "@/lib/files";
 import { buildInsuranceContractRows } from "@/lib/match-payer";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
+import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
 
 type Stage = "create-org" | "add-facilities" | "done";
 
@@ -188,7 +189,30 @@ export default function AdminCreateOrganization() {
     setOrgSlug(orgRow?.slug ?? null);
     setStage("add-facilities");
     setCreating(false);
-    toast.success("Organization created");
+
+    if (orgForm.verified) {
+      try {
+        const result = await sendOrgWelcomeEmail({
+          organization_id: newId,
+          to_email: orgForm.bd_contact_email.trim() || undefined,
+          to_name: orgForm.bd_contact_name.trim() || undefined,
+        });
+        toast.success("Organization created", {
+          description: result.to
+            ? `Welcome email sent to ${result.to}`
+            : "Welcome email sent",
+        });
+      } catch (emailErr) {
+        toast.success("Organization created", {
+          description:
+            emailErr instanceof Error
+              ? `Created, but welcome email failed: ${emailErr.message}`
+              : "Created, but welcome email failed",
+        });
+      }
+    } else {
+      toast.success("Organization created");
+    }
   };
 
   /* ---------- Logo upload ---------- */

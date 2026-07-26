@@ -6,6 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkBootstrapAdminCandidate } from "@/lib/bootstrap-admin";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { toast } from "sonner";
+import { notifyAuthEvent } from "@/lib/transactional-email";
+
+function isLikelyNewUser(createdAt: string | undefined) {
+  if (!createdAt) return false;
+  const createdMs = new Date(createdAt).getTime();
+  if (Number.isNaN(createdMs)) return false;
+  return Date.now() - createdMs < 2 * 60 * 1000;
+}
 
 function readOAuthParams() {
   const params = new URLSearchParams(window.location.search);
@@ -108,6 +116,12 @@ export default function AuthCallback() {
           return;
         }
       }
+
+      const fullName =
+        (user.user_metadata?.full_name as string | undefined) ||
+        (user.user_metadata?.name as string | undefined) ||
+        null;
+      notifyAuthEvent(isLikelyNewUser(user.created_at) ? "signup" : "login", fullName);
 
       if (isSuperAdmin || bootstrapAdmin) {
         navigate("/app", { replace: true });

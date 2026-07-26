@@ -9,8 +9,15 @@ import { toast } from "sonner";
 import { Clock, Check, X, Mail } from "lucide-react";
 
 interface Request {
-  id: string; full_name: string; email: string; organization: string; role: string | null;
-  num_facilities: number | null; notes: string | null; status: string; created_at: string;
+  id: string;
+  full_name: string;
+  email: string;
+  organization: string;
+  role: string | null;
+  facilities: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
 }
 
 export default function AccessRequests() {
@@ -20,19 +27,39 @@ export default function AccessRequests() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("early_access_requests").select("*").order("created_at", { ascending: false });
-    setRequests((data as Request[]) ?? []);
+    const { data, error } = await supabase
+      .from("early_access_leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error(error.message);
+      setRequests([]);
+    } else {
+      setRequests(
+        ((data as Request[]) ?? []).map((r) => ({
+          ...r,
+          status: r.status || "pending",
+        })),
+      );
+    }
     setLoading(false);
   };
-  useEffect(() => { if (isSuperAdmin) load(); }, [isSuperAdmin]);
+  useEffect(() => {
+    if (isSuperAdmin) load();
+  }, [isSuperAdmin]);
 
   if (authLoading) return null;
   if (!isSuperAdmin) return <Navigate to="/app" replace />;
 
   const setStatus = async (id: string, status: "approved" | "denied") => {
-    const { error } = await supabase.from("early_access_requests")
-      .update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    const { error } = await supabase
+      .from("early_access_leads")
+      .update({ status, reviewed_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(`Marked as ${status}`);
     load();
   };
@@ -44,8 +71,9 @@ export default function AccessRequests() {
         <p className="text-sm text-muted-foreground">Review and approve inbound membership requests.</p>
       </div>
 
-      {loading ? <p className="text-sm text-muted-foreground">Loading…</p> :
-       requests.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : requests.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">No requests yet.</Card>
       ) : (
         <div className="space-y-3">
@@ -55,15 +83,24 @@ export default function AccessRequests() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold">{r.full_name}</h3>
-                    <Badge variant={r.status === "pending" ? "secondary" : r.status === "approved" ? "default" : "destructive"}>
+                    <Badge
+                      variant={
+                        r.status === "pending" ? "secondary" : r.status === "approved" ? "default" : "destructive"
+                      }
+                    >
                       {r.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
                       {r.status}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {r.organization} {r.role && <>· {r.role}</>} {r.num_facilities && <>· {r.num_facilities} facilities</>}
+                    {r.organization}
+                    {r.role && <> · {r.role}</>}
+                    {r.facilities && <> · {r.facilities} facilities</>}
                   </p>
-                  <a href={`mailto:${r.email}`} className="text-sm text-primary inline-flex items-center gap-1 mt-1 hover:underline">
+                  <a
+                    href={`mailto:${r.email}`}
+                    className="text-sm text-primary inline-flex items-center gap-1 mt-1 hover:underline"
+                  >
                     <Mail className="h-3.5 w-3.5" /> {r.email}
                   </a>
                   {r.notes && <p className="text-sm mt-2 p-3 bg-muted rounded-lg">{r.notes}</p>}
@@ -85,7 +122,8 @@ export default function AccessRequests() {
       )}
 
       <p className="text-xs text-muted-foreground">
-        Tip: after approving, send the rep a direct invite from <strong>Members → Invite</strong> on their org's page, or share the signup link.
+        Tip: after approving, create or verify their organization (mark <strong>verified</strong>). That sends the
+        Welcome to CenterLinked email automatically.
       </p>
     </div>
   );

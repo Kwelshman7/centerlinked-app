@@ -31,9 +31,9 @@ export type Database = {
         Relationships: []
       }
       early_access_leads: {
-        Row: { created_at: string; email: string; facilities: string; full_name: string; id: string; organization: string }
-        Insert: { created_at?: string; email: string; facilities: string; full_name: string; id?: string; organization: string }
-        Update: { created_at?: string; email?: string; facilities?: string; full_name?: string; id?: string; organization?: string }
+        Row: { created_at: string; email: string; facilities: string; full_name: string; id: string; notes: string | null; organization: string; reviewed_at: string | null; role: string | null; status: string }
+        Insert: { created_at?: string; email: string; facilities: string; full_name: string; id?: string; notes?: string | null; organization: string; reviewed_at?: string | null; role?: string | null; status?: string }
+        Update: { created_at?: string; email?: string; facilities?: string; full_name?: string; id?: string; notes?: string | null; organization?: string; reviewed_at?: string | null; role?: string | null; status?: string }
         Relationships: []
       }
       facilities: {

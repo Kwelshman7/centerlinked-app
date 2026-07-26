@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { applySocialMeta } from "@/lib/social-meta";
+import { notifyAccessRequest } from "@/lib/transactional-email";
 
 export default function RequestAccess() {
   const navigate = useNavigate();
@@ -36,14 +37,52 @@ export default function RequestAccess() {
       toast.error("Please use your work email", { description: "Personal email addresses aren't accepted." }); return;
     }
     setLoading(true);
-    const { error } = await supabase.from("early_access_leads").insert({
-      full_name: form.full_name.trim(),
-      email: form.email.trim().toLowerCase(),
-      organization: form.organization.trim(),
-      facilities: form.num_facilities ? String(form.num_facilities) : "1",
+    const full_name = form.full_name.trim();
+    const email = form.email.trim().toLowerCase();
+    const organization = form.organization.trim();
+    const facilities = form.num_facilities ? String(form.num_facilities) : "1";
+    const role = form.role.trim() || null;
+    const notes = form.notes.trim() || null;
+
+    // Prefer extended columns (see supabase/early-access-leads-extend.sql); fall back if not migrated yet.
+    let { error } = await supabase.from("early_access_leads").insert({
+      full_name,
+      email,
+      organization,
+      facilities,
+      role,
+      notes,
+      status: "pending",
     });
+    if (error) {
+      ({ error } = await supabase.from("early_access_leads").insert({
+        full_name,
+        email,
+        organization,
+        facilities,
+      }));
+    }
+    if (error) {
+      setLoading(false);
+      toast.error("Could not submit request", { description: error.message });
+      return;
+    }
+
+    try {
+      await notifyAccessRequest({
+        full_name,
+        email,
+        organization,
+        role: role || undefined,
+        num_facilities: form.num_facilities || facilities,
+        notes: notes || undefined,
+      });
+    } catch (emailErr) {
+      console.error("Access request saved but admin email failed:", emailErr);
+      // Still treat as success for the applicant — lead is in the DB.
+    }
+
     setLoading(false);
-    if (error) { toast.error("Could not submit request", { description: error.message }); return; }
     toast.success("Request received", { description: "We'll review and email you shortly." });
     navigate("/");
   };

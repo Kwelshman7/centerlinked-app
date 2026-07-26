@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { applySocialMeta } from "@/lib/social-meta";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { notifyAuthEvent } from "@/lib/transactional-email";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -73,6 +74,7 @@ export default function Signup() {
       return;
     }
     if (data.session) {
+      notifyAuthEvent("signup", fullName.trim());
       toast.success("Welcome to CenterLinked");
       navigate("/setup-organization");
     } else {

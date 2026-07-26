@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { applySocialMeta } from "@/lib/social-meta";
 import { useAuth } from "@/contexts/AuthContext";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { notifyAuthEvent } from "@/lib/transactional-email";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -49,12 +50,17 @@ export default function Login() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       toast.error(error.message);
       return;
     }
+    const name =
+      (data.user?.user_metadata?.full_name as string | undefined) ||
+      data.user?.email ||
+      null;
+    notifyAuthEvent("login", name);
     toast.success("Welcome back");
   };
 
