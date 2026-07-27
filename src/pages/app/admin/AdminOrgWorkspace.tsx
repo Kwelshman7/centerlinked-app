@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
+import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { OrgDashboard } from "@/components/app/OrgDashboard";
 import { OrgSharedLinksPanel } from "@/components/app/OrgSharedLinksPanel";
 import { AdminOrgBrandingForm } from "@/components/app/admin/AdminOrgBrandingForm";
@@ -288,6 +289,15 @@ export default function AdminOrgWorkspace() {
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {[f.city, f.state].filter(Boolean).join(", ") || "No location"} · {fContracts.length} contracts
                       </p>
+                      <p className="text-xs mt-1 truncate">
+                        {f.bd_contact_name?.trim() ? (
+                          <span className="text-foreground/80">
+                            <span className="text-muted-foreground">BD:</span> {f.bd_contact_name}
+                          </span>
+                        ) : (
+                          <span className="text-amber-700/80">No BD assigned</span>
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 flex-wrap">
                       <Button asChild size="sm" variant="ghost">
@@ -295,6 +305,15 @@ export default function AdminOrgWorkspace() {
                           <ExternalLink className="h-4 w-4" /> Open
                         </Link>
                       </Button>
+                      <AssignFacilityBdDialog
+                        facilityId={f.id}
+                        facilityName={f.name}
+                        organizationId={org.id}
+                        bd_contact_name={f.bd_contact_name}
+                        bd_contact_phone={f.bd_contact_phone}
+                        bd_contact_email={f.bd_contact_email}
+                        onSaved={load}
+                      />
                       <EditFacilityDialog
                         facility={{ ...f, accreditations: f.accreditations ?? [] }}
                         contracts={fContracts.map((c) => ({
@@ -303,6 +322,7 @@ export default function AdminOrgWorkspace() {
                           payer_name: c.payer_name,
                           in_network: c.in_network,
                         }))}
+                        organizationId={org.id}
                         onSaved={load}
                       />
                       <AlertDialog>

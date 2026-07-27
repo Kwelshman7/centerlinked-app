@@ -95,7 +95,7 @@ export default function ProgramSheet() {
       supabase
         .from("organizations")
         .select(
-          "id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,tagline,brand_color,accent_color,cover_image_url",
+          "id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,website,tagline,brand_color,accent_color,cover_image_url",
         )
         .eq("id", fac.organization_id)
         .maybeSingle(),
@@ -229,6 +229,7 @@ export default function ProgramSheet() {
                   payer_name: c.payer_name,
                   in_network: c.in_network,
                 }))}
+                organizationId={facility.organization_id}
                 onSaved={loadAll}
               />
             ) : null

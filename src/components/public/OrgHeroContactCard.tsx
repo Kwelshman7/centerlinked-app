@@ -1,4 +1,4 @@
-import { Phone, MessageSquare, Mail } from "lucide-react";
+import { Phone, MessageSquare, Mail, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { sanitizePhone } from "@/lib/phone";
@@ -17,9 +17,24 @@ interface Props {
   organizationId?: string;
   brand?: string;
   heading?: string;
+  /** Optional org website shown under the action row. */
+  website?: string | null;
   /** Elevated card for hero overlay placement. */
   variant?: "default" | "floating";
   className?: string;
+}
+
+function websiteLabel(url: string) {
+  try {
+    const host = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
+    return host.replace(/^www\./, "");
+  } catch {
+    return url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
+  }
+}
+
+function websiteHref(url: string) {
+  return url.startsWith("http") ? url : `https://${url}`;
 }
 
 function initials(name: string) {
@@ -36,6 +51,7 @@ export function OrgHeroContactCard({
   organizationId,
   brand = "#1A73E8",
   heading = "For Referrals",
+  website,
   variant = "default",
   className,
 }: Props) {
@@ -45,15 +61,22 @@ export function OrgHeroContactCard({
     if (organizationId) trackOrgEvent(organizationId, kind);
   };
 
+  const site = website?.trim() || null;
+
   return (
     <div
       className={cn(
-        "rounded-xl border overflow-hidden w-full h-full text-foreground flex flex-col",
+        "rounded-xl border overflow-hidden w-full text-foreground flex flex-col",
         variant === "floating"
           ? "rounded-2xl border-white/25 bg-card/97 backdrop-blur-md shadow-2xl ring-1 ring-white/15"
-          : "border-border/70 bg-card shadow-[0_8px_30px_-18px_rgba(15,23,42,0.35)]",
+          : "bg-card/97 shadow-xl",
         className,
       )}
+      style={
+        variant === "default"
+          ? { borderColor: `${brand}38` }
+          : undefined
+      }
     >
       <div
         className="px-4 py-2.5 border-b shrink-0"
@@ -170,6 +193,18 @@ export function OrgHeroContactCard({
                   )}
                 </Button>
               </div>
+
+              {site ? (
+                <a
+                  href={websiteHref(site)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                >
+                  {websiteLabel(site)}
+                  <ExternalLink className="h-3 w-3" aria-hidden />
+                </a>
+              ) : null}
             </div>
           );
         })}

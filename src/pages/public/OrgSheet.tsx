@@ -21,6 +21,17 @@ function uniqueFacilityStates(facilities: ShowcaseFacility[]) {
   return Array.from(states).sort((a, b) => stateDisplayName(a).localeCompare(stateDisplayName(b)));
 }
 
+function uniqueFacilityLevels(facilities: ShowcaseFacility[]) {
+  const levels = new Set<string>();
+  for (const f of facilities) {
+    for (const level of f.levels_of_care ?? []) {
+      const trimmed = level?.trim();
+      if (trimmed) levels.add(trimmed);
+    }
+  }
+  return Array.from(levels).sort((a, b) => a.localeCompare(b));
+}
+
 function parseWhyRefer(raw: unknown): { title: string; body: string }[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter(
@@ -36,6 +47,11 @@ export default function OrgSheet() {
   const [heroContact, setHeroContact] = useState<HeroContact | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [selectedState, setSelectedState] = useState("all");
+  const [selectedLevel, setSelectedLevel] = useState("all");
+
+  useEffect(() => {
+    setSelectedLevel("all");
+  }, [selectedState]);
 
   useEffect(() => {
     if (!slug) return;
@@ -124,6 +140,7 @@ export default function OrgSheet() {
 
   const brand = useOrgBrandColor(org);
   const facilityStates = useMemo(() => uniqueFacilityStates(facilities), [facilities]);
+  const facilityLevels = useMemo(() => uniqueFacilityLevels(facilities), [facilities]);
 
   if (notFound) {
     return (
@@ -137,35 +154,43 @@ export default function OrgSheet() {
     return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
   }
 
-  const briefDescription =
-    org.tagline && org.description && org.description !== org.tagline
-      ? org.description
-      : !org.tagline
-        ? org.description
-        : null;
+  const briefDescription = org.description?.trim() || null;
 
   const contactAside = heroContact ? (
     <OrgHeroContactCard
       contacts={[heroContact]}
       organizationId={org.id}
       brand={brand}
-      heading="Your Contact"
+      heading="For Referrals"
+      website={org.website}
       variant="default"
-      className="w-full h-full"
+      className="w-full"
     />
   ) : (
-    <div className="rounded-xl border border-border/60 bg-card shadow-sm p-1 h-full">
+    <div className="rounded-xl border border-border/60 bg-card shadow-sm p-1">
       <OrgClaimCard organizationId={org.id} organizationName={org.name} />
     </div>
   );
 
   return (
-    <div id="top" className="min-h-screen bg-muted/30">
+    <div
+      id="top"
+      className="min-h-screen"
+      style={{
+        background: `linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.35) 100%)`,
+      }}
+    >
       <OrgAppHeader brand={brand} />
 
-      <OrgHeroSection org={org} brand={brand} />
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-7 lg:py-9 space-y-5 sm:space-y-8">
+        <OrgHeroSection
+          org={org}
+          brand={brand}
+          description={briefDescription}
+          facilityCount={facilities.length}
+          contactAside={contactAside}
+        />
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-9 lg:py-11">
         <OrganizationSheetView
           org={org}
           facilities={facilities}
@@ -174,8 +199,9 @@ export default function OrgSheet() {
           facilityStates={facilityStates}
           selectedState={selectedState}
           onStateChange={setSelectedState}
-          description={briefDescription}
-          contactAside={contactAside}
+          facilityLevels={facilityLevels}
+          selectedLevel={selectedLevel}
+          onLevelChange={setSelectedLevel}
         />
       </main>
     </div>

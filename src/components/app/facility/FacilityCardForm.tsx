@@ -13,15 +13,18 @@ import {
   ACCREDITATION_OPTIONS,
 } from "./facility-types";
 import { PayerCombobox } from "./PayerCombobox";
+import { FacilityBdRepFields } from "./FacilityBdRepFields";
 
 interface Props {
   value: FacilityDraft;
   onChange: (next: FacilityDraft) => void;
   onRemove?: () => void;
   index?: number;
+  /** When set, BD assignment offers a team-member picker. */
+  organizationId?: string | null;
 }
 
-export function FacilityCardForm({ value, onChange, onRemove, index }: Props) {
+export function FacilityCardForm({ value, onChange, onRemove, index, organizationId }: Props) {
   const set = <K extends keyof FacilityDraft>(k: K, v: FacilityDraft[K]) =>
     onChange({ ...value, [k]: v });
 
@@ -309,15 +312,22 @@ export function FacilityCardForm({ value, onChange, onRemove, index }: Props) {
             )}
           </div>
 
-          {/* BD rep */}
-          <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-            <Label className="text-sm">Assigned BD rep</Label>
-            <div className="space-y-2.5">
-              <Input placeholder="Full name" value={value.bd_contact_name} onChange={(e) => set("bd_contact_name", e.target.value)} />
-              <Input placeholder="Phone" value={value.bd_contact_phone} onChange={(e) => set("bd_contact_phone", e.target.value)} />
-              <Input placeholder="Email" type="email" value={value.bd_contact_email} onChange={(e) => set("bd_contact_email", e.target.value)} />
-            </div>
-          </div>
+          <FacilityBdRepFields
+            organizationId={organizationId}
+            value={{
+              bd_contact_name: value.bd_contact_name,
+              bd_contact_phone: value.bd_contact_phone,
+              bd_contact_email: value.bd_contact_email,
+            }}
+            onChange={(next) =>
+              onChange({
+                ...value,
+                bd_contact_name: next.bd_contact_name,
+                bd_contact_phone: next.bd_contact_phone,
+                bd_contact_email: next.bd_contact_email,
+              })
+            }
+          />
         </div>
       </div>
     </div>

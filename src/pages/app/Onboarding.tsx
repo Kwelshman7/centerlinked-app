@@ -328,6 +328,7 @@ export default function Onboarding() {
               value={f}
               onChange={(next) => updateFacility(i, next)}
               onRemove={facilities.length > 1 ? () => removeFacility(i) : undefined}
+              organizationId={profile?.organization_id}
             />
           ))}
 

@@ -49,6 +49,8 @@ interface Props {
   contracts: ExistingContract[];
   onSaved: () => void;
   triggerClassName?: string;
+  /** Enables team-member picker for BD assignment. */
+  organizationId?: string | null;
 }
 
 function toDraft(f: FacilityLike, contracts: ExistingContract[]): FacilityDraft {
@@ -81,7 +83,13 @@ function toDraft(f: FacilityLike, contracts: ExistingContract[]): FacilityDraft 
   };
 }
 
-export function EditFacilityDialog({ facility, contracts, onSaved, triggerClassName }: Props) {
+export function EditFacilityDialog({
+  facility,
+  contracts,
+  onSaved,
+  triggerClassName,
+  organizationId,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => toDraft(facility, contracts));
   const [saving, setSaving] = useState(false);
@@ -195,7 +203,11 @@ export function EditFacilityDialog({ facility, contracts, onSaved, triggerClassN
             Update details, photos, levels of care, and insurance contracts for this facility.
           </DialogDescription>
         </DialogHeader>
-        <FacilityCardForm value={draft} onChange={setDraft} />
+        <FacilityCardForm
+          value={draft}
+          onChange={setDraft}
+          organizationId={organizationId}
+        />
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
             Cancel

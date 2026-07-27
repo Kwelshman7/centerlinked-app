@@ -26,7 +26,8 @@ import { orgPublicPath } from "@/lib/public-urls";
 import { resolveStateCode } from "@/lib/us-states";
 import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
-import { FacilityGrid, FacilityGridCard } from "@/components/FacilityGridCard";
+import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
+import { FacilityGridCard } from "@/components/FacilityGridCard";
 import { extractLogoColor } from "@/lib/extract-logo-color";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,9 @@ interface FacilityRow {
   image_urls: string[] | null;
   levels_of_care: string[] | null;
   updated_at: string;
+  bd_contact_name: string | null;
+  bd_contact_phone: string | null;
+  bd_contact_email: string | null;
 }
 
 interface Props {
@@ -134,7 +138,9 @@ export function OrgDashboard({
     setFacilitiesLoading(true);
     const { data: f } = await supabase
       .from("facilities")
-      .select("id,name,city,state,image_urls,levels_of_care,updated_at")
+      .select(
+        "id,name,city,state,image_urls,levels_of_care,updated_at,bd_contact_name,bd_contact_phone,bd_contact_email",
+      )
       .eq("organization_id", organizationId)
       .order("updated_at", { ascending: false });
     setAllFacilities((f as FacilityRow[]) ?? []);
@@ -497,15 +503,39 @@ export function OrgDashboard({
           <div className="text-center py-8 text-sm text-muted-foreground">No facilities in this state.</div>
         ) : (
           <>
-            <FacilityGrid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {pageFacilities.map((f) => (
-                <FacilityGridCard
-                  key={f.id}
-                  facility={f}
-                  href={facilityDetailHref(f.id)}
-                />
+                <div key={f.id} className="min-w-0 flex flex-col gap-2">
+                  <FacilityGridCard
+                    facility={f}
+                    href={facilityDetailHref(f.id)}
+                  />
+                  <div className="flex items-center justify-between gap-2 px-0.5">
+                    <p className="text-[11px] text-muted-foreground truncate min-w-0">
+                      {f.bd_contact_name?.trim() ? (
+                        <>
+                          <span className="font-medium text-foreground/80">BD:</span>{" "}
+                          {f.bd_contact_name}
+                        </>
+                      ) : (
+                        <span className="text-amber-700/80">No BD assigned</span>
+                      )}
+                    </p>
+                    <AssignFacilityBdDialog
+                      facilityId={f.id}
+                      facilityName={f.name}
+                      organizationId={organizationId}
+                      bd_contact_name={f.bd_contact_name}
+                      bd_contact_phone={f.bd_contact_phone}
+                      bd_contact_email={f.bd_contact_email}
+                      onSaved={reloadFacilities}
+                      triggerVariant="ghost"
+                      triggerClassName="h-7 px-2 text-[11px] shrink-0"
+                    />
+                  </div>
+                </div>
               ))}
-            </FacilityGrid>
+            </div>
 
             {showFacilityPagination && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 mt-1 border-t border-border/60">

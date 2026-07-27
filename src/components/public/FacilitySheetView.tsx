@@ -68,6 +68,7 @@ export interface SheetOrg {
   bd_contact_name: string | null;
   bd_contact_phone: string | null;
   bd_contact_email: string | null;
+  website?: string | null;
   tagline?: string | null;
   brand_color?: string | null;
   accent_color?: string | null;
@@ -164,11 +165,20 @@ export function FacilitySheetView({
   const lastUpdated = fmtDate(facility.updated_at);
   const foundedYear = fmtYear(facility.created_at);
 
+  const facilityHasOwnBd = !!(
+    facility.bd_contact_name?.trim() &&
+    (facility.bd_contact_phone?.trim() || facility.bd_contact_email?.trim())
+  );
   const repName = facility.bd_contact_name || org?.bd_contact_name || null;
   const repPhone = facility.bd_contact_phone || org?.bd_contact_phone || null;
   const repEmail = facility.bd_contact_email || org?.bd_contact_email || null;
   const cleanPhone = sanitizePhone(repPhone) || null;
-  const hasContact = !!(cleanPhone || repEmail);
+  const hasContact = !!(repName && (cleanPhone || repEmail));
+  const repTitle = facilityHasOwnBd
+    ? "BD Representative"
+    : org?.bd_contact_name
+      ? "Organization BD Contact"
+      : "BD Representative";
 
   const shareNode =
     canShare && facility.slug ? (
@@ -447,7 +457,7 @@ export function FacilitySheetView({
                   contacts={[
                     {
                       name: repName,
-                      title: "BD Representative",
+                      title: repTitle,
                       location: cityStateZip || null,
                       phone: repPhone,
                       email: repEmail,
@@ -456,6 +466,7 @@ export function FacilitySheetView({
                   organizationId={org?.id}
                   brand={brand}
                   heading="For Referrals"
+                  website={org?.website ?? null}
                   className="shadow-none border-border/60"
                 />
               ) : (
@@ -471,7 +482,9 @@ export function FacilitySheetView({
                       <User className="h-5 w-5" />
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      No BD contact on file yet.
+                      {mode === "internal"
+                        ? "Assign a BD rep from the org dashboard so referrals have a contact."
+                        : "No BD contact on file yet."}
                     </p>
                   </div>
                 </div>

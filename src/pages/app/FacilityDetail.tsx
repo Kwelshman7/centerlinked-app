@@ -17,6 +17,7 @@ import {
   SheetContract,
 } from "@/components/public/FacilitySheetView";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
+import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
 
 interface Facility {
@@ -80,7 +81,7 @@ export default function FacilityDetail() {
     if (fac) {
       const { data: o } = await supabase
         .from("organizations")
-        .select("id,name,slug,logo_url,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url")
+        .select("id,name,slug,logo_url,bd_contact_name,bd_contact_phone,bd_contact_email,website,brand_color,accent_color,cover_image_url")
         .eq("id", fac.organization_id)
         .maybeSingle();
       setOrg((o as SheetOrg | null) ?? null);
@@ -149,16 +150,28 @@ export default function FacilityDetail() {
           </Button>
         )}
         {(isMine || isSuperAdmin) && (
-          <EditFacilityDialog
-            facility={facility}
-            contracts={contracts.map((c) => ({
-              id: c.id,
-              payer_id: c.payer_id,
-              payer_name: c.payer_name,
-              in_network: c.in_network,
-            }))}
-            onSaved={loadFacility}
-          />
+          <>
+            <AssignFacilityBdDialog
+              facilityId={facility.id}
+              facilityName={facility.name}
+              organizationId={facility.organization_id}
+              bd_contact_name={facility.bd_contact_name}
+              bd_contact_phone={facility.bd_contact_phone}
+              bd_contact_email={facility.bd_contact_email}
+              onSaved={loadFacility}
+            />
+            <EditFacilityDialog
+              facility={facility}
+              contracts={contracts.map((c) => ({
+                id: c.id,
+                payer_id: c.payer_id,
+                payer_name: c.payer_name,
+                in_network: c.in_network,
+              }))}
+              organizationId={facility.organization_id}
+              onSaved={loadFacility}
+            />
+          </>
         )}
       </div>
 

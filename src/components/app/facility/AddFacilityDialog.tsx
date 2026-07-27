@@ -117,7 +117,11 @@ export function AddFacilityDialog({
             Create a new facility under this organization. You can edit it any time.
           </DialogDescription>
         </DialogHeader>
-        <FacilityCardForm value={draft} onChange={setDraft} />
+        <FacilityCardForm
+          value={draft}
+          onChange={setDraft}
+          organizationId={organizationId}
+        />
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
             Cancel
