@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -21,18 +21,22 @@ import {
   SlidersHorizontal,
   Star,
   Users,
-  Trash2,
-  Phone,
-  Mail,
-  MessageSquare,
-  MapPin,
-  Layers,
 } from "lucide-react";
-import { US_STATES, stateDisplayName, resolveStateCode } from "@/lib/us-states";
-import { sanitizePhone } from "@/lib/phone";
+import { US_STATES, resolveStateCode } from "@/lib/us-states";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import { AddPartnerOrgDialog } from "@/components/app/network/AddPartnerOrgDialog";
 import { SuperAdminBanner } from "@/components/app/admin/SuperAdminPanel";
+import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
+import { LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
+import {
+  OrgResultCard,
+  OrgResultGrid,
+  type OrgSearchFacility,
+} from "@/components/app/search/OrgResultCard";
+import {
+  contractMatchesPayer,
+  type PayerMatchInput,
+} from "@/lib/match-payer";
 import { toast } from "sonner";
 
 interface OrgRow {
@@ -49,224 +53,26 @@ interface OrgRow {
   bd_contact_email: string | null;
 }
 
-interface OrgAggregate {
-  count: number;
-  states: Set<string>;
-  levels: Set<string>;
+interface FacilityRow {
+  id: string;
+  organization_id: string;
+  name: string;
+  slug: string | null;
+  city: string | null;
+  state: string | null;
+  levels_of_care: string[] | null;
+}
+
+interface ContractRow {
+  facility_id: string;
+  payer_id: string | null;
+  payer_name: string;
+  in_network: boolean;
 }
 
 const ANY = "__any__";
 const PAGE_SIZE = 24;
 type View = "network" | "all";
-
-function formatStateLabel(raw: string) {
-  const code = resolveStateCode(raw);
-  return code ? stateDisplayName(code) : raw;
-}
-
-function OrgNetworkCard({
-  org: o,
-  inNet,
-  facCount,
-  stateList,
-  levelList,
-  tel,
-  email,
-  href,
-  onStarClick,
-  onRemove,
-}: {
-  org: OrgRow;
-  inNet: boolean;
-  facCount: number;
-  stateList: string[];
-  levelList: string[];
-  tel: string | null;
-  email: string | null;
-  href: string;
-  onStarClick: () => void;
-  onRemove: () => void;
-}) {
-  return (
-    <article
-      className={`group relative flex flex-col rounded-2xl border bg-card overflow-hidden hover:shadow-lg transition-all h-full ${
-        inNet ? "border-primary/60 shadow-sm" : "border-border hover:border-primary/40"
-      }`}
-    >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          onStarClick();
-        }}
-        aria-label={inNet ? "Remove from network" : "Add to network"}
-        title={inNet ? "Remove from network" : "Add to network"}
-        className={`absolute top-3 right-3 z-10 h-9 w-9 grid place-items-center rounded-full bg-card/90 backdrop-blur-sm border border-border/60 shadow-sm transition-colors ${
-          inNet ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-accent"
-        }`}
-      >
-        <Star className={`h-4 w-4 ${inNet ? "fill-current" : ""}`} />
-      </button>
-
-      <Link to={href} className="block">
-        <div className="relative aspect-[4/3] bg-muted/40 border-b border-border/60 flex items-center justify-center p-6 sm:p-8">
-          {o.logo_url ? (
-            <img
-              src={o.logo_url}
-              alt={`${o.name} logo`}
-              loading="lazy"
-              className="max-h-full max-w-full object-contain"
-            />
-          ) : (
-            <Building2 className="h-14 w-14 text-muted-foreground/70" />
-          )}
-        </div>
-      </Link>
-
-      <div className="flex flex-col flex-1 p-4 sm:p-5">
-        <Link to={href} className="min-w-0 group/link">
-          <h3 className="font-heading font-bold text-base sm:text-lg leading-snug break-words group-hover/link:text-primary transition-colors pr-8">
-            {o.name}
-          </h3>
-        </Link>
-
-        <div className="mt-2 space-y-3 text-sm flex-1">
-          {(o.hq_city || o.hq_state || facCount > 0) && (
-            <div className="space-y-1.5">
-              {(o.hq_city || o.hq_state) && (
-                <p className="inline-flex items-start gap-1.5 text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                  <span className="break-words">
-                    {[o.hq_city, o.hq_state ? formatStateLabel(o.hq_state) : null]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </span>
-                </p>
-              )}
-              <p className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <Building2 className="h-3.5 w-3.5 shrink-0" />
-                {facCount} {facCount === 1 ? "facility" : "facilities"}
-              </p>
-            </div>
-          )}
-
-          {stateList.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {stateList.map((s) => (
-                <span
-                  key={s}
-                  className="text-[11px] font-semibold bg-muted text-foreground/80 px-2 py-0.5 rounded-md border border-border/60"
-                >
-                  {formatStateLabel(s)}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {levelList.length > 0 && (
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
-                <Layers className="h-3 w-3" /> Levels of care
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {levelList.slice(0, 8).map((l) => (
-                  <span
-                    key={l}
-                    className="text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full"
-                  >
-                    {l}
-                  </span>
-                ))}
-                {levelList.length > 8 && (
-                  <span className="text-[11px] font-semibold text-muted-foreground px-1 py-0.5">
-                    +{levelList.length - 8}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="border-t border-border/60 bg-muted/30 px-4 sm:px-5 py-3 mt-auto">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">BD Rep</p>
-            <p className="text-sm font-semibold truncate">
-              {o.bd_contact_name || (
-                <span className="text-muted-foreground font-normal">Not listed</span>
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {tel ? (
-              <Button
-                asChild
-                size="icon"
-                variant="outline"
-                className="h-8 w-8"
-                aria-label={`Call ${o.bd_contact_name ?? o.name}`}
-              >
-                <a href={`tel:${tel}`}>
-                  <Phone className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            ) : (
-              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No phone">
-                <Phone className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            {tel ? (
-              <Button
-                asChild
-                size="icon"
-                variant="outline"
-                className="h-8 w-8"
-                aria-label={`Text ${o.bd_contact_name ?? o.name}`}
-              >
-                <a href={`sms:${tel}`}>
-                  <MessageSquare className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            ) : (
-              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No SMS">
-                <MessageSquare className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            {email ? (
-              <Button
-                asChild
-                size="icon"
-                variant="outline"
-                className="h-8 w-8"
-                aria-label={`Email ${o.bd_contact_name ?? o.name}`}
-              >
-                <a href={`mailto:${email}`}>
-                  <Mail className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            ) : (
-              <Button size="icon" variant="outline" disabled className="h-8 w-8 opacity-40" aria-label="No email">
-                <Mail className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            {inNet && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={onRemove}
-                aria-label="Remove from network"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
 
 export default function Organizations() {
   const { isSuperAdmin } = useAuth();
@@ -277,45 +83,56 @@ export default function Organizations() {
   const [allLoading, setAllLoading] = useState(false);
   const [allLoaded, setAllLoaded] = useState(false);
 
-  // facility metadata for ALL orgs (used by both views)
-  const [facilitiesByOrg, setFacilitiesByOrg] = useState<Map<string, OrgAggregate>>(new Map());
+  const [facilities, setFacilities] = useState<FacilityRow[]>([]);
+  const [contracts, setContracts] = useState<ContractRow[]>([]);
 
   const [q, setQ] = useState("");
   const [city, setCity] = useState("");
   const [stateFilter, setStateFilter] = useState<string>(ANY);
+  const [locFilter, setLocFilter] = useState<string>(ANY);
+  const [payerId, setPayerId] = useState<string | null>(null);
+  const [payerName, setPayerName] = useState("");
+  const [payerMeta, setPayerMeta] = useState<PayerMatchInput | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
 
-  // Load facility aggregates once
   useEffect(() => {
     (async () => {
-      const { data: facs } = await supabase
-        .from("facilities")
-        .select("id,organization_id,state,levels_of_care")
-        .eq("verification_status", "approved");
-      const facList =
-        (facs as Array<{
-          id: string;
-          organization_id: string;
-          state: string | null;
-          levels_of_care: string[] | null;
-        }>) ?? [];
-      const map = new Map<string, OrgAggregate>();
-      facList.forEach((f) => {
-        if (!f.organization_id) return;
-        const entry = map.get(f.organization_id) ?? {
-          count: 0,
-          states: new Set<string>(),
-          levels: new Set<string>(),
-        };
-        entry.count += 1;
-        if (f.state) entry.states.add(f.state);
-        (f.levels_of_care ?? []).forEach((l) => l && entry.levels.add(l));
-        map.set(f.organization_id, entry);
-      });
-      setFacilitiesByOrg(map);
+      const [{ data: facs }, { data: cons }] = await Promise.all([
+        supabase
+          .from("facilities")
+          .select("id,organization_id,name,slug,city,state,levels_of_care")
+          .eq("verification_status", "approved")
+          .order("name"),
+        supabase
+          .from("insurance_contracts")
+          .select("facility_id,payer_id,payer_name,in_network")
+          .eq("in_network", true),
+      ]);
+      setFacilities((facs as FacilityRow[]) ?? []);
+      setContracts((cons as ContractRow[]) ?? []);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!payerId) {
+      setPayerMeta(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("payers")
+        .select("id,name,aliases")
+        .eq("id", payerId)
+        .maybeSingle();
+      if (cancelled) return;
+      setPayerMeta((data as PayerMatchInput | null) ?? { id: payerId, name: payerName });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [payerId, payerName]);
 
   useEffect(() => {
     if (view !== "all" || allLoaded) return;
@@ -323,7 +140,9 @@ export default function Organizations() {
       setAllLoading(true);
       const { data } = await supabase
         .from("organizations")
-        .select("id,name,slug,logo_url,hq_city,hq_state,description,verified,bd_contact_name,bd_contact_phone,bd_contact_email")
+        .select(
+          "id,name,slug,logo_url,hq_city,hq_state,description,verified,bd_contact_name,bd_contact_phone,bd_contact_email",
+        )
         .order("verified", { ascending: false })
         .order("name");
       setAllOrgs((data as OrgRow[]) ?? []);
@@ -347,53 +166,125 @@ export default function Organizations() {
         bd_contact_phone: p.bd_contact_phone,
         bd_contact_email: p.bd_contact_email,
       })),
-    [partners]
+    [partners],
   );
 
   const sourceRows = view === "network" ? preferredRows : allOrgs;
   const loading = view === "network" ? partnersLoading : allLoading;
 
-  // State filter options: union of HQ state + every state where the org has a facility
+  const facilitiesByOrg = useMemo(() => {
+    const map = new Map<string, FacilityRow[]>();
+    for (const f of facilities) {
+      if (!f.organization_id) continue;
+      const list = map.get(f.organization_id) ?? [];
+      list.push(f);
+      map.set(f.organization_id, list);
+    }
+    return map;
+  }, [facilities]);
+
+  /** facility_id → matched payer display name (when insurance filter is active). */
+  const facilityPayerMatch = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!payerMeta) return map;
+    for (const c of contracts) {
+      if (!c.in_network) continue;
+      if (!contractMatchesPayer(c, payerMeta)) continue;
+      if (!map.has(c.facility_id)) {
+        map.set(c.facility_id, payerMeta.name || c.payer_name);
+      }
+    }
+    return map;
+  }, [contracts, payerMeta]);
+
   const states = useMemo(() => {
     const present = new Set<string>();
     sourceRows.forEach((o) => {
       if (o.hq_state) present.add(o.hq_state);
-      facilitiesByOrg.get(o.id)?.states.forEach((s) => present.add(s));
+      (facilitiesByOrg.get(o.id) ?? []).forEach((f) => {
+        const code = resolveStateCode(f.state);
+        if (code) present.add(code);
+        else if (f.state) present.add(f.state);
+      });
     });
     return US_STATES.filter((s) => present.has(s.code));
   }, [sourceRows, facilitiesByOrg]);
 
-  const filtered = useMemo(() => {
-    const qLower = q.trim().toLowerCase();
-    const cityLower = city.trim().toLowerCase();
-    return sourceRows.filter((o) => {
-      if (qLower && !`${o.name} ${o.description ?? ""}`.toLowerCase().includes(qLower)) return false;
-      if (cityLower && !(o.hq_city ?? "").toLowerCase().includes(cityLower)) return false;
-      if (stateFilter !== ANY) {
-        const fac = facilitiesByOrg.get(o.id);
-        const matches = o.hq_state === stateFilter || (fac && fac.states.has(stateFilter));
-        if (!matches) return false;
-      }
-      return true;
-    });
-  }, [sourceRows, q, city, stateFilter, facilitiesByOrg]);
+  const qLower = q.trim().toLowerCase();
+  const cityLower = city.trim().toLowerCase();
+  const hasPayerFilter = !!payerId;
+  const hasActiveFilters =
+    !!qLower || !!cityLower || stateFilter !== ANY || locFilter !== ANY || hasPayerFilter;
 
-  const activeCount = (q ? 1 : 0) + (city ? 1 : 0) + (stateFilter !== ANY ? 1 : 0);
+  const filtered = useMemo(() => {
+    return sourceRows
+      .map((o) => {
+        const orgFacilities = facilitiesByOrg.get(o.id) ?? [];
+        const orgNameMatch = qLower
+          ? `${o.name} ${o.description ?? ""}`.toLowerCase().includes(qLower)
+          : true;
+
+        const matchedFacs = orgFacilities.filter((f) => {
+          if (hasPayerFilter && !facilityPayerMatch.has(f.id)) return false;
+          if (stateFilter !== ANY) {
+            const code = resolveStateCode(f.state) ?? f.state;
+            if (code !== stateFilter) return false;
+          }
+          if (cityLower && !(f.city ?? "").toLowerCase().includes(cityLower)) return false;
+          if (locFilter !== ANY && !(f.levels_of_care ?? []).includes(locFilter)) return false;
+          if (qLower) {
+            const facMatch = `${f.name} ${f.city ?? ""} ${f.state ?? ""}`
+              .toLowerCase()
+              .includes(qLower);
+            return orgNameMatch || facMatch;
+          }
+          return true;
+        });
+
+        return { org: o, facilities: matchedFacs };
+      })
+      .filter(({ facilities: facs }) => {
+        if (hasActiveFilters) return facs.length > 0;
+        return true;
+      });
+  }, [
+    sourceRows,
+    facilitiesByOrg,
+    qLower,
+    cityLower,
+    stateFilter,
+    locFilter,
+    hasPayerFilter,
+    facilityPayerMatch,
+    hasActiveFilters,
+  ]);
+
+  const activeCount =
+    (q ? 1 : 0) +
+    (city ? 1 : 0) +
+    (stateFilter !== ANY ? 1 : 0) +
+    (locFilter !== ANY ? 1 : 0) +
+    (payerId ? 1 : 0);
+
   const clearAll = () => {
     setQ("");
     setCity("");
     setStateFilter(ANY);
+    setLocFilter(ANY);
+    setPayerId(null);
+    setPayerName("");
+    setPayerMeta(null);
     setPage(1);
   };
 
-  // Reset to page 1 whenever filters or view change
-  useEffect(() => { setPage(1); }, [q, city, stateFilter, view]);
+  useEffect(() => {
+    setPage(1);
+  }, [q, city, stateFilter, locFilter, payerId, view]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const visibleOrgs = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const showPagination = filtered.length > PAGE_SIZE;
 
-  // Keep page in range when filters shrink the list
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
@@ -417,13 +308,13 @@ export default function Organizations() {
     else toast.success(`${name} removed from your network`);
   };
 
-  const handleStarClick = async (o: OrgRow, inNet: boolean) => {
+  const handleStarClick = async (orgId: string, name: string, inNet: boolean) => {
     if (inNet) {
-      handleRemove(o.id, o.name);
+      handleRemove(orgId, name);
     } else {
-      const { error } = await handleAddOrg(o.id);
+      const { error } = await handleAddOrg(orgId);
       if (error) toast.error(error);
-      else toast.success(`${o.name} added to your network`);
+      else toast.success(`${name} added to your network`);
     }
   };
 
@@ -436,8 +327,7 @@ export default function Organizations() {
             <Users className="h-6 w-6 text-primary" /> Referral Network
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            The organizations you trust to refer to. Preferred partners surface first in search and
-            on your team's dashboards.
+            Find in-network facilities by insurance, then browse the organizations behind them.
           </p>
         </div>
         <AddPartnerOrgDialog excludeIds={partnerOrgIds} onAdd={handleAddOrg} />
@@ -457,31 +347,56 @@ export default function Organizations() {
 
       <Card className="p-3 sm:p-4 shadow-sm">
         <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={view === "network" ? "Search your partners…" : "Search all organizations…"}
-                className="pl-9 h-11"
-              />
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Insurance
+            </Label>
+            <div className="flex gap-2">
+              <div className="flex-1 min-w-0">
+                <PayerCombobox
+                  payerId={payerId}
+                  payerName={payerName}
+                  onSelect={(p) => {
+                    setPayerId(p.id);
+                    setPayerName(p.name);
+                  }}
+                  placeholder="Search by insurance / payer…"
+                  triggerClassName="w-full h-11"
+                  approvedOnly
+                />
+              </div>
+              <Button
+                variant="outline"
+                className="h-11 sm:hidden shrink-0"
+                onClick={() => setShowFilters((v) => !v)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {activeCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs h-5 min-w-[20px] px-1">
+                    {activeCount}
+                  </span>
+                )}
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              className="h-11 sm:hidden"
-              onClick={() => setShowFilters((v) => !v)}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              {activeCount > 0 && (
-                <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs h-5 min-w-[20px] px-1">
-                  {activeCount}
-                </span>
-              )}
-            </Button>
           </div>
 
-          <div className={`grid gap-2 sm:grid-cols-2 ${showFilters ? "" : "hidden sm:grid"}`}>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={
+                view === "network"
+                  ? "Search partners or facilities…"
+                  : "Search organizations or facilities…"
+              }
+              className="pl-9 h-11"
+            />
+          </div>
+
+          <div
+            className={`grid gap-2 sm:grid-cols-3 ${showFilters ? "" : "hidden sm:grid"}`}
+          >
             <Input
               value={city}
               onChange={(e) => setCity(e.target.value)}
@@ -501,12 +416,26 @@ export default function Organizations() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={locFilter} onValueChange={setLocFilter}>
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Level of care" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ANY}>All levels of care</SelectItem>
+                {LEVELS_OF_CARE.map((l) => (
+                  <SelectItem key={l} value={l}>
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {activeCount > 0 && (
             <div className="flex items-center justify-between gap-2 pt-1">
               <p className="text-xs text-muted-foreground">
-                {filtered.length} {filtered.length === 1 ? "result" : "results"}
+                {filtered.length} {filtered.length === 1 ? "organization" : "organizations"}
+                {payerName ? ` in-network with ${payerName}` : ""}
               </p>
               <Button variant="ghost" size="sm" onClick={clearAll} className="h-8">
                 <X className="h-3.5 w-3.5" /> Clear filters
@@ -517,11 +446,11 @@ export default function Organizations() {
       </Card>
 
       {loading ? (
-        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <OrgResultGrid>
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[360px] rounded-2xl" />
+            <Skeleton key={i} className="h-[220px] sm:h-[240px] rounded-xl" />
           ))}
-        </div>
+        </OrgResultGrid>
       ) : filtered.length === 0 ? (
         <Card className="p-10 text-center">
           {view === "network" && sourceRows.length === 0 ? (
@@ -529,7 +458,8 @@ export default function Organizations() {
               <Star className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
               <p className="font-medium">No partners in your network yet</p>
               <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                Add organizations you trust to refer patients to. They'll show up here and surface first in search.
+                Add organizations you trust to refer patients to. They&apos;ll show up here and
+                surface first in search.
               </p>
               <div className="mt-4 inline-flex">
                 <AddPartnerOrgDialog excludeIds={partnerOrgIds} onAdd={handleAddOrg} />
@@ -539,7 +469,11 @@ export default function Organizations() {
             <>
               <Building2 className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
               <p className="font-medium">No organizations match your filters</p>
-              <p className="text-sm text-muted-foreground mt-1">Try clearing a filter or broadening your criteria.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {payerName
+                  ? `No in-network matches for ${payerName}. Try another payer or clear filters.`
+                  : "Try clearing a filter or broadening your criteria."}
+              </p>
               {activeCount > 0 && (
                 <Button variant="outline" size="sm" className="mt-4" onClick={clearAll}>
                   <X className="h-4 w-4" /> Clear filters
@@ -561,33 +495,61 @@ export default function Organizations() {
               </p>
             )}
           </div>
-          <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleOrgs.map((o) => {
+
+          <OrgResultGrid>
+            {visible.map(({ org: o, facilities: matchedFacs }) => {
               const inNet = partnerOrgIds.has(o.id);
-              const href = o.slug ? `/o/${o.slug}` : "#";
-              const fac = facilitiesByOrg.get(o.id);
-              const facCount = fac?.count ?? 0;
-              const stateList = fac ? Array.from(fac.states).sort() : [];
-              const levelList = fac ? Array.from(fac.levels) : [];
-              const tel = sanitizePhone(o.bd_contact_phone);
-              const email = o.bd_contact_email;
+              const sourceFacs =
+                matchedFacs.length > 0 || hasActiveFilters
+                  ? matchedFacs
+                  : facilitiesByOrg.get(o.id) ?? [];
+              const facs: OrgSearchFacility[] = sourceFacs.map((f) => ({
+                id: f.id,
+                name: f.name,
+                slug: f.slug,
+                city: f.city,
+                state: f.state,
+                levels_of_care: f.levels_of_care ?? [],
+                matched_payer: facilityPayerMatch.get(f.id),
+              }));
+
               return (
-                <OrgNetworkCard
-                  key={o.id}
-                  org={o}
-                  inNet={inNet}
-                  facCount={facCount}
-                  stateList={stateList}
-                  levelList={levelList}
-                  tel={tel}
-                  email={email}
-                  href={href}
-                  onStarClick={() => handleStarClick(o, inNet)}
-                  onRemove={() => handleRemove(o.id, o.name)}
-                />
+                <div key={o.id} className="relative h-full">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleStarClick(o.id, o.name, inNet);
+                    }}
+                    aria-label={inNet ? "Remove from network" : "Add to network"}
+                    title={inNet ? "Remove from network" : "Add to network"}
+                    className={`absolute top-2 right-2 z-20 h-8 w-8 grid place-items-center rounded-full bg-card/95 backdrop-blur-sm border border-border/60 shadow-sm transition-colors ${
+                      inNet
+                        ? "text-primary hover:bg-primary/10"
+                        : "text-muted-foreground hover:text-primary hover:bg-accent"
+                    }`}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${inNet ? "fill-current" : ""}`} />
+                  </button>
+                  <OrgResultCard
+                    o={{
+                      org_id: o.id,
+                      org_name: o.name,
+                      org_slug: o.slug,
+                      logo_url: o.logo_url,
+                      hq_city: o.hq_city,
+                      hq_state: o.hq_state,
+                      in_your_network: inNet,
+                      facilities: facs,
+                      latest_verified_at: null,
+                    }}
+                    collapsibleFacilities
+                  />
+                </div>
               );
             })}
-          </div>
+          </OrgResultGrid>
+
           {showPagination && (
             <div className="flex items-center justify-center gap-2 pt-1">
               <Button

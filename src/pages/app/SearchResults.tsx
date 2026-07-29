@@ -3,9 +3,14 @@ import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Search as SearchIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Search as SearchIcon } from "lucide-react";
 import { SearchForm } from "@/components/app/search/SearchForm";
-import { OrgResultCard, OrgSearchResult } from "@/components/app/search/OrgResultCard";
+import {
+  OrgResultCard,
+  OrgResultGrid,
+  OrgSearchResult,
+} from "@/components/app/search/OrgResultCard";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import {
   buildPayerOrFilter,
@@ -155,7 +160,9 @@ export default function SearchResults() {
       setBaseResults(Array.from(byOrg.values()));
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [payerId, state, city, loc]);
 
   const results = useMemo(
@@ -175,10 +182,12 @@ export default function SearchResults() {
   const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       <div className="flex items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link to="/app/search"><ArrowLeft className="h-4 w-4" /> New search</Link>
+          <Link to="/app/search">
+            <ArrowLeft className="h-4 w-4" /> New search
+          </Link>
         </Button>
         <Button variant="outline" size="sm" onClick={() => setEditing((v) => !v)}>
           <SearchIcon className="h-4 w-4" /> {editing ? "Hide filters" : "Edit search"}
@@ -186,7 +195,7 @@ export default function SearchResults() {
       </div>
 
       {editing && (
-        <Card className="p-4 sm:p-5">
+        <Card className="p-4 sm:p-5 max-w-2xl">
           <SearchForm />
         </Card>
       )}
@@ -201,11 +210,17 @@ export default function SearchResults() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <OrgResultGrid>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[280px] sm:h-[320px] rounded-xl" />
+          ))}
+        </OrgResultGrid>
       ) : results.length > 0 ? (
-        <div className="space-y-3">
-          {results.map((o) => <OrgResultCard key={o.org_id} o={o} />)}
-        </div>
+        <OrgResultGrid>
+          {results.map((o) => (
+            <OrgResultCard key={o.org_id} o={o} collapsibleFacilities />
+          ))}
+        </OrgResultGrid>
       ) : (
         <Card className="p-8 text-center space-y-2">
           <p className="font-medium">No verified organizations found</p>

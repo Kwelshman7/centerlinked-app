@@ -182,14 +182,22 @@ export default function OrgSheet() {
     >
       <OrgAppHeader brand={brand} />
 
+      {/* Mobile: logo sits cleanly under the header, full-bleed */}
+      <div className="lg:hidden">
+        <OrgHeroSection org={org} brand={brand} compact />
+      </div>
+
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-7 lg:py-9 space-y-5 sm:space-y-8">
-        <OrgHeroSection
-          org={org}
-          brand={brand}
-          description={briefDescription}
-          facilityCount={facilities.length}
-          contactAside={contactAside}
-        />
+        {/* Desktop: professional heading + contact card */}
+        <div className="hidden lg:block">
+          <OrgHeroSection
+            org={org}
+            brand={brand}
+            description={briefDescription}
+            facilityCount={facilities.length}
+            contactAside={contactAside}
+          />
+        </div>
 
         <OrganizationSheetView
           org={org}
@@ -202,6 +210,7 @@ export default function OrgSheet() {
           facilityLevels={facilityLevels}
           selectedLevel={selectedLevel}
           onLevelChange={setSelectedLevel}
+          description={briefDescription}
         />
       </main>
     </div>

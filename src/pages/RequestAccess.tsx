@@ -4,7 +4,6 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,7 @@ import { notifyAccessRequest } from "@/lib/transactional-email";
 
 export default function RequestAccess() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ full_name: "", email: "", organization: "", role: "", num_facilities: "", notes: "" });
+  const [form, setForm] = useState({ full_name: "", email: "", organization: "", role: "", num_facilities: "" });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -25,7 +24,7 @@ export default function RequestAccess() {
     });
   }, []);
 
-  const update = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const update = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
@@ -42,7 +41,6 @@ export default function RequestAccess() {
     const organization = form.organization.trim();
     const facilities = form.num_facilities ? String(form.num_facilities) : "1";
     const role = form.role.trim() || null;
-    const notes = form.notes.trim() || null;
 
     // Prefer extended columns (see supabase/early-access-leads-extend.sql); fall back if not migrated yet.
     let { error } = await supabase.from("early_access_leads").insert({
@@ -51,7 +49,6 @@ export default function RequestAccess() {
       organization,
       facilities,
       role,
-      notes,
       status: "pending",
     });
     if (error) {
@@ -75,7 +72,6 @@ export default function RequestAccess() {
         organization,
         role: role || undefined,
         num_facilities: form.num_facilities || facilities,
-        notes: notes || undefined,
       });
     } catch (emailErr) {
       console.error("Access request saved but admin email failed:", emailErr);
@@ -101,14 +97,13 @@ export default function RequestAccess() {
           </div>
 
           <form onSubmit={submit} className="space-y-3">
-            <div className="space-y-1.5"><Label htmlFor="name">Full name</Label><Input id="name" value={form.full_name} onChange={update("full_name")} placeholder="Jane Doe" /></div>
-            <div className="space-y-1.5"><Label htmlFor="email">Work email</Label><Input id="email" type="email" value={form.email} onChange={update("email")} placeholder="jane@company.com" /></div>
+            <div className="space-y-1.5"><Label htmlFor="name">Full name</Label><Input id="name" value={form.full_name} onChange={update("full_name")} placeholder="Your name" /></div>
+            <div className="space-y-1.5"><Label htmlFor="email">Work email</Label><Input id="email" type="email" value={form.email} onChange={update("email")} placeholder="you@company.com" /></div>
             <div className="space-y-1.5"><Label htmlFor="org">Organization</Label><Input id="org" value={form.organization} onChange={update("organization")} placeholder="Sunrise Recovery" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label htmlFor="role">Role</Label><Input id="role" value={form.role} onChange={update("role")} placeholder="BD Director" /></div>
               <div className="space-y-1.5"><Label htmlFor="num"># of facilities</Label><Input id="num" type="number" min="1" value={form.num_facilities} onChange={update("num_facilities")} placeholder="3" /></div>
             </div>
-            <div className="space-y-1.5"><Label htmlFor="notes">Anything else (optional)</Label><Textarea id="notes" value={form.notes} onChange={update("notes")} placeholder="Tell us briefly what you'd use CenterLinked for." rows={3} /></div>
             <Button type="submit" size="lg" variant="hero" className="w-full" disabled={loading}>
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</> : "Request access"}
             </Button>

@@ -1,13 +1,13 @@
 /**
- * Mobile mock of /o/:slug — logo + title heading, filters, natural 2×2 facility cards,
- * sticky Refer a Patient.
+ * Mobile mock of /o/:slug — logo sits cleanly on top, compact filter icon,
+ * natural 2×2 facility cards, sticky Refer a Patient.
  */
 import { User } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { FacilityGridCard } from "@/components/FacilityGridCard";
+import { ExpandableText } from "@/components/public/ExpandableText";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
-import { OrgStateFilter } from "@/components/public/OrgStateFilter";
-import { OrgLocFilter } from "@/components/public/OrgLocFilter";
+import { OrgFacilityFilters } from "@/components/public/OrgFacilityFilters";
 import {
   BANYAN_DEMO,
   BANYAN_GRID_FACILITIES,
@@ -30,6 +30,8 @@ const demoOrg = {
   tagline: "Deep roots. Lasting recovery.",
   hq_city: "Gulf Breeze",
   hq_state: "FL",
+  cover_image_url: null as string | null,
+  image_urls: null as string[] | null,
   verified: true,
 };
 
@@ -46,36 +48,42 @@ export function PublicOrgSheetPreviewContent() {
       </header>
 
       <div className="flex-1 min-h-0 overflow-hidden pb-[3.75rem]">
+        <OrgHeroSection org={demoOrg} brand={BRAND} compact />
+
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
-          <OrgHeroSection
-            org={demoOrg}
-            brand={BRAND}
-            description={DESCRIPTION}
-            facilityCount={BANYAN_DEMO.facilityCount}
-            compact
-          />
+          <header className="space-y-1">
+            <span
+              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+              style={{
+                color: BRAND,
+                backgroundColor: `${BRAND}12`,
+                borderColor: `${BRAND}28`,
+              }}
+            >
+              Verified
+            </span>
+            <h1 className="sr-only">{BANYAN_DEMO.orgName}</h1>
+            <ExpandableText text={DESCRIPTION} brand={BRAND} clampLines={3} preview />
+          </header>
 
           <section className="space-y-2">
-            <div className="space-y-1.5">
-              <div className="flex items-baseline justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
                 <h2 className="font-heading text-base font-bold tracking-tight">Our Facilities</h2>
-                <span className="text-[11px] text-muted-foreground shrink-0">
+                <span className="text-[11px] text-muted-foreground">
                   {BANYAN_DEMO.facilityCount} locations
                 </span>
               </div>
-              <OrgStateFilter
+              <OrgFacilityFilters
+                mode="button"
                 states={BANYAN_STATE_CODES}
-                selected="all"
-                onSelect={() => {}}
-                brand={BRAND}
-                className="pb-0"
-              />
-              <OrgLocFilter
+                selectedState="all"
+                onStateChange={() => {}}
                 levels={PREVIEW_LEVELS}
-                selected="all"
-                onSelect={() => {}}
+                selectedLevel="all"
+                onLevelChange={() => {}}
                 brand={BRAND}
-                className="pb-0"
+                preview
               />
             </div>
 

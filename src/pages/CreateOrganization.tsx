@@ -166,7 +166,7 @@ export default function CreateOrganization() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="bdn">BD rep name</Label>
-                <Input id="bdn" value={form.bd_contact_name} onChange={update("bd_contact_name")} placeholder="Jane Smith" />
+                <Input id="bdn" value={form.bd_contact_name} onChange={update("bd_contact_name")} placeholder="Your name" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bdp">BD phone</Label>

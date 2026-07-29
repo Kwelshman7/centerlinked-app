@@ -7,7 +7,6 @@ import {
   ShieldCheck,
   ChevronRight,
   User,
-  Calendar,
   Award,
   Clock,
   Check,
@@ -111,15 +110,6 @@ function fmtDate(d: string | null | undefined) {
   }
 }
 
-function fmtYear(d: string | null | undefined) {
-  if (!d) return null;
-  try {
-    return new Date(d).getFullYear().toString();
-  } catch {
-    return null;
-  }
-}
-
 function SectionHeading({
   title,
   headerExtra,
@@ -163,7 +153,6 @@ export function FacilitySheetView({
   const inNetworkPayers = contracts.filter((c) => c.in_network);
   const directionsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${facility.name} ${address}`)}`;
   const lastUpdated = fmtDate(facility.updated_at);
-  const foundedYear = fmtYear(facility.created_at);
 
   const facilityHasOwnBd = !!(
     facility.bd_contact_name?.trim() &&
@@ -173,7 +162,7 @@ export function FacilitySheetView({
   const repPhone = facility.bd_contact_phone || org?.bd_contact_phone || null;
   const repEmail = facility.bd_contact_email || org?.bd_contact_email || null;
   const cleanPhone = sanitizePhone(repPhone) || null;
-  const hasContact = !!(repName && (cleanPhone || repEmail));
+  const hasContact = !!(cleanPhone || repEmail);
   const repTitle = facilityHasOwnBd
     ? "BD Representative"
     : org?.bd_contact_name
@@ -272,9 +261,6 @@ export function FacilitySheetView({
             )}
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-0.5">
-              {foundedYear && (
-                <MetaItem icon={Calendar} label="Founded" value={foundedYear} brand={brand} />
-              )}
               {facilityType && (
                 <MetaItem icon={Building2} label="Facility Type" value={facilityType} brand={brand} />
               )}
@@ -452,11 +438,11 @@ export function FacilitySheetView({
 
             {/* Desktop sidebar contact — mobile uses sticky Contact now bar */}
             <aside className="hidden lg:block lg:border-l border-border/50 bg-muted/10 p-4 sm:p-5 lg:sticky lg:top-20 lg:self-start">
-              {repName && hasContact ? (
+              {hasContact ? (
                 <OrgHeroContactCard
                   contacts={[
                     {
-                      name: repName,
+                      name: repName || "BD Representative",
                       title: repTitle,
                       location: cityStateZip || null,
                       phone: repPhone,
@@ -501,6 +487,7 @@ export function FacilitySheetView({
           repEmail={repEmail}
           brand={brand}
           organizationId={org?.id}
+          ctaLabel="Contact now"
           contextLabel={`Reach the BD rep for ${facility.name}.`}
           bottomOffset={tabBarOffset}
           shareAction={shareNode ? <div className="lg:hidden w-full">{shareNode}</div> : undefined}

@@ -116,7 +116,7 @@ export default function Signup() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" autoFocus value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" />
+              <Input id="name" autoFocus value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Work Email</Label>
