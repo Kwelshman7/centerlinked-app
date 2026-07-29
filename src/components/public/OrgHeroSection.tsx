@@ -97,23 +97,22 @@ function MobileLogoHero({
           background: `linear-gradient(160deg, ${brand}12 0%, hsl(var(--background)) 55%, ${brand}08 100%)`,
         }}
       >
+        {/* Tight in-flow mark — avoid a tall empty band around the logo */}
         <div
           className={cn(
             "flex items-center justify-center",
-            mock ? "px-5 py-5" : compact ? "px-6 py-4" : "py-3",
+            mock ? "px-4 py-2" : compact ? "px-5 py-2" : "py-1.5",
           )}
         >
           <img
             src={heroImage}
             alt={org.name}
             className={cn(
-              "w-auto object-contain",
-              // Mock: ~200px logical so it still reads large after PhoneFrame scale-down
+              "object-contain",
+              // Width-led + tight padding: logo fills the band without a tall empty frame
               mock
-                ? "h-[12.5rem] max-w-[94%]"
-                : compact
-                  ? "h-32 max-w-[92%]"
-                  : "h-28 max-w-[90%]",
+                ? "w-[88%] h-auto max-h-[5.75rem]"
+                : "h-[4.75rem] w-auto max-w-[90%]",
             )}
           />
         </div>
