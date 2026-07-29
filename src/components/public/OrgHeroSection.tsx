@@ -115,7 +115,7 @@ function MobileLogoHero({
               <img
                 src={heroImage}
                 alt={org.name}
-                className="absolute inset-0 h-full w-full object-contain origin-center scale-[1.85]"
+                className="absolute inset-0 h-full w-full object-contain origin-center scale-[1.85] translate-y-[6%]"
               />
             </div>
           ) : (
