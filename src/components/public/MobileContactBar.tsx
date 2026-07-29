@@ -55,12 +55,12 @@ export function MobileContactBar({
 
   const barStyle: React.CSSProperties = bottomOffset
     ? { bottom: `calc(${bottomOffset}px + env(safe-area-inset-bottom))` }
-    : { paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" };
+    : { bottom: 0, paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" };
 
   return (
     <>
       <div
-        className="fixed left-0 right-0 lg:hidden z-30 bg-card/95 backdrop-blur-md border-t border-border px-4 pt-3 pb-3 print:hidden"
+        className="fixed inset-x-0 bottom-0 lg:hidden z-40 bg-card/95 backdrop-blur-md border-t border-border px-4 pt-3 pb-3 print:hidden"
         style={barStyle}
       >
         <div className={shareAction ? "flex gap-2" : undefined}>
