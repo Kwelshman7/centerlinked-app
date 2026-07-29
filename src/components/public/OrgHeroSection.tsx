@@ -111,11 +111,11 @@ function MobileLogoHero({
               band + scale the artwork up so the mark fills the band without
               enlarging the phone chrome.
             */
-            <div className="relative h-[6.75rem] w-[90%] overflow-hidden">
+            <div className="relative h-[7.25rem] w-[90%] overflow-hidden">
               <img
                 src={heroImage}
                 alt={org.name}
-                className="absolute inset-0 h-full w-full object-contain origin-center scale-[1.85] translate-y-[6%]"
+                className="absolute inset-0 h-full w-full object-contain origin-center scale-[1.75] translate-y-[2%]"
               />
             </div>
           ) : (
