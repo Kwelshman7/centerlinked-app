@@ -97,24 +97,34 @@ function MobileLogoHero({
           background: `linear-gradient(160deg, ${brand}12 0%, hsl(var(--background)) 55%, ${brand}08 100%)`,
         }}
       >
-        {/* Tight in-flow mark — avoid a tall empty band around the logo */}
         <div
           className={cn(
             "flex items-center justify-center",
-            mock ? "px-4 py-2" : compact ? "px-5 py-2" : "py-1.5",
+            mock ? "px-3 py-1" : "px-5 py-1.5",
           )}
         >
-          <img
-            src={heroImage}
-            alt={org.name}
-            className={cn(
-              "object-contain",
-              // Width-led + tight padding: logo fills the band without a tall empty frame
-              mock
-                ? "w-[88%] h-auto max-h-[5.75rem]"
-                : "h-[4.75rem] w-auto max-w-[90%]",
-            )}
-          />
+          {mock ? (
+            /*
+              Many org logos (incl. the Banyan demo asset) ship as a square with large
+              internal padding. PhoneFrame already scales the whole UI down — if we
+              only bump height, we grow empty black margins. Instead: fixed tight
+              band + scale the artwork up so the mark fills the band without
+              enlarging the phone chrome.
+            */
+            <div className="relative h-[6.75rem] w-[90%] overflow-hidden">
+              <img
+                src={heroImage}
+                alt={org.name}
+                className="absolute inset-0 h-full w-full object-contain origin-center scale-[1.85]"
+              />
+            </div>
+          ) : (
+            <img
+              src={heroImage}
+              alt={org.name}
+              className="h-[4.75rem] w-auto max-w-[90%] object-contain"
+            />
+          )}
         </div>
       </section>
     );
