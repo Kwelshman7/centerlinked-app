@@ -91,7 +91,7 @@ function MobileLogoHero({
         <div
           className={cn(
             "flex items-center justify-center",
-            compact ? "px-5 py-2.5" : "py-1.5",
+            compact ? "px-6 py-4" : "py-3",
           )}
         >
           <img
@@ -99,7 +99,7 @@ function MobileLogoHero({
             alt={org.name}
             className={cn(
               "w-auto object-contain",
-              compact ? "h-24 max-w-[90%]" : "h-[4.75rem] max-w-[88%]",
+              compact ? "h-32 max-w-[92%]" : "h-28 max-w-[90%]",
             )}
           />
         </div>
