@@ -31,6 +31,11 @@ interface Props {
    * On real pages, mobile uses logo-on-top and lg+ uses the heading band.
    */
   compact?: boolean;
+  /**
+   * Logo mark size for the mobile/compact hero.
+   * `mock` is intentionally larger — PhoneFrame scales the UI down on the landing page.
+   */
+  logoSize?: "default" | "mock";
 }
 
 /**
@@ -45,11 +50,12 @@ export function OrgHeroSection({
   facilityCount = 0,
   contactAside,
   compact = false,
+  logoSize = "default",
 }: Props) {
   return (
     <>
       <div className={cn(compact ? "block" : "lg:hidden")}>
-        <MobileLogoHero org={org} brand={brand} compact={compact} />
+        <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />
       </div>
 
       {!compact && (
@@ -72,13 +78,16 @@ function MobileLogoHero({
   org,
   brand,
   compact,
+  logoSize,
 }: {
   org: OrgHeroOrg;
   brand: string;
   compact: boolean;
+  logoSize: "default" | "mock";
 }) {
   const heroImage = orgHeroImage(org);
   const logoAsHero = orgHeroIsLogoFallback(org);
+  const mock = logoSize === "mock";
 
   if (logoAsHero && heroImage) {
     return (
@@ -91,7 +100,7 @@ function MobileLogoHero({
         <div
           className={cn(
             "flex items-center justify-center",
-            compact ? "px-6 py-4" : "py-3",
+            mock ? "px-5 py-5" : compact ? "px-6 py-4" : "py-3",
           )}
         >
           <img
@@ -99,7 +108,12 @@ function MobileLogoHero({
             alt={org.name}
             className={cn(
               "w-auto object-contain",
-              compact ? "h-32 max-w-[92%]" : "h-28 max-w-[90%]",
+              // Mock: ~200px logical so it still reads large after PhoneFrame scale-down
+              mock
+                ? "h-[12.5rem] max-w-[94%]"
+                : compact
+                  ? "h-32 max-w-[92%]"
+                  : "h-28 max-w-[90%]",
             )}
           />
         </div>

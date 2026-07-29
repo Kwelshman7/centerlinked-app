@@ -48,7 +48,7 @@ export function PublicOrgSheetPreviewContent() {
       </header>
 
       <div className="flex-1 min-h-0 overflow-hidden pb-[3.75rem]">
-        <OrgHeroSection org={demoOrg} brand={BRAND} compact />
+        <OrgHeroSection org={demoOrg} brand={BRAND} compact logoSize="mock" />
 
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
           <header className="space-y-1">
