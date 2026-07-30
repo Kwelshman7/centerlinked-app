@@ -13,13 +13,9 @@ import {
   ExternalLink,
   Palette,
   UserPlus,
-  Loader2,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { shareOrCopyUrl } from "@/lib/share";
 import { orgPublicPath } from "@/lib/public-urls";
@@ -28,7 +24,6 @@ import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { FacilityGridCard } from "@/components/FacilityGridCard";
-import { extractLogoColor } from "@/lib/extract-logo-color";
 import { cn } from "@/lib/utils";
 
 interface OrgRow {
@@ -37,7 +32,6 @@ interface OrgRow {
   slug: string | null;
   logo_url: string | null;
   brand_color: string | null;
-  accent_color: string | null;
 }
 
 interface FacilityRow {
@@ -91,11 +85,6 @@ export function OrgDashboard({
     text_clicks: number;
     email_clicks: number;
   } | null>(null);
-
-  const [brandColor, setBrandColor] = useState(DEFAULT_BRAND);
-  const [accentColor, setAccentColor] = useState("#E0EDFF");
-  const [logoSuggested, setLogoSuggested] = useState<string | null>(null);
-  const [savingTheme, setSavingTheme] = useState(false);
 
   const firstName = useMemo(
     () => (welcomeName.includes(" ") ? welcomeName.split(" ")[0] : welcomeName),
@@ -173,7 +162,7 @@ export function OrgDashboard({
       const [{ data: o }, { count: mCount }] = await Promise.all([
         supabase
           .from("organizations")
-          .select("id,name,slug,logo_url,brand_color,accent_color")
+          .select("id,name,slug,logo_url,brand_color")
           .eq("id", organizationId)
           .maybeSingle(),
         supabase
@@ -182,23 +171,8 @@ export function OrgDashboard({
           .eq("organization_id", organizationId),
       ]);
       if (cancelled) return;
-      const orgRow = o as OrgRow | null;
-      setOrg(orgRow);
+      setOrg(o as OrgRow | null);
       setMemberCount(mCount ?? 0);
-      if (orgRow) {
-        setBrandColor(orgRow.brand_color || DEFAULT_BRAND);
-        setAccentColor(orgRow.accent_color || "#E0EDFF");
-        if (orgRow.logo_url) {
-          const extracted = await extractLogoColor(orgRow.logo_url);
-          if (cancelled) return;
-          setLogoSuggested(extracted);
-          if (!orgRow.brand_color && extracted) {
-            setBrandColor(extracted);
-          }
-        } else {
-          setLogoSuggested(null);
-        }
-      }
 
       const { data: statsRows } = await supabase.rpc("get_org_engagement_stats", {
         _org_id: organizationId,
@@ -246,35 +220,7 @@ export function OrgDashboard({
     else toast.error("Could not copy link");
   };
 
-  const applyLogoColor = () => {
-    if (!logoSuggested) {
-      toast.error("Couldn't read colors from the logo.");
-      return;
-    }
-    setBrandColor(logoSuggested);
-  };
-
-  const saveTheme = async () => {
-    setSavingTheme(true);
-    const { error } = await supabase
-      .from("organizations")
-      .update({
-        brand_color: brandColor.trim() || null,
-        accent_color: accentColor.trim() || null,
-      })
-      .eq("id", organizationId);
-    setSavingTheme(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Theme colors saved");
-    setOrg((prev) =>
-      prev
-        ? { ...prev, brand_color: brandColor.trim() || null, accent_color: accentColor.trim() || null }
-        : prev,
-    );
-  };
+  const brandColor = org?.brand_color || DEFAULT_BRAND;
 
   return (
     <div className="space-y-5">
@@ -336,129 +282,60 @@ export function OrgDashboard({
         </Card>
       </div>
 
-      {/* Quick actions + theme */}
-      <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-        <Card className="p-3.5 sm:p-4">
-          <h2 className="font-heading text-sm font-bold mb-3">Quick actions</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <AddFacilityDialog
-              organizationId={organizationId}
-              onCreated={reloadFacilities}
-              triggerLabel="Add facility"
-              triggerClassName="w-full justify-start h-10"
-              triggerVariant="outline"
-            />
+      {/* Quick actions */}
+      <Card className="p-3.5 sm:p-4">
+        <h2 className="font-heading text-sm font-bold mb-3">Quick actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <AddFacilityDialog
+            organizationId={organizationId}
+            onCreated={reloadFacilities}
+            triggerLabel="Add facility"
+            triggerClassName="w-full justify-start h-10"
+            triggerVariant="outline"
+          />
+          <Button asChild variant="outline" className="h-10 justify-start">
+            <Link to={facilitiesHref}>
+              <Pencil className="h-4 w-4" /> Edit facilities
+            </Link>
+          </Button>
+          {membersHref ? (
             <Button asChild variant="outline" className="h-10 justify-start">
-              <Link to={facilitiesHref}>
-                <Pencil className="h-4 w-4" /> Edit facilities
+              <Link to={membersHref}>
+                <UserPlus className="h-4 w-4" /> Manage team
               </Link>
             </Button>
-            {membersHref ? (
-              <Button asChild variant="outline" className="h-10 justify-start">
-                <Link to={membersHref}>
-                  <UserPlus className="h-4 w-4" /> Manage team
-                </Link>
-              </Button>
-            ) : (
-              <Button asChild variant="outline" className="h-10 justify-start">
-                <Link to={brandingHref}>
-                  <Users className="h-4 w-4" /> Org profile
-                </Link>
-              </Button>
-            )}
+          ) : (
             <Button asChild variant="outline" className="h-10 justify-start">
               <Link to={brandingHref}>
-                <Palette className="h-4 w-4" /> Full branding
+                <Users className="h-4 w-4" /> Org profile
               </Link>
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 justify-start"
-              onClick={handleShare}
-              disabled={!publicUrl}
-            >
-              <Share2 className="h-4 w-4" /> Share link
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 justify-start"
-              onClick={handleViewPublic}
-              disabled={!publicUrl}
-            >
-              <ExternalLink className="h-4 w-4" /> Public page
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="p-3.5 sm:p-4">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="font-heading text-sm font-bold inline-flex items-center gap-1.5">
-              <Palette className="h-4 w-4 text-primary" /> Theme colors
-            </h2>
-            {logoSuggested && (
-              <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={applyLogoColor}>
-                <Sparkles className="h-3.5 w-3.5" /> Use logo color
-              </Button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="dash-brand" className="text-xs">
-                Brand
-              </Label>
-              <div className="flex gap-2">
-                <input
-                  id="dash-brand"
-                  type="color"
-                  value={brandColor}
-                  onChange={(e) => setBrandColor(e.target.value)}
-                  className="h-9 w-11 rounded border border-border cursor-pointer bg-transparent"
-                />
-                <Input
-                  value={brandColor}
-                  onChange={(e) => setBrandColor(e.target.value)}
-                  className="h-9 font-mono text-xs"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="dash-accent" className="text-xs">
-                Accent
-              </Label>
-              <div className="flex gap-2">
-                <input
-                  id="dash-accent"
-                  type="color"
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-9 w-11 rounded border border-border cursor-pointer bg-transparent"
-                />
-                <Input
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-9 font-mono text-xs"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <div
-              className="h-8 flex-1 rounded-md border border-border/60"
-              style={{
-                background: `linear-gradient(135deg, ${brandColor} 0%, ${accentColor} 100%)`,
-              }}
-            />
-            <Button type="button" size="sm" onClick={saveTheme} disabled={savingTheme}>
-              {savingTheme ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
-            </Button>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-2">
-            Defaults from your logo when no brand color is set.
-          </p>
-        </Card>
-      </div>
+          )}
+          <Button asChild variant="outline" className="h-10 justify-start">
+            <Link to={brandingHref}>
+              <Palette className="h-4 w-4" /> Full branding
+            </Link>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 justify-start"
+            onClick={handleShare}
+            disabled={!publicUrl}
+          >
+            <Share2 className="h-4 w-4" /> Share link
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 justify-start"
+            onClick={handleViewPublic}
+            disabled={!publicUrl}
+          >
+            <ExternalLink className="h-4 w-4" /> Public page
+          </Button>
+        </div>
+      </Card>
 
       {/* Facilities grid */}
       <Card className="p-3.5 sm:p-4">
