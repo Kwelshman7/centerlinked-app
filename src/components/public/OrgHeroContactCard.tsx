@@ -21,6 +21,8 @@ interface Props {
   website?: string | null;
   /** Elevated card for hero overlay placement. */
   variant?: "default" | "floating";
+  /** Slightly larger type, avatar, and actions for facility sidebars. */
+  size?: "default" | "lg";
   className?: string;
 }
 
@@ -53,6 +55,7 @@ export function OrgHeroContactCard({
   heading = "For Referrals",
   website,
   variant = "default",
+  size = "default",
   className,
 }: Props) {
   if (!contacts.length) return null;
@@ -62,6 +65,7 @@ export function OrgHeroContactCard({
   };
 
   const site = website?.trim() || null;
+  const lg = size === "lg";
 
   return (
     <div
@@ -79,25 +83,42 @@ export function OrgHeroContactCard({
       }
     >
       <div
-        className="px-4 py-2.5 border-b shrink-0"
+        className={cn("border-b shrink-0", lg ? "px-5 py-3" : "px-4 py-2.5")}
         style={{ backgroundColor: `${brand}10`, borderColor: `${brand}18` }}
       >
         <p
-          className="text-[10px] font-bold uppercase tracking-[0.14em] text-center"
+          className={cn(
+            "font-bold uppercase tracking-[0.14em] text-center",
+            lg ? "text-[11px]" : "text-[10px]",
+          )}
           style={{ color: brand }}
         >
           {heading}
         </p>
       </div>
 
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-4 min-h-0">
+      <div
+        className={cn(
+          "flex-1 flex flex-col justify-between min-h-0",
+          lg ? "p-5 sm:p-6 gap-5" : "p-4 sm:p-5 gap-4",
+        )}
+      >
         {contacts.map((c, i) => {
           const tel = sanitizePhone(c.phone);
           return (
-            <div key={i} className="space-y-4 flex-1 flex flex-col justify-between min-h-0">
-              <div className="flex items-center gap-3.5">
+            <div
+              key={i}
+              className={cn(
+                "flex-1 flex flex-col justify-between min-h-0",
+                lg ? "space-y-5" : "space-y-4",
+              )}
+            >
+              <div className={cn("flex items-center", lg ? "gap-4" : "gap-3.5")}>
                 <div
-                  className="h-12 w-12 rounded-full grid place-items-center text-sm font-bold shrink-0 border"
+                  className={cn(
+                    "rounded-full grid place-items-center font-bold shrink-0 border",
+                    lg ? "h-14 w-14 text-base" : "h-12 w-12 text-sm",
+                  )}
                   style={{
                     backgroundColor: `${brand}14`,
                     color: brand,
@@ -107,28 +128,46 @@ export function OrgHeroContactCard({
                   {initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="font-semibold text-[15px] sm:text-base leading-tight truncate">
+                  <p
+                    className={cn(
+                      "font-semibold leading-tight truncate",
+                      lg ? "text-base sm:text-lg" : "text-[15px] sm:text-base",
+                    )}
+                  >
                     {c.name}
                   </p>
                   {c.title && (
-                    <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+                    <p
+                      className={cn(
+                        "text-muted-foreground leading-snug mt-0.5 line-clamp-2",
+                        lg ? "text-sm" : "text-xs",
+                      )}
+                    >
                       {c.title}
                     </p>
                   )}
                   {c.location && (
-                    <p className="text-[11px] text-muted-foreground/90 mt-0.5 truncate">
+                    <p
+                      className={cn(
+                        "text-muted-foreground/90 mt-0.5 truncate",
+                        lg ? "text-xs" : "text-[11px]",
+                      )}
+                    >
                       {c.location}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mt-auto">
+              <div className={cn("grid grid-cols-3 mt-auto", lg ? "gap-2.5" : "gap-2")}>
                 <Button
                   asChild={!!tel}
                   variant="outline"
                   disabled={!tel}
-                  className="h-10 px-1.5 text-xs font-semibold bg-background"
+                  className={cn(
+                    "px-1.5 font-semibold bg-background",
+                    lg ? "h-11 text-sm" : "h-10 text-xs",
+                  )}
                 >
                   {tel ? (
                     <a
@@ -136,12 +175,12 @@ export function OrgHeroContactCard({
                       onClick={() => fire("contact_call")}
                       className="inline-flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 w-full h-full"
                     >
-                      <Phone className="h-3.5 w-3.5" />
+                      <Phone className={lg ? "h-4 w-4" : "h-3.5 w-3.5"} />
                       <span>Call</span>
                     </a>
                   ) : (
                     <span className="inline-flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1">
-                      <Phone className="h-3.5 w-3.5" />
+                      <Phone className={lg ? "h-4 w-4" : "h-3.5 w-3.5"} />
                       <span>Call</span>
                     </span>
                   )}
@@ -151,7 +190,10 @@ export function OrgHeroContactCard({
                   asChild={!!tel}
                   variant="outline"
                   disabled={!tel}
-                  className="h-10 px-1.5 text-xs font-semibold bg-background"
+                  className={cn(
+                    "px-1.5 font-semibold bg-background",
+                    lg ? "h-11 text-sm" : "h-10 text-xs",
+                  )}
                 >
                   {tel ? (
                     <a
@@ -159,12 +201,12 @@ export function OrgHeroContactCard({
                       onClick={() => fire("contact_text")}
                       className="inline-flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 w-full h-full"
                     >
-                      <MessageSquare className="h-3.5 w-3.5" />
+                      <MessageSquare className={lg ? "h-4 w-4" : "h-3.5 w-3.5"} />
                       <span>Text</span>
                     </a>
                   ) : (
                     <span className="inline-flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1">
-                      <MessageSquare className="h-3.5 w-3.5" />
+                      <MessageSquare className={lg ? "h-4 w-4" : "h-3.5 w-3.5"} />
                       <span>Text</span>
                     </span>
                   )}
@@ -173,7 +215,10 @@ export function OrgHeroContactCard({
                 <Button
                   asChild={!!c.email}
                   disabled={!c.email}
-                  className="h-10 px-1.5 text-xs font-semibold hover:opacity-90"
+                  className={cn(
+                    "px-1.5 font-semibold hover:opacity-90",
+                    lg ? "h-11 text-sm" : "h-10 text-xs",
+                  )}
                   style={{ backgroundColor: brand, color: "#fff" }}
                 >
                   {c.email ? (
@@ -182,12 +227,12 @@ export function OrgHeroContactCard({
                       onClick={() => fire("contact_email")}
                       className="inline-flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 w-full h-full"
                     >
-                      <Mail className="h-3.5 w-3.5" />
+                      <Mail className={lg ? "h-4 w-4" : "h-3.5 w-3.5"} />
                       <span>Email</span>
                     </a>
                   ) : (
                     <span className="inline-flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1">
-                      <Mail className="h-3.5 w-3.5" />
+                      <Mail className={lg ? "h-4 w-4" : "h-3.5 w-3.5"} />
                       <span>Email</span>
                     </span>
                   )}

@@ -285,9 +285,9 @@ export function FacilitySheetView({
 
       {/* Unified details */}
       {(hasFactsStrip || hasProgramDetails || hasServiceArea || repName || repEmail || repPhone) && (
-        <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="min-w-0 divide-y divide-border/50">
+        <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:overflow-visible">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50">
               {hasFactsStrip && (
                 <div className="px-4 sm:px-6 py-4 sm:py-5 grid sm:grid-cols-2 gap-5 sm:gap-8">
                   <div className="min-w-0">
@@ -436,8 +436,8 @@ export function FacilitySheetView({
               )}
             </div>
 
-            {/* Desktop sidebar contact — mobile uses sticky Contact now bar */}
-            <aside className="hidden lg:block lg:border-l border-border/50 bg-muted/10 p-4 sm:p-5 lg:sticky lg:top-20 lg:self-start">
+            {/* Desktop sidebar contact — sits at top of section and pops forward */}
+            <aside className="hidden lg:block relative z-10 lg:sticky lg:top-20 lg:self-start lg:rounded-r-2xl px-3 pt-3 pb-5 xl:px-4 xl:pt-4">
               {hasContact ? (
                 <OrgHeroContactCard
                   contacts={[
@@ -453,19 +453,23 @@ export function FacilitySheetView({
                   brand={brand}
                   heading="For Referrals"
                   website={org?.website ?? null}
-                  className="shadow-none border-border/60"
+                  size="lg"
+                  className="shadow-2xl -ml-2 ring-1"
                 />
               ) : (
-                <div className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
+                <div
+                  className="rounded-xl border bg-card p-5 space-y-3 shadow-2xl -ml-2 ring-1 ring-black/5"
+                  style={{ borderColor: `${brand}38` }}
+                >
                   <p
-                    className="text-[10px] font-bold uppercase tracking-[0.14em] text-center"
+                    className="text-[11px] font-bold uppercase tracking-[0.14em] text-center"
                     style={{ color: brand }}
                   >
                     For Referrals
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
-                      <User className="h-5 w-5" />
+                  <div className="flex items-center gap-3.5">
+                    <div className="h-14 w-14 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
+                      <User className="h-6 w-6" />
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {mode === "internal"
