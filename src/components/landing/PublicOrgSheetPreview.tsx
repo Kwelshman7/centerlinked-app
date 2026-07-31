@@ -82,6 +82,9 @@ export function PublicOrgSheetPreviewContent() {
                 levels={PREVIEW_LEVELS}
                 selectedLevel="all"
                 onLevelChange={() => {}}
+                insurers={["Aetna", "Cigna"]}
+                selectedInsurance="all"
+                onInsuranceChange={() => {}}
                 brand={BRAND}
                 preview
               />

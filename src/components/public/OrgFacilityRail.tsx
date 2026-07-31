@@ -7,6 +7,8 @@ import {
 interface Props {
   facilities: ShowcaseFacility[];
   orgSlug?: string | null;
+  canManage?: boolean;
+  onToggleHidden?: (facilityId: string, hidden: boolean) => Promise<void> | void;
 }
 
 /**
@@ -33,7 +35,12 @@ function densityForCount(count: number): FacilityGridDensity {
   return facilityGridDensityForCount(count);
 }
 
-export function OrgFacilityRail({ facilities, orgSlug }: Props) {
+export function OrgFacilityRail({
+  facilities,
+  orgSlug,
+  canManage = false,
+  onToggleHidden,
+}: Props) {
   const count = facilities.length;
   const density = densityForCount(count);
   const layout = layoutForCount(count);
@@ -47,6 +54,8 @@ export function OrgFacilityRail({ facilities, orgSlug }: Props) {
           orgSlug={orgSlug}
           density={density}
           layout={layout}
+          canManage={canManage}
+          onToggleHidden={onToggleHidden}
         />
       ))}
     </div>

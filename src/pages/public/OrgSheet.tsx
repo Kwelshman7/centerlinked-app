@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { OrgAppHeader } from "@/components/public/OrgAppHeader";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
@@ -42,16 +44,28 @@ function parseWhyRefer(raw: unknown): { title: string; body: string }[] {
 
 export default function OrgSheet() {
   const { slug } = useParams<{ slug: string }>();
+  const { profile, isSuperAdmin, isFacilityAdmin, loading: authLoading } = useAuth();
   const [org, setOrg] = useState<OrgSheetData | null>(null);
   const [facilities, setFacilities] = useState<ShowcaseFacility[]>([]);
+  const [facilityPayersById, setFacilityPayersById] = useState<Map<string, string[]>>(new Map());
   const [heroContact, setHeroContact] = useState<HeroContact | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [selectedState, setSelectedState] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
+  const [selectedInsurance, setSelectedInsurance] = useState("all");
+
+  const canManage =
+    !authLoading &&
+    !!org &&
+    (isSuperAdmin || (isFacilityAdmin && profile?.organization_id === org.id));
 
   useEffect(() => {
     setSelectedLevel("all");
   }, [selectedState]);
+
+  useEffect(() => {
+    setSelectedInsurance("all");
+  }, [selectedState, selectedLevel]);
 
   useEffect(() => {
     if (!slug) return;
@@ -93,7 +107,7 @@ export default function OrgSheet() {
       const { data: f } = await supabase
         .from("facilities")
         .select(
-          "id,name,slug,city,state,address_line1,zip,image_urls,levels_of_care,population_served,specializations,highlights,accreditations,short_description,description,tagline,insurance_status,featured_payer,updated_at",
+          "id,name,slug,city,state,address_line1,zip,image_urls,levels_of_care,population_served,specializations,highlights,accreditations,short_description,description,tagline,insurance_status,featured_payer,updated_at,hidden_from_org_page",
         )
         .eq("organization_id", orgData.id)
         .eq("verification_status", "approved")
@@ -101,6 +115,33 @@ export default function OrgSheet() {
 
       const facs = ((f as unknown) as ShowcaseFacility[]) ?? [];
       setFacilities(facs);
+
+      const facilityIds = facs.map((fac) => fac.id);
+      if (facilityIds.length > 0) {
+        const { data: contracts } = await supabase
+          .from("insurance_contracts")
+          .select("facility_id,payer_name,in_network")
+          .in("facility_id", facilityIds)
+          .eq("in_network", true);
+
+        const map = new Map<string, string[]>();
+        for (const row of contracts ?? []) {
+          const name = row.payer_name?.trim();
+          if (!name) continue;
+          const list = map.get(row.facility_id) ?? [];
+          if (!list.includes(name)) list.push(name);
+          map.set(row.facility_id, list);
+        }
+        for (const [id, names] of map) {
+          map.set(
+            id,
+            names.sort((a, b) => a.localeCompare(b)),
+          );
+        }
+        setFacilityPayersById(map);
+      } else {
+        setFacilityPayersById(new Map());
+      }
 
       if (orgData.bd_contact_name && (orgData.bd_contact_phone || orgData.bd_contact_email)) {
         setHeroContact({
@@ -139,8 +180,52 @@ export default function OrgSheet() {
   }, [slug]);
 
   const brand = useOrgBrandColor(org);
-  const facilityStates = useMemo(() => uniqueFacilityStates(facilities), [facilities]);
-  const facilityLevels = useMemo(() => uniqueFacilityLevels(facilities), [facilities]);
+
+  const publicFacilities = useMemo(
+    () => facilities.filter((f) => !f.hidden_from_org_page),
+    [facilities],
+  );
+
+  /** Admins see hidden facilities (with controls); everyone else sees the public list. */
+  const visibleFacilities = canManage ? facilities : publicFacilities;
+
+  const facilityStates = useMemo(
+    () => uniqueFacilityStates(visibleFacilities),
+    [visibleFacilities],
+  );
+  const facilityLevels = useMemo(
+    () => uniqueFacilityLevels(visibleFacilities),
+    [visibleFacilities],
+  );
+  const facilityInsurers = useMemo(() => {
+    const names = new Set<string>();
+    for (const f of visibleFacilities) {
+      for (const name of facilityPayersById.get(f.id) ?? []) {
+        names.add(name);
+      }
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [visibleFacilities, facilityPayersById]);
+
+  const onToggleHidden = useCallback(
+    async (facilityId: string, hidden: boolean) => {
+      const { error } = await supabase
+        .from("facilities")
+        .update({ hidden_from_org_page: hidden })
+        .eq("id", facilityId);
+
+      if (error) {
+        toast.error(error.message || "Could not update facility visibility.");
+        return;
+      }
+
+      setFacilities((prev) =>
+        prev.map((f) => (f.id === facilityId ? { ...f, hidden_from_org_page: hidden } : f)),
+      );
+      toast.success(hidden ? "Facility hidden from org page." : "Facility shown on org page.");
+    },
+    [],
+  );
 
   if (notFound) {
     return (
@@ -187,21 +272,21 @@ export default function OrgSheet() {
         <OrgHeroSection org={org} brand={brand} compact />
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-7 lg:py-9 space-y-5 sm:space-y-8">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:pt-6 lg:pb-8 space-y-5 sm:space-y-6 lg:space-y-5">
         {/* Desktop: professional heading + contact card */}
         <div className="hidden lg:block">
           <OrgHeroSection
             org={org}
             brand={brand}
             description={briefDescription}
-            facilityCount={facilities.length}
+            facilityCount={publicFacilities.length}
             contactAside={contactAside}
           />
         </div>
 
         <OrganizationSheetView
           org={org}
-          facilities={facilities}
+          facilities={visibleFacilities}
           heroContact={heroContact}
           brand={brand}
           facilityStates={facilityStates}
@@ -210,7 +295,13 @@ export default function OrgSheet() {
           facilityLevels={facilityLevels}
           selectedLevel={selectedLevel}
           onLevelChange={setSelectedLevel}
+          facilityInsurers={facilityInsurers}
+          selectedInsurance={selectedInsurance}
+          onInsuranceChange={setSelectedInsurance}
+          facilityPayersById={facilityPayersById}
           description={briefDescription}
+          canManage={canManage}
+          onToggleHidden={canManage ? onToggleHidden : undefined}
         />
       </main>
     </div>

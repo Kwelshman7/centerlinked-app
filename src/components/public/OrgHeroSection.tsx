@@ -187,13 +187,13 @@ function DesktopHeadingBand({
 
   return (
     <section
-      className="relative w-full py-0"
+      className="relative w-full pt-5 pb-1"
       style={{
         background: `radial-gradient(ellipse 70% 55% at 50% 0%, ${brand}14 0%, transparent 70%)`,
       }}
     >
-      <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:gap-6">
-        <div className="flex items-start min-w-0 gap-3.5 sm:gap-4 pt-0.5">
+      <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:gap-x-8 lg:gap-y-5">
+        <div className="flex items-start min-w-0 gap-3.5 sm:gap-4">
           <div className="shrink-0 rounded-2xl border border-border/70 bg-card shadow-md overflow-hidden grid place-items-center h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem]">
             {org.logo_url ? (
               <img

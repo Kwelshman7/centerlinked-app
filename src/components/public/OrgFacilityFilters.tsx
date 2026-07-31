@@ -16,8 +16,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { OrgStateFilter } from "@/components/public/OrgStateFilter";
-import { OrgLocFilter } from "@/components/public/OrgLocFilter";
 import { stateDisplayName } from "@/lib/us-states";
 import { cn } from "@/lib/utils";
 
@@ -28,20 +26,23 @@ interface Props {
   levels: string[];
   selectedLevel: string;
   onLevelChange: (level: string) => void;
+  insurers: string[];
+  selectedInsurance: string;
+  onInsuranceChange: (insurance: string) => void;
   brand?: string;
   className?: string;
   /**
-   * `button` — compact filter icon (mobile).
-   * `pills` — horizontal location / LOC tabs (desktop).
+   * `button` — compact filter icon (mobile sheet).
+   * `dropdowns` — Location / Level of Care / Insurance selects (desktop).
    */
-  mode: "button" | "pills";
+  mode: "button" | "dropdowns";
   /** Static preview — button is non-interactive. */
   preview?: boolean;
 }
 
 /**
  * Facility filters for org public profiles.
- * Use `mode="button"` on mobile and `mode="pills"` from sm+.
+ * Use `mode="button"` on mobile and `mode="dropdowns"` from sm+.
  */
 export function OrgFacilityFilters({
   states,
@@ -50,39 +51,56 @@ export function OrgFacilityFilters({
   levels,
   selectedLevel,
   onLevelChange,
-  brand,
+  insurers,
+  selectedInsurance,
+  onInsuranceChange,
   className,
   mode,
   preview = false,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const hasState = states.length > 1;
-  const hasLoc = levels.length > 1;
-  if (!hasState && !hasLoc) return null;
+  const hasState = states.length > 0;
+  const hasLoc = levels.length > 0;
+  const hasInsurance = insurers.length > 0;
+  if (!hasState && !hasLoc && !hasInsurance) return null;
 
   const activeCount =
     (hasState && selectedState !== "all" ? 1 : 0) +
-    (hasLoc && selectedLevel !== "all" ? 1 : 0);
+    (hasLoc && selectedLevel !== "all" ? 1 : 0) +
+    (hasInsurance && selectedInsurance !== "all" ? 1 : 0);
 
   const clearAll = () => {
     onStateChange("all");
     onLevelChange("all");
+    onInsuranceChange("all");
   };
 
-  if (mode === "pills") {
+  if (mode === "dropdowns") {
     return (
-      <div className={cn("space-y-2", className)}>
-        <OrgStateFilter
-          states={states}
-          selected={selectedState}
-          onSelect={onStateChange}
-          brand={brand}
+      <div className={cn("grid gap-2 sm:grid-cols-3 sm:gap-3", className)}>
+        <FilterSelect
+          label="Location"
+          value={selectedState}
+          onValueChange={onStateChange}
+          allLabel="All Locations"
+          options={states.map((code) => ({
+            value: code,
+            label: stateDisplayName(code),
+          }))}
         />
-        <OrgLocFilter
-          levels={levels}
-          selected={selectedLevel}
-          onSelect={onLevelChange}
-          brand={brand}
+        <FilterSelect
+          label="Level of Care"
+          value={selectedLevel}
+          onValueChange={onLevelChange}
+          allLabel="All Levels of Care"
+          options={levels.map((level) => ({ value: level, label: level }))}
+        />
+        <FilterSelect
+          label="Insurance"
+          value={selectedInsurance}
+          onValueChange={onInsuranceChange}
+          allLabel="All Insurance"
+          options={insurers.map((name) => ({ value: name, label: name }))}
         />
       </div>
     );
@@ -165,6 +183,27 @@ export function OrgFacilityFilters({
               </div>
             )}
 
+            {hasInsurance && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Insurance
+                </Label>
+                <Select value={selectedInsurance} onValueChange={onInsuranceChange}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="All insurance" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Insurance</SelectItem>
+                    {insurers.map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {activeCount > 0 && (
               <Button
                 variant="ghost"
@@ -182,6 +221,41 @@ export function OrgFacilityFilters({
           </div>
         </SheetContent>
       </Sheet>
+    </div>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onValueChange,
+  allLabel,
+  options,
+}: {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  allLabel: string;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </Label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="h-10 bg-card">
+          <SelectValue placeholder={allLabel} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">{allLabel}</SelectItem>
+          {options.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

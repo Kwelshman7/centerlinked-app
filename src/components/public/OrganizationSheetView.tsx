@@ -47,8 +47,15 @@ interface Props {
   facilityLevels: string[];
   selectedLevel: string;
   onLevelChange: (level: string) => void;
+  facilityInsurers: string[];
+  selectedInsurance: string;
+  onInsuranceChange: (insurance: string) => void;
+  /** facility_id → in-network payer names */
+  facilityPayersById: Map<string, string[]>;
   /** Optional org description shown under the mobile logo hero. */
   description?: string | null;
+  canManage?: boolean;
+  onToggleHidden?: (facilityId: string, hidden: boolean) => Promise<void> | void;
 }
 
 export function OrganizationSheetView({
@@ -62,7 +69,13 @@ export function OrganizationSheetView({
   facilityLevels,
   selectedLevel,
   onLevelChange,
+  facilityInsurers,
+  selectedInsurance,
+  onInsuranceChange,
+  facilityPayersById,
   description,
+  canManage = false,
+  onToggleHidden,
 }: Props) {
   const stateFiltered = useMemo(() => {
     if (selectedState === "all") return facilities;
@@ -85,19 +98,43 @@ export function OrganizationSheetView({
   const activeLevel =
     selectedLevel !== "all" && visibleLevels.includes(selectedLevel) ? selectedLevel : "all";
 
-  const filteredFacilities = useMemo(() => {
+  const levelFiltered = useMemo(() => {
     if (activeLevel === "all") return stateFiltered;
     return stateFiltered.filter((f) => (f.levels_of_care ?? []).includes(activeLevel));
   }, [stateFiltered, activeLevel]);
 
+  const visibleInsurers = useMemo(() => {
+    if (selectedState === "all" && activeLevel === "all") return facilityInsurers;
+    const names = new Set<string>();
+    for (const f of levelFiltered) {
+      for (const name of facilityPayersById.get(f.id) ?? []) {
+        names.add(name);
+      }
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [levelFiltered, selectedState, activeLevel, facilityInsurers, facilityPayersById]);
+
+  const activeInsurance =
+    selectedInsurance !== "all" && visibleInsurers.includes(selectedInsurance)
+      ? selectedInsurance
+      : "all";
+
+  const filteredFacilities = useMemo(() => {
+    if (activeInsurance === "all") return levelFiltered;
+    return levelFiltered.filter((f) =>
+      (facilityPayersById.get(f.id) ?? []).includes(activeInsurance),
+    );
+  }, [levelFiltered, activeInsurance, facilityPayersById]);
+
   const hasContact = !!(heroContact && (heroContact.phone || heroContact.email));
-  const filterActive = selectedState !== "all" || activeLevel !== "all";
+  const filterActive =
+    selectedState !== "all" || activeLevel !== "all" || activeInsurance !== "all";
   /** Logo already carries the org name — hide the duplicate title on mobile. */
   const hideTitleOnMobile = orgHeroIsLogoFallback(org);
   const showMobileIntro = !!(org.verified || description);
 
   return (
-    <div className={cn("space-y-4 sm:space-y-8", hasContact ? mobileContactBarPadding() : "")}>
+    <div className={cn("space-y-4 sm:space-y-6", hasContact ? mobileContactBarPadding() : "")}>
       {/* Mobile intro under logo hero — desktop heading lives in OrgHeroSection */}
       {showMobileIntro && (
         <header className="space-y-1.5 lg:hidden">
@@ -126,7 +163,7 @@ export function OrganizationSheetView({
       )}
 
       <section>
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:flex-1 gap-0.5 sm:gap-1.5">
               <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight">
@@ -149,21 +186,27 @@ export function OrganizationSheetView({
               levels={visibleLevels}
               selectedLevel={activeLevel}
               onLevelChange={onLevelChange}
+              insurers={visibleInsurers}
+              selectedInsurance={activeInsurance}
+              onInsuranceChange={onInsuranceChange}
               brand={brand}
               className="sm:hidden shrink-0"
             />
           </div>
 
           <OrgFacilityFilters
-            mode="pills"
+            mode="dropdowns"
             states={facilityStates}
             selectedState={selectedState}
             onStateChange={onStateChange}
             levels={visibleLevels}
             selectedLevel={activeLevel}
             onLevelChange={onLevelChange}
+            insurers={visibleInsurers}
+            selectedInsurance={activeInsurance}
+            onInsuranceChange={onInsuranceChange}
             brand={brand}
-            className="hidden sm:block"
+            className="hidden sm:grid"
           />
         </div>
 
@@ -175,7 +218,12 @@ export function OrganizationSheetView({
                 : "No facilities match these filters."}
             </div>
           ) : (
-            <OrgFacilityRail facilities={filteredFacilities} orgSlug={org.slug} />
+            <OrgFacilityRail
+              facilities={filteredFacilities}
+              orgSlug={org.slug}
+              canManage={canManage}
+              onToggleHidden={onToggleHidden}
+            />
           )}
         </div>
       </section>
