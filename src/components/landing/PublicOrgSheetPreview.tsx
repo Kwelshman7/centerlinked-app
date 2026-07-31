@@ -38,13 +38,7 @@ export function PublicOrgSheetPreviewContent() {
   return (
     <div className="relative flex flex-col h-full min-h-0 overflow-hidden bg-muted/30 text-foreground select-none pointer-events-none">
       <div className="flex-1 min-h-0 overflow-hidden pb-[3.75rem]">
-        <OrgHeroSection
-          org={demoOrg}
-          brand={BRAND}
-          compact
-          logoSize="mock"
-          verifiedAt={new Date().toISOString()}
-        />
+        <OrgHeroSection org={demoOrg} brand={BRAND} compact logoSize="mock" />
 
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
           <header className="space-y-1">

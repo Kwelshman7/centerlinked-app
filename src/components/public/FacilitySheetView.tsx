@@ -72,6 +72,8 @@ export interface SheetOrg {
   brand_color?: string | null;
   accent_color?: string | null;
   cover_image_url?: string | null;
+  verified?: boolean | null;
+  updated_at?: string | null;
 }
 
 export interface SheetContract {
@@ -183,7 +185,8 @@ export function FacilitySheetView({
         style={{ backgroundColor: brand, borderColor: brand }}
       />
     ) : null;
-  const showMobileActionBar = !!(hasContact || shareNode);
+  /** Mobile sticky bar matches org pages — single Refer a Patient contact sheet. */
+  const showMobileActionBar = hasContact;
 
   const summaryText =
     facility.short_description ||
@@ -491,10 +494,9 @@ export function FacilitySheetView({
           repEmail={repEmail}
           brand={brand}
           organizationId={org?.id}
-          ctaLabel="Contact now"
+          ctaLabel="Refer a Patient"
           contextLabel={`Reach the BD rep for ${facility.name}.`}
           bottomOffset={tabBarOffset}
-          shareAction={shareNode ? <div className="lg:hidden w-full">{shareNode}</div> : undefined}
         />
       )}
     </div>

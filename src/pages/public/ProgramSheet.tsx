@@ -28,10 +28,13 @@ interface Facility extends FacilitySheetData {
   capacity?: number | null;
   highlights?: string[];
   accreditations?: string[];
+  contracts_verified_at?: string | null;
 }
 
 interface OrgRow extends SheetOrg {
   cover_image_url?: string | null;
+  verified?: boolean | null;
+  updated_at?: string | null;
 }
 
 interface FullContract {
@@ -79,7 +82,7 @@ export default function ProgramSheet() {
     const { data: f } = await supabase
       .from("facilities")
       .select(
-        "id,organization_id,name,slug,description,tagline,short_description,address_line1,city,state,zip,phone,website,capacity,highlights,quick_highlights,accreditations,image_urls,levels_of_care,population_served,specializations,treatment_focus,insurance_status,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,hidden_from_org_page,created_at,updated_at",
+        "id,organization_id,name,slug,description,tagline,short_description,address_line1,city,state,zip,phone,website,capacity,highlights,quick_highlights,accreditations,image_urls,levels_of_care,population_served,specializations,treatment_focus,insurance_status,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,hidden_from_org_page,created_at,updated_at,contracts_verified_at",
       )
       .eq("slug", facilitySlug)
       .eq("verification_status", "approved")
@@ -95,7 +98,7 @@ export default function ProgramSheet() {
       supabase
         .from("organizations")
         .select(
-          "id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,website,tagline,brand_color,accent_color,cover_image_url",
+          "id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,website,tagline,brand_color,accent_color,cover_image_url,verified,updated_at",
         )
         .eq("id", fac.organization_id)
         .maybeSingle(),
@@ -256,6 +259,8 @@ export default function ProgramSheet() {
           tagline={org?.tagline ?? null}
           brand={brand}
           orgLinkLabel="View all programs"
+          verified={!!org?.verified}
+          verifiedAt={facility.contracts_verified_at ?? org?.updated_at ?? null}
           contact={
             (facility.bd_contact_name || org?.bd_contact_name) &&
             (facility.bd_contact_phone ||

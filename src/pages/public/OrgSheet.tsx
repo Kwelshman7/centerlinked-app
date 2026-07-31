@@ -264,6 +264,7 @@ export default function OrgSheet() {
           onInsuranceChange={setSelectedInsurance}
           facilityPayersById={facilityPayersById}
           description={briefDescription}
+          verifiedAt={verifiedAt}
         />
       </main>
     </div>

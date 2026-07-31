@@ -10,7 +10,6 @@ import {
   Clock,
   ShieldCheck,
   User,
-  Share2,
   ChevronRight,
 } from "lucide-react";
 import { ExpandableText } from "@/components/public/ExpandableText";
@@ -160,21 +159,12 @@ export function PublicFacilitySheetPreviewContent() {
       </div>
 
       <div className="absolute inset-x-0 bottom-0 z-30 bg-card/95 backdrop-blur-md border-t border-border px-3.5 pt-2 pb-2">
-        <div className="flex gap-2">
-          <div
-            className="flex-1 h-10 rounded-md text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md"
-            style={{ backgroundColor: BRAND }}
-          >
-            <Share2 className="h-4 w-4" aria-hidden />
-            Share Facility
-          </div>
-          <div
-            className="flex-1 h-10 rounded-md text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md"
-            style={{ backgroundColor: BRAND }}
-          >
-            <User className="h-4 w-4" aria-hidden />
-            Contact now
-          </div>
+        <div
+          className="h-10 w-full rounded-md text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md"
+          style={{ backgroundColor: BRAND }}
+        >
+          <User className="h-4 w-4" aria-hidden />
+          Refer a Patient
         </div>
       </div>
     </div>

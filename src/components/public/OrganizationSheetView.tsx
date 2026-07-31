@@ -52,6 +52,8 @@ interface Props {
   facilityPayersById: Map<string, string[]>;
   /** Org description shown under the mobile logo hero (matches landing mock). */
   description?: string | null;
+  /** Most recent verification timestamp for the footer verified mark. */
+  verifiedAt?: string | null;
 }
 
 export function OrganizationSheetView({
@@ -70,6 +72,7 @@ export function OrganizationSheetView({
   onInsuranceChange,
   facilityPayersById,
   description,
+  verifiedAt,
 }: Props) {
   const stateFiltered = useMemo(() => {
     if (selectedState === "all") return facilities;
@@ -211,6 +214,8 @@ export function OrganizationSheetView({
         tagline={org.tagline}
         brand={brand}
         contact={heroContact}
+        verified={org.verified}
+        verifiedAt={verifiedAt ?? org.updated_at}
       />
 
       {hasContact && heroContact && (

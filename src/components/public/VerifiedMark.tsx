@@ -36,36 +36,42 @@ function CenterLinkedBall({ className }: { className?: string }) {
 interface Props {
   verifiedAt?: string | null;
   className?: string;
-  /** Compact for mobile logo strip; default suits desktop logo tile. */
+  /** Compact for dense layouts; default suits desktop logo tile / footer. */
   size?: "sm" | "md";
+  /** `onBrand` for use on dark branded footer surfaces. */
+  tone?: "default" | "onBrand";
 }
 
 /**
  * Verified trust mark — CenterLinked ball + Verified, with a subtle date underneath.
- * Meant to sit in the top-right corner over the org logo.
  */
-export function VerifiedMark({ verifiedAt, className, size = "md" }: Props) {
+export function VerifiedMark({
+  verifiedAt,
+  className,
+  size = "md",
+  tone = "default",
+}: Props) {
   const dateLabel = formatVerifiedDate(verifiedAt);
   const sm = size === "sm";
+  const onBrand = tone === "onBrand";
 
   return (
-    <div
-      className={cn(
-        "flex flex-col items-end gap-0.5",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-col items-end gap-0.5", className)}>
       <span
         className={cn(
-          "inline-flex items-center rounded-full border border-border/70 bg-white/95 shadow-sm backdrop-blur-sm",
+          "inline-flex items-center rounded-full shadow-sm",
           sm ? "gap-1 px-1.5 py-0.5" : "gap-1.5 px-2 py-1",
+          onBrand
+            ? "border border-white/25 bg-white/15 backdrop-blur-sm"
+            : "border border-border/70 bg-white/95 backdrop-blur-sm",
         )}
       >
         <CenterLinkedBall className={sm ? "h-3.5 w-3.5" : "h-4 w-4"} />
         <span
           className={cn(
-            "font-bold uppercase tracking-wider text-foreground",
+            "font-bold uppercase tracking-wider",
             sm ? "text-[9px]" : "text-[10px]",
+            onBrand ? "text-white" : "text-foreground",
           )}
         >
           Verified
@@ -74,8 +80,9 @@ export function VerifiedMark({ verifiedAt, className, size = "md" }: Props) {
       {dateLabel ? (
         <span
           className={cn(
-            "text-muted-foreground/70 font-medium tracking-wide",
+            "font-medium tracking-wide",
             sm ? "text-[8px]" : "text-[9px]",
+            onBrand ? "text-white/65" : "text-muted-foreground/70",
           )}
         >
           {dateLabel}

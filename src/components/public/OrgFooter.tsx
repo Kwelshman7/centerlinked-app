@@ -8,6 +8,17 @@ import { trackOrgEvent } from "@/lib/track-org-event";
 import { orgDisplayPath, orgPublicPath } from "@/lib/public-urls";
 import { cn } from "@/lib/utils";
 
+function formatFooterVerifiedDate(d: string | null | undefined) {
+  if (!d) return null;
+  try {
+    const date = new Date(d);
+    if (Number.isNaN(date.getTime())) return null;
+    return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
+  } catch {
+    return null;
+  }
+}
+
 interface Props {
   orgId: string;
   orgName: string;
@@ -23,6 +34,9 @@ interface Props {
   /** Native share sheet title (defaults to org name). */
   shareTitle?: string;
   orgLinkLabel?: string;
+  /** Show CenterLinked verified mark (mobile footer — logo overlay is desktop-only). */
+  verified?: boolean;
+  verifiedAt?: string | null;
 }
 
 export function OrgFooter({
@@ -37,6 +51,8 @@ export function OrgFooter({
   shareDisplayPath,
   shareTitle,
   orgLinkLabel,
+  verified = false,
+  verifiedAt,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const displayUrl =
@@ -49,6 +65,7 @@ export function OrgFooter({
       : `https://${displayUrl}`);
   const year = new Date().getFullYear();
   const hasContact = !!(contact && (contact.phone || contact.email));
+  const verifiedDate = verified ? formatFooterVerifiedDate(verifiedAt) : null;
 
   const copy = async () => {
     try {
@@ -158,8 +175,13 @@ export function OrgFooter({
                 </Button>
               </div>
 
-              <div className="pt-3 border-t border-white/15">
-                <p className="text-[11px] text-white/65">© {year} {orgName}</p>
+              <div className="pt-3 border-t border-white/15 flex items-center justify-between gap-3 min-w-0">
+                <p className="text-[11px] text-white/65 truncate">© {year} {orgName}</p>
+                {verified ? (
+                  <p className="text-[10px] text-white/55 font-medium tracking-wide whitespace-nowrap shrink-0 lg:hidden">
+                    Verified{verifiedDate ? ` ${verifiedDate}` : ""}
+                  </p>
+                ) : null}
               </div>
             </div>
 

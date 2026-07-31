@@ -63,15 +63,7 @@ export function OrgHeroSection({
   parts = "all",
 }: Props) {
   if (compact || parts === "media") {
-    return (
-      <MobileLogoHero
-        org={org}
-        brand={brand}
-        compact={compact}
-        logoSize={logoSize}
-        verifiedAt={verifiedAt}
-      />
-    );
+    return <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />;
   }
 
   return (
@@ -207,13 +199,11 @@ function MobileLogoHero({
   brand,
   compact,
   logoSize,
-  verifiedAt,
 }: {
   org: OrgHeroOrg;
   brand: string;
   compact: boolean;
   logoSize: "default" | "mock";
-  verifiedAt?: string | null;
 }) {
   const heroImage = orgHeroImage({ ...org, cover_image_url: null });
   const logoAsHero = orgHeroIsLogoFallback({ ...org, cover_image_url: null }) || !!org.logo_url;
@@ -227,13 +217,6 @@ function MobileLogoHero({
           background: `linear-gradient(160deg, ${brand}12 0%, hsl(var(--background)) 55%, ${brand}08 100%)`,
         }}
       >
-        {org.verified && (
-          <VerifiedMark
-            verifiedAt={verifiedAt ?? org.updated_at}
-            size="sm"
-            className="absolute top-2 right-2.5 z-10"
-          />
-        )}
         <div
           className={cn(
             "flex items-center justify-center",
@@ -262,13 +245,6 @@ function MobileLogoHero({
 
   return (
     <section className="relative w-full overflow-hidden bg-muted/40">
-      {org.verified && (
-        <VerifiedMark
-          verifiedAt={verifiedAt ?? org.updated_at}
-          size="sm"
-          className="absolute top-2 right-2.5 z-10"
-        />
-      )}
       <div
         className={cn(
           "relative w-full",
