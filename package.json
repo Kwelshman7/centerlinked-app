@@ -14,7 +14,9 @@
     "facility-images:apply": "node server/facility-images/apply-pending-reports.mjs",
     "backfill-payer-ids": "node server/backfill-payer-ids.mjs",
     "seed-missing-payers": "node server/seed-missing-payers.mjs",
-    "approve-all-facilities": "node server/approve-all-facilities.mjs"
+    "approve-all-facilities": "node server/approve-all-facilities.mjs",
+    "reconcile-contracts": "node server/reconcile-facility-contracts.mjs",
+    "reconcile-contracts:apply": "node server/reconcile-facility-contracts.mjs --apply"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",

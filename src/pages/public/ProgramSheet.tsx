@@ -178,11 +178,8 @@ export default function ProgramSheet() {
         <ProgramOrgHeader org={org} facilityName={facility.name} brand={brand} />
       ) : (
         <header className="bg-slate-900 text-white border-b border-slate-800 print:hidden">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center">
             <span className="font-heading font-bold">{facility.name}</span>
-            <Button asChild size="sm" variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
-              <Link to="/login">Sign in</Link>
-            </Button>
           </div>
         </header>
       )}

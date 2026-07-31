@@ -41,15 +41,9 @@ export function ProgramOrgHeader({ org, facilityName, brand, trailing }: Props) 
           </div>
         </Link>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {trailing}
-          <Link
-            to="/login"
-            className="hidden sm:inline text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign in
-          </Link>
-        </div>
+        {trailing ? (
+          <div className="flex items-center gap-2 shrink-0">{trailing}</div>
+        ) : null}
       </div>
     </header>
   );

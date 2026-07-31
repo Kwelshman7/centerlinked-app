@@ -127,7 +127,9 @@ export function OrganizationSheetView({
     selectedState !== "all" || activeLevel !== "all" || activeInsurance !== "all";
   /** Logo already carries the org name — hide the duplicate title on mobile. */
   const hideTitleOnMobile = orgHeroIsLogoFallback(org);
-  const showMobileIntro = !!(org.verified || description);
+  /** Cover overlay hero already shows identity — skip the mobile intro block. */
+  const hasCoverHero = !!org.cover_image_url?.trim();
+  const showMobileIntro = !hasCoverHero && !!(org.verified || description);
 
   return (
     <div className={cn("space-y-4 sm:space-y-6", hasContact ? mobileContactBarPadding() : "")}>

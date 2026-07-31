@@ -108,36 +108,44 @@ export function OrgFooter({
             hasContact && "lg:grid-cols-[minmax(0,3fr)_minmax(240px,1fr)]",
           )}
         >
-          <div className="px-5 sm:px-8 py-6 sm:py-7 flex flex-col justify-between gap-5 min-w-0">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-xl bg-white shadow-md ring-1 ring-black/5 overflow-hidden grid place-items-center p-2 shrink-0">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt={`${orgName} logo`}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <Building2 className="h-7 w-7 text-foreground/60" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading text-lg sm:text-xl font-bold leading-tight truncate">
-                  {orgName}
-                </p>
-                {tagline && (
-                  <p className="text-xs sm:text-sm text-white/80 mt-0.5 leading-snug line-clamp-2">
-                    {tagline}
+          <div className="px-5 sm:px-8 py-5 flex flex-col gap-4 min-w-0">
+            <div className="flex items-center justify-between gap-3 sm:gap-4 min-w-0">
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-white shadow-md ring-1 ring-black/5 overflow-hidden grid place-items-center p-2 shrink-0">
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt={`${orgName} logo`}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <Building2 className="h-7 w-7 text-foreground/60" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-heading text-base sm:text-xl font-bold leading-tight truncate">
+                    {orgName}
                   </p>
-                )}
+                  {tagline && (
+                    <p className="text-xs sm:text-sm text-white/80 mt-0.5 leading-snug line-clamp-2">
+                      {tagline}
+                    </p>
+                  )}
+                  {orgLinkLabel && slug && (
+                    <Link
+                      to={orgPublicPath(slug)}
+                      className="mt-1 inline-block text-[11px] font-semibold text-white/85 hover:text-white hover:underline"
+                    >
+                      {orgLinkLabel} →
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <Button
                 size="lg"
                 onClick={share}
-                className="h-11 bg-white text-foreground hover:bg-white/90 font-semibold w-full sm:w-auto sm:min-w-[140px]"
+                className="h-10 sm:h-11 px-4 sm:px-5 bg-white text-foreground hover:bg-white/90 font-semibold shrink-0"
               >
                 {copied ? (
                   <Check className="h-4 w-4 shrink-0" />
@@ -146,17 +154,9 @@ export function OrgFooter({
                 )}
                 {copied ? "Copied" : "Share"}
               </Button>
-              {orgLinkLabel && slug && (
-                <Link
-                  to={orgPublicPath(slug)}
-                  className="text-[11px] font-semibold text-white/85 hover:text-white hover:underline"
-                >
-                  {orgLinkLabel} →
-                </Link>
-              )}
             </div>
 
-            <div className="pt-1 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="pt-3 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <p className="text-[11px] text-white/65">
                 © {year} {orgName}
               </p>

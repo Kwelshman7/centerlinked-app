@@ -207,12 +207,12 @@ export default function OrgSheet() {
       brand={brand}
       heading="For Referrals"
       website={org.website}
-      variant="default"
+      variant={hasCover ? "floating" : "default"}
       size="lg"
       className="w-full shadow-2xl"
     />
   ) : (
-    <div className="rounded-xl border border-border/60 bg-card shadow-sm p-1">
+    <div className="rounded-xl border border-border/60 bg-card/95 shadow-sm p-1 backdrop-blur-md">
       <OrgClaimCard organizationId={org.id} organizationName={org.name} />
     </div>
   );
@@ -227,27 +227,36 @@ export default function OrgSheet() {
     >
       <OrgAppHeader brand={brand} />
 
-      {/* Full-bleed cover / mobile logo under the nav */}
-      <div className="lg:hidden">
-        <OrgHeroSection org={org} brand={brand} compact parts="media" />
-      </div>
-      {hasCover && (
-        <div className="hidden lg:block">
-          <OrgHeroSection org={org} brand={brand} parts="media" />
-        </div>
+      {hasCover ? (
+        <OrgHeroSection
+          org={org}
+          brand={brand}
+          description={briefDescription}
+          facilityCount={facilities.length}
+          contactAside={contactAside}
+          parts="overlay"
+        />
+      ) : (
+        <>
+          <div className="lg:hidden">
+            <OrgHeroSection org={org} brand={brand} compact parts="media" />
+          </div>
+        </>
       )}
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:pt-2 lg:pb-8 space-y-5 sm:space-y-6">
-        <div className="hidden lg:block">
-          <OrgHeroSection
-            org={org}
-            brand={brand}
-            description={briefDescription}
-            facilityCount={facilities.length}
-            contactAside={contactAside}
-            parts="heading"
-          />
-        </div>
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:pt-6 lg:pb-8 space-y-5 sm:space-y-6">
+        {!hasCover && (
+          <div className="hidden lg:block">
+            <OrgHeroSection
+              org={org}
+              brand={brand}
+              description={briefDescription}
+              facilityCount={facilities.length}
+              contactAside={contactAside}
+              parts="heading"
+            />
+          </div>
+        )}
 
         <OrganizationSheetView
           org={org}
@@ -264,7 +273,7 @@ export default function OrgSheet() {
           selectedInsurance={selectedInsurance}
           onInsuranceChange={setSelectedInsurance}
           facilityPayersById={facilityPayersById}
-          description={briefDescription}
+          description={hasCover ? null : briefDescription}
         />
       </main>
     </div>

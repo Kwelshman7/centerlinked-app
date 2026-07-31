@@ -27,8 +27,7 @@ interface Props {
   /** Contact / claim card rendered on the right (desktop only). */
   contactAside?: ReactNode;
   /**
-   * Force the compact logo-on-top hero (phone mockups).
-   * On real pages, mobile uses logo-on-top and lg+ uses the heading band.
+   * Force the compact logo-on-top hero (phone mockups / mobile media strip).
    */
   compact?: boolean;
   /**
@@ -37,18 +36,19 @@ interface Props {
    */
   logoSize?: "default" | "mock";
   /**
-   * `media` — cover photo or mobile logo only (full-bleed).
-   * `heading` — desktop title + contact band only.
-   * `all` — both (default for standalone/preview use).
+   * `overlay` — cover image behind heading with dim overlay (shared org page).
+   * `media` — cover/logo strip only.
+   * `heading` — desktop title + contact band only (no-cover pages).
+   * `all` — default/preview behavior.
    */
-  parts?: "all" | "media" | "heading";
+  parts?: "all" | "media" | "heading" | "overlay";
 }
 
 /**
  * Org hero:
- * - Cover photo (when set): full-bleed banner.
- * - Mobile / compact without cover: logo mark on top.
- * - Desktop heading: logo tile + title + contact card.
+ * - Cover overlay: full-bleed image behind the heading, dimmed, bright type.
+ * - No cover / compact: logo mark on top.
+ * - Desktop without cover: logo tile + title + contact card.
  */
 export function OrgHeroSection({
   org,
@@ -61,6 +61,34 @@ export function OrgHeroSection({
   parts = "all",
 }: Props) {
   const coverUrl = org.cover_image_url?.trim() || null;
+
+  if (parts === "overlay" && coverUrl) {
+    return (
+      <OverlayHero
+        org={org}
+        brand={brand}
+        coverUrl={coverUrl}
+        description={description}
+        facilityCount={facilityCount}
+        contactAside={contactAside}
+      />
+    );
+  }
+
+  // Default: if a cover exists and we're rendering the full hero, use overlay.
+  if (parts === "all" && coverUrl && !compact) {
+    return (
+      <OverlayHero
+        org={org}
+        brand={brand}
+        coverUrl={coverUrl}
+        description={description}
+        facilityCount={facilityCount}
+        contactAside={contactAside}
+      />
+    );
+  }
+
   const showMedia = parts === "all" || parts === "media";
   const showHeading = !compact && (parts === "all" || parts === "heading");
 
@@ -83,11 +111,129 @@ export function OrgHeroSection({
             description={description}
             facilityCount={facilityCount}
             contactAside={contactAside}
-            hasCover={!!coverUrl}
           />
         </div>
       )}
     </>
+  );
+}
+
+/** Full-bleed cover with dim overlay and bright heading content on top. */
+function OverlayHero({
+  org,
+  brand,
+  coverUrl,
+  description,
+  facilityCount,
+  contactAside,
+}: {
+  org: OrgHeroOrg;
+  brand: string;
+  coverUrl: string;
+  description?: string | null;
+  facilityCount: number;
+  contactAside?: ReactNode;
+}) {
+  const headline = org.name;
+  const tagline = org.tagline && org.tagline !== org.name ? org.tagline : null;
+  const hq = [org.hq_city, org.hq_state].filter(Boolean).join(", ");
+  const locationMeta = [
+    hq || null,
+    facilityCount > 0
+      ? `${facilityCount} ${facilityCount === 1 ? "location" : "locations"}${hq ? " nationwide" : ""}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <section
+      className="relative w-full overflow-hidden min-h-[260px] sm:min-h-[300px] lg:min-h-[380px]"
+      aria-label={`${org.name} profile header`}
+    >
+      <img
+        src={coverUrl}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover object-center scale-[1.02]"
+      />
+      {/* Dim the photo so bright type reads clearly */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/50"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/45"
+      />
+
+      <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14">
+        <div
+          className={cn(
+            "grid items-center gap-6",
+            contactAside && "lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-x-10",
+          )}
+        >
+          <div className="flex items-start min-w-0 gap-3.5 sm:gap-4">
+            <div className="shrink-0 rounded-2xl bg-white shadow-xl overflow-hidden grid place-items-center h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem] ring-1 ring-white/50">
+              {org.logo_url ? (
+                <img
+                  src={org.logo_url}
+                  alt={`${org.name} logo`}
+                  className="h-[78%] w-[78%] object-contain"
+                />
+              ) : (
+                <div
+                  className="h-full w-full grid place-items-center"
+                  style={{
+                    background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
+                  }}
+                >
+                  <Building2 className="h-7 w-7 text-white/90" aria-hidden />
+                </div>
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 space-y-2">
+              {org.verified && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/40 bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm shadow-sm">
+                  <BadgeCheck className="h-3 w-3" />
+                  Verified
+                </span>
+              )}
+
+              <h1 className="font-heading font-extrabold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] leading-[1.12] text-2xl sm:text-3xl lg:text-[2.35rem]">
+                {headline}
+              </h1>
+
+              {tagline ? (
+                <p className="font-semibold text-sm sm:text-base text-white drop-shadow-sm">
+                  {tagline}
+                </p>
+              ) : null}
+
+              {locationMeta ? (
+                <p className="text-white/85 font-medium text-sm drop-shadow-sm">{locationMeta}</p>
+              ) : null}
+
+              {description ? (
+                <ExpandableText
+                  text={description}
+                  brand="#FFFFFF"
+                  clampLines={3}
+                  className="max-w-2xl pt-0.5 [&_p]:text-white/90 [&_p]:text-sm sm:[&_p]:text-[0.95rem] [&_p]:drop-shadow-sm"
+                />
+              ) : null}
+            </div>
+          </div>
+
+          {contactAside ? (
+            <div id="org-contact" className="hidden lg:block min-w-0 self-center">
+              {contactAside}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -115,7 +261,7 @@ function CoverBanner({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/20 to-black/25"
       />
     </section>
   );
@@ -200,21 +346,19 @@ function MobileLogoHero({
   );
 }
 
-/** Desktop-only professional heading + contact card. */
+/** Desktop-only professional heading + contact card (no cover photo). */
 function DesktopHeadingBand({
   org,
   brand,
   description,
   facilityCount,
   contactAside,
-  hasCover,
 }: {
   org: OrgHeroOrg;
   brand: string;
   description?: string | null;
   facilityCount: number;
   contactAside?: ReactNode;
-  hasCover: boolean;
 }) {
   const headline = org.name;
   const tagline = org.tagline && org.tagline !== org.name ? org.tagline : null;
@@ -232,9 +376,7 @@ function DesktopHeadingBand({
     <section
       className="relative w-full pt-6 pb-1"
       style={{
-        background: hasCover
-          ? undefined
-          : `radial-gradient(ellipse 70% 55% at 50% 0%, ${brand}14 0%, transparent 70%)`,
+        background: `radial-gradient(ellipse 70% 55% at 50% 0%, ${brand}14 0%, transparent 70%)`,
       }}
     >
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-x-8">
