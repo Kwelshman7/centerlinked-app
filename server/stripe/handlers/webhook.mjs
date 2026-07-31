@@ -1,0 +1,252 @@
+import { getStripe } from "../client.mjs";
+import { supabaseAdmin } from "../supabase.mjs";
+import { sendEmail } from "../../email/send.mjs";
+import { ADMIN_NOTIFY_EMAIL } from "../../email/config.mjs";
+
+function periodEndIso(subscription) {
+  const itemEnd = subscription?.items?.data?.[0]?.current_period_end;
+  const end = itemEnd ?? subscription?.current_period_end;
+  if (!end) return null;
+  return new Date(end * 1000).toISOString();
+}
+
+function primaryPriceId(subscription) {
+  return subscription?.items?.data?.[0]?.price?.id || null;
+}
+
+async function findOrgId({ admin, organizationId, customerId, subscription }) {
+  if (organizationId) return organizationId;
+  const fromMeta = subscription?.metadata?.organization_id;
+  if (fromMeta) return fromMeta;
+
+  if (customerId) {
+    const { data } = await admin
+      .from("organizations")
+      .select("id")
+      .eq("stripe_customer_id", customerId)
+      .maybeSingle();
+    if (data?.id) return data.id;
+  }
+
+  if (subscription?.id) {
+    const { data } = await admin
+      .from("organizations")
+      .select("id")
+      .eq("stripe_subscription_id", subscription.id)
+      .maybeSingle();
+    if (data?.id) return data.id;
+  }
+
+  return null;
+}
+
+async function applySubscription(admin, orgId, subscription, extras = {}) {
+  const status = subscription?.status || "none";
+  const patch = {
+    stripe_subscription_id: subscription?.id || null,
+    subscription_status: status,
+    subscription_price_id: primaryPriceId(subscription),
+    subscription_current_period_end: periodEndIso(subscription),
+    ...extras,
+  };
+  if (subscription?.customer) {
+    patch.stripe_customer_id =
+      typeof subscription.customer === "string"
+        ? subscription.customer
+        : subscription.customer.id;
+  }
+  const { error } = await admin.from("organizations").update(patch).eq("id", orgId);
+  if (error) throw new Error(error.message);
+}
+
+async function notifyDoneForYouPurchase({ orgName, orgId, email }) {
+  const subject = `Done For You purchase · ${orgName}`;
+  const text = [
+    "A Done For You setup package was purchased.",
+    "",
+    `Organization: ${orgName}`,
+    `Organization ID: ${orgId}`,
+    email ? `Billing email: ${email}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const result = await sendEmail({
+    to: ADMIN_NOTIFY_EMAIL,
+    subject,
+    text,
+    html: `<pre style="font-family:sans-serif;white-space:pre-wrap">${text}</pre>`,
+  });
+  if (!result.ok) {
+    console.warn("[stripe-webhook] DFY notify failed:", result.error);
+  }
+}
+
+async function handleCheckoutCompleted(admin, session) {
+  const organizationId =
+    session.client_reference_id || session.metadata?.organization_id || null;
+  const customerId =
+    typeof session.customer === "string" ? session.customer : session.customer?.id;
+  const subscriptionId =
+    typeof session.subscription === "string"
+      ? session.subscription
+      : session.subscription?.id;
+
+  const orgId = await findOrgId({
+    admin,
+    organizationId,
+    customerId,
+    subscription: subscriptionId ? { id: subscriptionId, metadata: session.metadata } : null,
+  });
+  if (!orgId) {
+    console.warn("[stripe-webhook] checkout.session.completed: org not found", session.id);
+    return;
+  }
+
+  const setupPackage =
+    session.metadata?.setup_package === "done_for_you" ? "done_for_you" : "self_serve";
+  const setupOnly = session.metadata?.setup_only === "true";
+
+  const patch = {
+    stripe_customer_id: customerId || undefined,
+    setup_package: setupPackage,
+    billing_email: session.customer_details?.email || session.customer_email || undefined,
+  };
+
+  if (subscriptionId) {
+    const stripe = getStripe();
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    await applySubscription(admin, orgId, subscription, {
+      setup_package: setupPackage,
+      billing_email: patch.billing_email,
+    });
+  } else {
+    // One-time Done For You add-on (or payment-mode checkout without subscription)
+    const clean = Object.fromEntries(
+      Object.entries({
+        ...patch,
+        ...(setupOnly ? { setup_package: "done_for_you" } : {}),
+      }).filter(([, v]) => v !== undefined),
+    );
+    const { error } = await admin.from("organizations").update(clean).eq("id", orgId);
+    if (error) throw new Error(error.message);
+  }
+
+  if (setupPackage === "done_for_you") {
+    const { data: org } = await admin
+      .from("organizations")
+      .select("name,billing_email")
+      .eq("id", orgId)
+      .maybeSingle();
+    await notifyDoneForYouPurchase({
+      orgName: org?.name || orgId,
+      orgId,
+      email: org?.billing_email || session.customer_details?.email,
+    });
+  }
+}
+
+async function handleSubscriptionEvent(admin, subscription) {
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id;
+  const orgId = await findOrgId({
+    admin,
+    organizationId: subscription.metadata?.organization_id,
+    customerId,
+    subscription,
+  });
+  if (!orgId) {
+    console.warn("[stripe-webhook] subscription event: org not found", subscription.id);
+    return;
+  }
+
+  if (subscription.status === "canceled") {
+    await applySubscription(admin, orgId, subscription, {
+      subscription_status: "canceled",
+    });
+    return;
+  }
+
+  await applySubscription(admin, orgId, subscription);
+}
+
+async function handleInvoicePaymentFailed(admin, invoice) {
+  const customerId =
+    typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  const subscriptionId =
+    typeof invoice.subscription === "string"
+      ? invoice.subscription
+      : invoice.subscription?.id;
+
+  const orgId = await findOrgId({
+    admin,
+    customerId,
+    subscription: subscriptionId ? { id: subscriptionId } : null,
+  });
+  if (!orgId) return;
+
+  const { error } = await admin
+    .from("organizations")
+    .update({ subscription_status: "past_due" })
+    .eq("id", orgId);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * @param {Buffer|string} rawBody
+ * @param {string|string[]|undefined} signatureHeader
+ */
+export async function handleStripeWebhook(rawBody, signatureHeader) {
+  const stripe = getStripe();
+  if (!stripe) {
+    return { status: 500, json: { error: "STRIPE_SECRET_KEY is not configured" } };
+  }
+
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) {
+    return { status: 500, json: { error: "STRIPE_WEBHOOK_SECRET is not configured" } };
+  }
+
+  const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
+  if (!signature) {
+    return { status: 400, json: { error: "Missing Stripe-Signature header" } };
+  }
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, secret);
+  } catch (err) {
+    console.error("[stripe-webhook] signature verification failed", err?.message);
+    return { status: 400, json: { error: `Webhook Error: ${err.message}` } };
+  }
+
+  const admin = supabaseAdmin();
+  if (!admin) {
+    return { status: 500, json: { error: "SUPABASE_SERVICE_ROLE is not configured" } };
+  }
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(admin, event.data.object);
+        break;
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted":
+        await handleSubscriptionEvent(admin, event.data.object);
+        break;
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(admin, event.data.object);
+        break;
+      default:
+        break;
+    }
+  } catch (err) {
+    console.error("[stripe-webhook] handler error", event.type, err);
+    return { status: 500, json: { error: err?.message || "Webhook handler failed" } };
+  }
+
+  return { status: 200, json: { received: true } };
+}

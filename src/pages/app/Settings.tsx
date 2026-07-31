@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -11,12 +11,15 @@ import { ImageUploader } from "@/components/app/ImageUploader";
 import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck } from "lucide-react";
 import { SuperAdminSettingsCard } from "@/components/app/admin/SuperAdminPanel";
 import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
+import { OrgBillingCard } from "@/components/app/OrgBillingCard";
 import { cn } from "@/lib/utils";
 import { mergeOrgImages } from "@/lib/org-hero";
+import type { OrgBilling } from "@/lib/billing";
 import { toast } from "sonner";
 
 export default function Settings() {
   const { profile, user, isFacilityAdmin, isSuperAdmin, needsSuperAdminSetup, refresh } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [fullName, setFullName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,6 +36,7 @@ export default function Settings() {
   const [bdPhone, setBdPhone] = useState("");
   const [bdEmail, setBdEmail] = useState("");
   const [savingOrg, setSavingOrg] = useState(false);
+  const [billing, setBilling] = useState<OrgBilling | null>(null);
 
   // Branded mini-homepage customization
   const [tagline, setTagline] = useState("");
@@ -51,6 +55,17 @@ export default function Settings() {
   const [payersCount, setPayersCount] = useState(0);
   const [contractsCount, setContractsCount] = useState(0);
   const [membersCount, setMembersCount] = useState(0);
+
+  const billingParam = searchParams.get("billing");
+
+  useEffect(() => {
+    if (billingParam === "success") {
+      toast.success("Billing updated — welcome aboard");
+      const next = new URLSearchParams(searchParams);
+      next.delete("billing");
+      setSearchParams(next, { replace: true });
+    }
+  }, [billingParam, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (profile) {
@@ -91,6 +106,13 @@ export default function Settings() {
         if (Array.isArray(wr)) {
           setWhyRefer(wr.filter((x): x is { title: string; body: string } => !!x && typeof x === "object" && "title" in x && "body" in x));
         }
+        setBilling({
+          subscription_status: data.subscription_status || "none",
+          subscription_current_period_end: data.subscription_current_period_end || null,
+          setup_package: data.setup_package || null,
+          stripe_customer_id: data.stripe_customer_id || null,
+          billing_email: data.billing_email || null,
+        });
       }
       const { data: fs } = await supabase
         .from("facilities")
@@ -114,7 +136,7 @@ export default function Settings() {
         .eq("organization_id", orgId);
       setMembersCount(memCount ?? 0);
     })();
-  }, [profile?.organization_id]);
+  }, [profile?.organization_id, billingParam]);
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,6 +202,15 @@ export default function Settings() {
       {needsSuperAdminSetup && <SuperAdminSetupAlert />}
 
       {isSuperAdmin && <SuperAdminSettingsCard />}
+
+      {profile?.organization_id && (
+        <div id="billing">
+          <OrgBillingCard
+            billing={billing}
+            canManage={isFacilityAdmin || isSuperAdmin}
+          />
+        </div>
+      )}
 
       {profile?.organization_id && (
         <Card className="p-5 sm:p-6 space-y-5">

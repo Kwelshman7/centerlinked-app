@@ -20,6 +20,7 @@ import { Logo } from "@/components/Logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { adminLinks } from "@/components/app/admin/SuperAdminPanel";
+import { BillingStatusBanner } from "@/components/app/BillingStatusBanner";
 
 type NavItem = { to: string; label: string; icon: typeof SearchIcon; end?: boolean };
 
@@ -244,6 +245,7 @@ export function AppLayout() {
             !isMessengerThread && "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-10"
           )}
         >
+          <BillingStatusBanner />
           <Outlet />
         </div>
       </main>

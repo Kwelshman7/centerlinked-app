@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, Star } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Check, ArrowRight, Star, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
+import { useAuth } from "@/contexts/AuthContext";
+import { startCheckout, type BillingPlan } from "@/lib/billing";
+import { toast } from "sonner";
 
 const plans = [
   {
+    id: "membership" as BillingPlan,
     name: "Build It Yourself",
     priceNote: "Self-serve setup",
     price: "$99",
@@ -27,6 +32,7 @@ const plans = [
     badge: null as string | null,
   },
   {
+    id: "done_for_you" as BillingPlan,
     name: "Done For You",
     priceNote: "We build your profile",
     price: "$499",
@@ -50,6 +56,40 @@ const plans = [
 ];
 
 export function Pricing() {
+  const { user, profile, isFacilityAdmin, isSuperAdmin, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState<BillingPlan | null>(null);
+
+  const handleCheckout = async (plan: BillingPlan) => {
+    if (authLoading) return;
+
+    if (!user) {
+      navigate("/login", { state: { from: `/#pricing`, checkoutPlan: plan } });
+      toast.message("Sign in to continue to checkout");
+      return;
+    }
+
+    if (!profile?.organization_id) {
+      navigate("/setup-organization", { replace: false });
+      toast.message("Set up your organization before subscribing");
+      return;
+    }
+
+    if (!isFacilityAdmin && !isSuperAdmin) {
+      toast.error("Ask an organization admin to start a subscription");
+      return;
+    }
+
+    setLoadingPlan(plan);
+    try {
+      const url = await startCheckout(plan);
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start checkout");
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <section className="py-16 sm:py-20 lg:py-28 bg-secondary/40">
       <div className="container">
@@ -109,16 +149,26 @@ export function Pricing() {
               </ul>
 
               <Button
-                asChild
+                type="button"
                 variant={plan.featured ? "hero" : "hero-outline"}
                 size="lg"
                 className="mt-7 w-full group rounded-full"
+                disabled={!!loadingPlan || authLoading}
+                onClick={() => handleCheckout(plan.id)}
               >
-                <Link to="/request-access">
-                  {plan.cta}
-                  <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
+                {loadingPlan === plan.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                {plan.cta}
+                <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </Button>
+
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Prefer to talk first?{" "}
+                <Link to="/request-access" className="underline underline-offset-2 hover:text-foreground">
+                  Request access
+                </Link>
+              </p>
             </div>
           ))}
         </div>

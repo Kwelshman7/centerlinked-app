@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { socialPreviewPlugin } from "./vite-plugin-social-preview";
 import { emailApiPlugin } from "./vite-plugin-email-api";
+import { stripeApiPlugin } from "./vite-plugin-stripe-api";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -13,6 +14,10 @@ export default defineConfig(({ mode }) => {
   process.env.ADMIN_NOTIFY_EMAIL = env.ADMIN_NOTIFY_EMAIL || "admin@centerlinked.com";
   process.env.EMAIL_FROM = env.EMAIL_FROM || "CenterLinked <Admin@centerlinked.com>";
   process.env.SITE_URL = env.SITE_URL || "http://localhost:8080";
+  process.env.STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY;
+  process.env.STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_PRICE_MEMBERSHIP = env.STRIPE_PRICE_MEMBERSHIP;
+  process.env.STRIPE_PRICE_SETUP = env.STRIPE_PRICE_SETUP;
 
   return {
     server: {
@@ -20,7 +25,7 @@ export default defineConfig(({ mode }) => {
       port: Number(process.env.PORT) || 8080,
       strictPort: true,
     },
-    plugins: [react(), socialPreviewPlugin(), emailApiPlugin()],
+    plugins: [react(), socialPreviewPlugin(), emailApiPlugin(), stripeApiPlugin()],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

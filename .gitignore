@@ -19,3 +19,4 @@ supabase/.temp/
 # Facility image pipeline artifacts
 server/facility-images/.work/
 server/facility-images/reports/
+.env*
