@@ -10,8 +10,12 @@ dist/
 # Local tooling
 .vercel
 .claude/
+.cursor/
 .DS_Store
 *.log
+
+# Local scratch / mocks / agent reports (not product source)
+tmp/
 
 # Supabase CLI temp state
 supabase/.temp/

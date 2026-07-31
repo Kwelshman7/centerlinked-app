@@ -52,7 +52,7 @@ interface Props {
   onInsuranceChange: (insurance: string) => void;
   /** facility_id → in-network payer names */
   facilityPayersById: Map<string, string[]>;
-  /** Optional org description shown under the mobile logo hero. */
+  /** Org description shown under the mobile logo hero (matches landing mock). */
   description?: string | null;
 }
 
@@ -127,13 +127,11 @@ export function OrganizationSheetView({
     selectedState !== "all" || activeLevel !== "all" || activeInsurance !== "all";
   /** Logo already carries the org name — hide the duplicate title on mobile. */
   const hideTitleOnMobile = orgHeroIsLogoFallback(org);
-  /** Cover overlay hero already shows identity — skip the mobile intro block. */
-  const hasCoverHero = !!org.cover_image_url?.trim();
-  const showMobileIntro = !hasCoverHero && !!(org.verified || description);
+  const showMobileIntro = !!(org.verified || description);
 
   return (
     <div className={cn("space-y-4 sm:space-y-6", hasContact ? mobileContactBarPadding() : "")}>
-      {/* Mobile intro under logo hero — desktop heading lives in OrgHeroSection */}
+      {/* Mobile intro under logo hero — matches PublicOrgSheetPreview */}
       {showMobileIntro && (
         <header className="space-y-1.5 lg:hidden">
           {org.verified && (
@@ -149,7 +147,9 @@ export function OrganizationSheetView({
               Verified
             </span>
           )}
-          {!hideTitleOnMobile && (
+          {hideTitleOnMobile ? (
+            <h1 className="sr-only">{org.name}</h1>
+          ) : (
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground leading-[1.15]">
               {org.tagline || org.name}
             </h1>

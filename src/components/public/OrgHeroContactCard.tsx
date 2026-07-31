@@ -19,9 +19,7 @@ interface Props {
   heading?: string;
   /** Optional org website shown under the action row. */
   website?: string | null;
-  /** Elevated card for hero overlay placement. */
-  variant?: "default" | "floating";
-  /** Slightly larger type, avatar, and actions for facility sidebars. */
+  /** Slightly larger type, avatar, and actions for profile sidebars. */
   size?: "default" | "lg";
   className?: string;
 }
@@ -48,13 +46,16 @@ function initials(name: string) {
     .join("");
 }
 
+/**
+ * Solid, high-contrast referral contact card.
+ * Opaque surface so name/title always read clearly on any page background.
+ */
 export function OrgHeroContactCard({
   contacts,
   organizationId,
   brand = "#1A73E8",
   heading = "For Referrals",
   website,
-  variant = "default",
   size = "default",
   className,
 }: Props) {
@@ -70,17 +71,10 @@ export function OrgHeroContactCard({
   return (
     <div
       className={cn(
-        "rounded-xl border overflow-hidden w-full text-foreground flex flex-col",
-        variant === "floating"
-          ? "rounded-2xl border-white/25 bg-card/97 backdrop-blur-md shadow-2xl ring-1 ring-white/15"
-          : "bg-card/97 shadow-xl",
+        "rounded-2xl border bg-card text-card-foreground overflow-hidden w-full flex flex-col shadow-lg",
         className,
       )}
-      style={
-        variant === "default"
-          ? { borderColor: `${brand}38` }
-          : undefined
-      }
+      style={{ borderColor: `${brand}30` }}
     >
       <div
         className={cn("border-b shrink-0", lg ? "px-5 py-3" : "px-4 py-2.5")}
@@ -99,7 +93,7 @@ export function OrgHeroContactCard({
 
       <div
         className={cn(
-          "flex-1 flex flex-col justify-between min-h-0",
+          "flex-1 flex flex-col justify-between min-h-0 bg-card",
           lg ? "p-5 sm:p-6 gap-5" : "p-4 sm:p-5 gap-4",
         )}
       >
@@ -130,7 +124,7 @@ export function OrgHeroContactCard({
                 <div className="min-w-0 flex-1 text-left">
                   <p
                     className={cn(
-                      "font-semibold leading-tight truncate",
+                      "font-semibold leading-tight truncate text-foreground",
                       lg ? "text-base sm:text-lg" : "text-[15px] sm:text-base",
                     )}
                   >
@@ -149,7 +143,7 @@ export function OrgHeroContactCard({
                   {c.location && (
                     <p
                       className={cn(
-                        "text-muted-foreground/90 mt-0.5 truncate",
+                        "text-muted-foreground mt-0.5 truncate",
                         lg ? "text-xs" : "text-[11px]",
                       )}
                     >
@@ -165,7 +159,7 @@ export function OrgHeroContactCard({
                   variant="outline"
                   disabled={!tel}
                   className={cn(
-                    "px-1.5 font-semibold bg-background",
+                    "px-1.5 font-semibold bg-background text-foreground",
                     lg ? "h-11 text-sm" : "h-10 text-xs",
                   )}
                 >
@@ -191,7 +185,7 @@ export function OrgHeroContactCard({
                   variant="outline"
                   disabled={!tel}
                   className={cn(
-                    "px-1.5 font-semibold bg-background",
+                    "px-1.5 font-semibold bg-background text-foreground",
                     lg ? "h-11 text-sm" : "h-10 text-xs",
                   )}
                 >
@@ -216,10 +210,10 @@ export function OrgHeroContactCard({
                   asChild={!!c.email}
                   disabled={!c.email}
                   className={cn(
-                    "px-1.5 font-semibold hover:opacity-90",
+                    "px-1.5 font-semibold hover:opacity-90 text-white",
                     lg ? "h-11 text-sm" : "h-10 text-xs",
                   )}
-                  style={{ backgroundColor: brand, color: "#fff" }}
+                  style={{ backgroundColor: brand }}
                 >
                   {c.email ? (
                     <a
@@ -244,7 +238,8 @@ export function OrgHeroContactCard({
                   href={websiteHref(site)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold hover:underline"
+                  style={{ color: brand }}
                 >
                   {websiteLabel(site)}
                   <ExternalLink className="h-3 w-3" aria-hidden />

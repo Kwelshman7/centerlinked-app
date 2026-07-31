@@ -20,35 +20,32 @@ interface OrgHeroOrg {
 interface Props {
   org: OrgHeroOrg;
   brand: string;
-  /** Short description under the title (desktop heading). */
+  /** Short description under the title. */
   description?: string | null;
-  /** Facility count for the meta line (desktop heading). */
+  /** Facility count for the meta line. */
   facilityCount?: number;
-  /** Contact / claim card rendered on the right (desktop only). */
+  /** Contact / claim card rendered beside the identity block. */
   contactAside?: ReactNode;
   /**
-   * Force the compact logo-on-top hero (phone mockups / mobile media strip).
+   * Force the compact logo-on-top strip (live mobile + landing phone mockups).
    */
   compact?: boolean;
   /**
-   * Logo mark size for the mobile/compact hero.
+   * Logo mark size for the compact strip.
    * `mock` is intentionally larger — PhoneFrame scales the UI down on the landing page.
    */
   logoSize?: "default" | "mock";
   /**
-   * `overlay` — cover image behind heading with dim overlay (shared org page).
-   * `media` — cover/logo strip only.
-   * `heading` — desktop title + contact band only (no-cover pages).
-   * `all` — default/preview behavior.
+   * `media` — compact logo strip only (mobile / landing preview).
+   * `heading` / `all` — desktop identity band with contact card.
    */
-  parts?: "all" | "media" | "heading" | "overlay";
+  parts?: "all" | "media" | "heading";
 }
 
 /**
- * Org hero:
- * - Cover overlay: full-bleed image behind the heading, dimmed, bright type.
- * - No cover / compact: logo mark on top.
- * - Desktop without cover: logo tile + title + contact card.
+ * Org profile hero:
+ * - Mobile / compact: full-bleed logo mark (matches landing mock).
+ * - Desktop: identity band + contact card.
  */
 export function OrgHeroSection({
   org,
@@ -60,76 +57,31 @@ export function OrgHeroSection({
   logoSize = "default",
   parts = "all",
 }: Props) {
-  const coverUrl = org.cover_image_url?.trim() || null;
-
-  if (parts === "overlay" && coverUrl) {
-    return (
-      <OverlayHero
-        org={org}
-        brand={brand}
-        coverUrl={coverUrl}
-        description={description}
-        facilityCount={facilityCount}
-        contactAside={contactAside}
-      />
-    );
+  if (compact || parts === "media") {
+    return <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />;
   }
-
-  // Default: if a cover exists and we're rendering the full hero, use overlay.
-  if (parts === "all" && coverUrl && !compact) {
-    return (
-      <OverlayHero
-        org={org}
-        brand={brand}
-        coverUrl={coverUrl}
-        description={description}
-        facilityCount={facilityCount}
-        contactAside={contactAside}
-      />
-    );
-  }
-
-  const showMedia = parts === "all" || parts === "media";
-  const showHeading = !compact && (parts === "all" || parts === "heading");
 
   return (
-    <>
-      {showMedia &&
-        (coverUrl ? (
-          <CoverBanner src={coverUrl} orgName={org.name} compact={compact} />
-        ) : (
-          <div className={cn(compact || parts === "media" ? "block" : "lg:hidden")}>
-            <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />
-          </div>
-        ))}
-
-      {showHeading && (
-        <div className={parts === "heading" ? "block" : "hidden lg:block"}>
-          <DesktopHeadingBand
-            org={org}
-            brand={brand}
-            description={description}
-            facilityCount={facilityCount}
-            contactAside={contactAside}
-          />
-        </div>
-      )}
-    </>
+    <IdentityHero
+      org={org}
+      brand={brand}
+      description={description}
+      facilityCount={facilityCount}
+      contactAside={contactAside}
+    />
   );
 }
 
-/** Full-bleed cover with dim overlay and bright heading content on top. */
-function OverlayHero({
+/** Desktop identity + contact — large logo, title, polished referral card. */
+function IdentityHero({
   org,
   brand,
-  coverUrl,
   description,
   facilityCount,
   contactAside,
 }: {
   org: OrgHeroOrg;
   brand: string;
-  coverUrl: string;
   description?: string | null;
   facilityCount: number;
   contactAside?: ReactNode;
@@ -148,38 +100,32 @@ function OverlayHero({
 
   return (
     <section
-      className="relative w-full overflow-hidden min-h-[260px] sm:min-h-[300px] lg:min-h-[380px]"
+      className="relative w-full"
+      style={{
+        background: `radial-gradient(ellipse 85% 70% at 12% 0%, ${brand}12 0%, transparent 58%),
+          linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.28) 100%)`,
+      }}
       aria-label={`${org.name} profile header`}
     >
-      <img
-        src={coverUrl}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center scale-[1.02]"
-      />
-      {/* Dim the photo so bright type reads clearly */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/50"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/45"
-      />
-
-      <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6 lg:pt-10 lg:pb-8">
         <div
           className={cn(
-            "grid items-center gap-6",
-            contactAside && "lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-x-10",
+            "grid items-center gap-7",
+            contactAside && "lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:gap-x-12",
           )}
         >
-          <div className="flex items-start min-w-0 gap-3.5 sm:gap-4">
-            <div className="shrink-0 rounded-2xl bg-white shadow-xl overflow-hidden grid place-items-center h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem] ring-1 ring-white/50">
+          <div className="flex items-center min-w-0 gap-5 lg:gap-6">
+            <div
+              className={cn(
+                "shrink-0 rounded-2xl border border-border/70 bg-white shadow-md overflow-hidden grid place-items-center",
+                "h-[9rem] w-[9rem] lg:h-[11rem] lg:w-[11rem]",
+              )}
+            >
               {org.logo_url ? (
                 <img
                   src={org.logo_url}
                   alt={`${org.name} logo`}
-                  className="h-[78%] w-[78%] object-contain"
+                  className="h-[88%] w-[88%] object-contain"
                 />
               ) : (
                 <div
@@ -188,46 +134,53 @@ function OverlayHero({
                     background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
                   }}
                 >
-                  <Building2 className="h-7 w-7 text-white/90" aria-hidden />
+                  <Building2 className="h-10 w-10 text-white/90" aria-hidden />
                 </div>
               )}
             </div>
 
-            <div className="min-w-0 flex-1 space-y-2">
+            <div className="min-w-0 flex-1 space-y-2.5">
               {org.verified && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/40 bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm shadow-sm">
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  style={{
+                    color: brand,
+                    backgroundColor: `${brand}12`,
+                    borderColor: `${brand}28`,
+                  }}
+                >
                   <BadgeCheck className="h-3 w-3" />
                   Verified
                 </span>
               )}
 
-              <h1 className="font-heading font-extrabold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] leading-[1.12] text-2xl sm:text-3xl lg:text-[2.35rem]">
+              <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.12] text-3xl lg:text-[2.5rem]">
                 {headline}
               </h1>
 
               {tagline ? (
-                <p className="font-semibold text-sm sm:text-base text-white drop-shadow-sm">
+                <p className="font-semibold text-base" style={{ color: brand }}>
                   {tagline}
                 </p>
               ) : null}
 
               {locationMeta ? (
-                <p className="text-white/85 font-medium text-sm drop-shadow-sm">{locationMeta}</p>
+                <p className="text-muted-foreground font-medium text-[0.95rem]">{locationMeta}</p>
               ) : null}
 
               {description ? (
                 <ExpandableText
                   text={description}
-                  brand="#FFFFFF"
+                  brand={brand}
                   clampLines={3}
-                  className="max-w-2xl pt-0.5 [&_p]:text-white/90 [&_p]:text-sm sm:[&_p]:text-[0.95rem] [&_p]:drop-shadow-sm"
+                  className="max-w-2xl pt-0.5"
                 />
               ) : null}
             </div>
           </div>
 
           {contactAside ? (
-            <div id="org-contact" className="hidden lg:block min-w-0 self-center">
+            <div id="org-contact" className="min-w-0 w-full">
               {contactAside}
             </div>
           ) : null}
@@ -237,37 +190,7 @@ function OverlayHero({
   );
 }
 
-function CoverBanner({
-  src,
-  orgName,
-  compact,
-}: {
-  src: string;
-  orgName: string;
-  compact: boolean;
-}) {
-  return (
-    <section
-      className={cn(
-        "relative w-full overflow-hidden bg-muted",
-        compact ? "h-[168px] min-h-[168px] sm:h-[200px]" : "h-[168px] sm:h-[200px] lg:h-[260px]",
-      )}
-      aria-label={`${orgName} cover photo`}
-    >
-      <img
-        src={src}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/20 to-black/25"
-      />
-    </section>
-  );
-}
-
-/** Full-bleed logo mark — used on mobile/phone mockups when no cover photo is set. */
+/** Full-bleed logo mark — live mobile + landing phone mockups. */
 function MobileLogoHero({
   org,
   brand,
@@ -279,8 +202,8 @@ function MobileLogoHero({
   compact: boolean;
   logoSize: "default" | "mock";
 }) {
-  const heroImage = orgHeroImage(org);
-  const logoAsHero = orgHeroIsLogoFallback(org);
+  const heroImage = orgHeroImage({ ...org, cover_image_url: null });
+  const logoAsHero = orgHeroIsLogoFallback({ ...org, cover_image_url: null }) || !!org.logo_url;
   const mock = logoSize === "mock";
 
   if (logoAsHero && heroImage) {
@@ -325,126 +248,14 @@ function MobileLogoHero({
           compact ? "h-[148px] min-h-[148px]" : "min-h-[160px]",
         )}
       >
-        {heroImage ? (
-          <img
-            src={heroImage}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-        ) : (
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{
-              background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 45%, hsl(var(--muted)) 100%)`,
-            }}
-          >
-            <Building2 className="h-14 w-14 text-white/80" aria-hidden />
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-/** Desktop-only professional heading + contact card (no cover photo). */
-function DesktopHeadingBand({
-  org,
-  brand,
-  description,
-  facilityCount,
-  contactAside,
-}: {
-  org: OrgHeroOrg;
-  brand: string;
-  description?: string | null;
-  facilityCount: number;
-  contactAside?: ReactNode;
-}) {
-  const headline = org.name;
-  const tagline = org.tagline && org.tagline !== org.name ? org.tagline : null;
-  const hq = [org.hq_city, org.hq_state].filter(Boolean).join(", ");
-  const locationMeta = [
-    hq || null,
-    facilityCount > 0
-      ? `${facilityCount} ${facilityCount === 1 ? "location" : "locations"}${hq ? " nationwide" : ""}`
-      : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-  return (
-    <section
-      className="relative w-full pt-6 pb-1"
-      style={{
-        background: `radial-gradient(ellipse 70% 55% at 50% 0%, ${brand}14 0%, transparent 70%)`,
-      }}
-    >
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-x-8">
-        <div className="flex items-start min-w-0 gap-4">
-          <div className="shrink-0 rounded-2xl border border-border/70 bg-card shadow-md overflow-hidden grid place-items-center h-[5.5rem] w-[5.5rem]">
-            {org.logo_url ? (
-              <img
-                src={org.logo_url}
-                alt={`${org.name} logo`}
-                className="h-[78%] w-[78%] object-contain"
-              />
-            ) : (
-              <div
-                className="h-full w-full grid place-items-center"
-                style={{
-                  background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
-                }}
-              >
-                <Building2 className="h-7 w-7 text-white/90" aria-hidden />
-              </div>
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1 space-y-1.5">
-            {org.verified && (
-              <span
-                className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                style={{
-                  color: brand,
-                  backgroundColor: `${brand}12`,
-                  borderColor: `${brand}28`,
-                }}
-              >
-                <BadgeCheck className="h-3 w-3" />
-                Verified
-              </span>
-            )}
-
-            <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.15] text-2xl lg:text-[2rem]">
-              {headline}
-            </h1>
-
-            {tagline ? (
-              <p className="font-medium text-[0.95rem]" style={{ color: brand }}>
-                {tagline}
-              </p>
-            ) : null}
-
-            {locationMeta ? (
-              <p className="text-muted-foreground font-medium text-sm">{locationMeta}</p>
-            ) : null}
-
-            {description ? (
-              <ExpandableText
-                text={description}
-                brand={brand}
-                clampLines={3}
-                className="max-w-2xl pt-0.5"
-              />
-            ) : null}
-          </div>
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 45%, hsl(var(--muted)) 100%)`,
+          }}
+        >
+          <Building2 className="h-14 w-14 text-white/80" aria-hidden />
         </div>
-
-        {contactAside ? (
-          <div id="org-contact" className="min-w-0 self-start">
-            <div className="lg:sticky lg:top-20">{contactAside}</div>
-          </div>
-        ) : null}
       </div>
     </section>
   );
