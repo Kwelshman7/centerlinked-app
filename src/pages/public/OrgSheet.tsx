@@ -183,6 +183,14 @@ export default function OrgSheet() {
     }
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [facilities, facilityPayersById]);
+  const verifiedAt = useMemo(() => {
+    let latest: string | null = null;
+    for (const f of facilities) {
+      const d = f.contracts_verified_at?.trim();
+      if (d && (!latest || d > latest)) latest = d;
+    }
+    return latest ?? org?.updated_at ?? null;
+  }, [facilities, org?.updated_at]);
 
   if (notFound) {
     return (
@@ -197,14 +205,6 @@ export default function OrgSheet() {
   }
 
   const briefDescription = org.description?.trim() || null;
-  const verifiedAt = useMemo(() => {
-    let latest: string | null = null;
-    for (const f of facilities) {
-      const d = f.contracts_verified_at?.trim();
-      if (d && (!latest || d > latest)) latest = d;
-    }
-    return latest ?? org.updated_at;
-  }, [facilities, org.updated_at]);
 
   const contactAside = heroContact ? (
     <OrgHeroContactCard
