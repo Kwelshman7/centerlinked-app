@@ -108,6 +108,8 @@ export interface FacilityDraft {
   bd_contact_name: string;
   bd_contact_phone: string;
   bd_contact_email: string;
+  /** When true, facility is omitted from the public organization profile. */
+  hidden_from_org_page: boolean;
   contracts: FacilityContractDraft[];
 }
 
@@ -132,5 +134,6 @@ export const emptyFacility = (): FacilityDraft => ({
   bd_contact_name: "",
   bd_contact_phone: "",
   bd_contact_email: "",
+  hidden_from_org_page: false,
   contracts: [],
 });

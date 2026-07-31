@@ -54,8 +54,6 @@ interface Props {
   facilityPayersById: Map<string, string[]>;
   /** Optional org description shown under the mobile logo hero. */
   description?: string | null;
-  canManage?: boolean;
-  onToggleHidden?: (facilityId: string, hidden: boolean) => Promise<void> | void;
 }
 
 export function OrganizationSheetView({
@@ -74,8 +72,6 @@ export function OrganizationSheetView({
   onInsuranceChange,
   facilityPayersById,
   description,
-  canManage = false,
-  onToggleHidden,
 }: Props) {
   const stateFiltered = useMemo(() => {
     if (selectedState === "all") return facilities;
@@ -218,12 +214,7 @@ export function OrganizationSheetView({
                 : "No facilities match these filters."}
             </div>
           ) : (
-            <OrgFacilityRail
-              facilities={filteredFacilities}
-              orgSlug={org.slug}
-              canManage={canManage}
-              onToggleHidden={onToggleHidden}
-            />
+            <OrgFacilityRail facilities={filteredFacilities} orgSlug={org.slug} />
           )}
         </div>
       </section>

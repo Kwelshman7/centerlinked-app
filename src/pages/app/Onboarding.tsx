@@ -149,6 +149,7 @@ export default function Onboarding() {
               bd_contact_name: f.bd_contact_name || null,
               bd_contact_phone: f.bd_contact_phone || null,
               bd_contact_email: f.bd_contact_email || null,
+              hidden_from_org_page: f.hidden_from_org_page,
               verification_status: "pending",
             })),
           )

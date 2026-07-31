@@ -69,6 +69,7 @@ export function AddFacilityDialog({
         bd_contact_name: draft.bd_contact_name || null,
         bd_contact_phone: draft.bd_contact_phone || null,
         bd_contact_email: draft.bd_contact_email || null,
+        hidden_from_org_page: draft.hidden_from_org_page,
         verification_status: isSuperAdmin ? ("approved" as const) : ("pending" as const),
       };
       const { data: inserted, error } = await supabase

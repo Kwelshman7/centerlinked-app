@@ -180,7 +180,8 @@ export function OrgFooter({
                 organizationId={orgId}
                 brand={brand}
                 heading="Your Contact"
-                className="flex-1"
+                size="lg"
+                className="flex-1 shadow-2xl"
               />
             </div>
           )}

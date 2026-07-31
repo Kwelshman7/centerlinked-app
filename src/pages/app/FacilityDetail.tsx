@@ -9,6 +9,7 @@ import {
   ExternalLink,
   AlertTriangle,
   Loader2,
+  EyeOff,
 } from "lucide-react";
 import { VerificationBadge } from "@/components/app/search/VerificationBadge";
 import {
@@ -53,6 +54,7 @@ interface Facility {
   featured_payer: string | null;
   quick_highlights: string[];
   updated_at: string | null;
+  hidden_from_org_page?: boolean;
 }
 interface Contract {
   id: string;
@@ -184,6 +186,16 @@ export default function FacilityDetail() {
           <Button size="sm" variant="outline" onClick={fixSlug} disabled={fixingSlug} className="shrink-0">
             {fixingSlug ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate link"}
           </Button>
+        </div>
+      )}
+
+      {facility.hidden_from_org_page && (isMine || isSuperAdmin) && (
+        <div className="rounded-lg border border-border/70 bg-muted/40 text-sm p-3 flex items-center gap-2 text-muted-foreground">
+          <EyeOff className="h-4 w-4 shrink-0" />
+          <span>
+            Hidden from your organization profile. Open <strong className="text-foreground">Edit Facility</strong> to
+            show it again.
+          </span>
         </div>
       )}
 

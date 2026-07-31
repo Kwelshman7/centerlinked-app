@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { OrgAppHeader } from "@/components/public/OrgAppHeader";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
@@ -44,7 +42,6 @@ function parseWhyRefer(raw: unknown): { title: string; body: string }[] {
 
 export default function OrgSheet() {
   const { slug } = useParams<{ slug: string }>();
-  const { profile, isSuperAdmin, isFacilityAdmin, loading: authLoading } = useAuth();
   const [org, setOrg] = useState<OrgSheetData | null>(null);
   const [facilities, setFacilities] = useState<ShowcaseFacility[]>([]);
   const [facilityPayersById, setFacilityPayersById] = useState<Map<string, string[]>>(new Map());
@@ -53,11 +50,6 @@ export default function OrgSheet() {
   const [selectedState, setSelectedState] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [selectedInsurance, setSelectedInsurance] = useState("all");
-
-  const canManage =
-    !authLoading &&
-    !!org &&
-    (isSuperAdmin || (isFacilityAdmin && profile?.organization_id === org.id));
 
   useEffect(() => {
     setSelectedLevel("all");
@@ -111,6 +103,7 @@ export default function OrgSheet() {
         )
         .eq("organization_id", orgData.id)
         .eq("verification_status", "approved")
+        .eq("hidden_from_org_page", false)
         .order("name");
 
       const facs = ((f as unknown) as ShowcaseFacility[]) ?? [];
@@ -180,52 +173,17 @@ export default function OrgSheet() {
   }, [slug]);
 
   const brand = useOrgBrandColor(org);
-
-  const publicFacilities = useMemo(
-    () => facilities.filter((f) => !f.hidden_from_org_page),
-    [facilities],
-  );
-
-  /** Admins see hidden facilities (with controls); everyone else sees the public list. */
-  const visibleFacilities = canManage ? facilities : publicFacilities;
-
-  const facilityStates = useMemo(
-    () => uniqueFacilityStates(visibleFacilities),
-    [visibleFacilities],
-  );
-  const facilityLevels = useMemo(
-    () => uniqueFacilityLevels(visibleFacilities),
-    [visibleFacilities],
-  );
+  const facilityStates = useMemo(() => uniqueFacilityStates(facilities), [facilities]);
+  const facilityLevels = useMemo(() => uniqueFacilityLevels(facilities), [facilities]);
   const facilityInsurers = useMemo(() => {
     const names = new Set<string>();
-    for (const f of visibleFacilities) {
+    for (const f of facilities) {
       for (const name of facilityPayersById.get(f.id) ?? []) {
         names.add(name);
       }
     }
     return Array.from(names).sort((a, b) => a.localeCompare(b));
-  }, [visibleFacilities, facilityPayersById]);
-
-  const onToggleHidden = useCallback(
-    async (facilityId: string, hidden: boolean) => {
-      const { error } = await supabase
-        .from("facilities")
-        .update({ hidden_from_org_page: hidden })
-        .eq("id", facilityId);
-
-      if (error) {
-        toast.error(error.message || "Could not update facility visibility.");
-        return;
-      }
-
-      setFacilities((prev) =>
-        prev.map((f) => (f.id === facilityId ? { ...f, hidden_from_org_page: hidden } : f)),
-      );
-      toast.success(hidden ? "Facility hidden from org page." : "Facility shown on org page.");
-    },
-    [],
-  );
+  }, [facilities, facilityPayersById]);
 
   if (notFound) {
     return (
@@ -240,6 +198,7 @@ export default function OrgSheet() {
   }
 
   const briefDescription = org.description?.trim() || null;
+  const hasCover = !!org.cover_image_url?.trim();
 
   const contactAside = heroContact ? (
     <OrgHeroContactCard
@@ -249,7 +208,8 @@ export default function OrgSheet() {
       heading="For Referrals"
       website={org.website}
       variant="default"
-      className="w-full"
+      size="lg"
+      className="w-full shadow-2xl"
     />
   ) : (
     <div className="rounded-xl border border-border/60 bg-card shadow-sm p-1">
@@ -267,26 +227,31 @@ export default function OrgSheet() {
     >
       <OrgAppHeader brand={brand} />
 
-      {/* Mobile: logo sits cleanly under the header, full-bleed */}
+      {/* Full-bleed cover / mobile logo under the nav */}
       <div className="lg:hidden">
-        <OrgHeroSection org={org} brand={brand} compact />
+        <OrgHeroSection org={org} brand={brand} compact parts="media" />
       </div>
+      {hasCover && (
+        <div className="hidden lg:block">
+          <OrgHeroSection org={org} brand={brand} parts="media" />
+        </div>
+      )}
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:pt-6 lg:pb-8 space-y-5 sm:space-y-6 lg:space-y-5">
-        {/* Desktop: professional heading + contact card */}
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:pt-2 lg:pb-8 space-y-5 sm:space-y-6">
         <div className="hidden lg:block">
           <OrgHeroSection
             org={org}
             brand={brand}
             description={briefDescription}
-            facilityCount={publicFacilities.length}
+            facilityCount={facilities.length}
             contactAside={contactAside}
+            parts="heading"
           />
         </div>
 
         <OrganizationSheetView
           org={org}
-          facilities={visibleFacilities}
+          facilities={facilities}
           heroContact={heroContact}
           brand={brand}
           facilityStates={facilityStates}
@@ -300,8 +265,6 @@ export default function OrgSheet() {
           onInsuranceChange={setSelectedInsurance}
           facilityPayersById={facilityPayersById}
           description={briefDescription}
-          canManage={canManage}
-          onToggleHidden={canManage ? onToggleHidden : undefined}
         />
       </main>
     </div>

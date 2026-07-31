@@ -35,6 +35,7 @@ interface FacilityLike {
   bd_contact_name: string | null;
   bd_contact_phone: string | null;
   bd_contact_email: string | null;
+  hidden_from_org_page?: boolean | null;
 }
 
 interface ExistingContract {
@@ -75,6 +76,7 @@ function toDraft(f: FacilityLike, contracts: ExistingContract[]): FacilityDraft 
     bd_contact_name: f.bd_contact_name ?? "",
     bd_contact_phone: f.bd_contact_phone ?? "",
     bd_contact_email: f.bd_contact_email ?? "",
+    hidden_from_org_page: !!f.hidden_from_org_page,
     contracts: contracts.map((c) => ({
       payer_id: c.payer_id,
       payer_name: c.payer_name,
@@ -126,6 +128,7 @@ export function EditFacilityDialog({
         bd_contact_name: draft.bd_contact_name || null,
         bd_contact_phone: draft.bd_contact_phone || null,
         bd_contact_email: draft.bd_contact_email || null,
+        hidden_from_org_page: draft.hidden_from_org_page,
       };
       const { error: upErr } = await supabase
         .from("facilities")
@@ -200,7 +203,8 @@ export function EditFacilityDialog({
         <DialogHeader>
           <DialogTitle>Edit facility</DialogTitle>
           <DialogDescription>
-            Update details, photos, levels of care, and insurance contracts for this facility.
+            Update details, photos, visibility on your org profile, levels of care, and insurance
+            contracts.
           </DialogDescription>
         </DialogHeader>
         <FacilityCardForm

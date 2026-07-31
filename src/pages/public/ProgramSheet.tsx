@@ -79,7 +79,7 @@ export default function ProgramSheet() {
     const { data: f } = await supabase
       .from("facilities")
       .select(
-        "id,organization_id,name,slug,description,tagline,short_description,address_line1,city,state,zip,phone,website,capacity,highlights,quick_highlights,accreditations,image_urls,levels_of_care,population_served,specializations,treatment_focus,insurance_status,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,created_at,updated_at",
+        "id,organization_id,name,slug,description,tagline,short_description,address_line1,city,state,zip,phone,website,capacity,highlights,quick_highlights,accreditations,image_urls,levels_of_care,population_served,specializations,treatment_focus,insurance_status,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,hidden_from_org_page,created_at,updated_at",
       )
       .eq("slug", facilitySlug)
       .eq("verification_status", "approved")

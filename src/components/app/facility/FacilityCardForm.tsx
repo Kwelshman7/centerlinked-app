@@ -2,8 +2,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ImageUploader } from "@/components/app/ImageUploader";
-import { CheckCircle2, Trash2, Plus, Sparkles, X } from "lucide-react";
+import { CheckCircle2, Trash2, Plus, Sparkles, X, EyeOff } from "lucide-react";
 import {
   FacilityDraft,
   HIGHLIGHT_OPTIONS,
@@ -119,6 +120,27 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
         <div className="space-y-1.5">
           <Label>Photos</Label>
           <ImageUploader bucket="facility-images" value={value.image_urls} onChange={(v) => set("image_urls", v)} max={8} />
+        </div>
+
+        {/* Org profile visibility */}
+        <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3.5 flex items-start justify-between gap-4">
+          <div className="min-w-0 space-y-1">
+            <div className="flex items-center gap-2">
+              <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Label htmlFor="hidden-from-org-page" className="text-sm font-semibold cursor-pointer">
+                Hide from organization profile
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Keep this facility in your account, but don’t show it on the shared org page.
+            </p>
+          </div>
+          <Switch
+            id="hidden-from-org-page"
+            checked={value.hidden_from_org_page}
+            onCheckedChange={(checked) => set("hidden_from_org_page", checked)}
+            className="mt-0.5 shrink-0"
+          />
         </div>
 
         {/* Levels of care */}

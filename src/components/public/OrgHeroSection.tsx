@@ -36,12 +36,19 @@ interface Props {
    * `mock` is intentionally larger — PhoneFrame scales the UI down on the landing page.
    */
   logoSize?: "default" | "mock";
+  /**
+   * `media` — cover photo or mobile logo only (full-bleed).
+   * `heading` — desktop title + contact band only.
+   * `all` — both (default for standalone/preview use).
+   */
+  parts?: "all" | "media" | "heading";
 }
 
 /**
  * Org hero:
- * - Mobile / compact: logo sits cleanly on top of the screen (or cover photo).
- * - Desktop (lg+): professional heading — logo tile + title + contact card.
+ * - Cover photo (when set): full-bleed banner.
+ * - Mobile / compact without cover: logo mark on top.
+ * - Desktop heading: logo tile + title + contact card.
  */
 export function OrgHeroSection({
   org,
@@ -51,21 +58,32 @@ export function OrgHeroSection({
   contactAside,
   compact = false,
   logoSize = "default",
+  parts = "all",
 }: Props) {
+  const coverUrl = org.cover_image_url?.trim() || null;
+  const showMedia = parts === "all" || parts === "media";
+  const showHeading = !compact && (parts === "all" || parts === "heading");
+
   return (
     <>
-      <div className={cn(compact ? "block" : "lg:hidden")}>
-        <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />
-      </div>
+      {showMedia &&
+        (coverUrl ? (
+          <CoverBanner src={coverUrl} orgName={org.name} compact={compact} />
+        ) : (
+          <div className={cn(compact || parts === "media" ? "block" : "lg:hidden")}>
+            <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />
+          </div>
+        ))}
 
-      {!compact && (
-        <div className="hidden lg:block">
+      {showHeading && (
+        <div className={parts === "heading" ? "block" : "hidden lg:block"}>
           <DesktopHeadingBand
             org={org}
             brand={brand}
             description={description}
             facilityCount={facilityCount}
             contactAside={contactAside}
+            hasCover={!!coverUrl}
           />
         </div>
       )}
@@ -73,7 +91,37 @@ export function OrgHeroSection({
   );
 }
 
-/** Full-bleed logo mark or cover — used on mobile and phone mockups. */
+function CoverBanner({
+  src,
+  orgName,
+  compact,
+}: {
+  src: string;
+  orgName: string;
+  compact: boolean;
+}) {
+  return (
+    <section
+      className={cn(
+        "relative w-full overflow-hidden bg-muted",
+        compact ? "h-[168px] min-h-[168px] sm:h-[200px]" : "h-[168px] sm:h-[200px] lg:h-[260px]",
+      )}
+      aria-label={`${orgName} cover photo`}
+    >
+      <img
+        src={src}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10"
+      />
+    </section>
+  );
+}
+
+/** Full-bleed logo mark — used on mobile/phone mockups when no cover photo is set. */
 function MobileLogoHero({
   org,
   brand,
@@ -104,13 +152,6 @@ function MobileLogoHero({
           )}
         >
           {mock ? (
-            /*
-              Many org logos (incl. the Banyan demo asset) ship as a square with large
-              internal padding. PhoneFrame already scales the whole UI down — if we
-              only bump height, we grow empty black margins. Instead: fixed tight
-              band + scale the artwork up so the mark fills the band without
-              enlarging the phone chrome.
-            */
             <div className="relative h-[7.25rem] w-[90%] overflow-hidden">
               <img
                 src={heroImage}
@@ -166,12 +207,14 @@ function DesktopHeadingBand({
   description,
   facilityCount,
   contactAside,
+  hasCover,
 }: {
   org: OrgHeroOrg;
   brand: string;
   description?: string | null;
   facilityCount: number;
   contactAside?: ReactNode;
+  hasCover: boolean;
 }) {
   const headline = org.name;
   const tagline = org.tagline && org.tagline !== org.name ? org.tagline : null;
@@ -187,14 +230,16 @@ function DesktopHeadingBand({
 
   return (
     <section
-      className="relative w-full pt-5 pb-1"
+      className="relative w-full pt-6 pb-1"
       style={{
-        background: `radial-gradient(ellipse 70% 55% at 50% 0%, ${brand}14 0%, transparent 70%)`,
+        background: hasCover
+          ? undefined
+          : `radial-gradient(ellipse 70% 55% at 50% 0%, ${brand}14 0%, transparent 70%)`,
       }}
     >
-      <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:gap-x-8 lg:gap-y-5">
-        <div className="flex items-start min-w-0 gap-3.5 sm:gap-4">
-          <div className="shrink-0 rounded-2xl border border-border/70 bg-card shadow-md overflow-hidden grid place-items-center h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem]">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-x-8">
+        <div className="flex items-start min-w-0 gap-4">
+          <div className="shrink-0 rounded-2xl border border-border/70 bg-card shadow-md overflow-hidden grid place-items-center h-[5.5rem] w-[5.5rem]">
             {org.logo_url ? (
               <img
                 src={org.logo_url}
@@ -213,7 +258,7 @@ function DesktopHeadingBand({
             )}
           </div>
 
-          <div className="min-w-0 flex-1 space-y-1 sm:space-y-1.5">
+          <div className="min-w-0 flex-1 space-y-1.5">
             {org.verified && (
               <span
                 className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -228,12 +273,12 @@ function DesktopHeadingBand({
               </span>
             )}
 
-            <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.15] text-xl sm:text-2xl lg:text-[2rem]">
+            <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.15] text-2xl lg:text-[2rem]">
               {headline}
             </h1>
 
             {tagline ? (
-              <p className="font-medium text-sm sm:text-[0.95rem]" style={{ color: brand }}>
+              <p className="font-medium text-[0.95rem]" style={{ color: brand }}>
                 {tagline}
               </p>
             ) : null}
@@ -254,7 +299,7 @@ function DesktopHeadingBand({
         </div>
 
         {contactAside ? (
-          <div id="org-contact" className="min-w-0">
+          <div id="org-contact" className="min-w-0 self-start">
             <div className="lg:sticky lg:top-20">{contactAside}</div>
           </div>
         ) : null}
