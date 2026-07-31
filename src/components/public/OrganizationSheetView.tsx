@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { BadgeCheck } from "lucide-react";
 import { OrgFacilityRail } from "@/components/public/OrgFacilityRail";
 import { OrgFacilityFilters } from "@/components/public/OrgFacilityFilters";
 import { OrgFooter } from "@/components/public/OrgFooter";
@@ -8,7 +7,6 @@ import { MobileContactBar, mobileContactBarPadding } from "@/components/public/M
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { HeroContact } from "@/components/public/OrgHeroContactCard";
 import { resolveStateCode } from "@/lib/us-states";
-import { orgHeroIsLogoFallback } from "@/lib/org-hero";
 import { cn } from "@/lib/utils";
 
 export interface OrgSheetData {
@@ -125,40 +123,20 @@ export function OrganizationSheetView({
   const hasContact = !!(heroContact && (heroContact.phone || heroContact.email));
   const filterActive =
     selectedState !== "all" || activeLevel !== "all" || activeInsurance !== "all";
-  /** Logo already carries the org name — hide the duplicate title on mobile. */
-  const hideTitleOnMobile = orgHeroIsLogoFallback(org);
-  const showMobileIntro = !!(org.verified || description);
+  /** Verified mark lives on the logo; mobile intro is description only. */
+  const showMobileIntro = !!description;
+  /** Filters only earn their keep for larger networks. */
+  const showFilters = facilities.length >= 8;
 
   return (
-    <div className={cn("space-y-4 sm:space-y-6", hasContact ? mobileContactBarPadding() : "")}>
+    <div className={cn("space-y-4 sm:space-y-5", hasContact ? mobileContactBarPadding() : "")}>
       {/* Mobile intro under logo hero — matches PublicOrgSheetPreview */}
-      {showMobileIntro && (
-        <header className="space-y-1.5 lg:hidden">
-          {org.verified && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-              style={{
-                color: brand,
-                backgroundColor: `${brand}12`,
-                borderColor: `${brand}28`,
-              }}
-            >
-              <BadgeCheck className="h-3 w-3" />
-              Verified
-            </span>
-          )}
-          {hideTitleOnMobile ? (
-            <h1 className="sr-only">{org.name}</h1>
-          ) : (
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground leading-[1.15]">
-              {org.tagline || org.name}
-            </h1>
-          )}
-          {description ? (
-            <ExpandableText text={description} brand={brand} clampLines={3} className="max-w-3xl" />
-          ) : null}
-        </header>
-      )}
+      <header className="space-y-1.5 lg:hidden">
+        <h1 className="sr-only">{org.name}</h1>
+        {showMobileIntro ? (
+          <ExpandableText text={description!} brand={brand} clampLines={3} className="max-w-3xl" />
+        ) : null}
+      </header>
 
       <section>
         <div className="space-y-3">
@@ -171,13 +149,32 @@ export function OrganizationSheetView({
                 <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
                   {filteredFacilities.length}{" "}
                   {filteredFacilities.length === 1 ? "location" : "locations"}
-                  {filterActive ? " matching filters" : ""}
+                  {showFilters && filterActive ? " matching filters" : ""}
                 </span>
               )}
             </div>
 
+            {showFilters && (
+              <OrgFacilityFilters
+                mode="button"
+                states={facilityStates}
+                selectedState={selectedState}
+                onStateChange={onStateChange}
+                levels={visibleLevels}
+                selectedLevel={activeLevel}
+                onLevelChange={onLevelChange}
+                insurers={visibleInsurers}
+                selectedInsurance={activeInsurance}
+                onInsuranceChange={onInsuranceChange}
+                brand={brand}
+                className="sm:hidden shrink-0"
+              />
+            )}
+          </div>
+
+          {showFilters && (
             <OrgFacilityFilters
-              mode="button"
+              mode="dropdowns"
               states={facilityStates}
               selectedState={selectedState}
               onStateChange={onStateChange}
@@ -188,27 +185,12 @@ export function OrganizationSheetView({
               selectedInsurance={activeInsurance}
               onInsuranceChange={onInsuranceChange}
               brand={brand}
-              className="sm:hidden shrink-0"
+              className="hidden sm:grid"
             />
-          </div>
-
-          <OrgFacilityFilters
-            mode="dropdowns"
-            states={facilityStates}
-            selectedState={selectedState}
-            onStateChange={onStateChange}
-            levels={visibleLevels}
-            selectedLevel={activeLevel}
-            onLevelChange={onLevelChange}
-            insurers={visibleInsurers}
-            selectedInsurance={activeInsurance}
-            onInsuranceChange={onInsuranceChange}
-            brand={brand}
-            className="hidden sm:grid"
-          />
+          )}
         </div>
 
-        <div className="mt-4 sm:mt-5">
+        <div className={cn(showFilters ? "mt-4 sm:mt-5" : "mt-3 sm:mt-4")}>
           {filteredFacilities.length === 0 ? (
             <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
               {facilities.length === 0

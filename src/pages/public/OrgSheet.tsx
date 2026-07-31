@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { OrgAppHeader } from "@/components/public/OrgAppHeader";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
 import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
@@ -99,7 +98,7 @@ export default function OrgSheet() {
       const { data: f } = await supabase
         .from("facilities")
         .select(
-          "id,name,slug,city,state,address_line1,zip,image_urls,levels_of_care,population_served,specializations,highlights,accreditations,short_description,description,tagline,insurance_status,featured_payer,updated_at,hidden_from_org_page",
+          "id,name,slug,city,state,address_line1,zip,image_urls,levels_of_care,population_served,specializations,highlights,accreditations,short_description,description,tagline,insurance_status,featured_payer,updated_at,contracts_verified_at,hidden_from_org_page",
         )
         .eq("organization_id", orgData.id)
         .eq("verification_status", "approved")
@@ -198,6 +197,14 @@ export default function OrgSheet() {
   }
 
   const briefDescription = org.description?.trim() || null;
+  const verifiedAt = useMemo(() => {
+    let latest: string | null = null;
+    for (const f of facilities) {
+      const d = f.contracts_verified_at?.trim();
+      if (d && (!latest || d > latest)) latest = d;
+    }
+    return latest ?? org.updated_at;
+  }, [facilities, org.updated_at]);
 
   const contactAside = heroContact ? (
     <OrgHeroContactCard
@@ -217,11 +224,15 @@ export default function OrgSheet() {
 
   return (
     <div id="top" className="min-h-screen bg-background">
-      <OrgAppHeader />
-
       {/* Mobile: logo-on-top strip — matches landing PublicOrgSheetPreview */}
       <div className="lg:hidden">
-        <OrgHeroSection org={org} brand={brand} compact parts="media" />
+        <OrgHeroSection
+          org={org}
+          brand={brand}
+          compact
+          parts="media"
+          verifiedAt={verifiedAt}
+        />
       </div>
 
       {/* Desktop: identity band + contact card */}
@@ -231,11 +242,12 @@ export default function OrgSheet() {
           brand={brand}
           description={briefDescription}
           facilityCount={facilities.length}
+          verifiedAt={verifiedAt}
           contactAside={contactAside}
         />
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:pt-6 lg:pb-8 space-y-5 sm:space-y-6">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:pt-3 lg:pb-8 space-y-4 sm:space-y-5">
         <OrganizationSheetView
           org={org}
           facilities={facilities}

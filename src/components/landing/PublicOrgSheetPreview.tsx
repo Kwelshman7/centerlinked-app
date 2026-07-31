@@ -1,9 +1,8 @@
 /**
  * Mobile mock of /o/:slug — logo sits cleanly on top, compact filter icon,
- * natural 2×2 facility cards, sticky Refer a Patient.
+ * natural 2×2 facility cards, sticky Refer a Patient. No CenterLinked chrome.
  */
 import { User } from "lucide-react";
-import { Logo } from "@/components/Logo";
 import { FacilityGridCard } from "@/components/FacilityGridCard";
 import { ExpandableText } from "@/components/public/ExpandableText";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
@@ -38,30 +37,17 @@ const demoOrg = {
 export function PublicOrgSheetPreviewContent() {
   return (
     <div className="relative flex flex-col h-full min-h-0 overflow-hidden bg-muted/30 text-foreground select-none pointer-events-none">
-      <header className="shrink-0 z-20 bg-card/95 backdrop-blur-xl border-b border-border/60">
-        <div className="h-11 px-3.5 flex items-center justify-between gap-3">
-          <Logo to="/" size="sm" className="shrink-0 pointer-events-none" />
-          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-            Sign in
-          </span>
-        </div>
-      </header>
-
       <div className="flex-1 min-h-0 overflow-hidden pb-[3.75rem]">
-        <OrgHeroSection org={demoOrg} brand={BRAND} compact logoSize="mock" />
+        <OrgHeroSection
+          org={demoOrg}
+          brand={BRAND}
+          compact
+          logoSize="mock"
+          verifiedAt={new Date().toISOString()}
+        />
 
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
           <header className="space-y-1">
-            <span
-              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-              style={{
-                color: BRAND,
-                backgroundColor: `${BRAND}12`,
-                borderColor: `${BRAND}28`,
-              }}
-            >
-              Verified
-            </span>
             <h1 className="sr-only">{BANYAN_DEMO.orgName}</h1>
             <ExpandableText text={DESCRIPTION} brand={BRAND} clampLines={3} preview />
           </header>
@@ -74,6 +60,7 @@ export function PublicOrgSheetPreviewContent() {
                   {BANYAN_DEMO.facilityCount} locations
                 </span>
               </div>
+              {/* Demo network is large enough that filters appear on the live page */}
               <OrgFacilityFilters
                 mode="button"
                 states={BANYAN_STATE_CODES}

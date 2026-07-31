@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
-import { BadgeCheck, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { ExpandableText } from "@/components/public/ExpandableText";
+import { VerifiedMark } from "@/components/public/VerifiedMark";
 import { orgHeroImage, orgHeroIsLogoFallback } from "@/lib/org-hero";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ interface OrgHeroOrg {
   cover_image_url?: string | null;
   image_urls?: string[] | null;
   verified: boolean;
+  updated_at?: string | null;
 }
 
 interface Props {
@@ -24,6 +26,8 @@ interface Props {
   description?: string | null;
   /** Facility count for the meta line. */
   facilityCount?: number;
+  /** Most recent verification timestamp for the subtle date under the mark. */
+  verifiedAt?: string | null;
   /** Contact / claim card rendered beside the identity block. */
   contactAside?: ReactNode;
   /**
@@ -52,13 +56,22 @@ export function OrgHeroSection({
   brand,
   description,
   facilityCount = 0,
+  verifiedAt,
   contactAside,
   compact = false,
   logoSize = "default",
   parts = "all",
 }: Props) {
   if (compact || parts === "media") {
-    return <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />;
+    return (
+      <MobileLogoHero
+        org={org}
+        brand={brand}
+        compact={compact}
+        logoSize={logoSize}
+        verifiedAt={verifiedAt}
+      />
+    );
   }
 
   return (
@@ -67,6 +80,7 @@ export function OrgHeroSection({
       brand={brand}
       description={description}
       facilityCount={facilityCount}
+      verifiedAt={verifiedAt}
       contactAside={contactAside}
     />
   );
@@ -78,12 +92,14 @@ function IdentityHero({
   brand,
   description,
   facilityCount,
+  verifiedAt,
   contactAside,
 }: {
   org: OrgHeroOrg;
   brand: string;
   description?: string | null;
   facilityCount: number;
+  verifiedAt?: string | null;
   contactAside?: ReactNode;
 }) {
   const headline = org.name;
@@ -107,7 +123,7 @@ function IdentityHero({
       }}
       aria-label={`${org.name} profile header`}
     >
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6 lg:pt-10 lg:pb-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-7 pb-4 lg:pt-8 lg:pb-5">
         <div
           className={cn(
             "grid items-center gap-7",
@@ -117,43 +133,38 @@ function IdentityHero({
           <div className="flex items-center min-w-0 gap-5 lg:gap-6">
             <div
               className={cn(
-                "shrink-0 rounded-2xl border border-border/70 bg-white shadow-md overflow-hidden grid place-items-center",
+                "relative shrink-0",
                 "h-[9rem] w-[9rem] lg:h-[11rem] lg:w-[11rem]",
               )}
             >
-              {org.logo_url ? (
-                <img
-                  src={org.logo_url}
-                  alt={`${org.name} logo`}
-                  className="h-[88%] w-[88%] object-contain"
+              <div className="absolute inset-0 rounded-2xl border border-border/70 bg-white shadow-md overflow-hidden grid place-items-center">
+                {org.logo_url ? (
+                  <img
+                    src={org.logo_url}
+                    alt={`${org.name} logo`}
+                    className="h-[88%] w-[88%] object-contain"
+                  />
+                ) : (
+                  <div
+                    className="h-full w-full grid place-items-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
+                    }}
+                  >
+                    <Building2 className="h-10 w-10 text-white/90" aria-hidden />
+                  </div>
+                )}
+              </div>
+              {org.verified && (
+                <VerifiedMark
+                  verifiedAt={verifiedAt ?? org.updated_at}
+                  size="md"
+                  className="absolute top-1.5 right-1.5 z-10"
                 />
-              ) : (
-                <div
-                  className="h-full w-full grid place-items-center"
-                  style={{
-                    background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
-                  }}
-                >
-                  <Building2 className="h-10 w-10 text-white/90" aria-hidden />
-                </div>
               )}
             </div>
 
             <div className="min-w-0 flex-1 space-y-2.5">
-              {org.verified && (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                  style={{
-                    color: brand,
-                    backgroundColor: `${brand}12`,
-                    borderColor: `${brand}28`,
-                  }}
-                >
-                  <BadgeCheck className="h-3 w-3" />
-                  Verified
-                </span>
-              )}
-
               <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.12] text-3xl lg:text-[2.5rem]">
                 {headline}
               </h1>
@@ -196,11 +207,13 @@ function MobileLogoHero({
   brand,
   compact,
   logoSize,
+  verifiedAt,
 }: {
   org: OrgHeroOrg;
   brand: string;
   compact: boolean;
   logoSize: "default" | "mock";
+  verifiedAt?: string | null;
 }) {
   const heroImage = orgHeroImage({ ...org, cover_image_url: null });
   const logoAsHero = orgHeroIsLogoFallback({ ...org, cover_image_url: null }) || !!org.logo_url;
@@ -214,6 +227,13 @@ function MobileLogoHero({
           background: `linear-gradient(160deg, ${brand}12 0%, hsl(var(--background)) 55%, ${brand}08 100%)`,
         }}
       >
+        {org.verified && (
+          <VerifiedMark
+            verifiedAt={verifiedAt ?? org.updated_at}
+            size="sm"
+            className="absolute top-2 right-2.5 z-10"
+          />
+        )}
         <div
           className={cn(
             "flex items-center justify-center",
@@ -242,6 +262,13 @@ function MobileLogoHero({
 
   return (
     <section className="relative w-full overflow-hidden bg-muted/40">
+      {org.verified && (
+        <VerifiedMark
+          verifiedAt={verifiedAt ?? org.updated_at}
+          size="sm"
+          className="absolute top-2 right-2.5 z-10"
+        />
+      )}
       <div
         className={cn(
           "relative w-full",

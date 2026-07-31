@@ -24,6 +24,7 @@ export interface ShowcaseFacility {
   insurance_status: string | null;
   featured_payer: string | null;
   updated_at?: string | null;
+  contracts_verified_at?: string | null;
   hidden_from_org_page?: boolean;
 }
 

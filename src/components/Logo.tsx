@@ -5,12 +5,13 @@ import logoFull from "@/assets/centerlinked-logo-full.png";
 interface LogoProps {
   className?: string;
   to?: string;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
 }
 
 // The image is tightly cropped (≈3.8:1), so these heights translate to
 // visually substantial widths without growing the host container.
 const sizes = {
+  xs: "h-5",
   sm: "h-7",
   md: "h-9",
   lg: "h-11",
