@@ -156,6 +156,7 @@ export default function ProgramSheet() {
         `${fac.name}${loc ? ` in ${loc}` : ""}. Program sheet.`,
       path: canonicalPath,
       image: orgRow ? orgShareImage(orgRow) : fac.image_urls?.[0] ?? null,
+      icon: orgRow?.logo_url,
       siteName: orgRow?.name ?? undefined,
       card: orgRow ? orgShareCardType(orgRow) : "summary_large_image",
     });

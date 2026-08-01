@@ -104,6 +104,7 @@ export default function OrgSheet() {
           `${orgData.name}${loc ? ` — ${loc}` : ""}. Referral profile.`,
         path: `/o/${orgData.slug ?? slug}`,
         image: orgShareImage(orgData),
+        icon: orgData.logo_url,
         siteName: orgData.name,
         card: orgShareCardType(orgData),
       });

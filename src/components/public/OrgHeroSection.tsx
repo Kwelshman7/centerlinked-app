@@ -125,41 +125,41 @@ function IdentityHero({
           <div className="flex items-center min-w-0 gap-5 lg:gap-6">
             <div
               className={cn(
-                "relative shrink-0",
+                "relative shrink-0 overflow-hidden rounded-2xl border border-border/70 bg-white shadow-md grid place-items-center",
                 "h-[9rem] w-[9rem] lg:h-[11rem] lg:w-[11rem]",
               )}
             >
-              <div className="absolute inset-0 rounded-2xl border border-border/70 bg-white shadow-md overflow-hidden grid place-items-center">
-                {org.logo_url ? (
-                  <img
-                    src={org.logo_url}
-                    alt={`${org.name} logo`}
-                    className="h-[88%] w-[88%] object-contain"
-                  />
-                ) : (
-                  <div
-                    className="h-full w-full grid place-items-center"
-                    style={{
-                      background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
-                    }}
-                  >
-                    <Building2 className="h-10 w-10 text-white/90" aria-hidden />
-                  </div>
-                )}
-              </div>
-              {org.verified && (
-                <VerifiedMark
-                  verifiedAt={verifiedAt ?? org.updated_at}
-                  size="md"
-                  className="absolute top-1.5 right-1.5 z-10"
+              {org.logo_url ? (
+                <img
+                  src={org.logo_url}
+                  alt={`${org.name} logo`}
+                  className="h-[88%] w-[88%] object-contain"
                 />
+              ) : (
+                <div
+                  className="h-full w-full grid place-items-center"
+                  style={{
+                    background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
+                  }}
+                >
+                  <Building2 className="h-10 w-10 text-white/90" aria-hidden />
+                </div>
               )}
             </div>
 
             <div className="min-w-0 flex-1 space-y-2.5">
-              <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.12] text-3xl lg:text-[2.5rem]">
-                {headline}
-              </h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.12] text-3xl lg:text-[2.5rem] min-w-0">
+                  {headline}
+                </h1>
+                {org.verified ? (
+                  <VerifiedMark
+                    verifiedAt={verifiedAt ?? org.updated_at}
+                    size="md"
+                    className="shrink-0 pt-1"
+                  />
+                ) : null}
+              </div>
 
               {tagline ? (
                 <p className="font-semibold text-base" style={{ color: brand }}>

@@ -4,11 +4,15 @@
 
 const SITE_URL = "https://www.centerlinked.com";
 
+const DEFAULT_FAVICON = "/favicon.png";
+
 type SocialMeta = {
   title: string;
   description?: string | null;
   path: string;
   image?: string | null;
+  /** Tab/bookmark icon — prefer org.logo_url on public share pages. */
+  icon?: string | null;
   /** Shown as og:site_name — use the org name for branded shares. */
   siteName?: string | null;
   /** summary works best for org logos; large image for cover photos. */
@@ -25,7 +29,7 @@ function setMeta(selector: string, attrs: Record<string, string>) {
   return el;
 }
 
-function setLink(rel: string, href: string) {
+function setLink(rel: string, href: string, opts?: { type?: string | null }) {
   let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
   if (!el) {
     el = document.createElement("link");
@@ -33,7 +37,24 @@ function setLink(rel: string, href: string) {
     document.head.appendChild(el);
   }
   el.href = href;
+  if (opts?.type) {
+    el.type = opts.type;
+  } else {
+    el.removeAttribute("type");
+  }
   return el;
+}
+
+function applyFavicon(icon?: string | null) {
+  const href = icon?.trim() || DEFAULT_FAVICON;
+  const isDefault = href === DEFAULT_FAVICON;
+  setLink("icon", href, isDefault ? { type: "image/png" } : undefined);
+
+  if (isDefault) {
+    document.head.querySelector('link[rel="apple-touch-icon"]')?.remove();
+  } else {
+    setLink("apple-touch-icon", href);
+  }
 }
 
 export function applySocialMeta({
@@ -41,6 +62,7 @@ export function applySocialMeta({
   description,
   path,
   image,
+  icon,
   siteName,
   card = "summary",
 }: SocialMeta) {
@@ -80,6 +102,7 @@ export function applySocialMeta({
   document.head.querySelector('meta[name="twitter:site"]')?.remove();
 
   setLink("canonical", url);
+  applyFavicon(icon);
 
   return () => {};
 }

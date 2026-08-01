@@ -64,13 +64,14 @@ function orgDescription(org) {
   );
 }
 
-function buildMeta({ title, description, path, image, siteName, card = "summary" }) {
+function buildMeta({ title, description, path, image, icon, siteName, card = "summary" }) {
   const url = `${process.env.SITE_URL || "https://www.centerlinked.com"}${path.startsWith("/") ? path : `/${path}`}`;
   return {
     title,
     description: (description || "").trim() || "Referral profile.",
     url,
     image: image || null,
+    icon: icon || null,
     siteName: siteName || title,
     card,
   };
@@ -115,6 +116,7 @@ export async function resolvePublicMeta(pathname) {
       description: facility.description || facility.tagline || orgDescription(org),
       path,
       image: org.logo_url || facility.image_urls?.[0] || org.cover_image_url,
+      icon: org.logo_url,
       siteName: org.name,
       card: org.logo_url ? "summary" : "summary_large_image",
     });
@@ -132,6 +134,7 @@ export async function resolvePublicMeta(pathname) {
       description: orgDescription(org),
       path: `/o/${org.slug}`,
       image: org.logo_url || org.cover_image_url,
+      icon: org.logo_url,
       siteName: org.name,
       card: org.logo_url ? "summary" : "summary_large_image",
     });
@@ -160,6 +163,7 @@ export async function resolvePublicMeta(pathname) {
       description: facility.description || facility.tagline || orgDescription(org),
       path: canonicalPath,
       image: org.logo_url || facility.image_urls?.[0] || org.cover_image_url,
+      icon: org.logo_url,
       siteName: org.name,
       card: org.logo_url ? "summary" : "summary_large_image",
     });
@@ -177,6 +181,7 @@ export async function resolvePublicMeta(pathname) {
       description: orgDescription(org),
       path: `/o/${org.slug}`,
       image: org.logo_url || org.cover_image_url,
+      icon: org.logo_url,
       siteName: org.name,
       card: org.logo_url ? "summary" : "summary_large_image",
     });
@@ -198,6 +203,7 @@ export function injectSocialMeta(baseHtml, meta) {
   const siteName = escapeHtml(meta.siteName);
   const card = meta.card === "summary_large_image" ? "summary_large_image" : "summary";
   const image = meta.image ? escapeHtml(meta.image) : null;
+  const icon = meta.icon ? escapeHtml(meta.icon) : null;
 
   let html = baseHtml
     .replace(/<title>[^<]*<\/title>/i, `<title>${title}</title>`)
@@ -221,6 +227,13 @@ export function injectSocialMeta(baseHtml, meta) {
 
   // Drop platform-default CenterLinked preview art for org-branded shares.
   html = html.replace(/\n?\s*<meta name="twitter:site"[^>]*>/i, "");
+
+  if (icon) {
+    html = html.replace(
+      /<link rel="icon"[^>]*>/i,
+      `<link rel="icon" href="${icon}">\n    <link rel="apple-touch-icon" href="${icon}">`,
+    );
+  }
 
   if (image) {
     html = html
