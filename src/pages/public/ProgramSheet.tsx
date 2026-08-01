@@ -15,8 +15,20 @@ import { OrgFooter } from "@/components/public/OrgFooter";
 import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
-import { parseBrandColor, programPublicPath } from "@/lib/public-urls";
+import {
+  programDisplayPath,
+  programPublicPath,
+  programPublicUrl,
+} from "@/lib/public-urls";
+import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
+import { sanitizePhone } from "@/lib/phone";
 import { trackOrgEvent } from "@/lib/track-org-event";
+import {
+  isMissingOptionalOrgColumn,
+  orgProgramSelect,
+  orgProgramSelectFallback,
+  orgSocialFromRow,
+} from "@/lib/org-public-select";
 
 interface Facility extends FacilitySheetData {
   organization_id: string;
@@ -75,7 +87,9 @@ export default function ProgramSheet() {
     [fullContracts],
   );
 
-  const brand = parseBrandColor(org?.brand_color);
+  // Match the organization sheet exactly, including the logo-derived fallback
+  // when a saved brand color is not present.
+  const brand = useOrgBrandColor(org);
 
   const loadAll = async () => {
     if (!facilitySlug) return;
@@ -94,20 +108,27 @@ export default function ProgramSheet() {
     }
 
     const fac = f as Facility;
-    const [{ data: o }, { data: c }] = await Promise.all([
-      supabase
+    const orgQuery = await supabase
+      .from("organizations")
+      .select(orgProgramSelect)
+      .eq("id", fac.organization_id)
+      .maybeSingle();
+
+    let o = orgQuery.data;
+    if (orgQuery.error && isMissingOptionalOrgColumn(orgQuery.error)) {
+      const fallback = await supabase
         .from("organizations")
-        .select(
-          "id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,website,tagline,brand_color,accent_color,cover_image_url,verified,updated_at",
-        )
+        .select(orgProgramSelectFallback)
         .eq("id", fac.organization_id)
-        .maybeSingle(),
-      supabase
-        .from("insurance_contracts")
-        .select("id,payer_id,payer_name,in_network")
-        .eq("facility_id", fac.id)
-        .order("payer_name"),
-    ]);
+        .maybeSingle();
+      o = fallback.data;
+    }
+
+    const { data: c } = await supabase
+      .from("insurance_contracts")
+      .select("id,payer_id,payer_name,in_network")
+      .eq("facility_id", fac.id)
+      .order("payer_name");
 
     const orgRow = (o as OrgRow | null) ?? null;
 
@@ -176,7 +197,7 @@ export default function ProgramSheet() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
       {org ? (
         <ProgramOrgHeader org={org} facilityName={facility.name} brand={brand} />
       ) : (
@@ -256,26 +277,25 @@ export default function ProgramSheet() {
           orgName={org?.name ?? "This organization"}
           slug={org?.slug ?? null}
           logoUrl={org?.logo_url ?? null}
-          tagline={org?.tagline ?? null}
           brand={brand}
-          orgLinkLabel="View all programs"
-          verified={!!org?.verified}
-          verifiedAt={facility.contracts_verified_at ?? org?.updated_at ?? null}
-          contact={
-            (facility.bd_contact_name || org?.bd_contact_name) &&
-            (facility.bd_contact_phone ||
+          social={orgSocialFromRow(org)}
+          shareTitle={facility.name}
+          shareUrl={
+            facility.slug && typeof window !== "undefined"
+              ? programPublicUrl(window.location.origin, facility.slug, org?.slug)
+              : undefined
+          }
+          shareDisplayPath={
+            facility.slug ? programDisplayPath(facility.slug, org?.slug) : undefined
+          }
+          orgLinkLabel="View More"
+          showExportPdf
+          showReferSlot={
+            !!(
+              sanitizePhone(facility.bd_contact_phone || org?.bd_contact_phone) ||
               facility.bd_contact_email ||
-              org?.bd_contact_phone ||
-              org?.bd_contact_email)
-              ? {
-                  name:
-                    facility.bd_contact_name ||
-                    org?.bd_contact_name ||
-                    "BD Representative",
-                  phone: facility.bd_contact_phone || org?.bd_contact_phone || null,
-                  email: facility.bd_contact_email || org?.bd_contact_email || null,
-                }
-              : null
+              org?.bd_contact_email
+            )
           }
         />
       </main>

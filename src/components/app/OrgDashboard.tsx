@@ -8,11 +8,11 @@ import {
   BarChart3,
   Pencil,
   Phone,
-  MessageSquare,
-  Mail,
   ExternalLink,
   Palette,
   UserPlus,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { FacilityGridCard } from "@/components/FacilityGridCard";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OrgRow {
   id: string;
@@ -45,6 +46,7 @@ interface FacilityRow {
   bd_contact_name: string | null;
   bd_contact_phone: string | null;
   bd_contact_email: string | null;
+  hidden_from_org_page?: boolean;
 }
 
 interface Props {
@@ -73,11 +75,14 @@ export function OrgDashboard({
   welcomeName = "there",
   onFacilitiesChanged,
 }: Props) {
+  const { isFacilityAdmin, isSuperAdmin } = useAuth();
+  const canManageFacilityVisibility = adminMode || isFacilityAdmin || isSuperAdmin;
   const [org, setOrg] = useState<OrgRow | null>(null);
   const [allFacilities, setAllFacilities] = useState<FacilityRow[]>([]);
   const [facilityPage, setFacilityPage] = useState(1);
   const [selectedState, setSelectedState] = useState("all");
   const [facilitiesLoading, setFacilitiesLoading] = useState(false);
+  const [visibilitySavingId, setVisibilitySavingId] = useState<string | null>(null);
   const [memberCount, setMemberCount] = useState(0);
   const [engagement, setEngagement] = useState<{
     page_views: number;
@@ -128,7 +133,7 @@ export function OrgDashboard({
     const { data: f } = await supabase
       .from("facilities")
       .select(
-        "id,name,city,state,image_urls,levels_of_care,updated_at,bd_contact_name,bd_contact_phone,bd_contact_email",
+        "id,name,city,state,image_urls,levels_of_care,updated_at,bd_contact_name,bd_contact_phone,bd_contact_email,hidden_from_org_page",
       )
       .eq("organization_id", organizationId)
       .order("updated_at", { ascending: false });
@@ -220,29 +225,54 @@ export function OrgDashboard({
     else toast.error("Could not copy link");
   };
 
+  const toggleFacilityVisibility = async (facility: FacilityRow) => {
+    if (!canManageFacilityVisibility) return;
+    const nextHidden = !facility.hidden_from_org_page;
+    setVisibilitySavingId(facility.id);
+    try {
+      const { error } = await supabase
+        .from("facilities")
+        .update({ hidden_from_org_page: nextHidden })
+        .eq("id", facility.id)
+        .eq("organization_id", organizationId);
+      if (error) throw error;
+      toast.success(nextHidden ? "Facility hidden from the public organization profile" : "Facility is visible on the public organization profile");
+      await reloadFacilities();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update facility visibility");
+    } finally {
+      setVisibilitySavingId(null);
+    }
+  };
+
   const brandColor = org?.brand_color || DEFAULT_BRAND;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {!adminMode && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
           <div className="min-w-0">
             <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight">
               Welcome back, {firstName}
             </h1>
-            {org?.name && <p className="text-muted-foreground mt-0.5 truncate">{org.name}</p>}
+            {org?.name && <p className="text-sm text-muted-foreground mt-1 truncate">{org.name}</p>}
           </div>
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            <Button variant="outline" size="sm" onClick={handleViewPublic} disabled={!publicUrl}>
+          <div className="grid grid-cols-2 gap-2 shrink-0 sm:flex sm:items-center sm:flex-wrap">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleViewPublic} disabled={!publicUrl}>
               <ExternalLink className="h-4 w-4" /> Public page
             </Button>
-            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} />
+            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} triggerClassName="w-full sm:w-auto" />
           </div>
         </div>
       )}
 
       {/* Compact KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+      <section aria-label="Organization overview">
+        <div className="flex items-center justify-between px-0.5 mb-2 sm:hidden">
+          <h2 className="font-heading text-sm font-bold">At a glance</h2>
+          <span className="text-[11px] text-muted-foreground">Organization activity</span>
+        </div>
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
         <KpiTile
           label="Facilities"
           value={facilityCount}
@@ -258,60 +288,59 @@ export function OrgDashboard({
           to={membersHref}
         />
         <KpiTile
-          label="Engagement"
+          label="Views"
+          value={engagement?.page_views ?? 0}
+          hint="Profile views"
+          icon={BarChart3}
+        />
+        <KpiTile
+          label="Referrals"
           value={
             (engagement?.call_clicks ?? 0) +
             (engagement?.text_clicks ?? 0) +
             (engagement?.email_clicks ?? 0)
           }
-          hint={`${engagement?.page_views ?? 0} views`}
-          icon={BarChart3}
+          hint="Calls, texts, email"
+          icon={Phone}
         />
-        <Card className="p-3 flex items-center justify-around gap-1">
-          {[
-            { label: "Calls", value: engagement?.call_clicks ?? 0, icon: Phone },
-            { label: "Texts", value: engagement?.text_clicks ?? 0, icon: MessageSquare },
-            { label: "Emails", value: engagement?.email_clicks ?? 0, icon: Mail },
-          ].map((m) => (
-            <div key={m.label} className="text-center min-w-0 px-1">
-              <m.icon className="h-3.5 w-3.5 text-primary mx-auto mb-0.5" />
-              <p className="font-heading text-lg font-bold leading-none tabular-nums">{m.value}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{m.label}</p>
-            </div>
-          ))}
-        </Card>
-      </div>
+        </div>
+      </section>
 
       {/* Quick actions */}
-      <Card className="p-3.5 sm:p-4">
-        <h2 className="font-heading text-sm font-bold mb-3">Quick actions</h2>
+      <Card className="p-3 sm:p-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 className="font-heading text-sm font-bold">Quick actions</h2>
+            <p className="text-[11px] text-muted-foreground mt-0.5 sm:hidden">Manage your profile, team, and facilities.</p>
+          </div>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <AddFacilityDialog
             organizationId={organizationId}
             onCreated={reloadFacilities}
             triggerLabel="Add facility"
-            triggerClassName="w-full justify-start h-10"
+            triggerClassName="w-full justify-start h-11 sm:h-10"
             triggerVariant="outline"
           />
-          <Button asChild variant="outline" className="h-10 justify-start">
+          <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
             <Link to={facilitiesHref}>
               <Pencil className="h-4 w-4" /> Edit facilities
             </Link>
           </Button>
           {membersHref ? (
-            <Button asChild variant="outline" className="h-10 justify-start">
+            <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
               <Link to={membersHref}>
                 <UserPlus className="h-4 w-4" /> Manage team
               </Link>
             </Button>
           ) : (
-            <Button asChild variant="outline" className="h-10 justify-start">
+            <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
               <Link to={brandingHref}>
                 <Users className="h-4 w-4" /> Org profile
               </Link>
             </Button>
           )}
-          <Button asChild variant="outline" className="h-10 justify-start">
+          <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
             <Link to={brandingHref}>
               <Palette className="h-4 w-4" /> Full branding
             </Link>
@@ -319,7 +348,7 @@ export function OrgDashboard({
           <Button
             type="button"
             variant="outline"
-            className="h-10 justify-start"
+            className="h-11 justify-start sm:h-10"
             onClick={handleShare}
             disabled={!publicUrl}
           >
@@ -328,7 +357,7 @@ export function OrgDashboard({
           <Button
             type="button"
             variant="outline"
-            className="h-10 justify-start"
+            className="h-11 justify-start sm:h-10"
             onClick={handleViewPublic}
             disabled={!publicUrl}
           >
@@ -338,7 +367,7 @@ export function OrgDashboard({
       </Card>
 
       {/* Facilities grid */}
-      <Card className="p-3.5 sm:p-4">
+      <Card className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <div className="min-w-0">
             <h2 className="font-heading text-base font-bold">Facilities</h2>
@@ -347,9 +376,9 @@ export function OrgDashboard({
               {selectedState !== "all" ? " in this state" : ""}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} />
-            <Button asChild variant="outline" size="sm">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0">
+            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} triggerClassName="w-full sm:w-auto" />
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <Link to={facilitiesHref}>
                 <Pencil className="h-3.5 w-3.5" /> Manage
               </Link>
@@ -389,7 +418,11 @@ export function OrgDashboard({
                   />
                   <div className="flex items-center justify-between gap-2 px-0.5">
                     <p className="text-[11px] text-muted-foreground truncate min-w-0">
-                      {f.bd_contact_name?.trim() ? (
+                      {f.hidden_from_org_page ? (
+                        <span className="inline-flex items-center gap-1 text-amber-700/90">
+                          <EyeOff className="h-3 w-3" /> Hidden from public organization profile
+                        </span>
+                      ) : f.bd_contact_name?.trim() ? (
                         <>
                           <span className="font-medium text-foreground/80">BD:</span>{" "}
                           {f.bd_contact_name}
@@ -398,17 +431,33 @@ export function OrgDashboard({
                         <span className="text-amber-700/80">No BD assigned</span>
                       )}
                     </p>
-                    <AssignFacilityBdDialog
-                      facilityId={f.id}
-                      facilityName={f.name}
-                      organizationId={organizationId}
-                      bd_contact_name={f.bd_contact_name}
-                      bd_contact_phone={f.bd_contact_phone}
-                      bd_contact_email={f.bd_contact_email}
-                      onSaved={reloadFacilities}
-                      triggerVariant="ghost"
-                      triggerClassName="h-7 px-2 text-[11px] shrink-0"
-                    />
+                    <div className="flex items-center shrink-0">
+                      {canManageFacilityVisibility && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-[11px]"
+                          disabled={visibilitySavingId === f.id}
+                          onClick={() => void toggleFacilityVisibility(f)}
+                          aria-label={f.hidden_from_org_page ? `Show ${f.name} on the public organization profile` : `Hide ${f.name} from the public organization profile`}
+                        >
+                          {f.hidden_from_org_page ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                          {f.hidden_from_org_page ? "Show" : "Hide"}
+                        </Button>
+                      )}
+                      <AssignFacilityBdDialog
+                        facilityId={f.id}
+                        facilityName={f.name}
+                        organizationId={organizationId}
+                        bd_contact_name={f.bd_contact_name}
+                        bd_contact_phone={f.bd_contact_phone}
+                        bd_contact_email={f.bd_contact_email}
+                        onSaved={reloadFacilities}
+                        triggerVariant="ghost"
+                        triggerClassName="h-7 px-2 text-[11px]"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -468,20 +517,20 @@ function KpiTile({
   const inner = (
     <Card
       className={cn(
-        "p-3 h-full",
+        "p-2 sm:p-3 h-full min-w-0",
         to && "hover:border-primary/40 hover:shadow-sm transition-all",
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-muted-foreground truncate">{label}</p>
-        <span className="h-7 w-7 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
-          <Icon className="h-3.5 w-3.5" />
+      <div className="flex items-center justify-between gap-1.5">
+        <p className="text-[10px] sm:text-xs font-medium text-muted-foreground truncate">{label}</p>
+        <span className="h-6 w-6 sm:h-7 sm:w-7 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
+          <Icon className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
         </span>
       </div>
-      <p className="mt-1 font-heading text-2xl font-bold tracking-tight tabular-nums leading-none">
+      <p className="mt-1 font-heading text-xl sm:text-2xl font-bold tracking-tight tabular-nums leading-none">
         {value}
       </p>
-      <p className="text-[11px] text-muted-foreground mt-1">{hint}</p>
+      <p className="text-[9px] sm:text-[11px] text-muted-foreground mt-1 truncate">{hint}</p>
     </Card>
   );
   if (to) return <Link to={to} className="block">{inner}</Link>;

@@ -24,15 +24,6 @@ export function emailApiPlugin(): Plugin {
           return next();
         }
 
-        if (req.method === "OPTIONS") {
-          res.statusCode = 204;
-          res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-          res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-          res.end();
-          return;
-        }
-
         if (req.method !== "POST") {
           sendJson(res, 405, { error: "Method not allowed" });
           return;
@@ -46,7 +37,7 @@ export function emailApiPlugin(): Plugin {
           }
 
           if (pathname === "/api/notify-access-request") {
-            const result = await handleNotifyAccessRequest(body);
+            const result = await handleNotifyAccessRequest(body, req.headers);
             sendJson(res, result.status, result.json);
             return;
           }
@@ -60,8 +51,8 @@ export function emailApiPlugin(): Plugin {
           const result = await handleSendWelcome(body, getBearerToken(req));
           sendJson(res, result.status, result.json);
         } catch (err) {
-          console.error("[email-api]", err);
-          sendJson(res, 500, { error: (err as Error)?.message || "Internal server error" });
+          console.error("[email-api] unexpected handler failure");
+          sendJson(res, 500, { error: "Internal server error" });
         }
       });
     },

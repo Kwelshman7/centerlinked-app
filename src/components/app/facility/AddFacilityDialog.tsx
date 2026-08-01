@@ -29,7 +29,8 @@ export function AddFacilityDialog({
   triggerClassName,
   triggerVariant = "default",
 }: Props & { triggerVariant?: "default" | "outline" }) {
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isFacilityAdmin, isSuperAdmin } = useAuth();
+  const canManageVisibility = isFacilityAdmin || isSuperAdmin;
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => emptyFacility());
   const [saving, setSaving] = useState(false);
@@ -69,7 +70,7 @@ export function AddFacilityDialog({
         bd_contact_name: draft.bd_contact_name || null,
         bd_contact_phone: draft.bd_contact_phone || null,
         bd_contact_email: draft.bd_contact_email || null,
-        hidden_from_org_page: draft.hidden_from_org_page,
+        ...(canManageVisibility ? { hidden_from_org_page: draft.hidden_from_org_page } : {}),
         verification_status: isSuperAdmin ? ("approved" as const) : ("pending" as const),
       };
       const { data: inserted, error } = await supabase

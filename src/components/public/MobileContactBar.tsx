@@ -1,7 +1,15 @@
-import { useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { Phone, MessageSquare, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  ORG_SHARED_FOOTER_ID,
+  registerReferPatientOpener,
+} from "@/lib/org-shared-footer";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { sanitizePhone } from "@/lib/phone";
 
@@ -18,6 +26,8 @@ interface Props {
   shareAction?: ReactNode;
   /** Pixels to lift the bar above a bottom tab bar (e.g. 64 in the logged-in app). */
   bottomOffset?: number;
+  /** Lets the page release sticky-bar spacing once the footer takes over. */
+  onFooterVisibilityChange?: (visible: boolean) => void;
 }
 
 function getInitials(name: string): string {
@@ -30,6 +40,8 @@ function getInitials(name: string): string {
 /**
  * Mobile sticky contact CTA. Tapping opens a sheet to choose
  * Send Text, Call, or Email for the BD rep.
+ * It stays full width until the footer enters view, where the footer's
+ * matching Refer Patient action takes over.
  */
 export function MobileContactBar({
   repName,
@@ -38,13 +50,51 @@ export function MobileContactBar({
   brand,
   organizationId,
   contextLabel = "Reach the business development representative.",
-  ctaLabel = "Contact now",
+  ctaLabel = "Refer Patient",
   shareAction,
   bottomOffset = 0,
+  onFooterVisibilityChange,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [footerVisible, setFooterVisible] = useState(false);
   const tel = sanitizePhone(repPhone);
   const hasContact = !!(tel || repEmail);
+
+  useEffect(() => {
+    if (!hasContact) {
+      registerReferPatientOpener(null);
+      return;
+    }
+    registerReferPatientOpener(() => setOpen(true));
+    return () => registerReferPatientOpener(null);
+  }, [hasContact]);
+
+  useEffect(() => {
+    const footer = document.getElementById(ORG_SHARED_FOOTER_ID);
+    if (!footer || !hasContact) return;
+
+    const updateVisibility = () => {
+      const rect = footer.getBoundingClientRect();
+      setFooterVisible(rect.top < window.innerHeight && rect.bottom > 0);
+    };
+    const observer = new IntersectionObserver(
+      ([entry]) => setFooterVisible(entry.isIntersecting),
+      { threshold: 0.01 },
+    );
+    observer.observe(footer);
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    window.addEventListener("resize", updateVisibility);
+    updateVisibility();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", updateVisibility);
+      window.removeEventListener("resize", updateVisibility);
+    };
+  }, [hasContact]);
+
+  useEffect(() => {
+    onFooterVisibilityChange?.(footerVisible);
+  }, [footerVisible, onFooterVisibilityChange]);
 
   if (!hasContact && !shareAction) return null;
 
@@ -53,39 +103,46 @@ export function MobileContactBar({
     setOpen(false);
   };
 
-  const barStyle: React.CSSProperties = bottomOffset
-    ? { bottom: `calc(${bottomOffset}px + env(safe-area-inset-bottom))` }
-    : { bottom: 0, paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" };
+  const stickyLabel = ctaLabel.includes(" ") ? ctaLabel : "Refer Patient";
 
   return (
     <>
-      <div
-        className="fixed inset-x-0 bottom-0 lg:hidden z-40 bg-card/95 backdrop-blur-md border-t border-border px-4 pt-3 pb-3 print:hidden"
-        style={barStyle}
-      >
-        <div className={shareAction ? "flex gap-2" : undefined}>
-          {shareAction && (
-            <div className="flex-1 min-w-0 [&_button]:w-full [&_button]:shadow-md [&_button]:text-[15px] [&_button]:font-semibold">
-              {shareAction}
+      {/* Sticky chrome stays full width until the real footer controls are visible. */}
+      {(shareAction || hasContact) && !footerVisible && (
+        <div
+          className="fixed inset-x-0 bottom-0 lg:hidden z-40 border-t bg-background/95 px-4 pt-3 pb-3 backdrop-blur-md print:hidden"
+          style={bottomOffset ? { bottom: `calc(${bottomOffset}px + env(safe-area-inset-bottom))` } : undefined}
+        >
+          {shareAction ? (
+            <div className="flex gap-2">
+              <div className="flex-1 min-w-0 [&_button]:w-full [&_button]:shadow-md [&_button]:text-[15px] [&_button]:font-semibold">
+                {shareAction}
+              </div>
+              {hasContact && (
+                <Button
+                  size="lg"
+                  className="flex-1 min-w-0 shadow-md text-[15px] font-semibold"
+                  style={{ backgroundColor: brand, borderColor: brand, color: "#ffffff" }}
+                  onClick={() => setOpen(true)}
+                >
+                  <User className="h-4 w-4" />
+                  {stickyLabel}
+                </Button>
+              )}
             </div>
-          )}
-          {hasContact && (
+          ) : (
             <Button
               size="lg"
-              className={
-                shareAction
-                  ? "flex-1 min-w-0 shadow-md text-[15px] font-semibold"
-                  : "w-full shadow-md text-[15px] font-semibold"
-              }
-              style={{ backgroundColor: brand, borderColor: brand }}
+              className="h-12 w-full text-[15px] font-semibold shadow-md hover:opacity-90"
+              style={{ backgroundColor: brand, borderColor: brand, color: "#ffffff" }}
               onClick={() => setOpen(true)}
             >
               <User className="h-4 w-4" />
-              {ctaLabel}
+              {stickyLabel}
             </Button>
           )}
         </div>
-      </div>
+      )}
 
       {hasContact && (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -182,7 +239,8 @@ export function MobileContactBar({
 }
 
 /** Bottom padding to keep scroll content clear of the fixed contact bar on mobile. */
-export function mobileContactBarPadding(bottomOffset = 0): string {
+export function mobileContactBarPadding(bottomOffset = 0, collapsed = false): string {
+  if (collapsed) return "pb-3 lg:pb-0";
   const bar = "5rem";
   if (bottomOffset) {
     return `pb-[calc(${bar}+${bottomOffset}px+env(safe-area-inset-bottom))] lg:pb-0`;

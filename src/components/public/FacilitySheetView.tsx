@@ -64,6 +64,11 @@ export interface SheetOrg {
   name: string;
   slug: string | null;
   logo_url: string | null;
+  footer_image_url?: string | null;
+  social_facebook_url?: string | null;
+  social_instagram_url?: string | null;
+  social_linkedin_url?: string | null;
+  social_x_url?: string | null;
   bd_contact_name: string | null;
   bd_contact_phone: string | null;
   bd_contact_email: string | null;
@@ -144,6 +149,7 @@ export function FacilitySheetView({
   coverImageUrl,
 }: Props) {
   const brand = useOrgBrandColor(org, brandColor);
+  const [footerVisible, setFooterVisible] = useState(false);
   const { cities: nearbyCities, loading: nearbyCitiesLoading } = useNearbyCities(facility.city, facility.state);
 
   const address = [facility.address_line1, [facility.city, facility.state].filter(Boolean).join(", "), facility.zip]
@@ -218,7 +224,7 @@ export function FacilitySheetView({
   const tabBarOffset = mode === "internal" ? 64 : 0;
 
   return (
-    <div className={`space-y-5 lg:space-y-6 min-w-0 ${showMobileActionBar ? mobileContactBarPadding(tabBarOffset) : ""}`}>
+    <div className={`space-y-5 lg:space-y-6 min-w-0 ${showMobileActionBar ? mobileContactBarPadding(tabBarOffset, footerVisible) : ""}`}>
       {/* Hero */}
       <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
         <div className="grid lg:grid-cols-2 lg:items-start">
@@ -263,15 +269,15 @@ export function FacilitySheetView({
               <p className="text-sm leading-relaxed text-foreground/80 break-words">{summaryText}</p>
             )}
 
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-0.5">
+            <div className="grid grid-cols-2 gap-x-5 sm:gap-x-8 gap-y-3 pt-0.5">
               {facilityType && (
-                <MetaItem icon={Building2} label="Facility Type" value={facilityType} brand={brand} />
+                <MetaItem icon={Building2} label="Type" value={facilityType} brand={brand} />
               )}
               {accreditationLabel && (
-                <MetaItem icon={Award} label="Accreditation" value={accreditationLabel} brand={brand} />
+                <MetaItem icon={Award} label="Accredited" value={accreditationLabel} brand={brand} />
               )}
               {lastUpdated && (
-                <MetaItem icon={Clock} label="Last Updated" value={lastUpdated} brand={brand} />
+                <MetaItem icon={Clock} label="Updated" value={lastUpdated} brand={brand} />
               )}
             </div>
 
@@ -292,15 +298,15 @@ export function FacilitySheetView({
           <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50">
               {hasFactsStrip && (
-                <div className="px-4 sm:px-6 py-4 sm:py-5 grid sm:grid-cols-2 gap-5 sm:gap-8">
+                <div className="px-4 sm:px-6 py-4 sm:py-5 grid gap-4 sm:grid-cols-2 sm:gap-x-10">
                   <div className="min-w-0">
-                    <SectionHeading title="In-Network Contracts" headerExtra={contractsHeaderExtra} />
+                    <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} />
                     {inNetworkPayers.length > 0 ? (
                       <div className="flex flex-wrap items-center gap-1.5">
                         {inNetworkPayers.map((c) => (
                           <span
                             key={c.id}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-semibold max-w-full"
+                            className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 sm:px-2 py-1 text-[11px] sm:text-xs font-semibold max-w-full"
                           >
                             {c.payer_logo_url ? (
                               <img src={c.payer_logo_url} alt={c.payer_name} className="h-3.5 w-3.5 object-contain shrink-0" />
@@ -312,21 +318,20 @@ export function FacilitySheetView({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">
-                        Out-of-Network Only
+                      <p className="text-[11px] sm:text-xs uppercase tracking-wide font-semibold text-muted-foreground">
+                        Out-of-network
                       </p>
                     )}
                   </div>
 
                   {facility.levels_of_care?.length > 0 && (
                     <div className="min-w-0">
-                      <SectionHeading title="Levels of Care" />
+                      <SectionHeading title="Care Levels" />
                       <div className="flex flex-wrap gap-1.5">
                         {facility.levels_of_care.map((level) => (
                           <span
                             key={level}
-                            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold"
-                            style={{ backgroundColor: `${brand}14`, color: brand }}
+                            className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-2 py-1 text-[11px] sm:text-xs font-medium text-foreground leading-snug"
                           >
                             {level}
                           </span>
@@ -342,7 +347,7 @@ export function FacilitySheetView({
                   <SectionHeading title="Program Details" headerExtra={aboutHeaderExtra} />
 
                   {(facility.tagline || facility.description) && (
-                    <div className="mb-4">
+                    <div className="mb-4 sm:mb-5">
                       {facility.tagline && facility.tagline !== summaryText && (
                         <p className="text-sm sm:text-[15px] text-foreground/90 font-medium leading-snug mb-2 break-words">
                           {facility.tagline}
@@ -355,11 +360,13 @@ export function FacilitySheetView({
                   )}
 
                   {programFeatures.length > 0 && (
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mb-4">
+                    <ul className="grid grid-cols-2 gap-x-4 sm:gap-x-10 gap-y-2.5 sm:gap-y-3 mb-4 sm:mb-5">
                       {programFeatures.map((item) => (
-                        <li key={item} className="flex items-start gap-2 min-w-0">
+                        <li key={item} className="flex items-start gap-1.5 sm:gap-2 min-w-0">
                           <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
-                          <span className="text-xs sm:text-sm text-foreground/85 leading-snug break-words">{item}</span>
+                          <span className="text-[11px] sm:text-sm text-foreground/85 leading-snug line-clamp-2">
+                            {item}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -368,18 +375,17 @@ export function FacilitySheetView({
                   {facility.population_served?.length > 0 && (
                     <div className={programFeatures.length > 0 ? "pt-4 border-t border-border/50" : ""}>
                       <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground mb-2.5">
-                        What We Treat
+                        Treats
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
+                      <ul className="grid grid-cols-2 gap-x-4 sm:gap-x-10 gap-y-2">
                         {facility.population_served.map((item) => (
-                          <span
-                            key={item}
-                            className="px-2 py-0.5 rounded-md border border-border bg-background text-foreground text-xs font-medium break-words"
-                          >
-                            {item}
-                          </span>
+                          <li key={item} className="min-w-0">
+                            <span className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-2 py-1 text-[11px] sm:text-xs font-medium text-foreground leading-snug line-clamp-2">
+                              {item}
+                            </span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
                   )}
                 </div>
@@ -494,9 +500,10 @@ export function FacilitySheetView({
           repEmail={repEmail}
           brand={brand}
           organizationId={org?.id}
-          ctaLabel="Refer a Patient"
+          ctaLabel="Refer Patient"
           contextLabel={`Reach the BD rep for ${facility.name}.`}
           bottomOffset={tabBarOffset}
+          onFooterVisibilityChange={setFooterVisible}
         />
       )}
     </div>
@@ -515,11 +522,13 @@ function MetaItem({
   brand: string;
 }) {
   return (
-    <div className="flex items-start gap-2.5 min-w-0">
+    <div className="flex items-start gap-2 min-w-0">
       <Icon className="h-4 w-4 shrink-0 mt-0.5" style={{ color: brand }} />
       <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium break-words leading-snug">{value}</p>
+        <p className="text-[10px] sm:text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+          {label}
+        </p>
+        <p className="text-xs sm:text-sm font-medium leading-snug line-clamp-2">{value}</p>
       </div>
     </div>
   );

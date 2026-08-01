@@ -1,42 +1,66 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, Share2, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  Building2,
+  Check,
+  Facebook,
+  FileText,
+  Instagram,
+  Linkedin,
+  Share2,
+  Twitter,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { orgDisplayPath, orgPublicPath } from "@/lib/public-urls";
+import {
+  contrastingTextColor,
+  footerMutedText,
+  footerRingColor,
+} from "@/lib/color-contrast";
+import {
+  FOOTER_ACTION_BTN_CLASS,
+  FOOTER_ACTION_ICON_CLASS,
+  ORG_FOOTER_REFER_SLOT_ID,
+  ORG_SHARED_FOOTER_ID,
+  footerActionButtonStyle,
+  openReferPatientSheet,
+} from "@/lib/org-shared-footer";
 import { cn } from "@/lib/utils";
 
-function formatFooterVerifiedDate(d: string | null | undefined) {
-  if (!d) return null;
-  try {
-    const date = new Date(d);
-    if (Number.isNaN(date.getTime())) return null;
-    return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
-  } catch {
-    return null;
-  }
-}
+export type OrgSocialLinks = {
+  facebook?: string | null;
+  instagram?: string | null;
+  linkedin?: string | null;
+  x?: string | null;
+};
 
 interface Props {
   orgId: string;
   orgName: string;
   slug: string | null;
   logoUrl: string | null;
-  tagline?: string | null;
   brand: string;
-  contact?: HeroContact | null;
+  social?: OrgSocialLinks | null;
   /** Override share URL (e.g. program sheet on branded path). */
   shareUrl?: string;
-  /** Override display path used when building the default share URL. */
   shareDisplayPath?: string;
-  /** Native share sheet title (defaults to org name). */
   shareTitle?: string;
+  /** When set, shows a "View More" button linking to the org page. */
   orgLinkLabel?: string;
-  /** Show CenterLinked verified mark (mobile footer — logo overlay is desktop-only). */
-  verified?: boolean;
-  verifiedAt?: string | null;
+  /** Reserve / show the Refer Patient action (dock target for the sticky CTA). */
+  showReferSlot?: boolean;
+  /** PDF export is available for individual facility/program sheets only. */
+  showExportPdf?: boolean;
+}
+
+function normalizeExternalUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
 }
 
 export function OrgFooter({
@@ -44,28 +68,29 @@ export function OrgFooter({
   orgName,
   slug,
   logoUrl,
-  tagline,
   brand,
-  contact,
+  social,
   shareUrl: shareUrlOverride,
   shareDisplayPath,
   shareTitle,
   orgLinkLabel,
-  verified = false,
-  verifiedAt,
+  showReferSlot = false,
+  showExportPdf = false,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const displayUrl =
-    shareDisplayPath ??
-    (slug ? orgDisplayPath(slug) : "centerlinked.com");
+    shareDisplayPath ?? (slug ? orgDisplayPath(slug) : "centerlinked.com");
   const fullUrl =
     shareUrlOverride ??
     (typeof window !== "undefined" && slug
       ? `${window.location.origin}${orgPublicPath(slug)}`
       : `https://${displayUrl}`);
   const year = new Date().getFullYear();
-  const hasContact = !!(contact && (contact.phone || contact.email));
-  const verifiedDate = verified ? formatFooterVerifiedDate(verifiedAt) : null;
+  const orgHref = slug ? orgPublicPath(slug) : null;
+  const text = contrastingTextColor(brand);
+  const muted = footerMutedText(text);
+  const ring = footerRingColor(text);
+  const buttonStyle = footerActionButtonStyle(brand);
 
   const copy = async () => {
     try {
@@ -93,115 +118,179 @@ export function OrgFooter({
         trackOrgEvent(orgId, "share_click");
         return;
       } catch {
-        /* fall through to copy */
+        /* fall through — user cancel or unsupported payload */
       }
     }
-    copy();
+    await copy();
   };
 
-  const bgStyle: React.CSSProperties = {
-    backgroundImage: `linear-gradient(135deg, ${brand} 0%, ${brand}e6 55%, #0f1f3d 100%)`,
+  const exportPdf = () => {
+    window.print();
   };
+
+  const menuItems: {
+    key: string;
+    label: string;
+    icon: LucideIcon;
+    onClick?: () => void;
+    href?: string;
+  }[] = [
+    {
+      key: "share",
+      label: copied ? "Link Copied" : "Share Link",
+      icon: copied ? Check : Share2,
+      onClick: share,
+    },
+    ...(showExportPdf ? [{ key: "pdf", label: "Export PDF", icon: FileText, onClick: exportPdf }] : []),
+  ];
+  const viewMoreItem =
+    orgHref && orgLinkLabel
+      ? {
+          key: "view-more",
+          label: "View More",
+          icon: Building2,
+          href: orgHref,
+        }
+      : null;
+
+  const socialItems = [
+    { key: "facebook", href: social?.facebook, icon: Facebook, label: "Facebook" },
+    { key: "x", href: social?.x, icon: Twitter, label: "X" },
+    { key: "instagram", href: social?.instagram, icon: Instagram, label: "Instagram" },
+    { key: "linkedin", href: social?.linkedin, icon: Linkedin, label: "LinkedIn" },
+  ].filter((s) => !!s.href?.trim());
+
+  const logoNode = logoUrl ? (
+    <img
+      src={logoUrl}
+      alt={`${orgName} logo`}
+      className="h-24 w-auto max-w-[14rem] lg:h-32 lg:max-w-[18rem] object-contain"
+    />
+  ) : (
+    <Building2 className="h-16 w-16 lg:h-20 lg:w-20" style={{ color: text }} aria-hidden />
+  );
+
+  const elevatedLogo = (
+    <div
+      className="rounded-2xl border bg-card p-2.5 lg:p-4 shadow-xl shadow-black/20 ring-1"
+      style={{ borderColor: `${brand}38`, ["--tw-ring-color" as string]: "rgba(255,255,255,0.32)" }}
+    >
+      {logoNode}
+    </div>
+  );
 
   return (
-    <div className="space-y-3">
-      <footer
-        className="relative overflow-hidden rounded-2xl text-white shadow-xl"
-        style={bgStyle}
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full blur-3xl opacity-25"
-          style={{ background: "white" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full blur-3xl opacity-15"
-          style={{ background: brand }}
-        />
-
-        <div className="relative">
-          <div
-            className={cn(
-              "flex flex-col lg:grid lg:items-stretch",
-              hasContact && "lg:grid-cols-[minmax(0,3fr)_minmax(240px,1fr)]",
-            )}
+    <div className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 space-y-3">
+      {/* Normal flow reserves space below the facility grid; the negative margin
+          overlaps the logo with the footer only, never the cards above it. */}
+      <div className="relative z-10 flex justify-center pt-6 -mb-12 lg:pt-8 lg:-mb-20 print:mb-0 print:pt-0">
+        {orgHref ? (
+          <Link
+            to={orgHref}
+            className="block rounded-2xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{ ["--tw-ring-color" as string]: ring }}
+            aria-label={`${orgName} home`}
           >
-            <div className="px-5 sm:px-8 py-5 flex flex-col gap-4 min-w-0">
-              <div className="flex items-center justify-between gap-3 sm:gap-4 min-w-0">
-                <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
-                  <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-white shadow-md ring-1 ring-black/5 overflow-hidden grid place-items-center p-2 shrink-0">
-                    {logoUrl ? (
-                      <img
-                        src={logoUrl}
-                        alt={`${orgName} logo`}
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <Building2 className="h-7 w-7 text-foreground/60" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-heading text-base sm:text-xl font-bold leading-tight truncate">
-                      {orgName}
-                    </p>
-                    {tagline && (
-                      <p className="text-xs sm:text-sm text-white/80 mt-0.5 leading-snug line-clamp-2">
-                        {tagline}
-                      </p>
-                    )}
-                    {orgLinkLabel && slug && (
-                      <Link
-                        to={orgPublicPath(slug)}
-                        className="mt-1 inline-block text-[11px] font-semibold text-white/85 hover:text-white hover:underline"
-                      >
-                        {orgLinkLabel} →
-                      </Link>
-                    )}
-                  </div>
-                </div>
+            {elevatedLogo}
+          </Link>
+        ) : (
+          elevatedLogo
+        )}
+      </div>
+      <footer
+        id={ORG_SHARED_FOOTER_ID}
+        className="relative overflow-visible print:shadow-none"
+        style={{ backgroundColor: brand, color: text }}
+      >
+        <div className="relative flex flex-col items-center text-center px-6 sm:px-10 pt-20 pb-12 lg:pt-32 lg:pb-16 gap-8 sm:gap-10">
+          <nav
+            aria-label="Footer actions"
+            className="print:hidden grid grid-cols-2 justify-items-center gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center"
+          >
+            {showReferSlot ? (
+              <button
+                id={ORG_FOOTER_REFER_SLOT_ID}
+                type="button"
+                onClick={() => openReferPatientSheet()}
+                className={FOOTER_ACTION_BTN_CLASS}
+                style={buttonStyle}
+              >
+                <User className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+                Refer Patient
+              </button>
+            ) : null}
 
-                <Button
-                  size="lg"
-                  onClick={share}
-                  className="h-10 sm:h-11 px-4 sm:px-5 bg-white text-foreground hover:bg-white/90 font-semibold shrink-0"
+            {viewMoreItem ? (
+              <Link
+                to={viewMoreItem.href}
+                className={FOOTER_ACTION_BTN_CLASS}
+                style={buttonStyle}
+              >
+                <Building2 className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+                {viewMoreItem.label}
+              </Link>
+            ) : null}
+
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              if (item.href) {
+                return (
+                  <Link
+                    key={item.key}
+                    to={item.href}
+                    className={FOOTER_ACTION_BTN_CLASS}
+                    style={buttonStyle}
+                  >
+                    <Icon className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+                    {item.label}
+                  </Link>
+                );
+              }
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={item.onClick}
+                  className={cn(FOOTER_ACTION_BTN_CLASS)}
+                  style={buttonStyle}
                 >
-                  {copied ? (
-                    <Check className="h-4 w-4 shrink-0" />
-                  ) : (
-                    <Share2 className="h-4 w-4 shrink-0" />
-                  )}
-                  {copied ? "Copied" : "Share"}
-                </Button>
-              </div>
+                  <Icon className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+                  {item.label}
+                </button>
+              );
+            })}
 
-              <div className="pt-3 border-t border-white/15 flex items-center justify-between gap-3 min-w-0">
-                <p className="text-[11px] text-white/65 truncate">© {year} {orgName}</p>
-                {verified ? (
-                  <p className="text-[10px] text-white/55 font-medium tracking-wide whitespace-nowrap shrink-0 lg:hidden">
-                    Verified{verifiedDate ? ` ${verifiedDate}` : ""}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+          </nav>
 
-            {hasContact && contact && (
-              <div className="hidden lg:flex w-full min-w-0 border-t lg:border-t-0 lg:border-l border-white/15 p-3 sm:p-3.5">
-                <OrgHeroContactCard
-                  contacts={[contact]}
-                  organizationId={orgId}
-                  brand={brand}
-                  heading="Your Contact"
-                  size="lg"
-                  className="flex-1 shadow-2xl"
-                />
-              </div>
-            )}
-          </div>
+          {socialItems.length > 0 ? (
+            <ul className="print:hidden flex items-center justify-center gap-3.5 sm:gap-4">
+              {socialItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.key}>
+                    <a
+                      href={normalizeExternalUrl(item.href!)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={item.label}
+                      className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2"
+                      style={{ borderColor: ring, color: text }}
+                    >
+                      <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+
+          <p className="text-[11px] tracking-wide" style={{ color: muted }}>
+            © {year} {orgName}
+          </p>
         </div>
       </footer>
 
-      <div className="flex justify-center pb-1">
+      <div className="flex justify-center pb-1 print:hidden">
         <Link
           to="/"
           className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"

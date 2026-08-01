@@ -10,6 +10,11 @@ import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-m
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
+import {
+  isMissingOptionalOrgColumn,
+  orgSheetSelect,
+  orgSheetSelectFallback,
+} from "@/lib/org-public-select";
 
 function uniqueFacilityStates(facilities: ShowcaseFacility[]) {
   const states = new Set<string>();
@@ -61,13 +66,21 @@ export default function OrgSheet() {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      const { data: o } = await supabase
+      const first = await supabase
         .from("organizations")
-        .select(
-          "id,name,logo_url,description,tagline,website,hq_city,hq_state,slug,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url,image_urls,verified,created_at,updated_at,program_badges,announcement,why_refer",
-        )
+        .select(orgSheetSelect)
         .eq("slug", slug)
         .maybeSingle();
+
+      let o = first.data;
+      if (first.error && isMissingOptionalOrgColumn(first.error)) {
+        const fallback = await supabase
+          .from("organizations")
+          .select(orgSheetSelectFallback)
+          .eq("slug", slug)
+          .maybeSingle();
+        o = fallback.data;
+      }
 
       if (!o) {
         setNotFound(true);
@@ -223,7 +236,7 @@ export default function OrgSheet() {
   );
 
   return (
-    <div id="top" className="min-h-screen bg-background">
+    <div id="top" className="min-h-screen bg-background overflow-x-hidden">
       {/* Mobile: logo-on-top strip — matches landing PublicOrgSheetPreview */}
       <div className="lg:hidden">
         <OrgHeroSection

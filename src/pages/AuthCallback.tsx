@@ -95,28 +95,6 @@ export default function AuthCallback() {
         return;
       }
 
-      if (!bootstrapAdmin) {
-        const { data: eligible, error: eligErr } = await supabase.rpc("email_signup_eligible", {
-          _email: email,
-        });
-
-        if (eligErr) {
-          await supabase.auth.signOut();
-          toast.error("Couldn't verify access", { description: eligErr.message });
-          navigate("/login", { replace: true });
-          return;
-        }
-
-        if (!eligible) {
-          await supabase.auth.signOut();
-          toast.error("This email isn't on the invite list", {
-            description: "Request access and we'll review your application.",
-          });
-          navigate("/request-access", { replace: true });
-          return;
-        }
-      }
-
       const fullName =
         (user.user_metadata?.full_name as string | undefined) ||
         (user.user_metadata?.name as string | undefined) ||

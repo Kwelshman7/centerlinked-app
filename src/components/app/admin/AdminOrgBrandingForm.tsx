@@ -43,6 +43,7 @@ function SectionCard({
 export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingTheme, setSavingTheme] = useState(false);
 
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState("");
@@ -51,6 +52,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [orgCity, setOrgCity] = useState("");
   const [orgState, setOrgState] = useState("");
   const [orgLogo, setOrgLogo] = useState<string[]>([]);
+  const [orgFooterImage, setOrgFooterImage] = useState<string[]>([]);
   const [emailDomain, setEmailDomain] = useState("");
   const [verified, setVerified] = useState(false);
   const [wasVerified, setWasVerified] = useState(false);
@@ -62,6 +64,10 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [accentColor, setAccentColor] = useState("#E0EDFF");
   const [orgImages, setOrgImages] = useState<string[]>([]);
   const [announcement, setAnnouncement] = useState("");
+  const [socialFacebook, setSocialFacebook] = useState("");
+  const [socialInstagram, setSocialInstagram] = useState("");
+  const [socialLinkedin, setSocialLinkedin] = useState("");
+  const [socialX, setSocialX] = useState("");
 
   useEffect(() => {
     if (!organizationId) return;
@@ -76,6 +82,11 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         setOrgCity(data.hq_city || "");
         setOrgState(data.hq_state || "");
         setOrgLogo(data.logo_url ? [data.logo_url] : []);
+        setOrgFooterImage(
+          (data as { footer_image_url?: string | null }).footer_image_url
+            ? [(data as { footer_image_url: string }).footer_image_url]
+            : [],
+        );
         setEmailDomain(data.email_domain || "");
         const v = !!data.verified;
         setVerified(v);
@@ -90,6 +101,10 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         const gallery = (data as { image_urls?: string[] | null }).image_urls;
         setOrgImages(mergeOrgImages(gallery, cover));
         setAnnouncement((data as { announcement?: string | null }).announcement || "");
+        setSocialFacebook((data as { social_facebook_url?: string | null }).social_facebook_url || "");
+        setSocialInstagram((data as { social_instagram_url?: string | null }).social_instagram_url || "");
+        setSocialLinkedin((data as { social_linkedin_url?: string | null }).social_linkedin_url || "");
+        setSocialX((data as { social_x_url?: string | null }).social_x_url || "");
       }
       setLoading(false);
     })();
@@ -113,6 +128,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         hq_city: orgCity.trim() || null,
         hq_state: orgState.trim() || null,
         logo_url: orgLogo[0] || null,
+        footer_image_url: orgFooterImage[0] || null,
         email_domain: emailDomain.trim() ? emailDomain.trim().toLowerCase() : null,
         verified,
         bd_contact_name: bdName.trim() || null,
@@ -124,6 +140,10 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         cover_image_url: orgImages[0] || null,
         image_urls: orgImages,
         announcement: announcement.trim() || null,
+        social_facebook_url: socialFacebook.trim() || null,
+        social_instagram_url: socialInstagram.trim() || null,
+        social_linkedin_url: socialLinkedin.trim() || null,
+        social_x_url: socialX.trim() || null,
       })
       .eq("id", organizationId);
     setSaving(false);
@@ -162,6 +182,40 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
     onSaved?.();
   };
 
+  const saveTheme = async () => {
+    const nextBrand = brandColor.trim();
+    const nextAccent = accentColor.trim();
+    const isHex = (value: string) => /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
+
+    if (!isHex(nextBrand) || !isHex(nextAccent)) {
+      toast.error("Enter valid hex colors", {
+        description: "Use #RRGGBB or #RGB for both brand and accent colors.",
+      });
+      return;
+    }
+
+    setSavingTheme(true);
+    try {
+      const { error } = await supabase
+        .from("organizations")
+        .update({ brand_color: nextBrand, accent_color: nextAccent })
+        .eq("id", organizationId);
+      if (error) throw error;
+      setBrandColor(nextBrand);
+      setAccentColor(nextAccent);
+      toast.success("Theme saved", {
+        description: "Your organization and facility pages now use these colors.",
+      });
+      onSaved?.();
+    } catch (error) {
+      toast.error("Theme could not be saved", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setSavingTheme(false);
+    }
+  };
+
   if (loading) {
     return <div className="py-12 text-center text-muted-foreground">Loading branding…</div>;
   }
@@ -196,6 +250,21 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
               max={1}
               label="Upload"
               recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Footer banner</Label>
+            <p className="text-xs text-muted-foreground">
+              Wide image shown at the bottom of your public org and facility pages. Separate from your square logo.
+            </p>
+            <ImageUploader
+              bucket="org-logos"
+              value={orgFooterImage}
+              onChange={setOrgFooterImage}
+              max={1}
+              label="Upload"
+              recommendedSize="Recommended: 1600×400 px (4:1 wide). JPG or PNG, max 5 MB."
             />
           </div>
 
@@ -359,6 +428,11 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
               </div>
             </div>
           </div>
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" size="sm" onClick={() => void saveTheme()} disabled={savingTheme}>
+              {savingTheme && <Loader2 className="h-4 w-4 animate-spin" />} Save theme
+            </Button>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="ann">Announcement banner</Label>
             <Textarea
@@ -370,6 +444,63 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
               placeholder="New PHP program now accepting referrals."
               className="resize-y"
             />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          className="lg:col-span-2"
+          title="Social links"
+          description="Shown as icons on your public org and facility page footers. Leave blank to hide."
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="soc-fb">Facebook</Label>
+              <Input
+                id="soc-fb"
+                value={socialFacebook}
+                onChange={(e) => setSocialFacebook(e.target.value)}
+                placeholder="https://facebook.com/your-org"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="soc-ig">Instagram</Label>
+              <Input
+                id="soc-ig"
+                value={socialInstagram}
+                onChange={(e) => setSocialInstagram(e.target.value)}
+                placeholder="https://instagram.com/your-org"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="soc-li">LinkedIn</Label>
+              <Input
+                id="soc-li"
+                value={socialLinkedin}
+                onChange={(e) => setSocialLinkedin(e.target.value)}
+                placeholder="https://linkedin.com/company/your-org"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="soc-x">X (Twitter)</Label>
+              <Input
+                id="soc-x"
+                value={socialX}
+                onChange={(e) => setSocialX(e.target.value)}
+                placeholder="https://x.com/your-org"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
           </div>
         </SectionCard>
 

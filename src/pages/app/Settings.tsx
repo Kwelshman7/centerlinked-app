@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 export default function Settings() {
   const { profile, user, isFacilityAdmin, isSuperAdmin, needsSuperAdminSetup, refresh } = useAuth();
+  const canManageOrganization = isFacilityAdmin || isSuperAdmin;
   const [searchParams, setSearchParams] = useSearchParams();
   const [fullName, setFullName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
@@ -32,6 +33,11 @@ export default function Settings() {
   const [orgCity, setOrgCity] = useState("");
   const [orgState, setOrgState] = useState("");
   const [orgLogo, setOrgLogo] = useState<string[]>([]);
+  const [orgFooterImage, setOrgFooterImage] = useState<string[]>([]);
+  const [socialFacebook, setSocialFacebook] = useState("");
+  const [socialInstagram, setSocialInstagram] = useState("");
+  const [socialLinkedin, setSocialLinkedin] = useState("");
+  const [socialX, setSocialX] = useState("");
   const [bdName, setBdName] = useState("");
   const [bdPhone, setBdPhone] = useState("");
   const [bdEmail, setBdEmail] = useState("");
@@ -87,6 +93,15 @@ export default function Settings() {
         setOrgCity(data.hq_city || "");
         setOrgState(data.hq_state || "");
         setOrgLogo(data.logo_url ? [data.logo_url] : []);
+        setOrgFooterImage(
+          (data as { footer_image_url?: string | null }).footer_image_url
+            ? [(data as { footer_image_url: string }).footer_image_url]
+            : [],
+        );
+        setSocialFacebook((data as { social_facebook_url?: string | null }).social_facebook_url || "");
+        setSocialInstagram((data as { social_instagram_url?: string | null }).social_instagram_url || "");
+        setSocialLinkedin((data as { social_linkedin_url?: string | null }).social_linkedin_url || "");
+        setSocialX((data as { social_x_url?: string | null }).social_x_url || "");
         setBdName(data.bd_contact_name || "");
         setBdPhone(data.bd_contact_phone || "");
         setBdEmail(data.bd_contact_email || "");
@@ -166,6 +181,11 @@ export default function Settings() {
       .slice(0, 4);
     const { error } = await supabase.from("organizations").update({
       name: orgName, description: orgDesc, website: orgWebsite, hq_city: orgCity, hq_state: orgState, logo_url: orgLogo[0] || null,
+      footer_image_url: orgFooterImage[0] || null,
+      social_facebook_url: socialFacebook.trim() || null,
+      social_instagram_url: socialInstagram.trim() || null,
+      social_linkedin_url: socialLinkedin.trim() || null,
+      social_x_url: socialX.trim() || null,
       bd_contact_name: bdName || null, bd_contact_phone: bdPhone || null, bd_contact_email: bdEmail || null,
       tagline: tagline || null,
       brand_color: brandColor || null,
@@ -261,11 +281,33 @@ export default function Settings() {
         </form>
       </Card>
 
-      {profile?.organization_id && (
+      {profile?.organization_id && canManageOrganization && (
         <Card className="p-6">
-          <h2 className="font-heading text-lg font-semibold mb-4">Organization</h2>
-          <form onSubmit={saveOrg} className="space-y-4">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 className="font-heading text-lg font-semibold">Organization</h2>
+              <p className="text-xs text-muted-foreground mt-1">Changes apply to your organization and its public facility pages.</p>
+            </div>
+            <Button type="submit" form="organization-settings-form" disabled={savingOrg} className="hidden sm:inline-flex shrink-0">
+              {savingOrg && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
+            </Button>
+          </div>
+          <form id="organization-settings-form" onSubmit={saveOrg} className="space-y-4">
             <div className="space-y-2"><Label>Logo</Label><ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB." /></div>
+            <div className="space-y-2">
+              <Label>Footer banner</Label>
+              <p className="text-xs text-muted-foreground">
+                Optional wide image for branding assets. Your square logo appears in the public footer.
+              </p>
+              <ImageUploader
+                bucket="org-logos"
+                value={orgFooterImage}
+                onChange={setOrgFooterImage}
+                max={1}
+                label="Upload"
+                recommendedSize="Recommended: 1600×400 px (4:1 wide). JPG or PNG, max 5 MB."
+              />
+            </div>
             <div className="space-y-2"><Label htmlFor="on">Name</Label><Input id="on" value={orgName} onChange={(e) => setOrgName(e.target.value)} /></div>
             <div className="space-y-2"><Label htmlFor="od">Description</Label><Textarea id="od" rows={3} value={orgDesc} onChange={(e) => setOrgDesc(e.target.value)} /></div>
             <div className="grid sm:grid-cols-3 gap-4">
@@ -327,6 +369,52 @@ export default function Settings() {
                   recommendedSize="Recommended: 1920×1080 px (16:9) for hero banners; 1200×900 px or larger for additional photos. JPG or PNG, max 5 MB each."
                 />
               </div>
+              <div className="space-y-3 pt-2">
+                <div>
+                  <p className="font-heading font-semibold text-sm">Social links</p>
+                  <p className="text-xs text-muted-foreground">
+                    Shown as icons on your public org and facility footers. Leave blank to hide.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="soc-fb">Facebook</Label>
+                    <Input
+                      id="soc-fb"
+                      value={socialFacebook}
+                      onChange={(e) => setSocialFacebook(e.target.value)}
+                      placeholder="https://facebook.com/your-org"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="soc-ig">Instagram</Label>
+                    <Input
+                      id="soc-ig"
+                      value={socialInstagram}
+                      onChange={(e) => setSocialInstagram(e.target.value)}
+                      placeholder="https://instagram.com/your-org"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="soc-li">LinkedIn</Label>
+                    <Input
+                      id="soc-li"
+                      value={socialLinkedin}
+                      onChange={(e) => setSocialLinkedin(e.target.value)}
+                      placeholder="https://linkedin.com/company/your-org"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="soc-x">X (Twitter)</Label>
+                    <Input
+                      id="soc-x"
+                      value={socialX}
+                      onChange={(e) => setSocialX(e.target.value)}
+                      placeholder="https://x.com/your-org"
+                    />
+                  </div>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="ann">Announcement banner (optional)</Label>
                 <Textarea id="ann" rows={2} maxLength={240} value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="New PHP program now accepting referrals." />
@@ -367,8 +455,21 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="flex justify-end"><Button type="submit" disabled={savingOrg}>{savingOrg && <Loader2 className="h-4 w-4 animate-spin" />} Save organization</Button></div>
+            <div className="sticky bottom-3 z-20 -mx-2 mt-6 border-t border-border/60 bg-card/95 px-2 pt-3 pb-1 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+              <Button type="submit" disabled={savingOrg} className="w-full sm:hidden">
+                {savingOrg && <Loader2 className="h-4 w-4 animate-spin" />} Save organization
+              </Button>
+            </div>
           </form>
+        </Card>
+      )}
+
+      {profile?.organization_id && !canManageOrganization && (
+        <Card className="p-5">
+          <h2 className="font-heading text-lg font-semibold">Organization</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Organization profile and visibility settings are managed by an organization admin.
+          </p>
         </Card>
       )}
     </div>

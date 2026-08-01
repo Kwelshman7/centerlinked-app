@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { OrgFacilityRail } from "@/components/public/OrgFacilityRail";
 import { OrgFacilityFilters } from "@/components/public/OrgFacilityFilters";
 import { OrgFooter } from "@/components/public/OrgFooter";
@@ -6,6 +6,7 @@ import { ExpandableText } from "@/components/public/ExpandableText";
 import { MobileContactBar, mobileContactBarPadding } from "@/components/public/MobileContactBar";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { HeroContact } from "@/components/public/OrgHeroContactCard";
+import { orgSocialFromRow } from "@/lib/org-public-select";
 import { resolveStateCode } from "@/lib/us-states";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,11 @@ export interface OrgSheetData {
   name: string;
   slug: string | null;
   logo_url: string | null;
+  footer_image_url?: string | null;
+  social_facebook_url?: string | null;
+  social_instagram_url?: string | null;
+  social_linkedin_url?: string | null;
+  social_x_url?: string | null;
   description: string | null;
   tagline: string | null;
   website: string | null;
@@ -74,6 +80,7 @@ export function OrganizationSheetView({
   description,
   verifiedAt,
 }: Props) {
+  const [footerVisible, setFooterVisible] = useState(false);
   const stateFiltered = useMemo(() => {
     if (selectedState === "all") return facilities;
     return facilities.filter((f) => resolveStateCode(f.state) === selectedState);
@@ -132,7 +139,7 @@ export function OrganizationSheetView({
   const showFilters = facilities.length >= 8;
 
   return (
-    <div className={cn("space-y-4 sm:space-y-5", hasContact ? mobileContactBarPadding() : "")}>
+    <div className={cn("space-y-4 sm:space-y-5", hasContact ? mobileContactBarPadding(0, footerVisible) : "")}>
       {/* Mobile intro under logo hero — matches PublicOrgSheetPreview */}
       <header className="space-y-1.5 lg:hidden">
         <h1 className="sr-only">{org.name}</h1>
@@ -170,7 +177,7 @@ export function OrganizationSheetView({
                 selectedInsurance={activeInsurance}
                 onInsuranceChange={onInsuranceChange}
                 brand={brand}
-                className="sm:hidden shrink-0"
+                className="sm:hidden shrink-0 print:hidden"
               />
             )}
           </div>
@@ -188,7 +195,7 @@ export function OrganizationSheetView({
               selectedInsurance={activeInsurance}
               onInsuranceChange={onInsuranceChange}
               brand={brand}
-              className="hidden sm:grid"
+              className="hidden sm:grid print:hidden"
             />
           )}
         </div>
@@ -211,11 +218,10 @@ export function OrganizationSheetView({
         orgName={org.name}
         slug={org.slug}
         logoUrl={org.logo_url}
-        tagline={org.tagline}
         brand={brand}
-        contact={heroContact}
-        verified={org.verified}
-        verifiedAt={verifiedAt ?? org.updated_at}
+        social={orgSocialFromRow(org)}
+        shareTitle={org.name}
+        showReferSlot={hasContact}
       />
 
       {hasContact && heroContact && (
@@ -225,8 +231,9 @@ export function OrganizationSheetView({
           repEmail={heroContact.email ?? null}
           brand={brand}
           organizationId={org.id}
-          ctaLabel="Refer a Patient"
+          ctaLabel="Refer Patient"
           contextLabel={`Reach the BD rep at ${org.name}.`}
+          onFooterVisibilityChange={setFooterVisible}
         />
       )}
     </div>

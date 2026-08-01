@@ -33,16 +33,11 @@ TO authenticated
 USING (user_id = auth.uid() OR public.has_role(auth.uid(), 'super_admin'::public.app_role));
 
 -- ---------------------------------------------------------------------------
--- 3) early_access_leads — public insert only, admin read
+-- 3) early_access_leads — writes go through the server-side intake API
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.early_access_leads ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "early_access_leads_public_insert" ON public.early_access_leads;
-CREATE POLICY "early_access_leads_public_insert"
-ON public.early_access_leads
-FOR INSERT
-TO anon, authenticated
-WITH CHECK (true);
 
 DROP POLICY IF EXISTS "early_access_leads_admin_select" ON public.early_access_leads;
 CREATE POLICY "early_access_leads_admin_select"

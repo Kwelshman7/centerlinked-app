@@ -35,7 +35,7 @@ const env = {
 
 const SUPABASE_URL = env.VITE_SUPABASE_URL || env.SUPABASE_URL;
 const SERVICE_ROLE =
-  env.SUPABASE_SERVICE_ROLE || env.SUPABASE_SERVICE_ROLE_KEY || env.VITE_SUPABASE_SERVICE_ROLE;
+  env.SUPABASE_SERVICE_ROLE || env.SUPABASE_SERVICE_ROLE_KEY;
 
 const dryRun = process.argv.includes("--dry-run");
 const PAGE_SIZE = 1000;

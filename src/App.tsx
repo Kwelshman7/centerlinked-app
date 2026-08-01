@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/react";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -42,6 +43,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
 const App = () => (
+  <AppErrorBoundary>
     <TooltipProvider>
       <Sonner />
       <Analytics />
@@ -95,6 +97,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+  </AppErrorBoundary>
 );
 
 export default App;

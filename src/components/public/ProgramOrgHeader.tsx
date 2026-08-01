@@ -34,7 +34,10 @@ export function ProgramOrgHeader({ org, facilityName, brand, trailing }: Props) 
             )}
           </div>
           <div className="min-w-0">
-            <p className="font-heading font-bold text-sm sm:text-base truncate group-hover:text-primary transition-colors">
+            <p
+              className="font-heading font-bold text-sm sm:text-base truncate transition-opacity group-hover:opacity-80"
+              style={{ color: brand }}
+            >
               {org.name}
             </p>
             <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{facilityName}</p>

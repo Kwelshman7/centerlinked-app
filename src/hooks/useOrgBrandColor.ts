@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { extractLogoColor } from "@/lib/extract-logo-color";
-import { DEFAULT_BRAND, parseBrandColor } from "@/lib/public-urls";
+import { DEFAULT_BRAND, parseAccentColor, parseBrandColor } from "@/lib/public-urls";
 
 function isHexColor(value: string | null | undefined): boolean {
   const v = value?.trim();
@@ -31,4 +31,16 @@ export function useOrgBrandColor(
   if (hasExplicit) return parseBrandColor(explicit);
   if (extracted) return extracted;
   return DEFAULT_BRAND;
+}
+
+/**
+ * The complete public organization theme. Keep facility and organization sheets
+ * on this shared resolver so they cannot drift when branding settings change.
+ */
+export function useOrgTheme(
+  org: { brand_color?: string | null; accent_color?: string | null; logo_url?: string | null } | null | undefined,
+  brandOverride?: string,
+): { brand: string; accent: string } {
+  const brand = useOrgBrandColor(org, brandOverride);
+  return { brand, accent: parseAccentColor(org?.accent_color) };
 }

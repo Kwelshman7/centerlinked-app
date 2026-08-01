@@ -44,27 +44,11 @@ export default function Signup() {
 
     setLoading(true);
 
-    // Members-only gate: must have a pending invite OR match a verified org domain.
-    const { data: eligible, error: eligErr } = await supabase.rpc("email_signup_eligible", { _email: email });
-    if (eligErr) {
-      setLoading(false);
-      toast.error("Couldn't verify access", { description: eligErr.message });
-      return;
-    }
-    if (!eligible) {
-      setLoading(false);
-      toast.error("This email isn't on the invite list", {
-        description: "CenterLinked is invite-only. Request access and we'll review your application.",
-      });
-      navigate("/request-access");
-      return;
-    }
-
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: { full_name: fullName.trim() },
       },
     });
@@ -76,10 +60,10 @@ export default function Signup() {
     if (data.session) {
       notifyAuthEvent("signup", fullName.trim());
       toast.success("Welcome to CenterLinked");
-      navigate("/setup-organization");
+      navigate("/setup-organization", { replace: true });
     } else {
       toast.success("Check your inbox", {
-        description: "We sent you a confirmation email. Click the link to activate your account, then come back to sign in.",
+        description: "We sent you a confirmation email. Click the link to activate your account and continue organization setup.",
         duration: 8000,
       });
       navigate("/login");
@@ -101,8 +85,7 @@ export default function Signup() {
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold text-foreground mt-4">Create your account</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Members-only. Use the work email you were invited with — or one that matches a verified organization.{" "}
-              <Link to="/request-access" className="text-primary font-medium hover:underline">Need access?</Link>
+              Use your work email to join your organization or create a new one.
             </p>
           </div>
 

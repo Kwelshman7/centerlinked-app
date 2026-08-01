@@ -1,5 +1,6 @@
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+import { fetchPublicHttps, parsePublicHttpsUrl, readBodyLimited } from "../lib/safe-fetch.mjs";
 
 const SKIP_PATTERNS =
   /logo|icon|badge|seal|avatar|favicon|sprite|placeholder|complianz|gravatar|emoji|svg|gif|banner-ad|social-share|facebook|twitter|instagram|linkedin|youtube|pinterest|tiktok|staff|team|doctor|patient|people|person|portrait|headshot|counselor|therapist|group-photo|senior-therapy|senior-and-alcohol|senior-recovery|senior-addiction|doctor\.jpg|meditation|interviewing|therapy|support-group|emergency-room|stock-photo|stockphoto|shutterstock|getty|istock|unsplash|pexels|new-client|client-pic|veteran-ready|insurance-questions|virtual-tour|get-help|national-locations|-\d+x\d+\.(?:jpg|jpeg|png|webp)/i;
@@ -40,7 +41,7 @@ function scoreCandidate(url, meta = {}) {
 }
 
 async function fetchText(url) {
-  const res = await fetch(url, {
+  const res = await fetchPublicHttps(url, {
     headers: {
       "User-Agent": USER_AGENT,
       Accept: "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
@@ -49,7 +50,7 @@ async function fetchText(url) {
     redirect: "follow",
     signal: AbortSignal.timeout(20000),
   });
-  if (res.ok) return res.text();
+  if (res.ok) return (await readBodyLimited(res, 2 * 1024 * 1024)).toString("utf8");
 
   // Cloudflare and similar blocks — try Internet Archive snapshot.
   if (res.status === 403 || res.status === 401) {
@@ -59,15 +60,15 @@ async function fetchText(url) {
 }
 
 async function fetchTextViaArchive(url) {
-  const archivePage = `https://web.archive.org/web/2025/${url}`;
+  const archivePage = `https://web.archive.org/web/2025/${encodeURIComponent(url)}`;
   try {
-    const res = await fetch(archivePage, {
+    const res = await fetchPublicHttps(archivePage, {
       headers: { "User-Agent": USER_AGENT, Accept: "text/html" },
       redirect: "follow",
       signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) return null;
-    return res.text();
+    return (await readBodyLimited(res, 2 * 1024 * 1024)).toString("utf8");
   } catch {
     return null;
   }
@@ -110,12 +111,12 @@ async function fetchWordPressMedia(origin) {
   for (let page = 1; page <= 3; page++) {
     const api = `${origin}/wp-json/wp/v2/media?per_page=100&page=${page}&media_type=image`;
     try {
-      const res = await fetch(api, {
+      const res = await fetchPublicHttps(api, {
         headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
         signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) break;
-      const items = await res.json();
+      const items = JSON.parse((await readBodyLimited(res, 2 * 1024 * 1024)).toString("utf8"));
       if (!Array.isArray(items) || items.length === 0) break;
       for (const item of items) {
         const url = item.source_url;
@@ -225,6 +226,7 @@ export async function fetchFacilityImageCandidates(facility) {
 
   let startUrl = facility.website.trim();
   if (!/^https?:\/\//i.test(startUrl)) startUrl = `https://${startUrl}`;
+  startUrl = parsePublicHttpsUrl(startUrl).href;
 
   const origin = new URL(startUrl).origin;
   const all = [];
@@ -259,7 +261,7 @@ export async function fetchFacilityImageCandidates(facility) {
 
 export async function downloadImage(url) {
   const tryDownload = async (target) => {
-    const res = await fetch(target, {
+    const res = await fetchPublicHttps(target, {
       headers: { "User-Agent": USER_AGENT, Accept: "image/*" },
       redirect: "follow",
       signal: AbortSignal.timeout(30000),
@@ -267,8 +269,7 @@ export async function downloadImage(url) {
     if (!res.ok) throw new Error(`Download failed (${res.status})`);
     const contentType = res.headers.get("content-type") || "";
     if (!contentType.startsWith("image/")) throw new Error("Not an image response");
-    const buffer = Buffer.from(await res.arrayBuffer());
-    if (buffer.length > 8 * 1024 * 1024) throw new Error("Image too large");
+    const buffer = await readBodyLimited(res, 8 * 1024 * 1024);
     return { buffer, contentType };
   };
 
@@ -276,7 +277,7 @@ export async function downloadImage(url) {
     return await tryDownload(url);
   } catch {
     // Blocked origin CDN — pull image bytes via Internet Archive.
-    const archiveUrl = `https://web.archive.org/web/2025im_/${url}`;
+    const archiveUrl = `https://web.archive.org/web/2025im_/${encodeURIComponent(url)}`;
     return await tryDownload(archiveUrl);
   }
 }

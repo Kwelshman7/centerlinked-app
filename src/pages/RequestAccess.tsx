@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { applySocialMeta } from "@/lib/social-meta";
 import { notifyAccessRequest } from "@/lib/transactional-email";
@@ -42,29 +41,6 @@ export default function RequestAccess() {
     const facilities = form.num_facilities ? String(form.num_facilities) : "1";
     const role = form.role.trim() || null;
 
-    // Prefer extended columns (see supabase/early-access-leads-extend.sql); fall back if not migrated yet.
-    let { error } = await supabase.from("early_access_leads").insert({
-      full_name,
-      email,
-      organization,
-      facilities,
-      role,
-      status: "pending",
-    });
-    if (error) {
-      ({ error } = await supabase.from("early_access_leads").insert({
-        full_name,
-        email,
-        organization,
-        facilities,
-      }));
-    }
-    if (error) {
-      setLoading(false);
-      toast.error("Could not submit request", { description: error.message });
-      return;
-    }
-
     try {
       await notifyAccessRequest({
         full_name,
@@ -73,9 +49,12 @@ export default function RequestAccess() {
         role: role || undefined,
         num_facilities: form.num_facilities || facilities,
       });
-    } catch (emailErr) {
-      console.error("Access request saved but admin email failed:", emailErr);
-      // Still treat as success for the applicant — lead is in the DB.
+    } catch {
+      setLoading(false);
+      toast.error("Could not submit request", {
+        description: "Please try again in a few minutes.",
+      });
+      return;
     }
 
     setLoading(false);

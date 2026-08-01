@@ -64,8 +64,8 @@ export function Pricing() {
     if (authLoading) return;
 
     if (!user) {
-      navigate("/login", { state: { from: `/#pricing`, checkoutPlan: plan } });
-      toast.message("Sign in to continue to checkout");
+      navigate("/signup", { state: { from: "/setup-organization", checkoutPlan: plan } });
+      toast.message("Create an account to join or set up your organization");
       return;
     }
 
@@ -76,7 +76,8 @@ export function Pricing() {
     }
 
     if (!isFacilityAdmin && !isSuperAdmin) {
-      toast.error("Ask an organization admin to start a subscription");
+      navigate("/app", { replace: false });
+      toast.message("Your organization is already set up. An organization admin can choose its subscription.");
       return;
     }
 

@@ -7,6 +7,11 @@ import { stripeApiPlugin } from "./vite-plugin-stripe-api";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  if (env.VITE_SUPABASE_SERVICE_ROLE) {
+    throw new Error(
+      "VITE_SUPABASE_SERVICE_ROLE is forbidden: VITE_* values are exposed to browser bundles. Use SUPABASE_SERVICE_ROLE instead.",
+    );
+  }
   process.env.VITE_SUPABASE_URL = env.VITE_SUPABASE_URL;
   process.env.VITE_SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY;
   process.env.SUPABASE_SERVICE_ROLE = env.SUPABASE_SERVICE_ROLE || env.SUPABASE_SERVICE_ROLE_KEY;

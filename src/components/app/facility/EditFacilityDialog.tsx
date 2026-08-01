@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Pencil, Loader2 } from "lucide-react";
 import { FacilityCardForm } from "./FacilityCardForm";
 import { FacilityDraft, emptyFacility } from "./facility-types";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FacilityLike {
   id: string;
@@ -92,6 +93,8 @@ export function EditFacilityDialog({
   triggerClassName,
   organizationId,
 }: Props) {
+  const { isFacilityAdmin, isSuperAdmin } = useAuth();
+  const canManageVisibility = isFacilityAdmin || isSuperAdmin;
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => toDraft(facility, contracts));
   const [saving, setSaving] = useState(false);
@@ -128,7 +131,7 @@ export function EditFacilityDialog({
         bd_contact_name: draft.bd_contact_name || null,
         bd_contact_phone: draft.bd_contact_phone || null,
         bd_contact_email: draft.bd_contact_email || null,
-        hidden_from_org_page: draft.hidden_from_org_page,
+        ...(canManageVisibility ? { hidden_from_org_page: draft.hidden_from_org_page } : {}),
       };
       const { error: upErr } = await supabase
         .from("facilities")
