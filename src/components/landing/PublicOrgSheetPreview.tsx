@@ -7,43 +7,43 @@ import { FacilityGridCard } from "@/components/FacilityGridCard";
 import { ExpandableText } from "@/components/public/ExpandableText";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrgFacilityFilters } from "@/components/public/OrgFacilityFilters";
-import {
-  BANYAN_DEMO,
-  BANYAN_GRID_FACILITIES,
-  BANYAN_STATE_CODES,
-} from "./banyanDemoData";
-
-const BRAND = BANYAN_DEMO.brandColor;
+import { mockupThemeVariables, useRotatingMockupOrg } from "./useRotatingMockupOrg";
 
 const DESCRIPTION =
   "A nationally recognized, Joint Commission-accredited network of treatment centers offering detox, residential, PHP, IOP, and mental health programs across the country.";
 
-const PREVIEW_FACILITIES = BANYAN_GRID_FACILITIES.slice(0, 4);
-const PREVIEW_LEVELS = ["Detox", "Residential", "PHP", "IOP"];
-
-const demoOrg = {
-  id: "banyan-demo",
-  name: BANYAN_DEMO.orgName,
-  logo_url: BANYAN_DEMO.logo,
-  description: DESCRIPTION,
-  tagline: "Deep roots. Lasting recovery.",
-  hq_city: "Gulf Breeze",
-  hq_state: "FL",
-  cover_image_url: null as string | null,
-  image_urls: null as string[] | null,
-  verified: true,
-};
-
 export function PublicOrgSheetPreviewContent() {
+  const organization = useRotatingMockupOrg();
+  const brand = organization.brandColor;
+  const description = organization.description?.trim() || DESCRIPTION;
+  const previewFacilities = organization.facilities.slice(0, 4);
+  const states = [...new Set(organization.facilities.map((facility) => facility.state).filter((state): state is string => Boolean(state)))];
+  const levels = [...new Set(organization.facilities.flatMap((facility) => facility.levels_of_care ?? []))].slice(0, 6);
+  const demoOrg = {
+    id: organization.id,
+    name: organization.name,
+    logo_url: organization.logoUrl,
+    description,
+    tagline: organization.tagline,
+    hq_city: organization.hqCity,
+    hq_state: organization.hqState,
+    cover_image_url: null as string | null,
+    image_urls: null as string[] | null,
+    verified: true,
+  };
+
   return (
-    <div className="relative flex flex-col h-full min-h-0 overflow-hidden bg-muted/30 text-foreground select-none pointer-events-none">
+    <div
+      className="relative flex flex-col h-full min-h-0 overflow-hidden bg-muted/30 text-foreground select-none pointer-events-none"
+      style={mockupThemeVariables(brand)}
+    >
       <div className="flex-1 min-h-0 overflow-hidden pb-[3.75rem]">
-        <OrgHeroSection org={demoOrg} brand={BRAND} compact logoSize="mock" />
+        <OrgHeroSection org={demoOrg} brand={brand} compact logoSize="mock" />
 
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
           <header className="space-y-1">
-            <h1 className="sr-only">{BANYAN_DEMO.orgName}</h1>
-            <ExpandableText text={DESCRIPTION} brand={BRAND} clampLines={3} preview />
+            <h1 className="sr-only">{organization.name}</h1>
+            <ExpandableText text={description} brand={brand} clampLines={3} preview />
           </header>
 
           <section className="space-y-2">
@@ -51,28 +51,28 @@ export function PublicOrgSheetPreviewContent() {
               <div className="min-w-0">
                 <h2 className="font-heading text-base font-bold tracking-tight">Our Facilities</h2>
                 <span className="text-[11px] text-muted-foreground">
-                  {BANYAN_DEMO.facilityCount} locations
+                  {organization.facilityCount} locations
                 </span>
               </div>
               {/* Demo network is large enough that filters appear on the live page */}
               <OrgFacilityFilters
                 mode="button"
-                states={BANYAN_STATE_CODES}
+                states={states}
                 selectedState="all"
                 onStateChange={() => {}}
-                levels={PREVIEW_LEVELS}
+                levels={levels}
                 selectedLevel="all"
                 onLevelChange={() => {}}
                 insurers={["Aetna", "Cigna"]}
                 selectedInsurance="all"
                 onInsuranceChange={() => {}}
-                brand={BRAND}
+                brand={brand}
                 preview
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
-              {PREVIEW_FACILITIES.map((f) => (
+              {previewFacilities.map((f) => (
                 <FacilityGridCard key={f.id} facility={f} density="compact" />
               ))}
             </div>
@@ -83,7 +83,7 @@ export function PublicOrgSheetPreviewContent() {
       <div className="absolute inset-x-0 bottom-0 z-30 bg-card/95 backdrop-blur-md border-t border-border px-3.5 pt-2 pb-2">
         <div
           className="h-9 w-full rounded-md text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md"
-          style={{ backgroundColor: BRAND }}
+          style={{ backgroundColor: brand }}
         >
           <User className="h-4 w-4" aria-hidden />
           Refer a Patient

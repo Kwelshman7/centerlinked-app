@@ -208,6 +208,9 @@ function MobileLogoHero({
   const heroImage = orgHeroImage({ ...org, cover_image_url: null });
   const logoAsHero = orgHeroIsLogoFallback({ ...org, cover_image_url: null }) || !!org.logo_url;
   const mock = logoSize === "mock";
+  // Banyan's supplied mark has generous transparent margins. Give that one
+  // mockup mark a little more visual weight without cropping other org logos.
+  const needsBanyanMockScale = mock && org.id === "banyan-demo";
 
   if (logoAsHero && heroImage) {
     return (
@@ -224,11 +227,19 @@ function MobileLogoHero({
           )}
         >
           {mock ? (
-            <div className="relative h-[7.25rem] w-[90%] overflow-hidden">
+            <div
+              className={cn(
+                "relative flex w-[88%] items-center justify-center p-2",
+                needsBanyanMockScale ? "h-[7.25rem] overflow-hidden" : "h-[6.75rem]",
+              )}
+            >
               <img
                 src={heroImage}
                 alt={org.name}
-                className="absolute inset-0 h-full w-full object-contain origin-center scale-[1.75] translate-y-[2%]"
+                className={cn(
+                  "max-h-full max-w-full object-contain",
+                  needsBanyanMockScale && "scale-[1.75] translate-y-[2%]",
+                )}
               />
             </div>
           ) : (
