@@ -12,6 +12,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Menu,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,11 @@ import { BillingStatusBanner } from "@/components/app/BillingStatusBanner";
 type NavItem = { to: string; label: string; icon: typeof SearchIcon; end?: boolean };
 
 export function AppLayout() {
-  const { profile, isSuperAdmin, needsSuperAdminSetup, signOut, user } = useAuth();
+  const { profile, isSuperAdmin, isFacilityAdmin, needsSuperAdminSetup, signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const canManageBilling = (isFacilityAdmin || isSuperAdmin) && !!profile?.organization_id;
 
   const primary: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
@@ -44,17 +46,21 @@ export function AppLayout() {
       });
     }
     items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
+    if (canManageBilling) {
+      items.push({ to: "/app/billing", label: "Billing", icon: CreditCard });
+    }
     items.push({ to: "/app/settings", label: "Settings", icon: Settings });
     return items;
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, canManageBilling]);
 
   const mobilePrimary: NavItem[] = useMemo(() => {
     if (!needsSuperAdminSetup) return primary;
     return [
       { to: "/app/dashboard", label: "Home", icon: LayoutDashboard },
+      ...(canManageBilling ? [{ to: "/app/billing", label: "Billing", icon: CreditCard } satisfies NavItem] : []),
       { to: "/app/settings", label: "Settings", icon: Settings },
     ];
-  }, [needsSuperAdminSetup, primary]);
+  }, [needsSuperAdminSetup, primary, canManageBilling]);
 
   const secondaryOrg: NavItem[] = [
     { to: "/app/members", label: "Members", icon: Users },
@@ -252,7 +258,16 @@ export function AppLayout() {
 
       {!isMessengerThread && (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card/90 backdrop-blur-xl border-t border-border/60" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-          <ul className={cn("grid h-16", mobilePrimary.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+          <ul
+            className={cn(
+              "grid h-16",
+              mobilePrimary.length >= 6
+                ? "grid-cols-6"
+                : mobilePrimary.length === 5
+                  ? "grid-cols-5"
+                  : "grid-cols-4",
+            )}
+          >
             {mobilePrimary.map(({ to, label, icon: Icon, end }) => (
               <li key={to}>
                 <NavLink to={to} end={end} className={({ isActive }) =>

@@ -432,12 +432,13 @@ html, body, #root { overflow-x: hidden; max-width: 100%; }
 /* Print / Save as PDF — hide chrome, keep sheet content */
 @media print {
   @page {
-    margin: 0.6in;
+    margin: 0.5in;
   }
 
   html, body, #root {
     overflow: visible !important;
     max-width: none !important;
+    height: auto !important;
     background: white !important;
   }
 
@@ -448,5 +449,44 @@ html, body, #root { overflow-x: hidden; max-width: 100%; }
 
   .print\:hidden {
     display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Keep logical sections intact across page breaks */
+  .print-keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Prefer starting large blocks on a fresh page rather than splitting them */
+  .print-break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  /* Expand clipped / truncated content for a complete PDF */
+  .overflow-hidden,
+  .overflow-x-auto,
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  .line-clamp-1,
+  .line-clamp-2,
+  .line-clamp-3,
+  .line-clamp-4 {
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Drop sticky/fixed chrome that doesn't belong in a document */
+  .fixed,
+  .sticky {
+    position: static !important;
   }
 }

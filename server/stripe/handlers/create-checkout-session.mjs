@@ -96,9 +96,11 @@ export async function handleCreateCheckoutSession(body, accessToken) {
       customer: customerId,
       client_reference_id: org.id,
       line_items: [{ price: prices.setup, quantity: 1 }],
-      success_url: `${site}/app/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${site}/app/settings#billing`,
+      success_url: `${site}/app/billing?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${site}/app/billing`,
       allow_promotion_codes: true,
+      // CenterLinked is merchant of record — Managed Payments (Stripe MoR) needs product tax codes.
+      managed_payments: { enabled: false },
       metadata: {
         organization_id: org.id,
         plan: "done_for_you",
@@ -132,9 +134,11 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     customer: customerId,
     client_reference_id: org.id,
     line_items,
-    success_url: `${site}/app/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${site}/#pricing`,
+    success_url: `${site}/app/billing?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${site}/app/billing`,
     allow_promotion_codes: true,
+    // CenterLinked is merchant of record — Managed Payments (Stripe MoR) needs product tax codes.
+    managed_payments: { enabled: false },
     metadata: {
       organization_id: org.id,
       plan,

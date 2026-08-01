@@ -1,5 +1,6 @@
 import type { Plugin } from "vite";
 import { getBearerToken, readJsonBody, sendJson } from "./server/email/http.mjs";
+import { handleBillingOverview } from "./server/stripe/handlers/billing-overview.mjs";
 import { handleCreateCheckoutSession } from "./server/stripe/handlers/create-checkout-session.mjs";
 import { handleCreatePortalSession } from "./server/stripe/handlers/create-portal-session.mjs";
 import { handleStripeWebhook } from "./server/stripe/handlers/webhook.mjs";
@@ -48,6 +49,29 @@ export function stripeApiPlugin(): Plugin {
             sendJson(res, result.status, result.json);
           } catch (err) {
             console.error("[stripe-api webhook]", err);
+            sendJson(res, 500, { error: (err as Error)?.message || "Internal server error" });
+          }
+          return;
+        }
+
+        if (pathname === "/api/billing-overview") {
+          if (req.method === "OPTIONS") {
+            res.statusCode = 204;
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            res.end();
+            return;
+          }
+          if (req.method !== "GET") {
+            sendJson(res, 405, { error: "Method not allowed" });
+            return;
+          }
+          try {
+            const result = await handleBillingOverview(getBearerToken(req));
+            sendJson(res, result.status, result.json);
+          } catch (err) {
+            console.error("[stripe-api billing-overview]", err);
             sendJson(res, 500, { error: (err as Error)?.message || "Internal server error" });
           }
           return;

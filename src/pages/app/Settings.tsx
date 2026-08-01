@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -8,19 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/app/ImageUploader";
-import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck } from "lucide-react";
+import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck, CreditCard } from "lucide-react";
 import { SuperAdminSettingsCard } from "@/components/app/admin/SuperAdminPanel";
 import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
-import { OrgBillingCard } from "@/components/app/OrgBillingCard";
 import { cn } from "@/lib/utils";
 import { mergeOrgImages } from "@/lib/org-hero";
-import type { OrgBilling } from "@/lib/billing";
+import { formatSubscriptionStatus, type OrgBilling } from "@/lib/billing";
 import { toast } from "sonner";
 
 export default function Settings() {
   const { profile, user, isFacilityAdmin, isSuperAdmin, needsSuperAdminSetup, refresh } = useAuth();
   const canManageOrganization = isFacilityAdmin || isSuperAdmin;
-  const [searchParams, setSearchParams] = useSearchParams();
   const [fullName, setFullName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [phone, setPhone] = useState("");
@@ -61,17 +59,6 @@ export default function Settings() {
   const [payersCount, setPayersCount] = useState(0);
   const [contractsCount, setContractsCount] = useState(0);
   const [membersCount, setMembersCount] = useState(0);
-
-  const billingParam = searchParams.get("billing");
-
-  useEffect(() => {
-    if (billingParam === "success") {
-      toast.success("Billing updated — welcome aboard");
-      const next = new URLSearchParams(searchParams);
-      next.delete("billing");
-      setSearchParams(next, { replace: true });
-    }
-  }, [billingParam, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (profile) {
@@ -151,7 +138,7 @@ export default function Settings() {
         .eq("organization_id", orgId);
       setMembersCount(memCount ?? 0);
     })();
-  }, [profile?.organization_id, billingParam]);
+  }, [profile?.organization_id]);
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,13 +210,24 @@ export default function Settings() {
 
       {isSuperAdmin && <SuperAdminSettingsCard />}
 
-      {profile?.organization_id && (
-        <div id="billing">
-          <OrgBillingCard
-            billing={billing}
-            canManage={isFacilityAdmin || isSuperAdmin}
-          />
-        </div>
+      {profile?.organization_id && (isFacilityAdmin || isSuperAdmin) && (
+        <Card className="p-5 sm:p-6 space-y-3" id="billing">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="font-heading text-lg font-semibold inline-flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Billing
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Status: {formatSubscriptionStatus(billing?.subscription_status)}. Manage subscription,
+                payment method, cancellations, and invoices on the billing page.
+              </p>
+            </div>
+            <Button asChild>
+              <Link to="/app/billing">Open billing</Link>
+            </Button>
+          </div>
+        </Card>
       )}
 
       {profile?.organization_id && (

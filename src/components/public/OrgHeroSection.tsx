@@ -148,18 +148,9 @@ function IdentityHero({
             </div>
 
             <div className="min-w-0 flex-1 space-y-2.5">
-              <div className="flex items-start justify-between gap-3">
-                <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.12] text-3xl lg:text-[2.5rem] min-w-0">
-                  {headline}
-                </h1>
-                {org.verified ? (
-                  <VerifiedMark
-                    verifiedAt={verifiedAt ?? org.updated_at}
-                    size="md"
-                    className="shrink-0 pt-1"
-                  />
-                ) : null}
-              </div>
+              <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.12] text-3xl lg:text-[2.5rem]">
+                {headline}
+              </h1>
 
               {tagline ? (
                 <p className="font-semibold text-base" style={{ color: brand }}>
@@ -169,6 +160,13 @@ function IdentityHero({
 
               {locationMeta ? (
                 <p className="text-muted-foreground font-medium text-[0.95rem]">{locationMeta}</p>
+              ) : null}
+
+              {org.verified ? (
+                <VerifiedMark
+                  verifiedAt={verifiedAt ?? org.updated_at}
+                  size="md"
+                />
               ) : null}
 
               {description ? (

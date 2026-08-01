@@ -63,7 +63,7 @@ export function BillingStatusBanner() {
       <div className="flex items-center gap-2 shrink-0">
         {canManage && (
           <Button asChild size="sm">
-            <Link to="/app/settings#billing">
+            <Link to="/app/billing">
               {pastDue ? "Update billing" : "View billing"}
             </Link>
           </Button>

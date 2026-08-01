@@ -10,6 +10,48 @@ export type OrgBilling = {
   billing_email: string | null;
 };
 
+export type BillingInvoice = {
+  id: string;
+  number: string;
+  status: string | null;
+  created: string | null;
+  amount_paid: number | null;
+  amount_due: number | null;
+  currency: string;
+  amount_label: string | null;
+  hosted_invoice_url: string | null;
+  invoice_pdf: string | null;
+  description: string | null;
+};
+
+export type BillingOverview = {
+  organization: OrgBilling & {
+    id: string;
+    name: string;
+    subscription_price_id?: string | null;
+    stripe_subscription_id?: string | null;
+  };
+  subscription: {
+    id: string;
+    status: string;
+    cancel_at_period_end: boolean;
+    current_period_end: string | null;
+    price_id: string | null;
+    product_name: string;
+    unit_amount: number | null;
+    currency: string;
+    interval: string;
+    amount_label: string | null;
+  } | null;
+  payment_method: {
+    brand: string;
+    last4: string | null;
+    exp_month: number | null;
+    exp_year: number | null;
+  } | null;
+  invoices: BillingInvoice[];
+};
+
 export function isSubscriptionActive(status: string | null | undefined) {
   return status === "active" || status === "trialing";
 }
@@ -44,17 +86,20 @@ export function formatSetupPackage(pkg: string | null | undefined) {
   return "—";
 }
 
-async function postBillingJson(path: string, body: Record<string, unknown> = {}) {
+async function authHeaders() {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("You must be signed in to manage billing.");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
+async function postBillingJson(path: string, body: Record<string, unknown> = {}) {
   const res = await fetch(path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: await authHeaders(),
     body: JSON.stringify(body),
   });
 
@@ -73,7 +118,20 @@ export async function startCheckout(plan: BillingPlan) {
   return postBillingJson("/api/create-checkout-session", { plan });
 }
 
-/** Open the Stripe Customer Portal. */
+/** Open the Stripe Customer Portal (update card, invoices, cancel). */
 export async function openBillingPortal() {
   return postBillingJson("/api/create-portal-session", {});
+}
+
+/** Load subscription snapshot + invoice history for org admins. */
+export async function fetchBillingOverview(): Promise<BillingOverview> {
+  const res = await fetch("/api/billing-overview", {
+    method: "GET",
+    headers: await authHeaders(),
+  });
+  const json = (await res.json().catch(() => ({}))) as BillingOverview & { error?: string };
+  if (!res.ok) {
+    throw new Error(json.error || `Could not load billing (${res.status})`);
+  }
+  return json;
 }

@@ -26,6 +26,7 @@ import PdfFacilityUpload from "./pages/app/PdfFacilityUpload";
 import Members from "./pages/app/Members";
 import Verifications from "./pages/app/Verifications";
 import Settings from "./pages/app/Settings";
+import Billing from "./pages/app/Billing";
 import Feed from "./pages/app/Feed";
 import Messenger from "./pages/app/Messenger";
 import SearchResults from "./pages/app/SearchResults";
@@ -90,6 +91,7 @@ const App = () => (
               {!FEATURES.community && <Route path="feed" element={<Navigate to="/app" replace />} />}
               {!FEATURES.community && <Route path="messages" element={<Navigate to="/app" replace />} />}
               <Route path="settings" element={<Settings />} />
+              <Route path="billing" element={<Billing />} />
             </Route>
             <Route path="/:slug" element={<OrgSheet />} />
             <Route path="*" element={<NotFound />} />

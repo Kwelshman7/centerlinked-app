@@ -15,6 +15,8 @@ import {
   ImageIcon,
   X,
   ChevronLeft,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 import { EditPhotosDialog } from "@/components/public/FacilityPhotoGallery";
@@ -23,7 +25,7 @@ import { OrgHeroContactCard } from "@/components/public/OrgHeroContactCard";
 import { ExpandableText } from "@/components/public/ExpandableText";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { useNearbyCities } from "@/hooks/useNearbyCities";
-import { sanitizePhone } from "@/lib/phone";
+import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 
 /** Fixed hero gallery dimensions — identical for every facility/org. */
 const HERO_IMAGE_HEIGHT = "h-[280px]";
@@ -127,7 +129,7 @@ function SectionHeading({
   return (
     <div className="flex items-center justify-between gap-3 mb-3">
       <h2 className="font-heading text-sm sm:text-[15px] font-bold tracking-tight">{title}</h2>
-      {headerExtra}
+      {headerExtra ? <div className="print:hidden">{headerExtra}</div> : null}
     </div>
   );
 }
@@ -170,12 +172,14 @@ export function FacilitySheetView({
   const repPhone = facility.bd_contact_phone || org?.bd_contact_phone || null;
   const repEmail = facility.bd_contact_email || org?.bd_contact_email || null;
   const cleanPhone = sanitizePhone(repPhone) || null;
+  const displayPhone = formatPhoneDisplay(repPhone);
   const hasContact = !!(cleanPhone || repEmail);
+  const hasBdForPdf = !!(repName?.trim() || cleanPhone || repEmail);
   const repTitle = facilityHasOwnBd
-    ? "BD Representative"
+    ? "Business Development Representative"
     : org?.bd_contact_name
-      ? "Organization BD Contact"
-      : "BD Representative";
+      ? "Organization Business Development Contact"
+      : "Business Development Representative";
 
   const shareNode =
     canShare && facility.slug ? (
@@ -226,8 +230,8 @@ export function FacilitySheetView({
   return (
     <div className={`space-y-5 lg:space-y-6 min-w-0 ${showMobileActionBar ? mobileContactBarPadding(tabBarOffset, footerVisible) : ""}`}>
       {/* Hero */}
-      <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-        <div className="grid lg:grid-cols-2 lg:items-start">
+      <section className="print-keep-together rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+        <div className="grid lg:grid-cols-2 lg:items-start print:grid-cols-1">
           <HeroGallery
             images={facility.image_urls ?? []}
             fallbackImage={coverImageUrl}
@@ -236,12 +240,12 @@ export function FacilitySheetView({
             canEdit={canEditPhotos}
             facilityId={facilityId ?? facility.id}
             onPhotosUpdated={onPhotosUpdated}
-            className="order-1 lg:order-2"
+            className="order-1 lg:order-2 print:hidden"
           />
 
           <div className="p-4 sm:p-6 lg:p-7 flex flex-col gap-3 min-w-0 self-start order-2 lg:order-1">
             {mode === "public" && org?.slug && (
-              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground print:hidden">
                 <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline">
                   {org.name}
                 </Link>
@@ -251,6 +255,11 @@ export function FacilitySheetView({
             )}
 
             <div>
+              {mode === "public" && org?.name ? (
+                <p className="hidden print:block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
+                  {org.name}
+                </p>
+              ) : null}
               <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight">{facility.name}</h1>
 
               <div className="mt-2 space-y-1.5 text-sm text-muted-foreground">
@@ -281,24 +290,73 @@ export function FacilitySheetView({
               )}
             </div>
 
-            {shareNode && <div className="pt-1 hidden lg:block">{shareNode}</div>}
+            {shareNode && <div className="pt-1 hidden lg:block print:hidden">{shareNode}</div>}
           </div>
         </div>
 
         {updatedByName && (
-          <div className="border-t border-border/60 bg-muted/30 px-5 sm:px-6 py-2.5 text-xs text-muted-foreground">
+          <div className="border-t border-border/60 bg-muted/30 px-5 sm:px-6 py-2.5 text-xs text-muted-foreground print:hidden">
             Updated by: {updatedByName}
           </div>
         )}
       </section>
 
+      {/* Print-only BD contact — screen UI uses the sidebar / mobile bar */}
+      {hasBdForPdf && (
+        <section
+          className="hidden print:block print-keep-together rounded-xl border bg-card overflow-hidden"
+          style={{ borderColor: `${brand}40` }}
+          aria-label="Business development contact"
+        >
+          <div
+            className="px-5 py-2.5 border-b"
+            style={{ backgroundColor: `${brand}10`, borderColor: `${brand}22` }}
+          >
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.14em]"
+              style={{ color: brand }}
+            >
+              Business Development Contact
+            </p>
+          </div>
+          <div className="px-5 py-4 flex flex-col gap-3">
+            <div>
+              <p className="font-heading text-lg font-bold tracking-tight text-foreground">
+                {repName?.trim() || "Referral Contact"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-0.5">{repTitle}</p>
+            </div>
+            <dl className="grid gap-2 text-sm">
+              {displayPhone ? (
+                <div className="flex items-baseline gap-3 min-w-0">
+                  <dt className="inline-flex items-center gap-1.5 w-16 shrink-0 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5" style={{ color: brand }} aria-hidden />
+                    Phone
+                  </dt>
+                  <dd className="font-medium text-foreground">{displayPhone}</dd>
+                </div>
+              ) : null}
+              {repEmail?.trim() ? (
+                <div className="flex items-baseline gap-3 min-w-0">
+                  <dt className="inline-flex items-center gap-1.5 w-16 shrink-0 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    <Mail className="h-3.5 w-3.5" style={{ color: brand }} aria-hidden />
+                    Email
+                  </dt>
+                  <dd className="font-medium text-foreground break-all">{repEmail.trim()}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
+        </section>
+      )}
+
       {/* Unified details */}
       {(hasFactsStrip || hasProgramDetails || hasServiceArea || repName || repEmail || repPhone) && (
         <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:overflow-visible">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] print:grid-cols-1">
+            <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50 print:border-0 print:rounded-none">
               {hasFactsStrip && (
-                <div className="px-4 sm:px-6 py-4 sm:py-5 grid gap-4 sm:grid-cols-2 sm:gap-x-10">
+                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5 grid gap-4 sm:grid-cols-2 sm:gap-x-10">
                   <div className="min-w-0">
                     <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} />
                     {inNetworkPayers.length > 0 ? (
@@ -343,7 +401,7 @@ export function FacilitySheetView({
               )}
 
               {hasProgramDetails && (
-                <div className="px-4 sm:px-6 py-4 sm:py-5">
+                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
                   <SectionHeading title="Program Details" headerExtra={aboutHeaderExtra} />
 
                   {(facility.tagline || facility.description) && (
@@ -392,14 +450,14 @@ export function FacilitySheetView({
               )}
 
               {hasServiceArea && (
-                <div className="px-4 sm:px-6 py-4 sm:py-5">
+                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
                   <SectionHeading title="Service Area" />
-                  <div className="grid md:grid-cols-[160px_1fr] gap-4">
+                  <div className="grid md:grid-cols-[160px_1fr] gap-4 print:grid-cols-1">
                     <a
                       href={directionsHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="relative h-[120px] md:h-full md:min-h-[120px] w-full rounded-lg overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0"
+                      className="relative h-[120px] md:h-full md:min-h-[120px] w-full rounded-lg overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0 print:hidden"
                     >
                       <iframe
                         title={`Map for ${facility.name}`}
@@ -417,7 +475,7 @@ export function FacilitySheetView({
                         </p>
                       )}
                       {nearbyCitiesLoading ? (
-                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
+                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 print:hidden">
                           {Array.from({ length: 6 }).map((_, i) => (
                             <li key={i} className="flex items-center gap-2 min-w-0">
                               <div className="h-3 w-3 rounded-full bg-muted animate-pulse shrink-0" />
@@ -446,7 +504,7 @@ export function FacilitySheetView({
             </div>
 
             {/* Desktop sidebar contact — sits at top of section and pops forward */}
-            <aside className="hidden lg:block relative z-10 lg:sticky lg:top-20 lg:self-start lg:rounded-r-2xl px-3 pt-3 pb-5 xl:px-4 xl:pt-4">
+            <aside className="hidden lg:block print:hidden relative z-10 lg:sticky lg:top-20 lg:self-start lg:rounded-r-2xl px-3 pt-3 pb-5 xl:px-4 xl:pt-4">
               {hasContact ? (
                 <OrgHeroContactCard
                   contacts={[

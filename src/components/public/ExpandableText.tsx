@@ -28,7 +28,7 @@ export function ExpandableText({
       <p
         className={cn(
           "text-sm leading-relaxed whitespace-pre-line text-foreground/80 break-words",
-          clamped && (clampLines === 3 ? "line-clamp-3" : "line-clamp-4"),
+          clamped && (clampLines === 3 ? "line-clamp-3 print:line-clamp-none" : "line-clamp-4 print:line-clamp-none"),
         )}
       >
         {text}
@@ -38,7 +38,7 @@ export function ExpandableText({
           type="button"
           tabIndex={preview ? -1 : undefined}
           onClick={preview ? undefined : () => setExpanded((v) => !v)}
-          className="mt-1.5 text-xs font-semibold hover:underline"
+          className="mt-1.5 text-xs font-semibold hover:underline print:hidden"
           style={{ color: brand }}
           aria-hidden={preview || undefined}
         >
