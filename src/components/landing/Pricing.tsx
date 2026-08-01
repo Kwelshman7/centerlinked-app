@@ -12,7 +12,7 @@ const plans = [
   {
     id: "membership" as BillingPlan,
     name: "Build It Yourself",
-    priceNote: "Self-serve setup",
+    priceNote: "Build your own profile",
     price: "$99",
     period: "/month",
     priceDetail: null as string | null,
@@ -101,7 +101,7 @@ export function Pricing() {
             <DisplayAccent>Pricing</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Every organization is $99/month. Choose self-serve, or add a one-time $499 setup and we’ll build it for you.
+            Every organization is $99/month. Build your own profile, or add a one-time $499 setup and we’ll build it for you.
           </p>
         </div>
 

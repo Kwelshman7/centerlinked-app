@@ -36,7 +36,6 @@ type TrustState = "verified" | "past_due" | "flagged";
 
 const trustStates: {
   id: TrustState;
-  label: string;
   detail: string;
   badge: string;
   badgeClass: string;
@@ -44,24 +43,21 @@ const trustStates: {
 }[] = [
   {
     id: "verified",
-    label: "Verified this month",
-    detail: "Partners see a clear Verified signal on your referral profile.",
+    detail: "This profile was verified this month.",
     badge: "Verified",
     badgeClass: "bg-primary text-primary-foreground",
     ringClass: "ring-primary/35",
   },
   {
     id: "past_due",
-    label: "Past due",
-    detail: "Miss the monthly check and a yellow Past due marker appears on your card.",
+    detail: "This profile is due for its monthly verification.",
     badge: "Past due",
     badgeClass: "bg-amber-500 text-white",
     ringClass: "ring-amber-400/40",
   },
   {
     id: "flagged",
-    label: "Needs attention",
-    detail: "More than a month overdue shows a red flag — still visible, clearly not freshly verified.",
+    detail: "This profile is overdue for verification.",
     badge: "Overdue",
     badgeClass: "bg-red-600 text-white",
     ringClass: "ring-red-500/35",
@@ -83,6 +79,19 @@ function TrustSignalCard({ state }: { state: (typeof trustStates)[number] }) {
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent" aria-hidden />
+        <span
+          className={cn(
+            "absolute right-4 top-4 z-10 inline-flex w-24 items-center justify-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide shadow-md transition-colors duration-500",
+            state.badgeClass,
+          )}
+        >
+          {state.id === "verified" ? (
+            <BadgeCheck className="h-3 w-3" aria-hidden />
+          ) : (
+            <Flag className="h-3 w-3" aria-hidden />
+          )}
+          {state.badge}
+        </span>
       </div>
 
       <div className="space-y-3.5 px-5 py-4 sm:px-5 sm:py-5">
@@ -100,21 +109,7 @@ function TrustSignalCard({ state }: { state: (typeof trustStates)[number] }) {
           </div>
         </div>
 
-        <span
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors duration-500",
-            state.badgeClass,
-          )}
-        >
-          {state.id === "verified" ? (
-            <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-          ) : (
-            <Flag className="h-3.5 w-3.5" aria-hidden />
-          )}
-          {state.badge}
-        </span>
-
-        <p className="text-sm leading-relaxed text-muted-foreground">{state.detail}</p>
+        <p className="min-h-[2.75rem] text-sm leading-relaxed text-muted-foreground">{state.detail}</p>
       </div>
     </div>
   );
@@ -273,34 +268,6 @@ export function VerifiedMonthly() {
               <TrustSignalCard state={activeTrust} />
             </div>
 
-            <div
-              className="mt-4 flex flex-wrap items-center justify-center lg:justify-start gap-2"
-              role="tablist"
-              aria-label="Verification status examples"
-            >
-              {trustStates.map((state, i) => (
-                <button
-                  key={state.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={i === trustIndex}
-                  onClick={() => setTrustIndex(i)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-300",
-                    i === trustIndex
-                      ? "border-foreground/20 bg-foreground text-background"
-                      : "border-border bg-background/80 text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {state.label}
-                </button>
-              ))}
-            </div>
-
-            <p className="mt-5 text-sm text-muted-foreground leading-relaxed text-center lg:text-left">
-              Your profile stays visible either way. The signal tells partners how recently it was
-              confirmed — so outdated directories don’t quietly mislead placements.
-            </p>
           </div>
         </div>
       </div>

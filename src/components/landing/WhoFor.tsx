@@ -5,11 +5,6 @@ import {
   Hospital,
   MessageSquare,
   Users,
-  Building2,
-  MapPin,
-  ShieldCheck,
-  Phone,
-  Sparkles,
   Send,
   ListChecks,
 } from "lucide-react";
@@ -17,6 +12,7 @@ import type { LucideIcon } from "lucide-react";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 import { WhoForNetwork } from "./WhoForNetwork";
+import { LinkAnswersReveal } from "./LinkAnswersReveal";
 import { cn } from "@/lib/utils";
 
 const moments: {
@@ -46,18 +42,6 @@ const moments: {
   },
 ];
 
-const answers: {
-  icon: LucideIcon;
-  label: string;
-}[] = [
-  { icon: Building2, label: "Who you are" },
-  { icon: Sparkles, label: "What you offer" },
-  { icon: Users, label: "Who you help" },
-  { icon: MapPin, label: "Where you're located" },
-  { icon: ShieldCheck, label: "Which insurance you accept" },
-  { icon: Phone, label: "How to contact you" },
-];
-
 function useInView<T extends HTMLElement>(threshold = 0.18) {
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
@@ -80,7 +64,6 @@ function useInView<T extends HTMLElement>(threshold = 0.18) {
 
 export function WhoFor() {
   const momentsReveal = useInView<HTMLElement>();
-  const answersReveal = useInView<HTMLElement>();
 
   return (
     <>
@@ -133,14 +116,14 @@ export function WhoFor() {
             </p>
           </div>
 
-          <ul className="mx-auto max-w-5xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+          <ul className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-stretch">
             {moments.map((moment, i) => {
               const Icon = moment.icon;
               return (
                 <li
                   key={moment.title}
                   className={cn(
-                    "opacity-0",
+                    "opacity-0 h-[84px] sm:h-[88px]",
                     momentsReveal.inView && "animate-fade-up",
                   )}
                   style={
@@ -152,16 +135,25 @@ export function WhoFor() {
                       : undefined
                   }
                 >
-                  <article className="h-full rounded-2xl border border-border/60 bg-card p-5 sm:p-6 lg:p-7 shadow-[0_12px_32px_-20px_rgba(15,23,42,0.28)] transition-transform duration-300 hover:-translate-y-0.5">
-                    <div className="flex items-start gap-4">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
-                        <Icon className="h-5 w-5" aria-hidden />
+                  <article
+                    className={cn(
+                      "h-full rounded-xl border border-border/50 bg-gradient-to-br from-card via-card to-secondary/40",
+                      "px-4 py-3 sm:px-4 sm:py-3",
+                      "shadow-[0_12px_24px_-14px_rgba(15,23,42,0.26),inset_0_1px_0_rgba(255,255,255,0.85)]",
+                      "ring-1 ring-black/[0.03]",
+                      "transition-[transform,box-shadow] duration-300",
+                      "hover:-translate-y-0.5 hover:shadow-[0_18px_30px_-16px_rgba(15,23,42,0.32),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                    )}
+                  >
+                    <div className="flex h-full items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
+                        <Icon className="h-4 w-4" aria-hidden />
                       </span>
-                      <div className="min-w-0 flex-1 pt-0.5">
-                        <h3 className="text-[15px] sm:text-base font-semibold text-foreground leading-snug mb-2">
+                      <div className="min-w-0 flex-1 flex flex-col justify-center">
+                        <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug shrink-0">
                           {moment.title}
                         </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-snug line-clamp-2">
                           {moment.body}
                         </p>
                       </div>
@@ -177,7 +169,6 @@ export function WhoFor() {
       {/* What your link answers */}
       <section
         id="what-link-answers"
-        ref={answersReveal.ref}
         className="relative py-16 sm:py-20 lg:py-24 bg-background scroll-mt-20"
       >
         <div
@@ -189,7 +180,7 @@ export function WhoFor() {
           }}
         />
 
-        <div className="container relative z-10 space-y-10 sm:space-y-12">
+        <div className="container relative z-10 space-y-8 sm:space-y-10">
           <div className="mx-auto max-w-2xl text-center space-y-3">
             <SectionBadge icon={ListChecks}>What your link answers</SectionBadge>
             <DisplayHeading as="h2" align="center" className="text-2xl sm:text-3xl lg:text-[2.15rem]">
@@ -202,37 +193,7 @@ export function WhoFor() {
             </p>
           </div>
 
-          <ul className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {answers.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <li
-                  key={item.label}
-                  className={cn(
-                    "opacity-0",
-                    answersReveal.inView && "animate-fade-up",
-                  )}
-                  style={
-                    answersReveal.inView
-                      ? {
-                          animationDelay: `${i * 60}ms`,
-                          animationFillMode: "forwards",
-                        }
-                      : undefined
-                  }
-                >
-                  <div className="h-full flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3.5 shadow-sm transition-all hover:border-primary/25 hover:-translate-y-0.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15">
-                      <Icon className="h-4 w-4" aria-hidden />
-                    </span>
-                    <span className="text-sm font-semibold text-foreground tracking-tight">
-                      {item.label}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <LinkAnswersReveal />
         </div>
       </section>
     </>
