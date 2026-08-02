@@ -212,12 +212,7 @@ function MobileLogoHero({
 
   if (logoAsHero && heroImage) {
     return (
-      <section
-        className="relative w-full overflow-hidden"
-        style={{
-          background: `linear-gradient(160deg, ${brand}12 0%, hsl(var(--background)) 55%, ${brand}08 100%)`,
-        }}
-      >
+      <section className="relative w-full overflow-hidden bg-white">
         <div
           className={cn(
             "flex items-center justify-center",

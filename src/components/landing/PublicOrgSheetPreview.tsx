@@ -14,7 +14,7 @@ import { mockupThemeVariables, useRotatingMockupOrg } from "./useRotatingMockupO
 const DESCRIPTION =
   "A nationally recognized, Joint Commission-accredited network of treatment centers offering detox, residential, PHP, IOP, and mental health programs across the country.";
 
-const FADE_MS = 220;
+const FADE_MS = 280;
 
 export function PublicOrgSheetPreviewContent({ active = true }: { active?: boolean }) {
   const organization = useRotatingMockupOrg(active);
@@ -66,19 +66,19 @@ export function PublicOrgSheetPreviewContent({ active = true }: { active?: boole
 
   return (
     <div
-      className="relative flex flex-col h-full min-h-0 overflow-hidden bg-muted/30 text-foreground select-none pointer-events-none"
+      className="relative flex flex-col h-full min-h-0 overflow-hidden bg-white text-foreground select-none pointer-events-none"
       style={mockupThemeVariables(brand)}
     >
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-hidden pb-[3.75rem] transition-opacity ease-out",
+          "flex-1 min-h-0 overflow-hidden pb-[3.75rem] transition-opacity ease-in-out",
           visible ? "opacity-100" : "opacity-0",
         )}
         style={{ transitionDuration: `${FADE_MS}ms` }}
       >
         <OrgHeroSection org={demoOrg} brand={brand} compact logoSize="mock" />
 
-        <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
+        <main className="px-3.5 pt-2.5 pb-2 space-y-2.5 bg-white">
           <header className="space-y-1">
             <h1 className="sr-only">{displayOrg.name}</h1>
             <ExpandableText text={description} brand={brand} clampLines={3} preview />
@@ -115,6 +115,7 @@ export function PublicOrgSheetPreviewContent({ active = true }: { active?: boole
                   facility={facility}
                   density="compact"
                   imageLoading="eager"
+                  elevated
                 />
               ))}
             </div>
@@ -122,7 +123,7 @@ export function PublicOrgSheetPreviewContent({ active = true }: { active?: boole
         </main>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-30 bg-card/95 backdrop-blur-md border-t border-border px-3.5 pt-2 pb-2">
+      <div className="absolute inset-x-0 bottom-0 z-30 bg-white/95 backdrop-blur-md border-t border-border px-3.5 pt-2 pb-2">
         <div
           className="h-9 w-full rounded-md text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md"
           style={{ backgroundColor: brand }}

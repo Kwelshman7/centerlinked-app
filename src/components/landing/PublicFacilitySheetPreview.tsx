@@ -22,9 +22,9 @@ const PREVIEW_PAYERS = FEATURED_FACILITY.payers.slice(0, 5);
 
 export function PublicFacilitySheetPreviewContent() {
   return (
-    <div className="relative flex flex-col h-full min-h-0 overflow-hidden bg-muted/30 text-foreground select-none pointer-events-none">
+    <div className="relative flex flex-col h-full min-h-0 overflow-hidden bg-white text-foreground select-none pointer-events-none">
       <header
-        className="shrink-0 border-b bg-card/95 backdrop-blur-xl px-3.5 h-12 flex items-center gap-2.5 min-w-0 z-10"
+        className="shrink-0 border-b bg-white/95 backdrop-blur-xl px-3.5 h-12 flex items-center gap-2.5 min-w-0 z-10"
         style={{ borderColor: `${BRAND}30` }}
       >
         <div

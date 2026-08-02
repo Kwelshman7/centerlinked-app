@@ -34,6 +34,8 @@ interface FacilityGridCardProps {
   layout?: "stack" | "split";
   /** Prefer eager for landing mockups so cards don't paint in piece by piece. */
   imageLoading?: "lazy" | "eager";
+  /** Soft resting elevation so cards read as lifted off a white sheet. */
+  elevated?: boolean;
 }
 
 /** Map facility count → card richness for public org sheets. */
@@ -49,6 +51,7 @@ export function FacilityGridCard({
   density = "compact",
   layout = "stack",
   imageLoading = "lazy",
+  elevated = false,
 }: FacilityGridCardProps) {
   const stateLabel = f.state
     ? stateDisplayName(resolveStateCode(f.state) ?? f.state)
@@ -67,6 +70,7 @@ export function FacilityGridCard({
   const className = cn(
     "group rounded-xl border border-border/60 bg-card overflow-hidden hover:border-primary/40 hover:shadow-md transition-all h-full",
     density === "showcase" && "sm:rounded-2xl",
+    elevated && "shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_16px_rgba(15,23,42,0.08)] border-border/40",
   );
 
   const body =

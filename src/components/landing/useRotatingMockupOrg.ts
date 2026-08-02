@@ -17,7 +17,7 @@ export type LandingMockupOrg = {
   facilities: FacilityGridCardData[];
 };
 
-const PREFERRED_ORGS = ["flyland", "level up", "boca recovery"];
+const PREFERRED_ORGS = ["flyland", "level up", "boca recovery", "intrepid"];
 const ROTATION_MS = 5_500;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const PREVIEW_FACILITY_COUNT = 4;
@@ -180,11 +180,13 @@ export function useRotatingMockupOrg(active = true) {
 
       if (completeFeatured.length > 0) {
         const nextOrgs = [...completeFeatured, fallbackOrg];
+        // Show the first org only after its assets are warm, then quietly warm the rest.
         await preloadImages(orgImageUrls(nextOrgs[0]));
         if (!cancelled) {
           setOrganizations(nextOrgs);
           setIndex(0);
         }
+        void Promise.all(nextOrgs.slice(1).map((org) => preloadImages(orgImageUrls(org))));
       }
     })();
 
@@ -203,12 +205,15 @@ export function useRotatingMockupOrg(active = true) {
     let timer = 0;
 
     const schedule = () => {
+      const orgs = organizationsRef.current;
+      const next = (indexRef.current + 1) % orgs.length;
+      // Warm the upcoming org while the current slide is still on screen.
+      const warmNext = preloadImages(orgImageUrls(orgs[next]));
+
       timer = window.setTimeout(() => {
         void (async () => {
           if (cancelled) return;
-          const orgs = organizationsRef.current;
-          const next = (indexRef.current + 1) % orgs.length;
-          await preloadImages(orgImageUrls(orgs[next]));
+          await warmNext;
           if (cancelled) return;
           setIndex(next);
           schedule();
