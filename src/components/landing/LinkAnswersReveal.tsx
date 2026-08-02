@@ -1,94 +1,169 @@
 import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import {
+  User,
+  Heart,
+  Users,
+  MapPin,
+  Shield,
+  Phone,
+  BadgeCheck,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** One highlighted word per statement; revealed on scroll. */
-const phrases: { before: string; highlight: string; after?: string }[] = [
-  { before: "Who you", highlight: "are" },
-  { before: "What you", highlight: "offer" },
-  { before: "Who you", highlight: "help" },
-  { before: "Where you're", highlight: "located" },
-  { before: "Who you're", highlight: "in-network", after: "with" },
-  { before: "How to", highlight: "contact", after: "you" },
-];
-
-function Statement({
-  before,
-  highlight,
-  after,
-  index,
-}: {
+const answers: {
+  icon: LucideIcon;
   before: string;
   highlight: string;
   after?: string;
+  body: string;
+}[] = [
+  {
+    icon: User,
+    before: "Who you",
+    highlight: "are",
+    body: "Share your story, mission, and what sets your program apart.",
+  },
+  {
+    icon: Heart,
+    before: "What you",
+    highlight: "offer",
+    body: "Highlight your levels of care, therapies, and specializations.",
+  },
+  {
+    icon: Users,
+    before: "Who you",
+    highlight: "help",
+    body: "Specify the populations you serve and the conditions you treat.",
+  },
+  {
+    icon: MapPin,
+    before: "Where you're",
+    highlight: "located",
+    body: "Provide your address, service areas, and nearby landmarks.",
+  },
+  {
+    icon: Shield,
+    before: "Who you're",
+    highlight: "in-network",
+    after: "with",
+    body: "List accepted insurance providers and payor types.",
+  },
+  {
+    icon: Phone,
+    before: "How to",
+    highlight: "contact",
+    after: "you",
+    body: "Include your BD contacts, phone numbers, and email addresses.",
+  },
+];
+
+function AnswerCard({
+  icon: Icon,
+  before,
+  highlight,
+  after,
+  body,
+  index,
+  inView,
+}: {
+  icon: LucideIcon;
+  before: string;
+  highlight: string;
+  after?: string;
+  body: string;
   index: number;
+  inView: boolean;
 }) {
-  const ref = useRef<HTMLLIElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.2, rootMargin: "0px 0px -10% 0px" },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <li
-      ref={ref}
       className={cn(
-        "flex flex-col items-center text-center transition-all duration-500 ease-out",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
+        "opacity-0",
+        inView && "animate-fade-up",
       )}
-      style={{ transitionDelay: visible ? `${(index % 2) * 80}ms` : "0ms" }}
+      style={
+        inView
+          ? {
+              animationDelay: `${100 + index * 70}ms`,
+              animationFillMode: "forwards",
+            }
+          : undefined
+      }
     >
-      <span
+      <article
         className={cn(
-          "mb-3 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-transform duration-500 ease-out",
-          visible ? "scale-100" : "scale-75",
-        )}
-        aria-hidden
-      >
-        <Check className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.75]" />
-      </span>
-
-      <p
-        className={cn(
-          "font-display text-2xl sm:text-3xl lg:text-[2.05rem] tracking-tight leading-snug",
-          "text-foreground text-balance",
+          "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
+          "px-3.5 py-3.5 sm:px-4 sm:py-4",
+          "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
+          "transition-[transform,box-shadow] duration-300",
+          "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
         )}
       >
-        <span>{before} </span>
-        <span className="text-primary font-semibold">{highlight}</span>
-        {after ? <span> {after}</span> : null}
-      </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm shadow-primary/25">
+            <Icon className="h-[18px] w-[18px]" aria-hidden strokeWidth={2.25} />
+          </span>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="font-display text-[15px] sm:text-base font-semibold text-foreground leading-snug tracking-tight">
+              <span>{before} </span>
+              <span className="text-primary">{highlight}</span>
+              {after ? <span> {after}</span> : null}
+            </h3>
+            <p className="mt-1 text-xs sm:text-[13px] text-muted-foreground leading-snug">
+              {body}
+            </p>
+          </div>
+        </div>
+      </article>
     </li>
   );
 }
 
 export function LinkAnswersReveal({ className }: { className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <ul
-      className={cn(
-        "mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-x-10 lg:gap-x-14 gap-y-10 sm:gap-y-12 md:gap-y-14",
-        "justify-items-center",
-        className,
-      )}
-    >
-      {phrases.map((phrase, index) => (
-        <Statement key={`${phrase.before}-${phrase.highlight}`} index={index} {...phrase} />
-      ))}
-    </ul>
+    <div ref={ref} className={cn("space-y-7 sm:space-y-8", className)}>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
+        {answers.map((answer, index) => (
+          <AnswerCard
+            key={`${answer.before}-${answer.highlight}`}
+            index={index}
+            inView={inView}
+            {...answer}
+          />
+        ))}
+      </ul>
+
+      <div className="flex items-center gap-3 sm:gap-4 pt-1">
+        <div className="h-px flex-1 bg-border/70" aria-hidden />
+        <p className="shrink-0 text-center text-xs sm:text-sm text-muted-foreground leading-none">
+          One link. Always up{" "}
+          <BadgeCheck
+            className="inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 align-[-2px] text-primary"
+            aria-hidden
+          />{" "}
+          to date. Built for trust.
+        </p>
+        <div className="h-px flex-1 bg-border/70" aria-hidden />
+      </div>
+    </div>
   );
 }

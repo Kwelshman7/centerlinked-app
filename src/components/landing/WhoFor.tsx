@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Handshake,
-  Presentation,
+  Monitor,
   Hospital,
   MessageSquare,
   Users,
@@ -14,6 +14,8 @@ import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 import { WhoForNetwork } from "./WhoForNetwork";
 import { LinkAnswersReveal } from "./LinkAnswersReveal";
 import { cn } from "@/lib/utils";
+import handshakeImg from "@/assets/when-to-send-handshake.jpg";
+import lobbyImg from "@/assets/link-answers-lobby.jpg";
 
 const moments: {
   icon: LucideIcon;
@@ -26,7 +28,7 @@ const moments: {
     body: "Follow up with one live link — not another PDF that goes stale overnight.",
   },
   {
-    icon: Presentation,
+    icon: Monitor,
     title: "At a conference",
     body: "Share from the booth, a badge scan, or a quick text.",
   },
@@ -98,102 +100,190 @@ export function WhoFor() {
         </div>
       </section>
 
-      {/* When to send — 2×2 cards */}
+      {/* When to send — content left, lifestyle photo right */}
       <section
         id="when-to-send"
         ref={momentsReveal.ref}
-        className="relative py-16 sm:py-20 lg:py-24 bg-secondary/25 scroll-mt-20"
+        className="relative overflow-hidden bg-background scroll-mt-20"
       >
-        <div className="container relative z-10">
-          <div className="mx-auto max-w-2xl text-center space-y-3 mb-10 sm:mb-12">
-            <SectionBadge icon={Send}>When to send your link</SectionBadge>
-            <DisplayHeading as="h2" align="center" className="text-2xl sm:text-3xl lg:text-[2.15rem]">
-              Never miss an opportunity to build a new relationship.
-            </DisplayHeading>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              One link connects your partners with everything your organization has
-              to offer.
-            </p>
+        {/* Mobile: photo behind cards */}
+        <div className="pointer-events-none absolute inset-0 lg:hidden" aria-hidden>
+          <img
+            src={handshakeImg}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-[70%_center]"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, hsl(var(--background) / 0.78) 0%, hsl(var(--background) / 0.6) 45%, hsl(var(--background) / 0.82) 100%)",
+            }}
+          />
+        </div>
+
+        <div className="relative flex w-full flex-col lg:flex-row lg:items-stretch">
+          <div className="relative z-10 mx-auto w-full max-w-xl px-4 py-14 sm:px-6 sm:py-16 lg:mx-0 lg:ml-[max(1.5rem,calc((100%-1120px)/2))] lg:w-[min(100%,520px)] lg:max-w-none lg:shrink-0 lg:py-20 lg:pr-6 xl:ml-[max(2rem,calc((100%-1200px)/2))] xl:w-[540px]">
+            <div className="space-y-8 sm:space-y-10">
+              <div className="space-y-4">
+                <SectionBadge
+                  icon={Send}
+                  className="border-primary/25 bg-primary/[0.06] text-primary"
+                >
+                  When to send your link
+                </SectionBadge>
+                <DisplayHeading
+                  as="h2"
+                  className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+                >
+                  Never miss an opportunity to build a new relationship.
+                </DisplayHeading>
+                <p className="max-w-md text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  One link connects your partners with everything your
+                  organization has to offer.
+                </p>
+              </div>
+
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
+                {moments.map((moment, i) => {
+                  const Icon = moment.icon;
+                  return (
+                    <li
+                      key={moment.title}
+                      className={cn(
+                        "opacity-0",
+                        momentsReveal.inView && "animate-fade-up",
+                      )}
+                      style={
+                        momentsReveal.inView
+                          ? {
+                              animationDelay: `${120 + i * 80}ms`,
+                              animationFillMode: "forwards",
+                            }
+                          : undefined
+                      }
+                    >
+                      <article
+                        className={cn(
+                          "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
+                          "px-4 py-3.5 sm:px-4 sm:py-4",
+                          "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
+                          "transition-[transform,box-shadow] duration-300",
+                          "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <Icon className="h-4 w-4" aria-hidden />
+                          </span>
+                          <div className="min-w-0 flex-1 pt-0.5">
+                            <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug">
+                              {moment.title}
+                            </h3>
+                            <p className="mt-1 text-xs sm:text-[13px] text-muted-foreground leading-snug">
+                              {moment.body}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
 
-          <ul className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-stretch">
-            {moments.map((moment, i) => {
-              const Icon = moment.icon;
-              return (
-                <li
-                  key={moment.title}
-                  className={cn(
-                    "opacity-0 h-[84px] sm:h-[88px]",
-                    momentsReveal.inView && "animate-fade-up",
-                  )}
-                  style={
-                    momentsReveal.inView
-                      ? {
-                          animationDelay: `${i * 80}ms`,
-                          animationFillMode: "forwards",
-                        }
-                      : undefined
-                  }
-                >
-                  <article
-                    className={cn(
-                      "h-full rounded-xl border border-border/50 bg-gradient-to-br from-card via-card to-secondary/40",
-                      "px-4 py-3 sm:px-4 sm:py-3",
-                      "shadow-[0_12px_24px_-14px_rgba(15,23,42,0.26),inset_0_1px_0_rgba(255,255,255,0.85)]",
-                      "ring-1 ring-black/[0.03]",
-                      "transition-[transform,box-shadow] duration-300",
-                      "hover:-translate-y-0.5 hover:shadow-[0_18px_30px_-16px_rgba(15,23,42,0.32),inset_0_1px_0_rgba(255,255,255,0.9)]",
-                    )}
-                  >
-                    <div className="flex h-full items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
-                        <Icon className="h-4 w-4" aria-hidden />
-                      </span>
-                      <div className="min-w-0 flex-1 flex flex-col justify-center">
-                        <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug shrink-0">
-                          {moment.title}
-                        </h3>
-                        <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-snug line-clamp-2">
-                          {moment.body}
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-                </li>
-              );
-            })}
-          </ul>
+          {/* Desktop: full-bleed photo column */}
+          <div
+            className="relative hidden min-h-[560px] flex-1 lg:block"
+            role="img"
+            aria-label="Two professionals shaking hands in a bright office"
+            style={{
+              backgroundImage: `url(${handshakeImg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "70% center",
+            }}
+          >
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 w-[22%]"
+              style={{
+                background:
+                  "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.45) 50%, transparent 100%)",
+              }}
+              aria-hidden
+            />
+          </div>
         </div>
       </section>
 
-      {/* What your link answers */}
+      {/* What your link answers — lobby photo left, cards right */}
       <section
         id="what-link-answers"
-        className="relative py-16 sm:py-20 lg:py-24 bg-background scroll-mt-20"
+        className="relative overflow-hidden bg-background scroll-mt-20"
       >
-        <div
-          className="pointer-events-none absolute inset-0"
-          aria-hidden
-          style={{
-            backgroundImage:
-              "radial-gradient(ellipse 45% 50% at 50% 0%, hsl(var(--primary-glow) / 0.08), transparent 65%)",
-          }}
-        />
+        {/* Mobile: photo behind cards */}
+        <div className="pointer-events-none absolute inset-0 lg:hidden" aria-hidden>
+          <img
+            src={lobbyImg}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-[30%_center]"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, hsl(var(--background) / 0.8) 0%, hsl(var(--background) / 0.62) 42%, hsl(var(--background) / 0.84) 100%)",
+            }}
+          />
+        </div>
 
-        <div className="container relative z-10 space-y-8 sm:space-y-10">
-          <div className="mx-auto max-w-2xl text-center space-y-3">
-            <SectionBadge icon={ListChecks}>What your link answers</SectionBadge>
-            <DisplayHeading as="h2" align="center" className="text-2xl sm:text-3xl lg:text-[2.15rem]">
-              Everything your referral partners need
-            </DisplayHeading>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Case managers refer to the centers that make their jobs easier. That
-              all starts with having access to the most up to date information about
-              your program.
-            </p>
+        <div className="relative flex w-full flex-col lg:flex-row lg:items-stretch">
+          {/* Desktop: full-bleed photo column (left) */}
+          <div
+            className="relative hidden min-h-[620px] flex-1 order-1 lg:block"
+            role="img"
+            aria-label="Bright recovery center lobby and reception area"
+            style={{
+              backgroundImage: `url(${lobbyImg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "28% center",
+            }}
+          >
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 w-[22%]"
+              style={{
+                background:
+                  "linear-gradient(270deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.45) 50%, transparent 100%)",
+              }}
+              aria-hidden
+            />
           </div>
 
-          <LinkAnswersReveal />
+          <div className="relative z-10 order-2 mx-auto w-full max-w-xl px-4 py-14 sm:px-6 sm:py-16 lg:mx-0 lg:mr-[max(1.5rem,calc((100%-1120px)/2))] lg:ml-0 lg:w-[min(100%,560px)] lg:max-w-none lg:shrink-0 lg:py-20 lg:pl-6 xl:mr-[max(2rem,calc((100%-1200px)/2))] xl:w-[600px]">
+            <div className="space-y-7 sm:space-y-8">
+              <div className="space-y-3.5 sm:space-y-4">
+                <SectionBadge
+                  icon={ListChecks}
+                  className="border-primary/25 bg-primary/[0.06] text-primary"
+                >
+                  What your link answers
+                </SectionBadge>
+                <DisplayHeading
+                  as="h2"
+                  className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+                >
+                  Everything your referral partners need
+                </DisplayHeading>
+                <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  Case managers refer to the centers that make their jobs
+                  easier. That all starts with having access to the most up to
+                  date information about your program.
+                </p>
+              </div>
+
+              <LinkAnswersReveal />
+            </div>
+          </div>
         </div>
       </section>
     </>
