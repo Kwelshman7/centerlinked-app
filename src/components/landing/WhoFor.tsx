@@ -15,7 +15,6 @@ import { WhoForNetwork } from "./WhoForNetwork";
 import { LinkAnswersReveal } from "./LinkAnswersReveal";
 import { cn } from "@/lib/utils";
 import handshakeImg from "@/assets/when-to-send-handshake.jpg";
-import lobbyImg from "@/assets/link-answers-lobby.jpg";
 
 const moments: {
   icon: LucideIcon;
@@ -100,30 +99,61 @@ export function WhoFor() {
         </div>
       </section>
 
-      {/* When to send — content left, lifestyle photo right */}
-      <section
-        id="when-to-send"
+      {/* Shared handshake band — one image spanning both story sections */}
+      <div
         ref={momentsReveal.ref}
-        className="relative overflow-hidden bg-background scroll-mt-20"
+        className="relative overflow-hidden bg-background"
       >
-        {/* Mobile: photo behind cards */}
-        <div className="pointer-events-none absolute inset-0 lg:hidden" aria-hidden>
+        {/* Full-height photo: behind content on mobile, right half on desktop */}
+        <div
+          className="pointer-events-none absolute inset-0 lg:left-[38%] xl:left-[36%]"
+          aria-hidden
+        >
           <img
             src={handshakeImg}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover object-[70%_center]"
+            className="absolute inset-0 h-full w-full object-cover object-[68%_center] scale-[1.02]"
           />
+          {/* Mobile: soft wash so cards stay readable */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 lg:hidden"
             style={{
               background:
-                "linear-gradient(180deg, hsl(var(--background) / 0.78) 0%, hsl(var(--background) / 0.6) 45%, hsl(var(--background) / 0.82) 100%)",
+                "linear-gradient(180deg, hsl(var(--background) / 0.82) 0%, hsl(var(--background) / 0.64) 40%, hsl(var(--background) / 0.72) 70%, hsl(var(--background) / 0.88) 100%)",
+            }}
+          />
+          {/* Desktop: blend photo into left content column */}
+          <div
+            className="absolute inset-0 hidden lg:block"
+            style={{
+              background:
+                "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.72) 10%, hsl(var(--background) / 0.28) 26%, transparent 46%)",
+            }}
+          />
+          {/* Soft top / bottom edge blends into neighboring sections */}
+          <div
+            className="absolute inset-x-0 top-0 h-20 sm:h-28"
+            style={{
+              background:
+                "linear-gradient(to bottom, hsl(var(--background)) 0%, transparent 100%)",
+            }}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 h-24 sm:h-32"
+            style={{
+              background:
+                "linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)",
             }}
           />
         </div>
 
-        <div className="relative flex w-full flex-col lg:flex-row lg:items-stretch">
-          <div className="relative z-10 mx-auto w-full max-w-xl px-4 py-14 sm:px-6 sm:py-16 lg:mx-0 lg:ml-[max(1.5rem,calc((100%-1120px)/2))] lg:w-[min(100%,520px)] lg:max-w-none lg:shrink-0 lg:py-20 lg:pr-6 xl:ml-[max(2rem,calc((100%-1200px)/2))] xl:w-[540px]">
+        {/* Left content column spanning both sections */}
+        <div className="relative z-10 mx-auto w-full max-w-xl px-4 sm:px-6 lg:mx-0 lg:ml-[max(1.5rem,calc((100%-1120px)/2))] lg:w-[min(100%,540px)] lg:max-w-none xl:ml-[max(2rem,calc((100%-1200px)/2))] xl:w-[560px]">
+          {/* When to send */}
+          <section
+            id="when-to-send"
+            className="scroll-mt-20 py-14 sm:py-16 lg:py-20"
+          >
             <div className="space-y-8 sm:space-y-10">
               <div className="space-y-4">
                 <SectionBadge
@@ -191,75 +221,27 @@ export function WhoFor() {
                 })}
               </ul>
             </div>
-          </div>
+          </section>
 
-          {/* Desktop: full-bleed photo column */}
+          {/* Soft mid-band blend between the two stories */}
           <div
-            className="relative hidden min-h-[560px] flex-1 lg:block"
-            role="img"
-            aria-label="Two professionals shaking hands in a bright office"
-            style={{
-              backgroundImage: `url(${handshakeImg})`,
-              backgroundSize: "cover",
-              backgroundPosition: "70% center",
-            }}
+            className="relative h-10 sm:h-12 lg:h-14"
+            aria-hidden
           >
             <div
-              className="pointer-events-none absolute inset-y-0 left-0 w-[22%]"
+              className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2"
               style={{
                 background:
-                  "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.45) 50%, transparent 100%)",
+                  "linear-gradient(90deg, transparent 0%, hsl(var(--border) / 0.7) 20%, hsl(var(--border) / 0.7) 80%, transparent 100%)",
               }}
-              aria-hidden
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* What your link answers — lobby photo left, cards right */}
-      <section
-        id="what-link-answers"
-        className="relative overflow-hidden bg-background scroll-mt-20"
-      >
-        {/* Mobile: photo behind cards */}
-        <div className="pointer-events-none absolute inset-0 lg:hidden" aria-hidden>
-          <img
-            src={lobbyImg}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-[30%_center]"
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, hsl(var(--background) / 0.8) 0%, hsl(var(--background) / 0.62) 42%, hsl(var(--background) / 0.84) 100%)",
-            }}
-          />
-        </div>
-
-        <div className="relative flex w-full flex-col lg:flex-row lg:items-stretch">
-          {/* Desktop: full-bleed photo column (left) */}
-          <div
-            className="relative hidden min-h-[620px] flex-1 order-1 lg:block"
-            role="img"
-            aria-label="Bright recovery center lobby and reception area"
-            style={{
-              backgroundImage: `url(${lobbyImg})`,
-              backgroundSize: "cover",
-              backgroundPosition: "28% center",
-            }}
-          >
-            <div
-              className="pointer-events-none absolute inset-y-0 right-0 w-[22%]"
-              style={{
-                background:
-                  "linear-gradient(270deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.45) 50%, transparent 100%)",
-              }}
-              aria-hidden
             />
           </div>
 
-          <div className="relative z-10 order-2 mx-auto w-full max-w-xl px-4 py-14 sm:px-6 sm:py-16 lg:mx-0 lg:mr-[max(1.5rem,calc((100%-1120px)/2))] lg:ml-0 lg:w-[min(100%,560px)] lg:max-w-none lg:shrink-0 lg:py-20 lg:pl-6 xl:mr-[max(2rem,calc((100%-1200px)/2))] xl:w-[600px]">
+          {/* What your link answers */}
+          <section
+            id="what-link-answers"
+            className="scroll-mt-20 pb-16 pt-2 sm:pb-20 sm:pt-3 lg:pb-24 lg:pt-4"
+          >
             <div className="space-y-7 sm:space-y-8">
               <div className="space-y-3.5 sm:space-y-4">
                 <SectionBadge
@@ -283,9 +265,9 @@ export function WhoFor() {
 
               <LinkAnswersReveal />
             </div>
-          </div>
+          </section>
         </div>
-      </section>
+      </div>
     </>
   );
 }

@@ -20,23 +20,6 @@ interface FeatureCarouselProps {
   intervalMs?: number;
 }
 
-/** Lightweight stand-in so side phones keep shape without mounting heavy demos. */
-function PhoneSilhouette({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "relative mx-auto shrink-0 w-[210px] sm:w-[230px] md:w-[250px] aspect-[393/852] rounded-[2.75rem]",
-        "bg-gradient-to-b from-neutral-700 via-neutral-900 to-black",
-        "shadow-[0_24px_40px_-20px_rgba(0,0,0,0.45)] ring-1 ring-white/10",
-        className,
-      )}
-      aria-hidden
-    >
-      <div className="absolute inset-[3%] rounded-[2.3rem] bg-neutral-950/90" />
-    </div>
-  );
-}
-
 export function FeatureCarousel({
   slides,
   className,
@@ -90,6 +73,7 @@ export function FeatureCarousel({
 
             const isCenter = pos === 0;
             const isAdjacent = Math.abs(pos) === 1;
+            const isVisible = Math.abs(pos) <= 1;
 
             return (
               <div
@@ -98,8 +82,8 @@ export function FeatureCarousel({
                 style={{
                   transform: `translate3d(${pos * 48}%, 0, 0) scale(${isCenter ? 1 : 0.9})`,
                   zIndex: isCenter ? 10 : isAdjacent ? 5 : 1,
-                  opacity: isCenter ? 1 : isAdjacent ? 0.4 : 0,
-                  visibility: Math.abs(pos) > 1 ? "hidden" : "visible",
+                  opacity: isVisible ? 1 : 0,
+                  visibility: isVisible ? "visible" : "hidden",
                   pointerEvents: isCenter ? "auto" : "none",
                   transition:
                     "transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 420ms ease",
@@ -112,13 +96,8 @@ export function FeatureCarousel({
                     isCenter && "drop-shadow-[0_28px_48px_-18px_rgba(0,48,72,0.45)]",
                   )}
                 >
-                  {isCenter ? (
-                    slide.content
-                  ) : isAdjacent ? (
-                    <div className="relative">
-                      <PhoneSilhouette />
-                    </div>
-                  ) : null}
+                  {/* Keep adjacent slides mounted with real content (not grey silhouettes). */}
+                  {isVisible ? slide.content : null}
                 </div>
               </div>
             );
