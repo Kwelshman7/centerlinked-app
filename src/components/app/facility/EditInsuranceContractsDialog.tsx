@@ -9,9 +9,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
+import { replaceInNetworkContracts } from "@/lib/save-facility";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface EditableContract {
   id?: string;
@@ -25,6 +26,8 @@ export interface EditableContract {
 
 interface Props {
   facilityId: string;
+  organizationId?: string | null;
+  facilityName?: string;
   contracts: EditableContract[];
   onSaved: () => void;
   triggerClassName?: string;
@@ -32,10 +35,14 @@ interface Props {
 
 export function EditInsuranceContractsDialog({
   facilityId,
+  organizationId,
+  facilityName,
   contracts,
   onSaved,
   triggerClassName,
 }: Props) {
+  const { profile } = useAuth();
+  const orgId = organizationId || profile?.organization_id || null;
   const [open, setOpen] = useState(false);
   const [list, setList] = useState<EditableContract[]>([]);
   const [saving, setSaving] = useState(false);
@@ -82,36 +89,29 @@ export function EditInsuranceContractsDialog({
   };
 
   const save = async () => {
+    if (!orgId) {
+      toast.error("Organization is required");
+      return;
+    }
     setSaving(true);
     try {
-      const toDeleteIds = list
-        .filter((c) => c.id && c._markedForDelete)
-        .map((c) => c.id as string);
-      const toInsert = list
-        .filter((c) => c._isNew && !c._markedForDelete)
+      const nextContracts = list
+        .filter((c) => !c._markedForDelete)
         .map((c) => ({
-          facility_id: facilityId,
           payer_id: c.payer_id,
           payer_name: c.payer_name,
           in_network: true,
         }));
 
-      if (toDeleteIds.length > 0) {
-        const { error } = await supabase
-          .from("insurance_contracts")
-          .delete()
-          .in("id", toDeleteIds);
-        if (error) {
-          toast.error(error.message);
-          return;
-        }
-      }
-      if (toInsert.length > 0) {
-        const { error } = await supabase.from("insurance_contracts").insert(toInsert);
-        if (error) {
-          toast.error(error.message);
-          return;
-        }
+      const result = await replaceInNetworkContracts({
+        organizationId: orgId,
+        facilityId,
+        facilityName: facilityName || "Facility",
+        contracts: nextContracts,
+      });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
       }
       toast.success("In-network contracts updated");
       setOpen(false);

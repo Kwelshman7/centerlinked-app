@@ -205,9 +205,9 @@ export function FacilitySheetView({
     null;
 
   const facilityType = facility.treatment_focus || facility.levels_of_care?.[0] || null;
-  const accreditationLabel = facility.accreditations?.length
-    ? facility.accreditations.join(", ")
-    : null;
+  const accreditations = (facility.accreditations ?? [])
+    .map((item) => item.trim())
+    .filter(Boolean);
 
   const programFeatures = [
     ...(facility.quick_highlights ?? []),
@@ -282,11 +282,32 @@ export function FacilitySheetView({
               {facilityType && (
                 <MetaItem icon={Building2} label="Type" value={facilityType} brand={brand} />
               )}
-              {accreditationLabel && (
-                <MetaItem icon={Award} label="Accredited" value={accreditationLabel} brand={brand} />
-              )}
               {lastUpdated && (
                 <MetaItem icon={Clock} label="Updated" value={lastUpdated} brand={brand} />
+              )}
+              {accreditations.length > 0 && (
+                <div className="col-span-2 flex items-start gap-2 min-w-0 pt-0.5">
+                  <Award className="h-4 w-4 shrink-0 mt-0.5" style={{ color: brand }} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+                      Accredited
+                    </p>
+                    <ul className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+                      {accreditations.map((item) => (
+                        <li key={item} className="flex items-start gap-1.5 min-w-0">
+                          <Check
+                            className="h-3.5 w-3.5 shrink-0 mt-0.5"
+                            style={{ color: brand }}
+                            aria-hidden
+                          />
+                          <span className="text-xs sm:text-sm font-medium leading-snug text-foreground/90">
+                            {item}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -613,18 +634,21 @@ function HeroGallery({
 }) {
   const list = (images ?? []).filter(Boolean);
   const heroImage = list[0] ?? fallbackImage ?? null;
-  const thumbs = list.slice(0, 5);
-  const extraCount = Math.max(0, list.length - 5);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   const displayImages = list.length > 0 ? list : fallbackImage ? [fallbackImage] : [];
   const currentImage = displayImages[activeIndex] ?? heroImage;
+  const hasMany = displayImages.length > 1;
 
   useEffect(() => {
     if (activeIndex >= displayImages.length) setActiveIndex(0);
   }, [activeIndex, displayImages.length]);
+
+  const goPrev = () =>
+    setActiveIndex((i) => (i - 1 + displayImages.length) % displayImages.length);
+  const goNext = () => setActiveIndex((i) => (i + 1) % displayImages.length);
 
   return (
     <div className={`relative bg-muted shrink-0 self-start w-full border-b lg:border-b-0 lg:border-l border-border/60 ${className ?? ""}`}>
@@ -642,23 +666,48 @@ function HeroGallery({
 
       {currentImage ? (
         <>
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(true)}
-            className={`block w-full ${HERO_IMAGE_HEIGHT} overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
-            style={{ ["--tw-ring-color" as string]: brand }}
-          >
-            <img
-              src={currentImage}
-              alt={facilityName}
-              className="w-full h-full object-cover object-center"
-              loading="eager"
-            />
-          </button>
+          <div className={`relative w-full ${HERO_IMAGE_HEIGHT} overflow-hidden`}>
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="block w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              style={{ ["--tw-ring-color" as string]: brand }}
+            >
+              <img
+                src={currentImage}
+                alt={`${facilityName} photo ${activeIndex + 1} of ${displayImages.length}`}
+                className="w-full h-full object-cover object-center"
+                loading="eager"
+              />
+            </button>
+            {hasMany && (
+              <>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-[1] h-9 w-9 grid place-items-center rounded-full bg-black/45 text-white hover:bg-black/60 transition-colors"
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-[1] h-9 w-9 grid place-items-center rounded-full bg-black/45 text-white hover:bg-black/60 transition-colors"
+                  aria-label="Next photo"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <span className="absolute bottom-2 right-2 z-[1] rounded-full bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-white tabular-nums">
+                  {activeIndex + 1}/{displayImages.length}
+                </span>
+              </>
+            )}
+          </div>
 
-          {displayImages.length > 1 && (
+          {hasMany && (
             <div className={`flex items-center gap-2 px-3 ${HERO_THUMB_STRIP} bg-card border-t border-border/60 overflow-x-auto`}>
-              {thumbs.map((src, i) => (
+              {displayImages.map((src, i) => (
                 <button
                   key={src + i}
                   type="button"
@@ -667,13 +716,10 @@ function HeroGallery({
                     activeIndex === i ? "ring-2 ring-offset-1" : "ring-1 ring-border/60 opacity-80 hover:opacity-100"
                   }`}
                   style={activeIndex === i ? { boxShadow: `0 0 0 2px ${brand}` } : undefined}
+                  aria-label={`Show photo ${i + 1}`}
+                  aria-current={activeIndex === i}
                 >
                   <img src={src} alt="" className="w-full h-full object-cover object-center" loading="lazy" />
-                  {i === 4 && extraCount > 0 && (
-                    <span className="absolute inset-0 bg-black/55 text-white text-[10px] font-bold grid place-items-center">
-                      +{extraCount}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>

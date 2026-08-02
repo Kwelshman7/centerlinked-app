@@ -35,6 +35,6 @@ export default async function handler(req, res) {
     res.status(result.status).json(result.json);
   } catch (err) {
     console.error("[api/stripe-webhook]", err);
-    res.status(500).json({ error: err?.message || "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 }

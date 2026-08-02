@@ -260,6 +260,8 @@ export default function ProgramSheet() {
             canEdit ? (
               <EditInsuranceContractsDialog
                 facilityId={facility.id}
+                organizationId={facility.organization_id}
+                facilityName={facility.name}
                 contracts={fullContracts.map((c) => ({
                   id: c.id,
                   payer_id: c.payer_id,

@@ -93,7 +93,7 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Facility name</Label>
-            <Input value={value.name} onChange={(e) => set("name", e.target.value)} placeholder="Flyland Recovery — Boca" />
+            <Input value={value.name} onChange={(e) => set("name", e.target.value)} placeholder="Facility name" />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Tagline</Label>

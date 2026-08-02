@@ -1,12 +1,23 @@
+const MAX_JSON_BODY_BYTES = 32 * 1024;
+
 /**
  * Read JSON body from a Node IncomingMessage (Vite middleware or Vercel).
+ * Rejects bodies larger than 32kb.
  */
-export async function readJsonBody(req) {
+export async function readJsonBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
   if (req.body && typeof req.body === "object") return req.body;
 
   const chunks = [];
+  let total = 0;
   for await (const chunk of req) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+    const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+    total += buf.length;
+    if (total > maxBytes) {
+      const err = new Error("Request body too large");
+      err.code = "BODY_TOO_LARGE";
+      throw err;
+    }
+    chunks.push(buf);
   }
   const raw = Buffer.concat(chunks).toString("utf8");
   if (!raw) return {};

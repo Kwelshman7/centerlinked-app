@@ -12,38 +12,69 @@ import { toast } from "sonner";
 import { orgDisplayPath } from "@/lib/public-urls";
 import { mergeOrgImages } from "@/lib/org-hero";
 import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
+import { cn } from "@/lib/utils";
 
 interface Props {
   organizationId: string;
   onSaved?: () => void;
 }
 
-function SectionCard({
-  title,
-  description,
+const SECTIONS = [
+  { id: "basics", label: "Basics" },
+  { id: "look", label: "Look" },
+  { id: "contact", label: "Contact" },
+  { id: "social", label: "Social" },
+  { id: "photos", label: "Photos" },
+] as const;
+
+function Field({
+  label,
+  htmlFor,
+  hint,
   children,
-  className = "",
+  className,
 }: {
-  title: string;
-  description?: string;
+  label: string;
+  htmlFor?: string;
+  hint?: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <Card className={`overflow-hidden ${className}`}>
-      <div className="border-b border-border/60 px-4 py-3.5 sm:px-5">
-        <h3 className="font-heading text-sm font-semibold sm:text-base">{title}</h3>
-        {description && <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{description}</p>}
+    <div className={cn("space-y-1.5 min-w-0", className)}>
+      <Label htmlFor={htmlFor}>{label}</Label>
+      {children}
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
+function Section({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-28 space-y-4">
+      <div>
+        <h3 className="font-heading text-base font-semibold sm:text-lg">{title}</h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
       </div>
-      <div className="space-y-4 p-4 sm:p-5">{children}</div>
-    </Card>
+      <div className="space-y-4">{children}</div>
+    </section>
   );
 }
 
 export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingTheme, setSavingTheme] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("basics");
 
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState("");
@@ -110,6 +141,29 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
     })();
   }, [organizationId]);
 
+  useEffect(() => {
+    const nodes = SECTIONS.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
+    if (nodes.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]?.target?.id) setActiveSection(visible[0].target.id);
+      },
+      { rootMargin: "-20% 0px -55% 0px", threshold: [0.15, 0.4, 0.7] },
+    );
+
+    nodes.forEach((n) => observer.observe(n));
+    return () => observer.disconnect();
+  }, [loading]);
+
+  const jumpTo = (id: string) => {
+    setActiveSection(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgName.trim()) {
@@ -117,38 +171,61 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
       return;
     }
     setSaving(true);
-    const slug = orgSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "") || null;
-    const { error } = await supabase
-      .from("organizations")
-      .update({
-        name: orgName.trim(),
-        slug,
-        description: orgDesc.trim() || null,
-        website: orgWebsite.trim() || null,
-        hq_city: orgCity.trim() || null,
-        hq_state: orgState.trim() || null,
-        logo_url: orgLogo[0] || null,
-        footer_image_url: orgFooterImage[0] || null,
-        email_domain: emailDomain.trim() ? emailDomain.trim().toLowerCase() : null,
-        verified,
-        bd_contact_name: bdName.trim() || null,
-        bd_contact_phone: bdPhone.trim() || null,
-        bd_contact_email: bdEmail.trim() || null,
-        tagline: tagline.trim() || null,
-        brand_color: brandColor.trim() || null,
-        accent_color: accentColor.trim() || null,
-        cover_image_url: orgImages[0] || null,
-        image_urls: orgImages,
-        announcement: announcement.trim() || null,
-        social_facebook_url: socialFacebook.trim() || null,
-        social_instagram_url: socialInstagram.trim() || null,
-        social_linkedin_url: socialLinkedin.trim() || null,
-        social_x_url: socialX.trim() || null,
-      })
-      .eq("id", organizationId);
+    const slug =
+      orgSlug
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/^-|-$/g, "") || null;
+
+    const payload: Record<string, unknown> = {
+      name: orgName.trim(),
+      slug,
+      description: orgDesc.trim() || null,
+      website: orgWebsite.trim() || null,
+      hq_city: orgCity.trim() || null,
+      hq_state: orgState.trim() || null,
+      logo_url: orgLogo[0] || null,
+      footer_image_url: orgFooterImage[0] || null,
+      email_domain: emailDomain.trim() ? emailDomain.trim().toLowerCase() : null,
+      verified,
+      bd_contact_name: bdName.trim() || null,
+      bd_contact_phone: bdPhone.trim() || null,
+      bd_contact_email: bdEmail.trim() || null,
+      tagline: tagline.trim() || null,
+      brand_color: brandColor.trim() || null,
+      accent_color: accentColor.trim() || null,
+      cover_image_url: orgImages[0] || null,
+      image_urls: orgImages,
+      announcement: announcement.trim() || null,
+      social_facebook_url: socialFacebook.trim() || null,
+      social_instagram_url: socialInstagram.trim() || null,
+      social_linkedin_url: socialLinkedin.trim() || null,
+      social_x_url: socialX.trim() || null,
+    };
+
+    const optionalColumns = [
+      "footer_image_url",
+      "social_facebook_url",
+      "social_instagram_url",
+      "social_linkedin_url",
+      "social_x_url",
+    ] as const;
+
+    let error: { message?: string } | null = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const result = await supabase.from("organizations").update(payload).eq("id", organizationId);
+      error = result.error;
+      if (!error) break;
+
+      const missing = optionalColumns.find((col) => error?.message?.includes(col));
+      if (!missing) break;
+      delete payload[missing];
+    }
+
     setSaving(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message ?? "Could not save branding");
       return;
     }
 
@@ -162,9 +239,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         });
         setWasVerified(true);
         toast.success("Organization verified", {
-          description: result.to
-            ? `Welcome email sent to ${result.to}`
-            : "Welcome email sent",
+          description: result.to ? `Welcome email sent to ${result.to}` : "Welcome email sent",
         });
       } catch (emailErr) {
         setWasVerified(true);
@@ -177,43 +252,9 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
       }
     } else {
       setWasVerified(verified);
-      toast.success("Organization updated");
+      toast.success("Branding saved");
     }
     onSaved?.();
-  };
-
-  const saveTheme = async () => {
-    const nextBrand = brandColor.trim();
-    const nextAccent = accentColor.trim();
-    const isHex = (value: string) => /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
-
-    if (!isHex(nextBrand) || !isHex(nextAccent)) {
-      toast.error("Enter valid hex colors", {
-        description: "Use #RRGGBB or #RGB for both brand and accent colors.",
-      });
-      return;
-    }
-
-    setSavingTheme(true);
-    try {
-      const { error } = await supabase
-        .from("organizations")
-        .update({ brand_color: nextBrand, accent_color: nextAccent })
-        .eq("id", organizationId);
-      if (error) throw error;
-      setBrandColor(nextBrand);
-      setAccentColor(nextAccent);
-      toast.success("Theme saved", {
-        description: "Your organization and facility pages now use these colors.",
-      });
-      onSaved?.();
-    } catch (error) {
-      toast.error("Theme could not be saved", {
-        description: error instanceof Error ? error.message : "Please try again.",
-      });
-    } finally {
-      setSavingTheme(false);
-    }
   };
 
   if (loading) {
@@ -223,80 +264,72 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const previewSlug = orgSlug.trim().toLowerCase();
 
   return (
-    <form onSubmit={save} className="space-y-5 pb-24 lg:pb-6">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">Organization profile</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Provider directory details shown on your public referral page.
-          </p>
+    <form onSubmit={save} className="space-y-4 pb-28 lg:pb-8">
+      <div className="sticky top-0 z-30 -mx-1 border-b border-border/70 bg-muted/30 px-1 py-3 backdrop-blur supports-[backdrop-filter]:bg-muted/80 sm:rounded-xl sm:border sm:px-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="font-heading text-xl font-semibold tracking-tight">Branding</h2>
+            <p className="text-sm text-muted-foreground">
+              Edit what partners see on the public org page.
+            </p>
+          </div>
+          <Button type="submit" disabled={saving} className="hidden sm:inline-flex shrink-0">
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
+          </Button>
         </div>
-        <Button type="submit" disabled={saving} className="mt-3 hidden sm:inline-flex">
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save organization
-        </Button>
+        <nav
+          aria-label="Branding sections"
+          className="mt-3 flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {SECTIONS.map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              onClick={() => jumpTo(section.id)}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                activeSection === section.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground border border-border/70",
+              )}
+            >
+              {section.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-2 lg:items-start">
-        <SectionCard
-          title="Identity"
-          description="Logo, legal name, and how partners find your public page."
+      <Card className="p-4 sm:p-6 space-y-8 sm:space-y-10">
+        <Section
+          id="basics"
+          title="Basics"
+          description="Name, public link, and the short story partners read first."
         >
-          <div className="space-y-2">
-            <Label>Logo</Label>
-            <ImageUploader
-              bucket="org-logos"
-              value={orgLogo}
-              onChange={setOrgLogo}
-              max={1}
-              label="Upload"
-              recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Footer banner</Label>
-            <p className="text-xs text-muted-foreground">
-              Wide image shown at the bottom of your public org and facility pages. Separate from your square logo.
-            </p>
-            <ImageUploader
-              bucket="org-logos"
-              value={orgFooterImage}
-              onChange={setOrgFooterImage}
-              max={1}
-              label="Upload"
-              recommendedSize="Recommended: 1600×400 px (4:1 wide). JPG or PNG, max 5 MB."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="on">Organization name</Label>
-            <Input
-              id="on"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              autoComplete="organization"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="oslug">Public URL slug</Label>
-            <Input
-              id="oslug"
-              value={orgSlug}
-              onChange={(e) => setOrgSlug(e.target.value)}
-              placeholder="recovery-solutions"
-              inputMode="text"
-              autoCapitalize="none"
-              autoCorrect="off"
-            />
-            {previewSlug && (
-              <p className="font-mono text-xs text-muted-foreground">{orgDisplayPath(previewSlug)}</p>
-            )}
-          </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="odomain">Email domain</Label>
+            <Field label="Organization name" htmlFor="on" className="sm:col-span-2">
+              <Input
+                id="on"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                autoComplete="organization"
+              />
+            </Field>
+            <Field
+              label="Public URL slug"
+              htmlFor="oslug"
+              hint={previewSlug ? orgDisplayPath(previewSlug) : "Used in centerlinked.com/o/…"}
+            >
+              <Input
+                id="oslug"
+                value={orgSlug}
+                onChange={(e) => setOrgSlug(e.target.value)}
+                placeholder="recovery-solutions"
+                inputMode="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </Field>
+            <Field label="Email domain" htmlFor="odomain" hint="Company emails that can join this org.">
               <Input
                 id="odomain"
                 value={emailDomain}
@@ -305,40 +338,26 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                 autoCapitalize="none"
                 autoCorrect="off"
               />
-            </div>
-            <div className="flex items-end">
-              <label className="flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                <Checkbox checked={verified} onCheckedChange={(v) => setVerified(!!v)} />
-                <span>Verified organization</span>
-              </label>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard title="About & location" description="What referring partners see first about your network.">
-          <div className="space-y-2">
-            <Label htmlFor="tg">Tagline</Label>
-            <Input
-              id="tg"
-              maxLength={140}
-              value={tagline}
-              onChange={(e) => setTagline(e.target.value)}
-              placeholder="Detox, residential, and outpatient programs across the region."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="od">Description</Label>
-            <Textarea
-              id="od"
-              rows={5}
-              value={orgDesc}
-              onChange={(e) => setOrgDesc(e.target.value)}
-              className="min-h-[7.5rem] resize-y"
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2 sm:col-span-1">
-              <Label htmlFor="ow">Website</Label>
+            </Field>
+            <Field label="Tagline" htmlFor="tg" className="sm:col-span-2">
+              <Input
+                id="tg"
+                maxLength={140}
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                placeholder="Detox, residential, and outpatient programs across the region."
+              />
+            </Field>
+            <Field label="Description" htmlFor="od" className="sm:col-span-2">
+              <Textarea
+                id="od"
+                rows={4}
+                value={orgDesc}
+                onChange={(e) => setOrgDesc(e.target.value)}
+                className="min-h-[6.5rem] resize-y"
+              />
+            </Field>
+            <Field label="Website" htmlFor="ow">
               <Input
                 id="ow"
                 value={orgWebsite}
@@ -348,113 +367,161 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                 autoCorrect="off"
                 placeholder="https://"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="oc">HQ city</Label>
-              <Input id="oc" value={orgCity} onChange={(e) => setOrgCity(e.target.value)} autoComplete="address-level2" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ost">HQ state</Label>
-              <Input id="ost" value={orgState} onChange={(e) => setOrgState(e.target.value)} autoComplete="address-level1" />
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="Referral contact"
-          description="Business development contact shown when partners need to get in touch."
-        >
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="bdn">BD rep name</Label>
-              <Input id="bdn" value={bdName} onChange={(e) => setBdName(e.target.value)} autoComplete="name" />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="bdp">Phone</Label>
+            </Field>
+            <div className="grid grid-cols-2 gap-4 min-w-0">
+              <Field label="HQ city" htmlFor="oc">
                 <Input
-                  id="bdp"
-                  value={bdPhone}
-                  onChange={(e) => setBdPhone(e.target.value)}
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
+                  id="oc"
+                  value={orgCity}
+                  onChange={(e) => setOrgCity(e.target.value)}
+                  autoComplete="address-level2"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bde">Email</Label>
+              </Field>
+              <Field label="HQ state" htmlFor="ost">
                 <Input
-                  id="bde"
-                  type="email"
-                  inputMode="email"
-                  value={bdEmail}
-                  onChange={(e) => setBdEmail(e.target.value)}
-                  autoComplete="email"
+                  id="ost"
+                  value={orgState}
+                  onChange={(e) => setOrgState(e.target.value)}
+                  autoComplete="address-level1"
                 />
-              </div>
+              </Field>
             </div>
+            <label className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded-md border border-input bg-background px-3 py-2 text-sm sm:col-span-2">
+              <Checkbox checked={verified} onCheckedChange={(v) => setVerified(!!v)} />
+              <span>Verified organization</span>
+            </label>
           </div>
-        </SectionCard>
+        </Section>
 
-        <SectionCard
-          title="Brand & announcement"
-          description="Colors and banner copy for your public mini-homepage."
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="bc">Brand color</Label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="bc"
-                  type="color"
-                  value={brandColor}
-                  onChange={(e) => setBrandColor(e.target.value)}
-                  className="h-11 w-12 shrink-0 cursor-pointer rounded-md border border-input bg-background"
+        <div className="border-t border-border/60" />
+
+        <Section id="look" title="Look" description="Logo and colors used across public pages.">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] lg:gap-0 lg:items-stretch">
+            <div className="min-w-0 lg:pr-6 lg:border-r lg:border-border/70">
+              <Field label="Logo">
+                <ImageUploader
+                  bucket="org-logos"
+                  value={orgLogo}
+                  onChange={setOrgLogo}
+                  max={1}
+                  label="Upload logo"
+                  objectFit="contain"
+                  recommendedSize="Square logo, PNG with transparent background preferred. Max 5 MB."
                 />
-                <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="min-w-0" />
-              </div>
+              </Field>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="ac">Accent color</Label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="ac"
-                  type="color"
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-11 w-12 shrink-0 cursor-pointer rounded-md border border-input bg-background"
-                />
-                <Input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="min-w-0" />
+
+            <div className="min-w-0 flex flex-col gap-4 rounded-xl border border-border/70 bg-muted/20 p-4 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:pl-6">
+              <div>
+                <p className="text-sm font-semibold">Colors</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Applied to buttons, footer, and accents on public pages.
+                </p>
               </div>
+
+              <div
+                className="h-12 rounded-lg border border-border/60 overflow-hidden flex shadow-sm"
+                aria-hidden
+              >
+                <div className="flex-[1.4]" style={{ backgroundColor: brandColor }} />
+                <div className="flex-1" style={{ backgroundColor: accentColor }} />
+              </div>
+
+              <Field label="Brand color" htmlFor="bc">
+                <div className="flex items-center gap-2 min-w-0">
+                  <input
+                    id="bc"
+                    type="color"
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="h-10 w-11 shrink-0 cursor-pointer rounded-md border border-input bg-background"
+                  />
+                  <Input
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="min-w-0 font-mono text-sm uppercase"
+                  />
+                </div>
+              </Field>
+
+              <Field label="Accent color" htmlFor="ac">
+                <div className="flex items-center gap-2 min-w-0">
+                  <input
+                    id="ac"
+                    type="color"
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="h-10 w-11 shrink-0 cursor-pointer rounded-md border border-input bg-background"
+                  />
+                  <Input
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="min-w-0 font-mono text-sm uppercase"
+                  />
+                </div>
+              </Field>
             </div>
           </div>
-          <div className="flex justify-end">
-            <Button type="button" variant="outline" size="sm" onClick={() => void saveTheme()} disabled={savingTheme}>
-              {savingTheme && <Loader2 className="h-4 w-4 animate-spin" />} Save theme
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ann">Announcement banner</Label>
-            <Textarea
+
+          <Field
+            label="Announcement"
+            htmlFor="ann"
+            hint="Optional one-line notice on the public page."
+            className="pt-1"
+          >
+            <Input
               id="ann"
-              rows={3}
               maxLength={240}
               value={announcement}
               onChange={(e) => setAnnouncement(e.target.value)}
               placeholder="New PHP program now accepting referrals."
-              className="resize-y"
             />
-          </div>
-        </SectionCard>
+          </Field>
+        </Section>
 
-        <SectionCard
-          className="lg:col-span-2"
-          title="Social links"
-          description="Shown as icons on your public org and facility page footers. Leave blank to hide."
+        <div className="border-t border-border/60" />
+
+        <Section
+          id="contact"
+          title="Referral contact"
+          description="Who partners reach when they tap Refer a Patient."
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="soc-fb">Facebook</Label>
+            <Field label="BD rep name" htmlFor="bdn" className="sm:col-span-2">
+              <Input id="bdn" value={bdName} onChange={(e) => setBdName(e.target.value)} autoComplete="name" />
+            </Field>
+            <Field label="Phone" htmlFor="bdp">
+              <Input
+                id="bdp"
+                value={bdPhone}
+                onChange={(e) => setBdPhone(e.target.value)}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+              />
+            </Field>
+            <Field label="Email" htmlFor="bde">
+              <Input
+                id="bde"
+                type="email"
+                inputMode="email"
+                value={bdEmail}
+                onChange={(e) => setBdEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </Field>
+          </div>
+        </Section>
+
+        <div className="border-t border-border/60" />
+
+        <Section
+          id="social"
+          title="Social links"
+          description="Footer icons on public pages. Leave blank to hide."
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Facebook" htmlFor="soc-fb">
               <Input
                 id="soc-fb"
                 value={socialFacebook}
@@ -464,9 +531,8 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                 autoCapitalize="none"
                 autoCorrect="off"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="soc-ig">Instagram</Label>
+            </Field>
+            <Field label="Instagram" htmlFor="soc-ig">
               <Input
                 id="soc-ig"
                 value={socialInstagram}
@@ -476,9 +542,8 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                 autoCapitalize="none"
                 autoCorrect="off"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="soc-li">LinkedIn</Label>
+            </Field>
+            <Field label="LinkedIn" htmlFor="soc-li">
               <Input
                 id="soc-li"
                 value={socialLinkedin}
@@ -488,9 +553,8 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                 autoCapitalize="none"
                 autoCorrect="off"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="soc-x">X (Twitter)</Label>
+            </Field>
+            <Field label="X (Twitter)" htmlFor="soc-x">
               <Input
                 id="soc-x"
                 value={socialX}
@@ -500,31 +564,56 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                 autoCapitalize="none"
                 autoCorrect="off"
               />
-            </div>
+            </Field>
           </div>
-        </SectionCard>
+        </Section>
 
-        <SectionCard
-          className="lg:col-span-2"
-          title="Organization photos"
-          description="Upload photos and mark one as the hero banner on the public org page."
+        <div className="border-t border-border/60" />
+
+        <Section
+          id="photos"
+          title="Photos"
+          description="Hero and gallery images for the public org page."
         >
-          <ImageUploader
-            bucket="org-logos"
-            value={orgImages}
-            onChange={setOrgImages}
-            max={8}
-            label="Add photo"
-            allowCover
-            coverLabel="Hero"
-            recommendedSize="Recommended: 1920×1080 px (16:9) hero; JPG or PNG, max 5 MB each."
-          />
-        </SectionCard>
+          <Field label="Organization photos" hint="Star one as the hero banner.">
+            <ImageUploader
+              bucket="org-logos"
+              value={orgImages}
+              onChange={setOrgImages}
+              max={8}
+              label="Add photo"
+              allowCover
+              coverLabel="Hero"
+              recommendedSize="Hero works best at 1920×1080 (16:9). JPG or PNG, max 5 MB each."
+            />
+          </Field>
+          <Field
+            label="Footer banner (optional)"
+            hint="Wide branding asset. Your square logo still appears in the public footer."
+          >
+            <ImageUploader
+              bucket="org-logos"
+              value={orgFooterImage}
+              onChange={setOrgFooterImage}
+              max={1}
+              label="Upload"
+              objectFit="contain"
+              recommendedSize="Optional. 1600×400 (4:1 wide) works well."
+            />
+          </Field>
+        </Section>
+      </Card>
+
+      <div className="hidden sm:flex items-center justify-end gap-3 rounded-xl border border-border/70 bg-card px-4 py-3.5">
+        <p className="mr-auto text-sm text-muted-foreground">Saves logo, colors, contact, and public page details.</p>
+        <Button type="submit" disabled={saving} size="lg">
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
+        </Button>
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:hidden pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <Button type="submit" disabled={saving} className="h-11 w-full text-base">
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save organization
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
         </Button>
       </div>
     </form>

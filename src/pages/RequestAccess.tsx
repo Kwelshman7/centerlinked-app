@@ -29,10 +29,7 @@ export default function RequestAccess() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim() || !form.email.trim() || !form.organization.trim()) {
-      toast.error("Please fill in name, work email, and organization."); return;
-    }
-    if (isPersonalEmail(form.email)) {
-      toast.error("Please use your work email", { description: "Personal email addresses aren't accepted." }); return;
+      toast.error("Please fill in name, email, and organization."); return;
     }
     setLoading(true);
     const full_name = form.full_name.trim();
@@ -72,12 +69,23 @@ export default function RequestAccess() {
           <div className="text-center mb-6">
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold mt-4">Request access</h1>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">CenterLinked is a private, invite-only network for treatment BD reps. Tell us about your organization and we'll get you set up.</p>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              CenterLinked is a private, invite-only network for treatment BD reps. Use your work email when possible —
+              personal emails (Gmail, etc.) need manual approval before they can sign in.
+            </p>
           </div>
 
           <form onSubmit={submit} className="space-y-3">
             <div className="space-y-1.5"><Label htmlFor="name">Full name</Label><Input id="name" value={form.full_name} onChange={update("full_name")} placeholder="Your name" /></div>
-            <div className="space-y-1.5"><Label htmlFor="email">Work email</Label><Input id="email" type="email" value={form.email} onChange={update("email")} placeholder="you@company.com" /></div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={form.email} onChange={update("email")} placeholder="you@company.com" />
+              {isPersonalEmail(form.email) ? (
+                <p className="text-[11px] text-amber-700 mt-1">
+                  Personal email detected — login stays blocked until CenterLinked approves this request.
+                </p>
+              ) : null}
+            </div>
             <div className="space-y-1.5"><Label htmlFor="org">Organization</Label><Input id="org" value={form.organization} onChange={update("organization")} placeholder="Sunrise Recovery" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label htmlFor="role">Role</Label><Input id="role" value={form.role} onChange={update("role")} placeholder="BD Director" /></div>

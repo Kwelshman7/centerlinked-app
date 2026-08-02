@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { isPersonalEmail } from "@/lib/email-domains";
+import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { applySocialMeta } from "@/lib/social-meta";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { notifyAuthEvent } from "@/lib/transactional-email";
@@ -37,12 +37,15 @@ export default function Signup() {
       toast.error("Password must be at least 8 characters");
       return;
     }
-    if (isPersonalEmail(email)) {
-      toast.error("Please use your work email", { description: "Personal email addresses (Gmail, Yahoo, etc.) aren't allowed." });
+    setLoading(true);
+    const allowed = await isEmailAuthAllowed(email);
+    if (!allowed) {
+      setLoading(false);
+      toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
+        description: PERSONAL_EMAIL_BLOCKED_MESSAGE.description,
+      });
       return;
     }
-
-    setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -85,7 +88,7 @@ export default function Signup() {
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold text-foreground mt-4">Create your account</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Use your work email to join your organization or create a new one.
+              Use your work email to join your organization or create a new one. Personal emails need approval first.
             </p>
           </div>
 

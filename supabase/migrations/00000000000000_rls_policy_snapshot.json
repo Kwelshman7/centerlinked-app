@@ -1,0 +1,602 @@
+[
+  {
+    "table": "approved_personal_emails",
+    "policy": "approved_personal_emails_admin_delete",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "approved_personal_emails",
+    "policy": "approved_personal_emails_admin_insert",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "approved_personal_emails",
+    "policy": "approved_personal_emails_admin_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "approved_personal_emails",
+    "policy": "approved_personal_emails_admin_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "contract_verifications",
+    "policy": "org members insert facility verifications",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM facilities f\n  WHERE ((f.id = contract_verifications.facility_id) AND (is_org_member(auth.uid(), f.organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))))))"
+  },
+  {
+    "table": "contract_verifications",
+    "policy": "org members view facility verifications",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "(EXISTS ( SELECT 1\n   FROM facilities f\n  WHERE ((f.id = contract_verifications.facility_id) AND (is_org_member(auth.uid(), f.organization_id) OR has_role(auth.uid(), 'super_admin'::app_role)))))",
+    "with_check": null
+  },
+  {
+    "table": "conversation_participants",
+    "policy": "update own participant row",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "table": "conversation_participants",
+    "policy": "view own participant rows",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "((user_id = auth.uid()) OR is_conversation_participant(auth.uid(), conversation_id))",
+    "with_check": null
+  },
+  {
+    "table": "conversations",
+    "policy": "participants update conversations",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "is_conversation_participant(auth.uid(), id)",
+    "with_check": null
+  },
+  {
+    "table": "conversations",
+    "policy": "participants view conversations",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "is_conversation_participant(auth.uid(), id)",
+    "with_check": null
+  },
+  {
+    "table": "early_access_leads",
+    "policy": "anyone submits leads",
+    "cmd": "INSERT",
+    "roles": "{anon,authenticated}",
+    "using": null,
+    "with_check": "true"
+  },
+  {
+    "table": "early_access_leads",
+    "policy": "early_access_leads_admin_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "early_access_leads",
+    "policy": "early_access_leads_admin_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "early_access_leads",
+    "policy": "super admin reads leads",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "facilities",
+    "policy": "Super admins can manage all facilities",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "facilities",
+    "policy": "anon can view approved facilities",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "using": "(verification_status = 'approved'::verification_status)",
+    "with_check": null
+  },
+  {
+    "table": "facilities",
+    "policy": "org members create facilities",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "is_org_member(auth.uid(), organization_id)"
+  },
+  {
+    "table": "facilities",
+    "policy": "org members or super admin delete facilities",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "facilities",
+    "policy": "org members or super admin update facilities",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "facilities",
+    "policy": "view approved facilities or own org",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "((verification_status = 'approved'::verification_status) OR is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "facility_pdf_uploads",
+    "policy": "Org admins can delete their PDF uploads",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "facility_pdf_uploads",
+    "policy": "Org members can insert PDF uploads for their org",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "((uploaded_by = auth.uid()) AND is_org_member(auth.uid(), organization_id))"
+  },
+  {
+    "table": "facility_pdf_uploads",
+    "policy": "Org members can update their PDF uploads",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))"
+  },
+  {
+    "table": "facility_pdf_uploads",
+    "policy": "Org members can view their PDF uploads",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "insurance_contracts",
+    "policy": "Super admins can manage all insurance contracts",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "insurance_contracts",
+    "policy": "anon can view contracts of approved facilities",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "using": "(EXISTS ( SELECT 1\n   FROM facilities f\n  WHERE ((f.id = insurance_contracts.facility_id) AND (f.verification_status = 'approved'::verification_status))))",
+    "with_check": null
+  },
+  {
+    "table": "insurance_contracts",
+    "policy": "org members manage contracts",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "using": "(EXISTS ( SELECT 1\n   FROM facilities f\n  WHERE ((f.id = insurance_contracts.facility_id) AND (is_org_member(auth.uid(), f.organization_id) OR has_role(auth.uid(), 'super_admin'::app_role)))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM facilities f\n  WHERE ((f.id = insurance_contracts.facility_id) AND (is_org_member(auth.uid(), f.organization_id) OR has_role(auth.uid(), 'super_admin'::app_role)))))"
+  },
+  {
+    "table": "insurance_contracts",
+    "policy": "view contracts of viewable facilities",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "(EXISTS ( SELECT 1\n   FROM facilities f\n  WHERE ((f.id = insurance_contracts.facility_id) AND ((f.verification_status = 'approved'::verification_status) OR is_org_member(auth.uid(), f.organization_id) OR has_role(auth.uid(), 'super_admin'::app_role)))))",
+    "with_check": null
+  },
+  {
+    "table": "messages",
+    "policy": "participants send messages",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "((sender_id = auth.uid()) AND is_conversation_participant(auth.uid(), conversation_id))"
+  },
+  {
+    "table": "messages",
+    "policy": "participants view messages",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "is_conversation_participant(auth.uid(), conversation_id)",
+    "with_check": null
+  },
+  {
+    "table": "messages",
+    "policy": "senders delete own messages",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "(sender_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "table": "org_analytics_events",
+    "policy": "org members or super admin read events",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "org_invites",
+    "policy": "org members manage invites",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))"
+  },
+  {
+    "table": "org_invites",
+    "policy": "view own pending invites by email",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "(lower(email) = lower((( SELECT users.email\n   FROM auth.users\n  WHERE (users.id = auth.uid())))::text))",
+    "with_check": null
+  },
+  {
+    "table": "organization_claims",
+    "policy": "Anyone can submit a claim",
+    "cmd": "INSERT",
+    "roles": "{anon,authenticated}",
+    "using": null,
+    "with_check": "(status = 'pending'::text)"
+  },
+  {
+    "table": "organization_claims",
+    "policy": "Claimant can view own claims",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "(claimant_user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "table": "organization_claims",
+    "policy": "Super admins can delete claims",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "organization_claims",
+    "policy": "Super admins can update claims",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "organization_claims",
+    "policy": "Super admins can view all claims",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "organization_claims",
+    "policy": "organization_claims_admin_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "organization_claims",
+    "policy": "organization_claims_insert_authenticated",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "(claimant_user_id = auth.uid())"
+  },
+  {
+    "table": "organization_claims",
+    "policy": "organization_claims_select_own_or_admin",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "((claimant_user_id = auth.uid()) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "organization_join_requests",
+    "policy": "join_requests_select_own_or_admin",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "((user_id = auth.uid()) OR has_role(auth.uid(), 'super_admin'::app_role) OR is_org_facility_admin(organization_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "table": "organization_members",
+    "policy": "auth users view members",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "true",
+    "with_check": null
+  },
+  {
+    "table": "organization_members",
+    "policy": "org members or super admin manage members",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))"
+  },
+  {
+    "table": "organizations",
+    "policy": "anon can view organizations",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "using": "true",
+    "with_check": null
+  },
+  {
+    "table": "organizations",
+    "policy": "auth users create orgs",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "(created_by = auth.uid())"
+  },
+  {
+    "table": "organizations",
+    "policy": "authenticated users view all orgs",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "true",
+    "with_check": null
+  },
+  {
+    "table": "organizations",
+    "policy": "org members or super admin update org",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "organizations",
+    "policy": "super admin deletes orgs",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "payers",
+    "policy": "auth users suggest payers",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "((created_by = auth.uid()) AND (status = 'pending'::payer_status))"
+  },
+  {
+    "table": "payers",
+    "policy": "super admin deletes payers",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "payers",
+    "policy": "super admin updates payers",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "payers",
+    "policy": "view approved payers or own pending or super admin",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "((status = 'approved'::payer_status) OR (created_by = auth.uid()) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "post_likes",
+    "policy": "auth users view likes",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "true",
+    "with_check": null
+  },
+  {
+    "table": "post_likes",
+    "policy": "users like as themselves",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "table": "post_likes",
+    "policy": "users unlike own",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "table": "posts",
+    "policy": "auth users view posts",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "true",
+    "with_check": null
+  },
+  {
+    "table": "posts",
+    "policy": "authors or super admin update posts",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "((author_id = auth.uid()) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "posts",
+    "policy": "authors org admins or super admin delete posts",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "((author_id = auth.uid()) OR has_role(auth.uid(), 'super_admin'::app_role) OR is_org_member(auth.uid(), organization_id))",
+    "with_check": null
+  },
+  {
+    "table": "posts",
+    "policy": "org members create posts for own org",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "((author_id = auth.uid()) AND is_org_member(auth.uid(), organization_id))"
+  },
+  {
+    "table": "preferred_provider_changes",
+    "policy": "super admin inserts preferred changes",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "(has_role(auth.uid(), 'super_admin'::app_role) AND (set_by = auth.uid()))"
+  },
+  {
+    "table": "preferred_provider_changes",
+    "policy": "super admin views preferred changes",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "profiles",
+    "policy": "auth users view profiles",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "true",
+    "with_check": null
+  },
+  {
+    "table": "profiles",
+    "policy": "users insert own profile",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "table": "profiles",
+    "policy": "users update own profile",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "table": "referral_network",
+    "policy": "owner org members manage their network",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), owner_org_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": "(is_org_member(auth.uid(), owner_org_id) OR has_role(auth.uid(), 'super_admin'::app_role))"
+  },
+  {
+    "table": "referral_network",
+    "policy": "partner org members view inbound",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "is_org_member(auth.uid(), partner_org_id)",
+    "with_check": null
+  },
+  {
+    "table": "user_roles",
+    "policy": "super admin manages roles",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "user_roles",
+    "policy": "user_roles_delete_super_admin_only",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "table": "user_roles",
+    "policy": "user_roles_insert_super_admin_only",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "using": null,
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "user_roles",
+    "policy": "user_roles_select_own",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "((user_id = auth.uid()) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "user_roles",
+    "policy": "user_roles_update_super_admin_only",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "using": "has_role(auth.uid(), 'super_admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'super_admin'::app_role)"
+  },
+  {
+    "table": "user_roles",
+    "policy": "users view own roles",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "((user_id = auth.uid()) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "table": "verification_reminders",
+    "policy": "org members or super admin view reminders",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "using": "(is_org_member(auth.uid(), organization_id) OR has_role(auth.uid(), 'super_admin'::app_role))",
+    "with_check": null
+  }
+]

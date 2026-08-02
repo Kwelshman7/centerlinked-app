@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fileToBase64 } from "@/lib/files";
 import { programPublicPath } from "@/lib/public-urls";
-import { buildInsuranceContractRows } from "@/lib/match-payer";
+import { buildFacilityContractDrafts } from "@/lib/match-payer";
+import { emptyFacility } from "@/components/app/facility/facility-types";
+import { saveFacilityWithContracts } from "@/lib/save-facility";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
 import {
   Upload,
@@ -157,12 +159,13 @@ export default function PdfFacilityUpload() {
         body: { pdf_base64, filename: file.name, upload_id: rec.id },
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const parsedData = data as ParsedPayload;
+      const parseResult = data as ParsedPayload & { error?: string; images?: ExtractedImage[] };
+      if (parseResult?.error) throw new Error(parseResult.error);
+      const parsedData = parseResult as ParsedPayload;
       setParsed(parsedData);
       await supabase
         .from("facility_pdf_uploads")
-        .update({ status: "parsed", parsed_payload: data as any })
+        .update({ status: "parsed", parsed_payload: parsedData as unknown as Record<string, unknown> })
         .eq("id", rec.id);
       setStage("review");
 
@@ -171,11 +174,12 @@ export default function PdfFacilityUpload() {
       supabase.functions
         .invoke("extract-pdf-images", { body: { storage_path: path } })
         .then(({ data: imgData, error: imgErr }) => {
-          if (imgErr || (imgData as any)?.error) {
-            console.warn("image extract failed", imgErr ?? (imgData as any)?.error);
+          const imageResult = imgData as { error?: string; images?: ExtractedImage[] } | null;
+          if (imgErr || imageResult?.error) {
+            console.warn("image extract failed", imgErr ?? imageResult?.error);
             return;
           }
-          const imgs = ((imgData as any)?.images ?? []) as ExtractedImage[];
+          const imgs = imageResult?.images ?? [];
           setExtractedImages(imgs);
           // Default every image to facility 0 (user can change or skip per image)
           const init: Record<string, number | "none"> = {};
@@ -329,40 +333,36 @@ export default function PdfFacilityUpload() {
       for (let fIdx = 0; fIdx < parsed.facilities.length; fIdx++) {
         const f = parsed.facilities[fIdx];
         const imageUrls = approvedByFacility[fIdx] ?? [];
-        const { data: inserted, error: facErr } = await supabase
-          .from("facilities")
-          .insert({
-            organization_id: orgId!,
-            submitted_by: user.id,
-            name: f.name,
-            tagline: f.tagline ?? null,
-            address_line1: f.address_line1 ?? null,
-            city: f.city ?? null,
-            state: f.state ?? null,
-            zip: f.zip ?? null,
-            phone: f.phone ?? null,
-            website: f.website ?? null,
-            description: f.description ?? null,
-            capacity: f.capacity ?? null,
-            levels_of_care: f.levels_of_care ?? [],
-            highlights: f.highlights ?? [],
-            bd_contact_name: f.bd_contact_name ?? null,
-            bd_contact_phone: f.bd_contact_phone ?? null,
-            bd_contact_email: f.bd_contact_email ?? null,
-            image_urls: imageUrls,
-          })
-          .select("id, slug")
-          .single();
-        if (facErr || !inserted) throw facErr ?? new Error("facility insert failed");
-
-        const contracts = [
-          ...buildInsuranceContractRows(inserted.id, f.payers_in_network ?? [], true, payers),
-          ...buildInsuranceContractRows(inserted.id, f.payers_out_of_network ?? [], false, payers),
-        ];
-        if (contracts.length) {
-          await supabase.from("insurance_contracts").insert(contracts);
-        }
-        if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));
+        const draft = {
+          ...emptyFacility(),
+          name: f.name,
+          tagline: f.tagline ?? "",
+          address_line1: f.address_line1 ?? "",
+          city: f.city ?? "",
+          state: f.state ?? "",
+          zip: f.zip ?? "",
+          phone: f.phone ?? "",
+          website: f.website ?? "",
+          description: f.description ?? "",
+          capacity: f.capacity != null ? String(f.capacity) : "",
+          levels_of_care: f.levels_of_care ?? [],
+          highlights: f.highlights ?? [],
+          bd_contact_name: f.bd_contact_name ?? "",
+          bd_contact_phone: f.bd_contact_phone ?? "",
+          bd_contact_email: f.bd_contact_email ?? "",
+          image_urls: imageUrls,
+          contracts: [
+            ...buildFacilityContractDrafts(f.payers_in_network ?? [], true, payers),
+            ...buildFacilityContractDrafts(f.payers_out_of_network ?? [], false, payers),
+          ],
+        };
+        const result = await saveFacilityWithContracts({
+          organizationId: orgId!,
+          draft,
+          contractsMode: "all",
+        });
+        if (!result.ok) throw new Error(result.error);
+        if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
       }
 
       setResultUrls(urls);

@@ -8,12 +8,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Pencil, Loader2 } from "lucide-react";
 import { FacilityCardForm } from "./FacilityCardForm";
 import { FacilityDraft, emptyFacility } from "./facility-types";
 import { useAuth } from "@/contexts/AuthContext";
+import { saveFacilityWithContracts } from "@/lib/save-facility";
 
 interface FacilityLike {
   id: string;
@@ -93,8 +93,9 @@ export function EditFacilityDialog({
   triggerClassName,
   organizationId,
 }: Props) {
-  const { isFacilityAdmin, isSuperAdmin } = useAuth();
+  const { profile, isFacilityAdmin, isSuperAdmin } = useAuth();
   const canManageVisibility = isFacilityAdmin || isSuperAdmin;
+  const orgId = organizationId || profile?.organization_id || null;
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => toDraft(facility, contracts));
   const [saving, setSaving] = useState(false);
@@ -105,84 +106,23 @@ export function EditFacilityDialog({
   };
 
   const save = async () => {
-    if (!draft.name.trim()) {
-      toast.error("Facility name is required");
+    if (!orgId) {
+      toast.error("Organization is required");
       return;
     }
     setSaving(true);
     try {
-      const patch = {
-        name: draft.name.trim(),
-        tagline: draft.tagline || null,
-        address_line1: draft.address_line1 || null,
-        city: draft.city || null,
-        state: draft.state || null,
-        zip: draft.zip || null,
-        phone: draft.phone || null,
-        website: draft.website || null,
-        description: draft.description || null,
-        capacity: draft.capacity ? Number(draft.capacity) || null : null,
-        levels_of_care: draft.levels_of_care,
-        highlights: draft.highlights,
-        population_served: draft.population_served,
-        specializations: draft.specializations,
-        accreditations: draft.accreditations,
-        image_urls: draft.image_urls,
-        bd_contact_name: draft.bd_contact_name || null,
-        bd_contact_phone: draft.bd_contact_phone || null,
-        bd_contact_email: draft.bd_contact_email || null,
-        ...(canManageVisibility ? { hidden_from_org_page: draft.hidden_from_org_page } : {}),
-      };
-      const { error: upErr } = await supabase
-        .from("facilities")
-        .update(patch)
-        .eq("id", facility.id);
-      if (upErr) {
-        toast.error(upErr.message);
+      const result = await saveFacilityWithContracts({
+        organizationId: orgId,
+        facilityId: facility.id,
+        draft,
+        includeHidden: canManageVisibility,
+        contractsMode: "all",
+      });
+      if (!result.ok) {
+        toast.error(result.error);
         return;
       }
-
-      // Sync contracts: delete removed, insert new
-      const existingIds = new Set(contracts.map((c) => `${c.payer_id ?? ""}|${c.payer_name.toLowerCase()}`));
-      const draftKeys = new Set(
-        draft.contracts.map((c) => `${c.payer_id ?? ""}|${c.payer_name.toLowerCase()}`),
-      );
-
-      const toDelete = contracts.filter(
-        (c) => !draftKeys.has(`${c.payer_id ?? ""}|${c.payer_name.toLowerCase()}`),
-      );
-      const toInsert = draft.contracts.filter(
-        (c) => !existingIds.has(`${c.payer_id ?? ""}|${c.payer_name.toLowerCase()}`),
-      );
-
-      if (toDelete.length > 0) {
-        const { error: delErr } = await supabase
-          .from("insurance_contracts")
-          .delete()
-          .in(
-            "id",
-            toDelete.map((c) => c.id),
-          );
-        if (delErr) {
-          toast.error(delErr.message);
-          return;
-        }
-      }
-      if (toInsert.length > 0) {
-        const { error: insErr } = await supabase.from("insurance_contracts").insert(
-          toInsert.map((c) => ({
-            facility_id: facility.id,
-            payer_id: c.payer_id,
-            payer_name: c.payer_name,
-            in_network: c.in_network,
-          })),
-        );
-        if (insErr) {
-          toast.error(insErr.message);
-          return;
-        }
-      }
-
       toast.success("Facility updated");
       setOpen(false);
       onSaved();

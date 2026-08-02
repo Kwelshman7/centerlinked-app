@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Check, Loader2, Mail, Trash2, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
-import { isPersonalEmail } from "@/lib/email-domains";
+import { isEmailAuthAllowed, isPersonalEmail, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { reviewJoinRequest } from "@/lib/org-setup";
 
 interface MemberRow { id: string; user_id: string; role_at_org: string; created_at: string; }
@@ -73,7 +73,11 @@ export default function Members() {
     }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [profile?.organization_id, isFacilityAdmin]);
+  useEffect(() => {
+    void load();
+    // Intentionally keyed to org/role identity; load closes over latest handlers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.organization_id, isFacilityAdmin]);
 
   const handleReviewJoin = async (id: string, approve: boolean) => {
     setReviewingId(id);
@@ -92,8 +96,13 @@ export default function Members() {
     e.preventDefault();
     const email = inviteEmail.trim().toLowerCase();
     if (!email || !profile?.organization_id) return;
-    if (isPersonalEmail(email)) {
-      toast.error("Personal emails aren't allowed");
+    const allowed = await isEmailAuthAllowed(email);
+    if (!allowed) {
+      toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
+        description: isPersonalEmail(email)
+          ? "Invite a company email, or ask a super admin to approve this personal address first."
+          : PERSONAL_EMAIL_BLOCKED_MESSAGE.description,
+      });
       return;
     }
     if (orgDomain && email.split("@")[1] !== orgDomain.toLowerCase()) {

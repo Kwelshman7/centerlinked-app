@@ -30,6 +30,12 @@ export type Database = {
         Update: { created_at?: string; created_by?: string; id?: string; last_message_at?: string }
         Relationships: []
       }
+      approved_personal_emails: {
+        Row: { approved_by: string | null; created_at: string; email: string; notes: string | null }
+        Insert: { approved_by?: string | null; created_at?: string; email: string; notes?: string | null }
+        Update: { approved_by?: string | null; created_at?: string; email?: string; notes?: string | null }
+        Relationships: []
+      }
       early_access_leads: {
         Row: { created_at: string; email: string; facilities: string; full_name: string; id: string; notes: string | null; organization: string; reviewed_at: string | null; role: string | null; status: string }
         Insert: { created_at?: string; email: string; facilities: string; full_name: string; id?: string; notes?: string | null; organization: string; reviewed_at?: string | null; role?: string | null; status?: string }
@@ -60,6 +66,12 @@ export type Database = {
         Update: { event_type?: string; id?: string; occurred_at?: string; organization_id?: string; referrer?: string | null; session_id?: string | null; user_agent?: string | null }
         Relationships: [{ foreignKeyName: 'org_analytics_events_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] }]
       }
+      stripe_webhook_events: {
+        Row: { created_at: string; id: string; livemode: boolean | null; type: string }
+        Insert: { created_at?: string; id: string; livemode?: boolean | null; type: string }
+        Update: { created_at?: string; id?: string; livemode?: boolean | null; type?: string }
+        Relationships: []
+      }
       org_invites: {
         Row: { accepted_at: string | null; created_at: string; email: string; id: string; invited_by: string | null; organization_id: string; role_at_org: string; status: string }
         Insert: { accepted_at?: string | null; created_at?: string; email: string; id?: string; invited_by?: string | null; organization_id: string; role_at_org?: string; status?: string }
@@ -85,9 +97,9 @@ export type Database = {
         Relationships: [{ foreignKeyName: 'organization_members_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] }]
       }
       organizations: {
-        Row: { accent_color: string | null; announcement: string | null; bd_contact_email: string | null; bd_contact_name: string | null; bd_contact_phone: string | null; billing_email: string | null; brand_color: string | null; cover_image_url: string | null; created_at: string; created_by: string | null; cta_primary_label: string | null; cta_secondary_label: string | null; description: string | null; email_domain: string | null; hq_city: string | null; hq_state: string | null; id: string; image_urls: string[]; logo_url: string | null; name: string; num_facilities: number | null; phone: string | null; program_badges: string[]; setup_package: string | null; slug: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null; subscription_current_period_end: string | null; subscription_price_id: string | null; subscription_status: string; tagline: string | null; updated_at: string; verified: boolean; website: string | null; why_refer: Json }
-        Insert: { accent_color?: string | null; announcement?: string | null; bd_contact_email?: string | null; bd_contact_name?: string | null; bd_contact_phone?: string | null; billing_email?: string | null; brand_color?: string | null; cover_image_url?: string | null; created_at?: string; created_by?: string | null; cta_primary_label?: string | null; cta_secondary_label?: string | null; description?: string | null; email_domain?: string | null; hq_city?: string | null; hq_state?: string | null; id?: string; image_urls?: string[]; logo_url?: string | null; name: string; num_facilities?: number | null; phone?: string | null; program_badges?: string[]; setup_package?: string | null; slug?: string | null; stripe_customer_id?: string | null; stripe_subscription_id?: string | null; subscription_current_period_end?: string | null; subscription_price_id?: string | null; subscription_status?: string; tagline?: string | null; updated_at?: string; verified?: boolean; website?: string | null; why_refer?: Json }
-        Update: { accent_color?: string | null; announcement?: string | null; bd_contact_email?: string | null; bd_contact_name?: string | null; bd_contact_phone?: string | null; billing_email?: string | null; brand_color?: string | null; cover_image_url?: string | null; created_at?: string; created_by?: string | null; cta_primary_label?: string | null; cta_secondary_label?: string | null; description?: string | null; email_domain?: string | null; hq_city?: string | null; hq_state?: string | null; id?: string; image_urls?: string[]; logo_url?: string | null; name?: string; num_facilities?: number | null; phone?: string | null; program_badges?: string[]; setup_package?: string | null; slug?: string | null; stripe_customer_id?: string | null; stripe_subscription_id?: string | null; subscription_current_period_end?: string | null; subscription_price_id?: string | null; subscription_status?: string; tagline?: string | null; updated_at?: string; verified?: boolean; website?: string | null; why_refer?: Json }
+        Row: { accent_color: string | null; announcement: string | null; bd_contact_email: string | null; bd_contact_name: string | null; bd_contact_phone: string | null; billing_email: string | null; brand_color: string | null; cover_image_url: string | null; footer_image_url: string | null; social_facebook_url: string | null; social_instagram_url: string | null; social_linkedin_url: string | null; social_x_url: string | null; created_at: string; created_by: string | null; cta_primary_label: string | null; cta_secondary_label: string | null; description: string | null; email_domain: string | null; hq_city: string | null; hq_state: string | null; id: string; image_urls: string[]; logo_url: string | null; name: string; num_facilities: number | null; phone: string | null; program_badges: string[]; setup_package: string | null; slug: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null; subscription_current_period_end: string | null; subscription_price_id: string | null; subscription_status: string; tagline: string | null; updated_at: string; verified: boolean; website: string | null; why_refer: Json }
+        Insert: { accent_color?: string | null; announcement?: string | null; bd_contact_email?: string | null; bd_contact_name?: string | null; bd_contact_phone?: string | null; billing_email?: string | null; brand_color?: string | null; cover_image_url?: string | null; footer_image_url?: string | null; social_facebook_url?: string | null; social_instagram_url?: string | null; social_linkedin_url?: string | null; social_x_url?: string | null; created_at?: string; created_by?: string | null; cta_primary_label?: string | null; cta_secondary_label?: string | null; description?: string | null; email_domain?: string | null; hq_city?: string | null; hq_state?: string | null; id?: string; image_urls?: string[]; logo_url?: string | null; name: string; num_facilities?: number | null; phone?: string | null; program_badges?: string[]; setup_package?: string | null; slug?: string | null; stripe_customer_id?: string | null; stripe_subscription_id?: string | null; subscription_current_period_end?: string | null; subscription_price_id?: string | null; subscription_status?: string; tagline?: string | null; updated_at?: string; verified?: boolean; website?: string | null; why_refer?: Json }
+        Update: { accent_color?: string | null; announcement?: string | null; bd_contact_email?: string | null; bd_contact_name?: string | null; bd_contact_phone?: string | null; billing_email?: string | null; brand_color?: string | null; cover_image_url?: string | null; footer_image_url?: string | null; social_facebook_url?: string | null; social_instagram_url?: string | null; social_linkedin_url?: string | null; social_x_url?: string | null; created_at?: string; created_by?: string | null; cta_primary_label?: string | null; cta_secondary_label?: string | null; description?: string | null; email_domain?: string | null; hq_city?: string | null; hq_state?: string | null; id?: string; image_urls?: string[]; logo_url?: string | null; name?: string; num_facilities?: number | null; phone?: string | null; program_badges?: string[]; setup_package?: string | null; slug?: string | null; stripe_customer_id?: string | null; stripe_subscription_id?: string | null; subscription_current_period_end?: string | null; subscription_price_id?: string | null; subscription_status?: string; tagline?: string | null; updated_at?: string; verified?: boolean; website?: string | null; why_refer?: Json }
         Relationships: []
       }
       payers: {
@@ -162,8 +174,24 @@ export type Database = {
       get_user_org: { Args: { _user_id: string }; Returns: string }
       has_role: { Args: { _role: Database['public']['Enums']['app_role']; _user_id: string }; Returns: boolean }
       is_conversation_participant: { Args: { _conversation_id: string; _user_id: string }; Returns: boolean }
-      is_org_member: { Args: { _org_id: string; _user_id: string }; Returns: boolean }
+      is_org_member: { Args: { _user_id: string; _org_id: string }; Returns: boolean }
+      approve_personal_email: { Args: { _email: string; _notes?: string | null }; Returns: undefined }
+      is_email_auth_allowed: { Args: { _email: string }; Returns: boolean }
       is_personal_email_domain: { Args: { _email: string }; Returns: boolean }
+      save_facility_with_contracts: {
+        Args: {
+          _organization_id: string
+          _facility: Json
+          _contracts?: Json
+          _facility_id?: string | null
+          _contracts_mode?: string
+        }
+        Returns: string
+      }
+      update_organization_profile: {
+        Args: { _organization_id: string; _profile: Json }
+        Returns: undefined
+      }
       list_facilities_due_for_verification: { Args: { _days?: number }; Returns: { contracts_verified_at: string; facility_id: string; facility_name: string; organization_id: string }[] }
       run_sql: { Args: { query: string }; Returns: Json }
       slugify: { Args: { _input: string }; Returns: string }

@@ -149,6 +149,7 @@ export default function OrgSheet() {
         setFacilityPayersById(new Map());
       }
 
+      // Public contact must come from explicit org BD fields — never from member profiles.
       if (orgData.bd_contact_name && (orgData.bd_contact_phone || orgData.bd_contact_email)) {
         setHeroContact({
           name: orgData.bd_contact_name,
@@ -157,30 +158,8 @@ export default function OrgSheet() {
           phone: orgData.bd_contact_phone,
           email: orgData.bd_contact_email,
         });
-        return;
-      }
-
-      const { data: members } = await supabase
-        .from("profiles")
-        .select("full_name,job_title,phone,email")
-        .eq("organization_id", orgData.id)
-        .limit(4);
-
-      if (members?.length) {
-        const member = members.find(
-          (m: { full_name?: string; phone?: string; email?: string }) =>
-            m.full_name && (m.phone || m.email),
-        ) as { full_name: string; job_title?: string; phone?: string; email?: string } | undefined;
-
-        if (member) {
-          setHeroContact({
-            name: member.full_name,
-            title: member.job_title ?? "BD Representative",
-            location: loc || null,
-            phone: member.phone ?? null,
-            email: member.email ?? null,
-          });
-        }
+      } else {
+        setHeroContact(null);
       }
     })();
   }, [slug]);

@@ -342,3 +342,14 @@ export function buildInsuranceContractRows(
       };
     });
 }
+
+/** Contract drafts for save_facility_with_contracts (no facility_id yet). */
+export function buildFacilityContractDrafts(
+  payerNames: string[],
+  inNetwork: boolean,
+  payers: PayerMatchInput[],
+): { payer_id: string | null; payer_name: string; in_network: boolean }[] {
+  return buildInsuranceContractRows("pending", payerNames, inNetwork, payers).map(
+    ({ payer_id, payer_name, in_network }) => ({ payer_id, payer_name, in_network }),
+  );
+}

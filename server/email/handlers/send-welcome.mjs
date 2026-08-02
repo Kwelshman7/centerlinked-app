@@ -116,7 +116,8 @@ export async function handleSendWelcome(body, accessToken) {
 
   const admin = supabaseAdmin();
   if (!admin) {
-    return { status: 500, json: { error: "SUPABASE_SERVICE_ROLE is not configured" } };
+    console.error("[send-welcome] SUPABASE_SERVICE_ROLE is not configured");
+    return { status: 503, json: { error: "Email service is temporarily unavailable" } };
   }
 
   const { data: org, error: orgError } = await admin
@@ -169,13 +170,13 @@ export async function handleSendWelcome(body, accessToken) {
   if (!result.ok) {
     console.error("[send-welcome]", result.error);
     return {
-      status: result.status && result.status >= 400 ? result.status : 502,
-      json: { error: result.error },
+      status: 502,
+      json: { error: "Could not send welcome email" },
     };
   }
 
   return {
     status: 200,
-    json: { ok: true, id: result.id, to: recipient.email },
+    json: { ok: true, to: recipient.email },
   };
 }

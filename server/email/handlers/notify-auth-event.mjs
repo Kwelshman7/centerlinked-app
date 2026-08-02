@@ -1,10 +1,19 @@
+import { createHmac } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { adminNotifyAddress, sendEmail } from "../send.mjs";
 import {
   accountCreatedEmail,
   adminNewSignupEmail,
   loginNoticeEmail,
 } from "../templates.mjs";
+
+const authEventSchema = z
+  .object({
+    event: z.enum(["signup", "login"]),
+    full_name: z.string().trim().max(120).optional().nullable(),
+  })
+  .strict();
 
 function supabaseAuthed(accessToken) {
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -16,20 +25,43 @@ function supabaseAuthed(accessToken) {
   });
 }
 
+function supabaseAdmin() {
+  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+function fingerprint(value, key) {
+  return createHmac("sha256", key).update(value).digest("hex");
+}
+
+async function consumeRateLimit(admin, fingerprintValue, maxAttempts, windowSeconds) {
+  const { data, error } = await admin.rpc("consume_access_request_rate_limit", {
+    _fingerprint: fingerprintValue,
+    _max_attempts: maxAttempts,
+    _window_seconds: windowSeconds,
+  });
+  if (error) throw new Error("Auth-event rate limit is unavailable");
+  return data === true;
+}
+
 /**
  * Send signup or login transactional emails for the authenticated user.
  * Auth: Bearer access token.
  * Body: { event: "signup" | "login", full_name? }
  */
 export async function handleNotifyAuthEvent(body, accessToken) {
-  const event = String(body?.event || "").trim().toLowerCase();
-  if (event !== "signup" && event !== "login") {
-    return { status: 400, json: { error: 'event must be "signup" or "login"' } };
+  const parsed = authEventSchema.safeParse(body ?? {});
+  if (!parsed.success) {
+    return { status: 400, json: { error: "Invalid auth notification request" } };
   }
+  const event = parsed.data.event;
 
   const client = supabaseAuthed(accessToken);
   if (!client) {
-    return { status: 500, json: { error: "Auth not configured" } };
+    console.error("[notify-auth-event] auth client is not configured");
+    return { status: 503, json: { error: "Notification service is temporarily unavailable" } };
   }
 
   const { data: userData, error: userError } = await client.auth.getUser(accessToken);
@@ -40,9 +72,35 @@ export async function handleNotifyAuthEvent(body, accessToken) {
   const user = userData.user;
   const email = user.email.trim().toLowerCase();
   const fullName =
-    String(body?.full_name || "").trim() ||
+    String(parsed.data.full_name || "").trim() ||
     String(user.user_metadata?.full_name || "").trim() ||
     null;
+
+  const admin = supabaseAdmin();
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!admin || !serviceRole) {
+    console.error("[notify-auth-event] rate-limit backend is not configured");
+    return { status: 503, json: { error: "Notification service is temporarily unavailable" } };
+  }
+
+  try {
+    // signup: 2 / 24h per user; login: 5 / hour per user
+    const allowed = await consumeRateLimit(
+      admin,
+      fingerprint(`auth-event:${event}:${user.id}`, serviceRole),
+      event === "signup" ? 2 : 5,
+      event === "signup" ? 86_400 : 3_600,
+    );
+    if (!allowed) {
+      return { status: 429, json: { error: "Too many requests. Please try again later." } };
+    }
+  } catch (error) {
+    console.error(
+      "[notify-auth-event] rate-limit failure",
+      error instanceof Error ? error.message : "unknown",
+    );
+    return { status: 503, json: { error: "Notification service is temporarily unavailable" } };
+  }
 
   if (event === "signup") {
     const userTemplate = accountCreatedEmail({ recipientName: fullName });
@@ -56,8 +114,8 @@ export async function handleNotifyAuthEvent(body, accessToken) {
     if (!userResult.ok) {
       console.error("[notify-auth-event:signup:user]", userResult.error);
       return {
-        status: userResult.status && userResult.status >= 400 ? userResult.status : 502,
-        json: { error: userResult.error },
+        status: 502,
+        json: { error: "Could not send notification email" },
       };
     }
 
@@ -72,14 +130,12 @@ export async function handleNotifyAuthEvent(body, accessToken) {
 
     if (!adminResult.ok) {
       console.error("[notify-auth-event:signup:admin]", adminResult.error);
-      // User email already sent — still report success with a warning.
+      // User email already sent — still report success without leaking vendor errors.
       return {
         status: 200,
         json: {
           ok: true,
           event,
-          user_email_id: userResult.id,
-          admin_error: adminResult.error,
         },
       };
     }
@@ -89,8 +145,6 @@ export async function handleNotifyAuthEvent(body, accessToken) {
       json: {
         ok: true,
         event,
-        user_email_id: userResult.id,
-        admin_email_id: adminResult.id,
       },
     };
   }
@@ -110,10 +164,10 @@ export async function handleNotifyAuthEvent(body, accessToken) {
   if (!result.ok) {
     console.error("[notify-auth-event:login]", result.error);
     return {
-      status: result.status && result.status >= 400 ? result.status : 502,
-      json: { error: result.error },
+      status: 502,
+      json: { error: "Could not send notification email" },
     };
   }
 
-  return { status: 200, json: { ok: true, event, id: result.id } };
+  return { status: 200, json: { ok: true, event } };
 }

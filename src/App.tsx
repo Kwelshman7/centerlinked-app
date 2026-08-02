@@ -21,7 +21,6 @@ import Facilities from "./pages/app/Facilities";
 import Organizations from "./pages/app/Organizations";
 import FacilityDetail from "./pages/app/FacilityDetail";
 import Onboarding from "./pages/app/Onboarding";
-import ImportFacilities from "./pages/app/ImportFacilities";
 import PdfFacilityUpload from "./pages/app/PdfFacilityUpload";
 import Members from "./pages/app/Members";
 import Verifications from "./pages/app/Verifications";
@@ -79,7 +78,6 @@ const App = () => (
               <Route path="organizations" element={<Organizations />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="facilities/new" element={<Navigate to="/app/onboarding?add=1" replace />} />
-              <Route path="facilities/import" element={<ImportFacilities />} />
               <Route path="facilities/upload-pdf" element={<PdfFacilityUpload />} />
               <Route path="facilities/:id" element={<FacilityDetail />} />
               <Route path="facilities/:id/verify" element={<VerifyContracts />} />

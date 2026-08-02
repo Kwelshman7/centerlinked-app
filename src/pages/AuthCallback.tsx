@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { checkBootstrapAdminCandidate } from "@/lib/bootstrap-admin";
-import { isPersonalEmail } from "@/lib/email-domains";
+import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { toast } from "sonner";
 import { notifyAuthEvent } from "@/lib/transactional-email";
 
@@ -85,11 +85,13 @@ export default function AuthCallback() {
 
       const bootstrapCandidate = await checkBootstrapAdminCandidate();
       const bootstrapAdmin = isSuperAdmin || bootstrapCandidate;
+      const allowed = bootstrapAdmin || (await isEmailAuthAllowed(email));
 
-      if (!bootstrapAdmin && isPersonalEmail(email)) {
+      if (!allowed) {
         await supabase.auth.signOut();
-        toast.error("Please use your work email", {
-          description: "Personal Gmail accounts aren't allowed. Sign in with your organization Google Workspace account.",
+        toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
+          description:
+            "Personal Google accounts aren't allowed unless approved. Sign in with your organization Google Workspace account, or request access.",
         });
         navigate("/request-access", { replace: true });
         return;

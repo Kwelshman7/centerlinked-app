@@ -24,12 +24,14 @@ export async function handleBillingOverview(accessToken) {
 
   const stripe = getStripe();
   if (!stripe) {
-    return { status: 500, json: { error: "STRIPE_SECRET_KEY is not configured" } };
+    console.error("[billing-overview] STRIPE_SECRET_KEY is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const admin = supabaseAdmin();
   if (!admin) {
-    return { status: 500, json: { error: "SUPABASE_SERVICE_ROLE is not configured" } };
+    console.error("[billing-overview] SUPABASE_SERVICE_ROLE is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const { data: org, error: orgError } = await admin
@@ -107,10 +109,10 @@ export async function handleBillingOverview(accessToken) {
           (inv.billing_reason === "subscription_create" ? "Subscription start" : "Invoice"),
       }));
     } catch (err) {
-      console.error("[billing-overview] stripe fetch", err);
+      console.error("[billing-overview] stripe fetch", err?.message || err);
       return {
         status: 500,
-        json: { error: err?.message || "Could not load Stripe billing details" },
+        json: { error: "Could not load billing details" },
       };
     }
   }

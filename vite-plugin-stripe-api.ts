@@ -49,7 +49,7 @@ export function stripeApiPlugin(): Plugin {
             sendJson(res, result.status, result.json);
           } catch (err) {
             console.error("[stripe-api webhook]", err);
-            sendJson(res, 500, { error: (err as Error)?.message || "Internal server error" });
+            sendJson(res, 500, { error: "Internal server error" });
           }
           return;
         }
@@ -72,7 +72,7 @@ export function stripeApiPlugin(): Plugin {
             sendJson(res, result.status, result.json);
           } catch (err) {
             console.error("[stripe-api billing-overview]", err);
-            sendJson(res, 500, { error: (err as Error)?.message || "Internal server error" });
+            sendJson(res, 500, { error: "Internal server error" });
           }
           return;
         }
@@ -109,8 +109,13 @@ export function stripeApiPlugin(): Plugin {
               : await handleCreateCheckoutSession(body, token);
           sendJson(res, result.status, result.json);
         } catch (err) {
+          const code = (err as { code?: string })?.code;
+          if (code === "BODY_TOO_LARGE") {
+            sendJson(res, 413, { error: "Request body too large" });
+            return;
+          }
           console.error("[stripe-api]", err);
-          sendJson(res, 500, { error: (err as Error)?.message || "Internal server error" });
+          sendJson(res, 500, { error: "Internal server error" });
         }
       });
     },

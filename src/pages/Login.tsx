@@ -11,6 +11,7 @@ import { applySocialMeta } from "@/lib/social-meta";
 import { useAuth } from "@/contexts/AuthContext";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { notifyAuthEvent } from "@/lib/transactional-email";
+import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -50,6 +51,14 @@ export default function Login() {
       return;
     }
     setLoading(true);
+    const allowed = await isEmailAuthAllowed(email);
+    if (!allowed) {
+      setLoading(false);
+      toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
+        description: PERSONAL_EMAIL_BLOCKED_MESSAGE.description,
+      });
+      return;
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
@@ -86,7 +95,9 @@ export default function Login() {
           <div className="text-center mb-8">
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold text-foreground mt-4">Welcome back</h1>
-            <p className="text-sm text-muted-foreground mt-2">Sign in to manage your referral profile</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Sign in with your work email. Personal emails require CenterLinked approval.
+            </p>
           </div>
 
           <GoogleSignInButton className="w-full mb-4" />

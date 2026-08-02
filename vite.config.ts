@@ -4,6 +4,7 @@ import path from "path";
 import { socialPreviewPlugin } from "./vite-plugin-social-preview";
 import { emailApiPlugin } from "./vite-plugin-email-api";
 import { stripeApiPlugin } from "./vite-plugin-stripe-api";
+import { authHookPlugin } from "./vite-plugin-auth-hook";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -23,6 +24,7 @@ export default defineConfig(({ mode }) => {
   process.env.STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
   process.env.STRIPE_PRICE_MEMBERSHIP = env.STRIPE_PRICE_MEMBERSHIP;
   process.env.STRIPE_PRICE_SETUP = env.STRIPE_PRICE_SETUP;
+  process.env.BEFORE_USER_CREATED_HOOK_SECRET = env.BEFORE_USER_CREATED_HOOK_SECRET;
 
   return {
     server: {
@@ -30,7 +32,7 @@ export default defineConfig(({ mode }) => {
       port: Number(process.env.PORT) || 8080,
       strictPort: true,
     },
-    plugins: [react(), socialPreviewPlugin(), emailApiPlugin(), stripeApiPlugin()],
+    plugins: [react(), socialPreviewPlugin(), emailApiPlugin(), stripeApiPlugin(), authHookPlugin()],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

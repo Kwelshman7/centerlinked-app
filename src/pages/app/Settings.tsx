@@ -166,25 +166,35 @@ export default function Settings() {
       .map((r) => ({ title: r.title.trim(), body: r.body.trim() }))
       .filter((r) => r.title && r.body)
       .slice(0, 4);
-    const { error } = await supabase.from("organizations").update({
-      name: orgName, description: orgDesc, website: orgWebsite, hq_city: orgCity, hq_state: orgState, logo_url: orgLogo[0] || null,
-      footer_image_url: orgFooterImage[0] || null,
-      social_facebook_url: socialFacebook.trim() || null,
-      social_instagram_url: socialInstagram.trim() || null,
-      social_linkedin_url: socialLinkedin.trim() || null,
-      social_x_url: socialX.trim() || null,
-      bd_contact_name: bdName || null, bd_contact_phone: bdPhone || null, bd_contact_email: bdEmail || null,
-      tagline: tagline || null,
-      brand_color: brandColor || null,
-      accent_color: accentColor || null,
-      cover_image_url: orgImages[0] || null,
-      image_urls: orgImages,
-      announcement: announcement || null,
-      program_badges,
-      cta_primary_label: ctaPrimary || null,
-      cta_secondary_label: ctaSecondary || null,
-      why_refer: cleanWhyRefer,
-    }).eq("id", profile.organization_id);
+    const { error } = await supabase.rpc("update_organization_profile", {
+      _organization_id: profile.organization_id,
+      _profile: {
+        name: orgName,
+        description: orgDesc,
+        website: orgWebsite,
+        hq_city: orgCity,
+        hq_state: orgState,
+        logo_url: orgLogo[0] || null,
+        footer_image_url: orgFooterImage[0] || null,
+        social_facebook_url: socialFacebook.trim() || null,
+        social_instagram_url: socialInstagram.trim() || null,
+        social_linkedin_url: socialLinkedin.trim() || null,
+        social_x_url: socialX.trim() || null,
+        bd_contact_name: bdName || null,
+        bd_contact_phone: bdPhone || null,
+        bd_contact_email: bdEmail || null,
+        tagline: tagline || null,
+        brand_color: brandColor || null,
+        accent_color: accentColor || null,
+        cover_image_url: orgImages[0] || null,
+        image_urls: orgImages,
+        announcement: announcement || null,
+        program_badges,
+        cta_primary_label: ctaPrimary || null,
+        cta_secondary_label: ctaSecondary || null,
+        why_refer: cleanWhyRefer,
+      },
+    });
     setSavingOrg(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Organization updated");

@@ -195,18 +195,48 @@ async function handleInvoicePaymentFailed(admin, invoice) {
 }
 
 /**
+ * Claim an event for processing. Returns false when already processed (duplicate delivery).
+ * On handler failure the claim is released so Stripe can retry.
+ */
+async function claimWebhookEvent(admin, event) {
+  const { error } = await admin.from("stripe_webhook_events").insert({
+    id: event.id,
+    type: event.type,
+    livemode: !!event.livemode,
+  });
+
+  if (!error) return true;
+
+  // Unique violation = already claimed/processed
+  if (error.code === "23505") {
+    return false;
+  }
+
+  throw new Error(error.message || "Failed to claim webhook event");
+}
+
+async function releaseWebhookEvent(admin, eventId) {
+  const { error } = await admin.from("stripe_webhook_events").delete().eq("id", eventId);
+  if (error) {
+    console.error("[stripe-webhook] failed to release event claim", eventId, error.message);
+  }
+}
+
+/**
  * @param {Buffer|string} rawBody
  * @param {string|string[]|undefined} signatureHeader
  */
 export async function handleStripeWebhook(rawBody, signatureHeader) {
   const stripe = getStripe();
   if (!stripe) {
-    return { status: 500, json: { error: "STRIPE_SECRET_KEY is not configured" } };
+    console.error("[stripe-webhook] STRIPE_SECRET_KEY is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
-    return { status: 500, json: { error: "STRIPE_WEBHOOK_SECRET is not configured" } };
+    console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
@@ -219,15 +249,22 @@ export async function handleStripeWebhook(rawBody, signatureHeader) {
     event = stripe.webhooks.constructEvent(rawBody, signature, secret);
   } catch (err) {
     console.error("[stripe-webhook] signature verification failed", err?.message);
-    return { status: 400, json: { error: `Webhook Error: ${err.message}` } };
+    return { status: 400, json: { error: "Invalid webhook signature" } };
   }
 
   const admin = supabaseAdmin();
   if (!admin) {
-    return { status: 500, json: { error: "SUPABASE_SERVICE_ROLE is not configured" } };
+    console.error("[stripe-webhook] SUPABASE_SERVICE_ROLE is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
+  let claimed = false;
   try {
+    claimed = await claimWebhookEvent(admin, event);
+    if (!claimed) {
+      return { status: 200, json: { received: true, duplicate: true } };
+    }
+
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(admin, event.data.object);
@@ -244,8 +281,11 @@ export async function handleStripeWebhook(rawBody, signatureHeader) {
         break;
     }
   } catch (err) {
-    console.error("[stripe-webhook] handler error", event.type, err);
-    return { status: 500, json: { error: err?.message || "Webhook handler failed" } };
+    console.error("[stripe-webhook] handler error", event.type, err?.message || err);
+    if (claimed) {
+      await releaseWebhookEvent(admin, event.id);
+    }
+    return { status: 500, json: { error: "Webhook handler failed" } };
   }
 
   return { status: 200, json: { received: true } };

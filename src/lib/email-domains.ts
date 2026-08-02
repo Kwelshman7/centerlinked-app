@@ -1,5 +1,7 @@
-// Personal email domains that are NOT allowed for CenterLinked signup.
-// Users must sign up with a work email tied to a verified organization.
+import { supabase } from "@/integrations/supabase/client";
+
+// Personal email domains that are NOT allowed for CenterLinked login/signup
+// unless explicitly approved by a super admin.
 export const PERSONAL_EMAIL_DOMAINS = new Set([
   "gmail.com",
   "googlemail.com",
@@ -33,3 +35,23 @@ export function getEmailDomain(email: string): string {
 export function isPersonalEmail(email: string): boolean {
   return PERSONAL_EMAIL_DOMAINS.has(getEmailDomain(email));
 }
+
+/** Server-backed gate: company domains, approved personal emails, or bootstrap admins. */
+export async function isEmailAuthAllowed(email: string): Promise<boolean> {
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed || !trimmed.includes("@")) return false;
+
+  const { data, error } = await supabase.rpc("is_email_auth_allowed", { _email: trimmed });
+  if (error) {
+    console.warn("is_email_auth_allowed:", error.message);
+    // Fail closed for personal domains when the RPC is unavailable.
+    return !isPersonalEmail(trimmed);
+  }
+  return !!data;
+}
+
+export const PERSONAL_EMAIL_BLOCKED_MESSAGE = {
+  title: "Please use your work email",
+  description:
+    "Personal email addresses (Gmail, Yahoo, Outlook, etc.) aren't accepted unless CenterLinked has approved an exception. Request access if you need one.",
+} as const;

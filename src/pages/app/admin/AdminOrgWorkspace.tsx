@@ -177,34 +177,38 @@ export default function AdminOrgWorkspace() {
       </Link>
 
       <Card className="p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row gap-5 items-start">
-          <div className="w-20 h-20 rounded-xl bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
-            {org.logo_url ? (
-              <img src={org.logo_url} alt={org.name} className="w-full h-full object-contain p-2" />
-            ) : (
-              <Building2 className="h-10 w-10 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-heading text-2xl sm:text-3xl font-bold">{org.name}</h1>
-              {org.verified && (
-                <Badge variant="secondary">
-                  <BadgeCheck className="h-3.5 w-3.5 text-success" /> Verified
-                </Badge>
+        <div className="flex flex-col gap-4 sm:gap-5">
+          <div className="flex items-start gap-4 sm:gap-5">
+            <div className="w-20 h-20 rounded-xl bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
+              {org.logo_url ? (
+                <img src={org.logo_url} alt={org.name} className="w-full h-full object-contain p-2" />
+              ) : (
+                <Building2 className="h-10 w-10 text-muted-foreground" />
               )}
-              <Badge variant="outline" className="text-[10px]">Super-admin workspace</Badge>
             </div>
-            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-              {(org.hq_city || org.hq_state) && (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" /> {[org.hq_city, org.hq_state].filter(Boolean).join(", ")}
-                </span>
-              )}
-              {org.email_domain && <span>· {org.email_domain}</span>}
-            </p>
+            <div className="min-w-0 flex-1 space-y-2">
+              <h1 className="font-heading text-2xl sm:text-3xl font-bold leading-tight text-balance break-words line-clamp-2">
+                {org.name}
+              </h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                {org.verified && (
+                  <Badge variant="secondary">
+                    <BadgeCheck className="h-3.5 w-3.5 text-success" /> Verified
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-[10px]">Super-admin workspace</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                {(org.hq_city || org.hq_state) && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" /> {[org.hq_city, org.hq_state].filter(Boolean).join(", ")}
+                  </span>
+                )}
+                {org.email_domain && <span>· {org.email_domain}</span>}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap sm:justify-end">
             <EditOrganizationDialog org={org} onSaved={load} triggerLabel="Edit profile" />
             {org.slug && (
               <Button asChild size="sm" variant="outline">

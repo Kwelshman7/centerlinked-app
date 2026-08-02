@@ -2,31 +2,63 @@
  * Mobile mock of /o/:slug — logo sits cleanly on top, compact filter icon,
  * natural 2×2 facility cards, sticky Refer a Patient. No CenterLinked chrome.
  */
+import { useEffect, useState } from "react";
 import { User } from "lucide-react";
 import { FacilityGridCard } from "@/components/FacilityGridCard";
 import { ExpandableText } from "@/components/public/ExpandableText";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrgFacilityFilters } from "@/components/public/OrgFacilityFilters";
+import { cn } from "@/lib/utils";
 import { mockupThemeVariables, useRotatingMockupOrg } from "./useRotatingMockupOrg";
 
 const DESCRIPTION =
   "A nationally recognized, Joint Commission-accredited network of treatment centers offering detox, residential, PHP, IOP, and mental health programs across the country.";
 
-export function PublicOrgSheetPreviewContent() {
-  const organization = useRotatingMockupOrg();
-  const brand = organization.brandColor;
-  const description = organization.description?.trim() || DESCRIPTION;
-  const previewFacilities = organization.facilities.slice(0, 4);
-  const states = [...new Set(organization.facilities.map((facility) => facility.state).filter((state): state is string => Boolean(state)))];
-  const levels = [...new Set(organization.facilities.flatMap((facility) => facility.levels_of_care ?? []))].slice(0, 6);
+const FADE_MS = 220;
+
+export function PublicOrgSheetPreviewContent({ active = true }: { active?: boolean }) {
+  const organization = useRotatingMockupOrg(active);
+  const [displayOrg, setDisplayOrg] = useState(organization);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (organization.id === displayOrg.id) {
+      setDisplayOrg(organization);
+      return;
+    }
+
+    setVisible(false);
+    const timer = window.setTimeout(() => {
+      setDisplayOrg(organization);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+    }, FADE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [organization, displayOrg.id]);
+
+  const brand = displayOrg.brandColor;
+  const description = displayOrg.description?.trim() || DESCRIPTION;
+  const previewFacilities = displayOrg.facilities.slice(0, 4);
+  const states = [
+    ...new Set(
+      displayOrg.facilities
+        .map((facility) => facility.state)
+        .filter((state): state is string => Boolean(state)),
+    ),
+  ];
+  const levels = [
+    ...new Set(displayOrg.facilities.flatMap((facility) => facility.levels_of_care ?? [])),
+  ].slice(0, 6);
   const demoOrg = {
-    id: organization.id,
-    name: organization.name,
-    logo_url: organization.logoUrl,
+    id: displayOrg.id,
+    name: displayOrg.name,
+    logo_url: displayOrg.logoUrl,
     description,
-    tagline: organization.tagline,
-    hq_city: organization.hqCity,
-    hq_state: organization.hqState,
+    tagline: displayOrg.tagline,
+    hq_city: displayOrg.hqCity,
+    hq_state: displayOrg.hqState,
     cover_image_url: null as string | null,
     image_urls: null as string[] | null,
     verified: true,
@@ -37,12 +69,18 @@ export function PublicOrgSheetPreviewContent() {
       className="relative flex flex-col h-full min-h-0 overflow-hidden bg-muted/30 text-foreground select-none pointer-events-none"
       style={mockupThemeVariables(brand)}
     >
-      <div className="flex-1 min-h-0 overflow-hidden pb-[3.75rem]">
+      <div
+        className={cn(
+          "flex-1 min-h-0 overflow-hidden pb-[3.75rem] transition-opacity ease-out",
+          visible ? "opacity-100" : "opacity-0",
+        )}
+        style={{ transitionDuration: `${FADE_MS}ms` }}
+      >
         <OrgHeroSection org={demoOrg} brand={brand} compact logoSize="mock" />
 
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5">
           <header className="space-y-1">
-            <h1 className="sr-only">{organization.name}</h1>
+            <h1 className="sr-only">{displayOrg.name}</h1>
             <ExpandableText text={description} brand={brand} clampLines={3} preview />
           </header>
 
@@ -51,10 +89,9 @@ export function PublicOrgSheetPreviewContent() {
               <div className="min-w-0">
                 <h2 className="font-heading text-base font-bold tracking-tight">Our Facilities</h2>
                 <span className="text-[11px] text-muted-foreground">
-                  {organization.facilityCount} locations
+                  {displayOrg.facilityCount} locations
                 </span>
               </div>
-              {/* Demo network is large enough that filters appear on the live page */}
               <OrgFacilityFilters
                 mode="button"
                 states={states}
@@ -72,8 +109,13 @@ export function PublicOrgSheetPreviewContent() {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
-              {previewFacilities.map((f) => (
-                <FacilityGridCard key={f.id} facility={f} density="compact" />
+              {previewFacilities.map((facility) => (
+                <FacilityGridCard
+                  key={facility.id}
+                  facility={facility}
+                  density="compact"
+                  imageLoading="eager"
+                />
               ))}
             </div>
           </section>

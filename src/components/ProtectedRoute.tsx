@@ -4,8 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SuperAdminAccessDenied } from "@/components/app/admin/SuperAdminSetupAlert";
 import { Loader2 } from "lucide-react";
 
+const ORG_OPTIONAL_PATHS = new Set([
+  "/setup-organization",
+  "/create-organization",
+  "/app/onboarding",
+]);
+
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading, isSuperAdmin } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -18,6 +24,11 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  const onOrgOptionalPath = ORG_OPTIONAL_PATHS.has(location.pathname);
+  if (!isSuperAdmin && !profile?.organization_id && !onOrgOptionalPath) {
+    return <Navigate to="/setup-organization" replace />;
   }
 
   return <>{children}</>;

@@ -46,7 +46,8 @@ export async function assertOrgBillingAdmin(accessToken) {
     .maybeSingle();
 
   if (profileError) {
-    return { ok: false, error: profileError.message, status: 500 };
+    console.error("[assertOrgBillingAdmin] profile lookup failed", profileError.message);
+    return { ok: false, error: "Could not verify billing permissions", status: 500 };
   }
 
   const organizationId = profile?.organization_id || null;
@@ -60,7 +61,8 @@ export async function assertOrgBillingAdmin(accessToken) {
     .eq("user_id", userId);
 
   if (rolesError) {
-    return { ok: false, error: rolesError.message, status: 500 };
+    console.error("[assertOrgBillingAdmin] roles lookup failed", rolesError.message);
+    return { ok: false, error: "Could not verify billing permissions", status: 500 };
   }
 
   const roleList = (roles || []).map((r) => r.role);

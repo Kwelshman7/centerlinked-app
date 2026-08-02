@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { bootstrapSuperAdmin, checkBootstrapAdminCandidate } from "@/lib/bootstrap-admin";
+import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { ensureProfile } from "@/lib/ensure-profile";
 import { claimPendingOrgInvite } from "@/lib/org-setup";
 
@@ -46,23 +48,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (loadRef.current) return loadRef.current;
 
     loadRef.current = (async () => {
-      await ensureProfile(authUser);
-      const [bootstrapped, bootstrapCandidate] = await Promise.all([
-        bootstrapSuperAdmin(authUser),
+      const email = authUser.email?.trim().toLowerCase() || "";
+      const [bootstrapCandidate, emailAllowed] = await Promise.all([
         checkBootstrapAdminCandidate(),
+        email ? isEmailAuthAllowed(email) : Promise.resolve(false),
       ]);
+
+      if (email && !bootstrapCandidate && !emailAllowed) {
+        toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
+          description: PERSONAL_EMAIL_BLOCKED_MESSAGE.description,
+        });
+        await supabase.auth.signOut();
+        setProfile(null);
+        setRoles([]);
+        setIsBootstrapAdmin(false);
+        return;
+      }
+
+      const profileReady = await ensureProfile(authUser);
+      if (!profileReady.ok) {
+        toast.error("Account setup incomplete", {
+          description: profileReady.error,
+        });
+      }
+
+      const bootstrapped = await bootstrapSuperAdmin(authUser);
       setIsBootstrapAdmin(bootstrapCandidate);
 
       try {
         await claimPendingOrgInvite();
-      } catch {
-        // Invite claim is best-effort; setup page retries if needed.
+      } catch (inviteError) {
+        console.warn(
+          "claimPendingOrgInvite failed:",
+          inviteError instanceof Error ? inviteError.message : inviteError,
+        );
       }
 
-      const [{ data: prof }, { data: rolesData }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", authUser.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", authUser.id),
-      ]);
+      const [{ data: prof, error: profError }, { data: rolesData, error: rolesError }] =
+        await Promise.all([
+          supabase.from("profiles").select("*").eq("user_id", authUser.id).maybeSingle(),
+          supabase.from("user_roles").select("role").eq("user_id", authUser.id),
+        ]);
+
+      if (profError || rolesError) {
+        console.warn("profile/roles load failed:", profError?.message || rolesError?.message);
+        toast.error("Could not load your account", {
+          description: "Refresh the page or sign in again if this continues.",
+        });
+      }
+
       let nextRoles = ((rolesData as { role: AppRole }[]) ?? []).map((r) => r.role);
       if (bootstrapped && !nextRoles.includes("super_admin")) {
         const { data: retryRoles } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id);

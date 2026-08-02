@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/app/ImageUploader";
 import { FacilityCardForm } from "@/components/app/facility/FacilityCardForm";
 import { FacilityDraft, emptyFacility } from "@/components/app/facility/facility-types";
+import { saveFacilityWithContracts } from "@/lib/save-facility";
 import {
   ArrowLeft,
   ArrowRight,
@@ -122,54 +123,16 @@ export default function Onboarding() {
         .eq("id", profile.organization_id);
       if (orgErr) throw orgErr;
 
-      // 2. Insert facilities in one batch, then contracts
+      // 2. Save each facility + contracts atomically via RPC
       const validFacilities = facilities.filter((f) => f.name.trim());
-      if (validFacilities.length) {
-        const { data: insertedFacs, error: facErr } = await supabase
-          .from("facilities")
-          .insert(
-            validFacilities.map((f) => ({
-              organization_id: profile.organization_id,
-              submitted_by: user.id,
-              name: f.name.trim(),
-              tagline: f.tagline || null,
-              address_line1: f.address_line1 || null,
-              city: f.city || null,
-              state: f.state || null,
-              zip: f.zip || null,
-              phone: f.phone || null,
-              website: f.website || null,
-              description: f.description || null,
-              capacity: f.capacity ? parseInt(f.capacity) : null,
-              levels_of_care: f.levels_of_care,
-              highlights: f.highlights,
-              population_served: f.population_served,
-              specializations: f.specializations,
-              image_urls: f.image_urls,
-              bd_contact_name: f.bd_contact_name || null,
-              bd_contact_phone: f.bd_contact_phone || null,
-              bd_contact_email: f.bd_contact_email || null,
-              hidden_from_org_page: f.hidden_from_org_page,
-              verification_status: "pending",
-            })),
-          )
-          .select("id");
-        if (facErr) throw facErr;
-
-        const allContracts = (insertedFacs ?? []).flatMap((row, idx) =>
-          (validFacilities[idx].contracts ?? [])
-            .filter((c) => c.payer_name.trim())
-            .map((c) => ({
-              facility_id: row.id,
-              payer_id: c.payer_id || null,
-              payer_name: c.payer_name.trim(),
-              in_network: c.in_network,
-            })),
-        );
-        if (allContracts.length) {
-          const { error: cErr } = await supabase.from("insurance_contracts").insert(allContracts);
-          if (cErr) throw cErr;
-        }
+      for (const facilityDraft of validFacilities) {
+        const result = await saveFacilityWithContracts({
+          organizationId: profile.organization_id,
+          draft: facilityDraft,
+          includeHidden: true,
+          contractsMode: "all",
+        });
+        if (!result.ok) throw new Error(result.error);
       }
 
       await refresh();

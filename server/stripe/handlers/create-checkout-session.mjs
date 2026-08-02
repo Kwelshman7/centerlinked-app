@@ -13,12 +13,14 @@ export async function handleCreateCheckoutSession(body, accessToken) {
 
   const stripe = getStripe();
   if (!stripe) {
-    return { status: 500, json: { error: "STRIPE_SECRET_KEY is not configured" } };
+    console.error("[create-checkout-session] STRIPE_SECRET_KEY is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const prices = stripePrices();
   if (!prices.membership) {
-    return { status: 500, json: { error: "STRIPE_PRICE_MEMBERSHIP is not configured" } };
+    console.error("[create-checkout-session] STRIPE_PRICE_MEMBERSHIP is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const plan = String(body?.plan || "membership").trim() === "done_for_you"
@@ -26,12 +28,14 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     : "membership";
 
   if (plan === "done_for_you" && !prices.setup) {
-    return { status: 500, json: { error: "STRIPE_PRICE_SETUP is not configured" } };
+    console.error("[create-checkout-session] STRIPE_PRICE_SETUP is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const admin = supabaseAdmin();
   if (!admin) {
-    return { status: 500, json: { error: "SUPABASE_SERVICE_ROLE is not configured" } };
+    console.error("[create-checkout-session] SUPABASE_SERVICE_ROLE is not configured");
+    return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
   const { data: org, error: orgError } = await admin
@@ -66,21 +70,39 @@ export async function handleCreateCheckoutSession(body, accessToken) {
 
   let customerId = org.stripe_customer_id || null;
   if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: auth.email || org.billing_email || undefined,
-      name: org.name,
-      metadata: {
-        organization_id: org.id,
+    const customer = await stripe.customers.create(
+      {
+        email: auth.email || org.billing_email || undefined,
+        name: org.name,
+        metadata: {
+          organization_id: org.id,
+        },
       },
-    });
+      { idempotencyKey: `cl_cust_${org.id}` },
+    );
     customerId = customer.id;
-    await admin
+    const { error: customerUpdateError } = await admin
       .from("organizations")
       .update({
         stripe_customer_id: customerId,
         billing_email: auth.email || org.billing_email || null,
       })
       .eq("id", org.id);
+
+    // Concurrent checkout may have won the unique customer index — re-read.
+    if (customerUpdateError) {
+      const { data: refreshed } = await admin
+        .from("organizations")
+        .select("stripe_customer_id")
+        .eq("id", org.id)
+        .maybeSingle();
+      if (refreshed?.stripe_customer_id) {
+        customerId = refreshed.stripe_customer_id;
+      } else {
+        console.error("[create-checkout-session] failed to persist stripe_customer_id", customerUpdateError.message);
+        return { status: 500, json: { error: "Could not start checkout" } };
+      }
+    }
   }
 
   const site = appSiteUrl();
@@ -88,6 +110,25 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     plan === "done_for_you"
       ? `centerlinked_dfy_${randomSuffix()}`
       : `centerlinked_membership_${randomSuffix()}`;
+
+  // Collapse double-submits within a 30s window for the same org/plan.
+  const checkoutIdempotencyKey = `cl_cs_${org.id}_${plan}_${Math.floor(Date.now() / 30_000)}`;
+
+  async function createSession(sessionParams) {
+    try {
+      return await stripe.checkout.sessions.create(sessionParams, {
+        idempotencyKey: checkoutIdempotencyKey,
+      });
+    } catch (err) {
+      if (String(err?.message || "").includes("integration_identifier")) {
+        delete sessionParams.integration_identifier;
+        return await stripe.checkout.sessions.create(sessionParams, {
+          idempotencyKey: `${checkoutIdempotencyKey}_noid`,
+        });
+      }
+      throw err;
+    }
+  }
 
   /** Already on membership — charge setup fee only as a one-time payment. */
   if (alreadySubscribed && plan === "done_for_you") {
@@ -110,17 +151,7 @@ export async function handleCreateCheckoutSession(body, accessToken) {
       integration_identifier: integrationId,
     };
 
-    let session;
-    try {
-      session = await stripe.checkout.sessions.create(sessionParams);
-    } catch (err) {
-      if (String(err?.message || "").includes("integration_identifier")) {
-        delete sessionParams.integration_identifier;
-        session = await stripe.checkout.sessions.create(sessionParams);
-      } else {
-        throw err;
-      }
-    }
+    const session = await createSession(sessionParams);
     return { status: 200, json: { url: session.url, id: session.id } };
   }
 
@@ -154,18 +185,6 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     integration_identifier: integrationId,
   };
 
-  let session;
-  try {
-    session = await stripe.checkout.sessions.create(sessionParams);
-  } catch (err) {
-    // Older accounts / API versions may reject integration_identifier.
-    if (String(err?.message || "").includes("integration_identifier")) {
-      delete sessionParams.integration_identifier;
-      session = await stripe.checkout.sessions.create(sessionParams);
-    } else {
-      throw err;
-    }
-  }
-
+  const session = await createSession(sessionParams);
   return { status: 200, json: { url: session.url, id: session.id } };
 }

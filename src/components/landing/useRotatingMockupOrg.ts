@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { supabase, supabaseConfigured } from "@/integrations/supabase/client";
 import type { FacilityGridCardData } from "@/components/FacilityGridCard";
 import { BANYAN_DEMO, BANYAN_GRID_FACILITIES } from "./banyanDemoData";
@@ -18,8 +18,9 @@ export type LandingMockupOrg = {
 };
 
 const PREFERRED_ORGS = ["flyland", "level up", "boca recovery"];
-const ROTATION_MS = 5_000;
+const ROTATION_MS = 5_500;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+const PREVIEW_FACILITY_COUNT = 4;
 
 const fallbackOrg: LandingMockupOrg = {
   id: "banyan-demo",
@@ -33,7 +34,7 @@ const fallbackOrg: LandingMockupOrg = {
     "A nationally recognized, Joint Commission-accredited network of treatment centers offering detox, residential, PHP, IOP, and mental health programs across the country.",
   tagline: "Deep roots. Lasting recovery.",
   facilityCount: BANYAN_DEMO.facilityCount,
-  facilities: BANYAN_GRID_FACILITIES,
+  facilities: BANYAN_GRID_FACILITIES.slice(0, PREVIEW_FACILITY_COUNT),
 };
 
 function safeColor(value: string | null, fallback: string) {
@@ -58,13 +59,46 @@ function priority(org: LandingMockupOrg) {
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }
 
+function orgImageUrls(org: LandingMockupOrg) {
+  const urls = [org.logoUrl];
+  for (const facility of org.facilities.slice(0, PREVIEW_FACILITY_COUNT)) {
+    const image = facility.image_urls?.[0];
+    if (image) urls.push(image);
+  }
+  return urls;
+}
+
+function preloadImages(urls: string[]) {
+  return Promise.all(
+    urls.map(
+      (src) =>
+        new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = src;
+        }),
+    ),
+  );
+}
+
 /**
  * Reads only public branding fields for the landing-page preview. The mockup
  * remains usable without a network connection by falling back to Banyan.
  */
-export function useRotatingMockupOrg() {
+export function useRotatingMockupOrg(active = true) {
   const [organizations, setOrganizations] = useState<LandingMockupOrg[]>([fallbackOrg]);
   const [index, setIndex] = useState(0);
+  const indexRef = useRef(0);
+  const organizationsRef = useRef(organizations);
+
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
+
+  useEffect(() => {
+    organizationsRef.current = organizations;
+  }, [organizations]);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -106,7 +140,7 @@ export function useRotatingMockupOrg() {
 
       const { data: facilities, error: facilitiesError } = await supabase
         .from("facilities")
-        .select("id, organization_id, name, city, state, image_urls, levels_of_care, short_description, tagline, description")
+        .select("id, organization_id, name, city, state, image_urls, levels_of_care")
         .in("organization_id", featured.map((org) => org.id))
         .eq("hidden_from_org_page", false)
         .order("name");
@@ -116,37 +150,41 @@ export function useRotatingMockupOrg() {
       const facilitiesByOrg = new Map<string, FacilityGridCardData[]>();
       for (const facility of facilities) {
         const cards = facilitiesByOrg.get(facility.organization_id) ?? [];
+        if (cards.length >= PREVIEW_FACILITY_COUNT) continue;
+
+        const firstImage =
+          (facility.image_urls ?? [])
+            .map((url) => safeLogoUrl(url))
+            .find((url): url is string => !!url) ?? null;
         cards.push({
           id: facility.id,
           name: facility.name,
           city: facility.city,
           state: facility.state,
-          image_urls: facility.image_urls.filter((url) => safeLogoUrl(url) !== null),
-          levels_of_care: facility.levels_of_care,
-          short_description: facility.short_description,
-          tagline: facility.tagline,
-          description: facility.description,
+          image_urls: firstImage ? [firstImage] : [],
+          levels_of_care: (facility.levels_of_care ?? []).slice(0, 3),
         });
         facilitiesByOrg.set(facility.organization_id, cards);
       }
 
-      // Do not show an organization's identity with another organization's cards.
       const completeFeatured = featured
         .map((org) => {
           const orgFacilities = facilitiesByOrg.get(org.id) ?? [];
           return {
             ...org,
             facilities: orgFacilities,
-            facilityCount: orgFacilities.length,
+            facilityCount: Math.max(org.facilityCount, orgFacilities.length),
           };
         })
         .filter((org) => org.facilities.length > 0);
 
       if (completeFeatured.length > 0) {
-        // Keep a local, branded fallback in the cycle so the preview still
-        // demonstrates rotation if only one preferred organization is public.
-        setOrganizations([...completeFeatured, fallbackOrg]);
-        setIndex(0);
+        const nextOrgs = [...completeFeatured, fallbackOrg];
+        await preloadImages(orgImageUrls(nextOrgs[0]));
+        if (!cancelled) {
+          setOrganizations(nextOrgs);
+          setIndex(0);
+        }
       }
     })();
 
@@ -156,17 +194,34 @@ export function useRotatingMockupOrg() {
   }, []);
 
   useEffect(() => {
-    if (organizations.length < 2) return;
+    if (!active || organizations.length < 2) return;
 
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mediaQuery.matches) return;
 
-    const timer = window.setInterval(() => {
-      setIndex((current) => (current + 1) % organizations.length);
-    }, ROTATION_MS);
+    let cancelled = false;
+    let timer = 0;
 
-    return () => window.clearInterval(timer);
-  }, [organizations.length]);
+    const schedule = () => {
+      timer = window.setTimeout(() => {
+        void (async () => {
+          if (cancelled) return;
+          const orgs = organizationsRef.current;
+          const next = (indexRef.current + 1) % orgs.length;
+          await preloadImages(orgImageUrls(orgs[next]));
+          if (cancelled) return;
+          setIndex(next);
+          schedule();
+        })();
+      }, ROTATION_MS);
+    };
+
+    schedule();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [active, organizations.length]);
 
   return useMemo(
     () => organizations[index] ?? organizations[0] ?? fallbackOrg,

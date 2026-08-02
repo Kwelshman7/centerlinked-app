@@ -20,6 +20,23 @@ interface FeatureCarouselProps {
   intervalMs?: number;
 }
 
+/** Lightweight stand-in so side phones keep shape without mounting heavy demos. */
+function PhoneSilhouette({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "relative mx-auto shrink-0 w-[210px] sm:w-[230px] md:w-[250px] aspect-[393/852] rounded-[2.75rem]",
+        "bg-gradient-to-b from-neutral-700 via-neutral-900 to-black",
+        "shadow-[0_24px_40px_-20px_rgba(0,0,0,0.45)] ring-1 ring-white/10",
+        className,
+      )}
+      aria-hidden
+    >
+      <div className="absolute inset-[3%] rounded-[2.3rem] bg-neutral-950/90" />
+    </div>
+  );
+}
+
 export function FeatureCarousel({
   slides,
   className,
@@ -64,7 +81,7 @@ export function FeatureCarousel({
       }}
     >
       <div className="relative w-full h-[420px] sm:h-[480px] md:h-[520px] flex items-center justify-center">
-        <div className="relative w-full h-full flex items-center justify-center [perspective:1200px]">
+        <div className="relative w-full h-full flex items-center justify-center">
           {slides.map((slide, index) => {
             const offset = index - currentIndex;
             const total = slides.length;
@@ -77,18 +94,15 @@ export function FeatureCarousel({
             return (
               <div
                 key={slide.id}
-                className="absolute flex items-center justify-center transition-all duration-500 ease-in-out"
+                className="absolute flex items-center justify-center will-change-transform"
                 style={{
-                  transform: `
-                    translateX(${pos * 42}%)
-                    scale(${isCenter ? 1 : isAdjacent ? 0.86 : 0.72})
-                    rotateY(${pos * -12}deg)
-                  `,
+                  transform: `translate3d(${pos * 48}%, 0, 0) scale(${isCenter ? 1 : 0.9})`,
                   zIndex: isCenter ? 10 : isAdjacent ? 5 : 1,
-                  opacity: isCenter ? 1 : isAdjacent ? 0.45 : 0,
-                  filter: isCenter ? "blur(0px)" : "blur(3px)",
+                  opacity: isCenter ? 1 : isAdjacent ? 0.4 : 0,
                   visibility: Math.abs(pos) > 1 ? "hidden" : "visible",
                   pointerEvents: isCenter ? "auto" : "none",
+                  transition:
+                    "transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 420ms ease",
                 }}
                 aria-hidden={!isCenter}
               >
@@ -98,11 +112,13 @@ export function FeatureCarousel({
                     isCenter && "drop-shadow-[0_28px_48px_-18px_rgba(0,48,72,0.45)]",
                   )}
                 >
-                  <div
-                    className="pointer-events-none absolute left-1/2 top-[78%] h-6 w-[70%] -translate-x-1/2 rounded-[100%] bg-black/15 blur-xl"
-                    aria-hidden
-                  />
-                  {slide.content}
+                  {isCenter ? (
+                    slide.content
+                  ) : isAdjacent ? (
+                    <div className="relative">
+                      <PhoneSilhouette />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             );
@@ -132,7 +148,7 @@ export function FeatureCarousel({
       </div>
 
       {active ? (
-        <div className="mt-8 sm:mt-10 max-w-lg mx-auto text-center space-y-2.5 px-2 transition-opacity duration-300">
+        <div className="mt-8 sm:mt-10 max-w-lg mx-auto text-center space-y-2.5 px-2">
           <p className="text-[11px] sm:text-xs font-bold tracking-[0.12em] uppercase text-primary">
             {active.label}
           </p>

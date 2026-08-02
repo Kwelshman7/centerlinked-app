@@ -6,7 +6,6 @@ import {
   Users,
   Shield,
   Settings,
-  Upload,
   LogOut,
   Search as SearchIcon,
   PanelLeftClose,
@@ -64,7 +63,6 @@ export function AppLayout() {
 
   const secondaryOrg: NavItem[] = [
     { to: "/app/members", label: "Members", icon: Users },
-    { to: "/app/facilities/import", label: "Import", icon: Upload },
   ];
 
   const secondaryAdmin: NavItem[] = adminLinks.map(({ to, label, icon, end }) => ({

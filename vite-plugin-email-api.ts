@@ -51,6 +51,11 @@ export function emailApiPlugin(): Plugin {
           const result = await handleSendWelcome(body, getBearerToken(req));
           sendJson(res, result.status, result.json);
         } catch (err) {
+          const code = (err as { code?: string })?.code;
+          if (code === "BODY_TOO_LARGE") {
+            sendJson(res, 413, { error: "Request body too large" });
+            return;
+          }
           console.error("[email-api] unexpected handler failure");
           sendJson(res, 500, { error: "Internal server error" });
         }

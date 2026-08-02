@@ -16,6 +16,8 @@ interface ImageUploaderProps {
   allowCover?: boolean;
   /** Label for the selected cover badge (default: Cover). */
   coverLabel?: string;
+  /** How previews are cropped. Use contain for logos. */
+  objectFit?: "cover" | "contain";
 }
 
 const BUCKET_RECOMMENDED_SIZES: Record<ImageUploaderProps["bucket"], string> = {
@@ -36,6 +38,7 @@ export function ImageUploader({
   recommendedSize,
   allowCover = bucket === "facility-images",
   coverLabel = "Cover",
+  objectFit = "cover",
 }: ImageUploaderProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -87,8 +90,17 @@ export function ImageUploader({
         {value.map((url, idx) => {
           const isCover = allowCover && idx === 0;
           return (
-            <div key={url} className="relative group aspect-square rounded-lg overflow-hidden border border-border">
-              <img src={url} alt="" className="w-full h-full object-cover" />
+            <div
+              key={url}
+              className={`relative group aspect-square rounded-lg overflow-hidden border border-border ${
+                objectFit === "contain" ? "bg-white" : ""
+              }`}
+            >
+              <img
+                src={url}
+                alt=""
+                className={`w-full h-full ${objectFit === "contain" ? "object-contain p-2" : "object-cover"}`}
+              />
               {isCover && (
                 <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground text-[10px] font-semibold flex items-center gap-1 shadow">
                   <Star className="h-3 w-3 fill-current" /> {coverLabel}

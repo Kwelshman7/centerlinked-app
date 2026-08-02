@@ -32,6 +32,8 @@ interface FacilityGridCardProps {
   density?: FacilityGridDensity;
   /** Split image/content side-by-side on larger screens (best for a single facility). */
   layout?: "stack" | "split";
+  /** Prefer eager for landing mockups so cards don't paint in piece by piece. */
+  imageLoading?: "lazy" | "eager";
 }
 
 /** Map facility count → card richness for public org sheets. */
@@ -46,6 +48,7 @@ export function FacilityGridCard({
   href,
   density = "compact",
   layout = "stack",
+  imageLoading = "lazy",
 }: FacilityGridCardProps) {
   const stateLabel = f.state
     ? stateDisplayName(resolveStateCode(f.state) ?? f.state)
@@ -83,6 +86,7 @@ export function FacilityGridCard({
         insuranceStatus={f.insurance_status}
         featuredPayer={f.featured_payer}
         split={layout === "split"}
+        imageLoading={imageLoading}
       />
     ) : density === "comfortable" ? (
       <ComfortableBody
@@ -96,6 +100,7 @@ export function FacilityGridCard({
         population={population}
         metaLimit={metaLimit}
         featuredPayer={f.featured_payer}
+        imageLoading={imageLoading}
       />
     ) : (
       <CompactBody
@@ -104,6 +109,7 @@ export function FacilityGridCard({
         locationLine={locationLine}
         levels={levels}
         levelLimit={levelLimit}
+        imageLoading={imageLoading}
       />
     );
 
@@ -124,16 +130,24 @@ function CompactBody({
   locationLine,
   levels,
   levelLimit,
+  imageLoading,
 }: {
   name: string;
   imageUrl: string | null;
   locationLine: string;
   levels: string[];
   levelLimit: number;
+  imageLoading: "lazy" | "eager";
 }) {
   return (
     <div className="flex flex-col h-full">
-      <FacilityImage imageUrl={imageUrl} name={name} aspect="aspect-[4/3]" iconClass="h-7 w-7" />
+      <FacilityImage
+        imageUrl={imageUrl}
+        name={name}
+        aspect="aspect-[4/3]"
+        iconClass="h-7 w-7"
+        imageLoading={imageLoading}
+      />
       <div className="px-2.5 py-2 space-y-1.5 flex-1 flex flex-col">
         <div className="space-y-0.5">
           <p className="font-semibold text-xs sm:text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors">
@@ -160,6 +174,7 @@ function ComfortableBody({
   population,
   metaLimit,
   featuredPayer,
+  imageLoading,
 }: {
   name: string;
   imageUrl: string | null;
@@ -171,10 +186,17 @@ function ComfortableBody({
   population: string[];
   metaLimit: number;
   featuredPayer?: string | null;
+  imageLoading: "lazy" | "eager";
 }) {
   return (
     <div className="flex flex-col h-full">
-      <FacilityImage imageUrl={imageUrl} name={name} aspect="aspect-[16/9]" iconClass="h-8 w-8" />
+      <FacilityImage
+        imageUrl={imageUrl}
+        name={name}
+        aspect="aspect-[16/9]"
+        iconClass="h-8 w-8"
+        imageLoading={imageLoading}
+      />
       <div className="p-3.5 sm:p-4 space-y-2.5 flex-1 flex flex-col">
         <div className="space-y-1">
           <p className="font-semibold text-[15px] sm:text-base leading-snug line-clamp-2 group-hover:text-primary transition-colors">
@@ -230,6 +252,7 @@ function ShowcaseBody({
   insuranceStatus,
   featuredPayer,
   split,
+  imageLoading,
 }: {
   name: string;
   imageUrl: string | null;
@@ -245,6 +268,7 @@ function ShowcaseBody({
   insuranceStatus?: string | null;
   featuredPayer?: string | null;
   split?: boolean;
+  imageLoading: "lazy" | "eager";
 }) {
   const focusItems = [...specializations, ...highlights].filter(Boolean);
 
@@ -346,6 +370,7 @@ function ShowcaseBody({
           name={name}
           aspect="aspect-[16/9] md:aspect-auto md:h-full md:min-h-[320px]"
           iconClass="h-12 w-12"
+          imageLoading={imageLoading}
         />
         {content}
       </div>
@@ -359,6 +384,7 @@ function ShowcaseBody({
         name={name}
         aspect="aspect-[16/9] sm:aspect-[5/3]"
         iconClass="h-10 w-10"
+        imageLoading={imageLoading}
       />
       {content}
     </div>
@@ -370,11 +396,13 @@ function FacilityImage({
   name,
   aspect,
   iconClass,
+  imageLoading = "lazy",
 }: {
   imageUrl: string | null;
   name: string;
   aspect: string;
   iconClass: string;
+  imageLoading?: "lazy" | "eager";
 }) {
   return (
     <div className={cn(aspect, "bg-muted overflow-hidden shrink-0")}>
@@ -382,7 +410,8 @@ function FacilityImage({
         <img
           src={imageUrl}
           alt={name}
-          loading="lazy"
+          loading={imageLoading}
+          decoding={imageLoading === "eager" ? "sync" : "async"}
           className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
         />
       ) : (

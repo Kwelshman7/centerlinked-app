@@ -1,0 +1,21 @@
+-- Production security apply order (review checklist)
+-- Apply each file with:
+--   npx supabase db query --linked -f supabase/<file>.sql
+--
+-- 1. revoke-dangerous-grants.sql     -- CRITICAL: revoke run_sql from clients
+-- 2. rls-tenant-hardening.sql        -- tighten organizations/profiles SELECT
+-- 3. save-facility-with-contracts.sql
+-- 4. stripe-webhook-events.sql
+-- 5. approved-personal-emails.sql
+-- 6. security-hardening.sql
+-- 7. access-request-intake-hardening.sql
+--
+-- Live policy inventory snapshot:
+--   supabase/migrations/00000000000000_rls_policy_snapshot.json (75 policies)
+--
+-- After deploy, configure Supabase Auth Hook → Before User Created:
+--   HTTPS URL: https://www.centerlinked.com/api/auth-before-user-created
+--   Secret env: BEFORE_USER_CREATED_HOOK_SECRET
+--
+-- This file is documentation-only (no executable statements).
+SELECT 1;

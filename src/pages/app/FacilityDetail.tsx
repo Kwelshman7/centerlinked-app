@@ -122,8 +122,8 @@ export default function FacilityDetail() {
       if (upErr) throw upErr;
       toast.success("Public link generated");
       loadFacility();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not generate link");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not generate link");
     } finally {
       setFixingSlug(false);
     }
@@ -228,6 +228,8 @@ export default function FacilityDetail() {
                 </Button>
                 <EditInsuranceContractsDialog
                   facilityId={facility.id}
+                  organizationId={facility.organization_id}
+                  facilityName={facility.name}
                   contracts={contracts.map((c) => ({
                     id: c.id,
                     payer_id: c.payer_id,

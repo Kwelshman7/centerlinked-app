@@ -1,5 +1,11 @@
 import { handleBillingOverview } from "../server/stripe/handlers/billing-overview.mjs";
 
+export const config = {
+  api: {
+    bodyParser: { sizeLimit: "16kb" },
+  },
+};
+
 function getBearerToken(req) {
   const header = req.headers?.authorization || "";
   const match = String(header).match(/^Bearer\s+(.+)$/i);
@@ -25,6 +31,6 @@ export default async function handler(req, res) {
     res.status(result.status).json(result.json);
   } catch (err) {
     console.error("[api/billing-overview]", err);
-    res.status(500).json({ error: err?.message || "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 }

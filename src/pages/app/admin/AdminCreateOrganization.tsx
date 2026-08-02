@@ -18,12 +18,13 @@ import {
 } from "lucide-react";
 import {
   LEVELS_OF_CARE, HIGHLIGHT_OPTIONS, POPULATION_OPTIONS,
-  SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS,
+  SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS, emptyFacility,
 } from "@/components/app/facility/facility-types";
 import { fileToBase64 } from "@/lib/files";
-import { buildInsuranceContractRows } from "@/lib/match-payer";
+import { buildFacilityContractDrafts } from "@/lib/match-payer";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
 import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
+import { saveFacilityWithContracts } from "@/lib/save-facility";
 
 type Stage = "create-org" | "add-facilities" | "done";
 
@@ -253,14 +254,15 @@ export default function AdminCreateOrganization() {
         body: { pdf_base64, filename: file.name },
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const facilities = ((data as any)?.facilities ?? []) as PdfFacility[];
+      const parseResult = data as { error?: string; facilities?: PdfFacility[] } | null;
+      if (parseResult?.error) throw new Error(parseResult.error);
+      const facilities = parseResult?.facilities ?? [];
       if (!facilities.length) throw new Error("No facilities detected in the PDF");
       setParsedFacilities(facilities);
       toast.success(`Extracted ${facilities.length} facility${facilities.length === 1 ? "" : "s"}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e?.message ?? "Couldn't read that PDF");
+      toast.error(e instanceof Error ? e.message : "Couldn't read that PDF");
       setPdfFilename("");
     } finally {
       setPdfBusy(false);
@@ -274,45 +276,42 @@ export default function AdminCreateOrganization() {
     try {
       const payers = await loadApprovedPayers();
       for (const f of parsedFacilities) {
-        const { data: inserted, error } = await supabase
-          .from("facilities")
-          .insert({
-            organization_id: orgId,
-            submitted_by: user.id,
-            name: f.name,
-            tagline: f.tagline ?? null,
-            address_line1: f.address_line1 ?? null,
-            city: f.city ?? null,
-            state: f.state ?? null,
-            zip: f.zip ?? null,
-            phone: f.phone ?? null,
-            website: f.website ?? null,
-            description: f.description ?? null,
-            capacity: f.capacity ?? null,
-            levels_of_care: f.levels_of_care ?? [],
-            highlights: f.highlights ?? [],
-            bd_contact_name: f.bd_contact_name ?? null,
-            bd_contact_phone: f.bd_contact_phone ?? null,
-            bd_contact_email: f.bd_contact_email ?? null,
-            image_urls: [],
-          })
-          .select("id, slug")
-          .single();
-        if (error || !inserted) throw error ?? new Error("Insert failed");
-
-        const contracts = [
-          ...buildInsuranceContractRows(inserted.id, f.payers_in_network ?? [], true, payers),
-          ...buildInsuranceContractRows(inserted.id, f.payers_out_of_network ?? [], false, payers),
-        ];
-        if (contracts.length) await supabase.from("insurance_contracts").insert(contracts);
-        if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));
+        const draft = {
+          ...emptyFacility(),
+          name: f.name,
+          tagline: f.tagline ?? "",
+          address_line1: f.address_line1 ?? "",
+          city: f.city ?? "",
+          state: f.state ?? "",
+          zip: f.zip ?? "",
+          phone: f.phone ?? "",
+          website: f.website ?? "",
+          description: f.description ?? "",
+          capacity: f.capacity != null ? String(f.capacity) : "",
+          levels_of_care: f.levels_of_care ?? [],
+          highlights: f.highlights ?? [],
+          bd_contact_name: f.bd_contact_name ?? "",
+          bd_contact_phone: f.bd_contact_phone ?? "",
+          bd_contact_email: f.bd_contact_email ?? "",
+          contracts: [
+            ...buildFacilityContractDrafts(f.payers_in_network ?? [], true, payers),
+            ...buildFacilityContractDrafts(f.payers_out_of_network ?? [], false, payers),
+          ],
+        };
+        const result = await saveFacilityWithContracts({
+          organizationId: orgId,
+          draft,
+          contractsMode: "all",
+        });
+        if (!result.ok) throw new Error(result.error);
+        if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
       }
       setCreatedFacilityUrls(urls);
       setStage("done");
       toast.success("Facilities created");
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e?.message ?? "Couldn't save facilities");
+      toast.error(e instanceof Error ? e.message : "Couldn't save facilities");
     } finally {
       setCommitting(false);
     }
@@ -347,50 +346,48 @@ export default function AdminCreateOrganization() {
     try {
       const payers = await loadApprovedPayers();
       for (const f of manualFacilities) {
-        const { data: inserted, error } = await supabase
-          .from("facilities")
-          .insert({
-            organization_id: orgId,
-            submitted_by: user.id,
-            name: f.name.trim(),
-            tagline: f.tagline.trim() || null,
-            address_line1: f.address_line1.trim() || null,
-            city: f.city.trim() || null,
-            state: f.state.trim() || null,
-            zip: f.zip.trim() || null,
-            phone: f.phone.trim() || null,
-            website: f.website.trim() || null,
-            description: f.description.trim() || null,
-            capacity: f.capacity ? parseInt(f.capacity, 10) : null,
-            levels_of_care: f.levels_of_care,
-            highlights: f.highlights,
-            population_served: f.population_served,
-            specializations: f.specializations,
-            accreditations: f.accreditations,
-            bd_contact_name: f.bd_contact_name.trim() || null,
-            bd_contact_phone: f.bd_contact_phone.trim() || null,
-            bd_contact_email: f.bd_contact_email.trim() || null,
-            image_urls: f.image_urls,
-          })
-          .select("id, slug")
-          .single();
-        if (error || !inserted) throw error ?? new Error("Insert failed");
-
         const ins = f.payers_in_network.split(",").map((s) => s.trim()).filter(Boolean);
         const oon = f.payers_out_of_network.split(",").map((s) => s.trim()).filter(Boolean);
-        const contracts = [
-          ...buildInsuranceContractRows(inserted.id, ins, true, payers),
-          ...buildInsuranceContractRows(inserted.id, oon, false, payers),
-        ];
-        if (contracts.length) await supabase.from("insurance_contracts").insert(contracts);
-        if (inserted.slug) urls.push(programPublicPath(inserted.slug, orgSlug));
+        const draft = {
+          ...emptyFacility(),
+          name: f.name.trim(),
+          tagline: f.tagline.trim(),
+          address_line1: f.address_line1.trim(),
+          city: f.city.trim(),
+          state: f.state.trim(),
+          zip: f.zip.trim(),
+          phone: f.phone.trim(),
+          website: f.website.trim(),
+          description: f.description.trim(),
+          capacity: f.capacity,
+          levels_of_care: f.levels_of_care,
+          highlights: f.highlights,
+          population_served: f.population_served,
+          specializations: f.specializations,
+          accreditations: f.accreditations,
+          bd_contact_name: f.bd_contact_name.trim(),
+          bd_contact_phone: f.bd_contact_phone.trim(),
+          bd_contact_email: f.bd_contact_email.trim(),
+          image_urls: f.image_urls,
+          contracts: [
+            ...buildFacilityContractDrafts(ins, true, payers),
+            ...buildFacilityContractDrafts(oon, false, payers),
+          ],
+        };
+        const result = await saveFacilityWithContracts({
+          organizationId: orgId,
+          draft,
+          contractsMode: "all",
+        });
+        if (!result.ok) throw new Error(result.error);
+        if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
       }
       setCreatedFacilityUrls(urls);
       setStage("done");
       toast.success(`${manualFacilities.length} facility${manualFacilities.length === 1 ? "" : "s"} created`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e?.message ?? "Couldn't save facilities");
+      toast.error(e instanceof Error ? e.message : "Couldn't save facilities");
     } finally {
       setSavingManual(false);
     }
