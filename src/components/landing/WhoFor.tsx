@@ -99,14 +99,15 @@ export function WhoFor() {
         </div>
       </section>
 
-      {/* Shared handshake band — one image spanning both story sections */}
-      <div
+      {/* When to send — desktop-only handshake photo, blends into the next section */}
+      <section
+        id="when-to-send"
         ref={momentsReveal.ref}
-        className="relative overflow-hidden bg-background"
+        className="relative overflow-hidden bg-background scroll-mt-20"
       >
-        {/* Full-height photo: behind content on mobile, right half on desktop */}
+        {/* Desktop photo only — sits on the right and fades into the section below */}
         <div
-          className="pointer-events-none absolute inset-0 lg:left-[38%] xl:left-[36%]"
+          className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58%] lg:block xl:w-[56%]"
           aria-hidden
         >
           <img
@@ -114,160 +115,134 @@ export function WhoFor() {
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-[68%_center] scale-[1.02]"
           />
-          {/* Mobile: soft wash so cards stay readable */}
+          {/* Soft left blend into content */}
           <div
-            className="absolute inset-0 lg:hidden"
+            className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, hsl(var(--background) / 0.82) 0%, hsl(var(--background) / 0.64) 40%, hsl(var(--background) / 0.72) 70%, hsl(var(--background) / 0.88) 100%)",
+                "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.78) 8%, hsl(var(--background) / 0.32) 24%, transparent 42%)",
             }}
           />
-          {/* Desktop: blend photo into left content column */}
+          {/* Top edge soften */}
           <div
-            className="absolute inset-0 hidden lg:block"
-            style={{
-              background:
-                "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.72) 10%, hsl(var(--background) / 0.28) 26%, transparent 46%)",
-            }}
-          />
-          {/* Soft top / bottom edge blends into neighboring sections */}
-          <div
-            className="absolute inset-x-0 top-0 h-20 sm:h-28"
+            className="absolute inset-x-0 top-0 h-24"
             style={{
               background:
                 "linear-gradient(to bottom, hsl(var(--background)) 0%, transparent 100%)",
             }}
           />
+          {/* Bottom blend into the following section */}
           <div
-            className="absolute inset-x-0 bottom-0 h-24 sm:h-32"
+            className="absolute inset-x-0 bottom-0 h-40 xl:h-48"
             style={{
               background:
-                "linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)",
+                "linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.72) 35%, transparent 100%)",
             }}
           />
         </div>
 
-        {/* Left content column spanning both sections */}
-        <div className="relative z-10 mx-auto w-full max-w-xl px-4 sm:px-6 lg:mx-0 lg:ml-[max(1.5rem,calc((100%-1120px)/2))] lg:w-[min(100%,540px)] lg:max-w-none xl:ml-[max(2rem,calc((100%-1200px)/2))] xl:w-[560px]">
-          {/* When to send */}
-          <section
-            id="when-to-send"
-            className="scroll-mt-20 py-14 sm:py-16 lg:py-20"
-          >
-            <div className="space-y-8 sm:space-y-10">
-              <div className="space-y-4">
-                <SectionBadge
-                  icon={Send}
-                  className="border-primary/25 bg-primary/[0.06] text-primary"
-                >
-                  When to send your link
-                </SectionBadge>
-                <DisplayHeading
-                  as="h2"
-                  className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
-                >
-                  Never miss an opportunity to build a new relationship.
-                </DisplayHeading>
-                <p className="max-w-md text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  One link connects your partners with everything your
-                  organization has to offer.
-                </p>
-              </div>
+        <div className="relative z-10 container py-14 sm:py-16 lg:py-20 lg:pb-28">
+          <div className="max-w-xl space-y-8 sm:space-y-10 lg:w-[min(100%,540px)] xl:w-[560px]">
+            <div className="space-y-4">
+              <SectionBadge
+                icon={Send}
+                className="border-primary/25 bg-primary/[0.06] text-primary"
+              >
+                When to send your link
+              </SectionBadge>
+              <DisplayHeading
+                as="h2"
+                className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+              >
+                Never miss an opportunity to build a new relationship.
+              </DisplayHeading>
+              <p className="max-w-md text-sm sm:text-base text-muted-foreground leading-relaxed">
+                One link connects your partners with everything your
+                organization has to offer.
+              </p>
+            </div>
 
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
-                {moments.map((moment, i) => {
-                  const Icon = moment.icon;
-                  return (
-                    <li
-                      key={moment.title}
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
+              {moments.map((moment, i) => {
+                const Icon = moment.icon;
+                return (
+                  <li
+                    key={moment.title}
+                    className={cn(
+                      "opacity-0",
+                      momentsReveal.inView && "animate-fade-up",
+                    )}
+                    style={
+                      momentsReveal.inView
+                        ? {
+                            animationDelay: `${120 + i * 80}ms`,
+                            animationFillMode: "forwards",
+                          }
+                        : undefined
+                    }
+                  >
+                    <article
                       className={cn(
-                        "opacity-0",
-                        momentsReveal.inView && "animate-fade-up",
+                        "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
+                        "px-4 py-3.5 sm:px-4 sm:py-4",
+                        "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
+                        "transition-[transform,box-shadow] duration-300",
+                        "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
                       )}
-                      style={
-                        momentsReveal.inView
-                          ? {
-                              animationDelay: `${120 + i * 80}ms`,
-                              animationFillMode: "forwards",
-                            }
-                          : undefined
-                      }
                     >
-                      <article
-                        className={cn(
-                          "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
-                          "px-4 py-3.5 sm:px-4 sm:py-4",
-                          "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
-                          "transition-[transform,box-shadow] duration-300",
-                          "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <Icon className="h-4 w-4" aria-hidden />
-                          </span>
-                          <div className="min-w-0 flex-1 pt-0.5">
-                            <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug">
-                              {moment.title}
-                            </h3>
-                            <p className="mt-1 text-xs sm:text-[13px] text-muted-foreground leading-snug">
-                              {moment.body}
-                            </p>
-                          </div>
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Icon className="h-4 w-4" aria-hidden />
+                        </span>
+                        <div className="min-w-0 flex-1 pt-0.5">
+                          <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug">
+                            {moment.title}
+                          </h3>
+                          <p className="mt-1 text-xs sm:text-[13px] text-muted-foreground leading-snug">
+                            {moment.body}
+                          </p>
                         </div>
-                      </article>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </section>
-
-          {/* Soft mid-band blend between the two stories */}
-          <div
-            className="relative h-10 sm:h-12 lg:h-14"
-            aria-hidden
-          >
-            <div
-              className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2"
-              style={{
-                background:
-                  "linear-gradient(90deg, transparent 0%, hsl(var(--border) / 0.7) 20%, hsl(var(--border) / 0.7) 80%, transparent 100%)",
-              }}
-            />
+                      </div>
+                    </article>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
-
-          {/* What your link answers */}
-          <section
-            id="what-link-answers"
-            className="scroll-mt-20 pb-16 pt-2 sm:pb-20 sm:pt-3 lg:pb-24 lg:pt-4"
-          >
-            <div className="space-y-7 sm:space-y-8">
-              <div className="space-y-3.5 sm:space-y-4">
-                <SectionBadge
-                  icon={ListChecks}
-                  className="border-primary/25 bg-primary/[0.06] text-primary"
-                >
-                  What your link answers
-                </SectionBadge>
-                <DisplayHeading
-                  as="h2"
-                  className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
-                >
-                  Everything your referral partners need
-                </DisplayHeading>
-                <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Case managers refer to the centers that make their jobs
-                  easier. That all starts with having access to the most up to
-                  date information about your program.
-                </p>
-              </div>
-
-              <LinkAnswersReveal />
-            </div>
-          </section>
         </div>
-      </div>
+      </section>
+
+      {/* What your link answers — separate section; photo fades out above it on desktop */}
+      <section
+        id="what-link-answers"
+        className="relative bg-background scroll-mt-20 py-14 sm:py-16 lg:py-20"
+      >
+        <div className="container">
+          <div className="mx-auto max-w-3xl space-y-7 sm:space-y-8 lg:mx-0 lg:max-w-xl xl:max-w-[560px]">
+            <div className="space-y-3.5 sm:space-y-4">
+              <SectionBadge
+                icon={ListChecks}
+                className="border-primary/25 bg-primary/[0.06] text-primary"
+              >
+                What your link answers
+              </SectionBadge>
+              <DisplayHeading
+                as="h2"
+                className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+              >
+                Everything your referral partners need
+              </DisplayHeading>
+              <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
+                Case managers refer to the centers that make their jobs
+                easier. That all starts with having access to the most up to
+                date information about your program.
+              </p>
+            </div>
+
+            <LinkAnswersReveal />
+          </div>
+        </div>
+      </section>
     </>
   );
 }
