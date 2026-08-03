@@ -19,14 +19,13 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
-import { BANYAN_DEMO, BANYAN_GRID_FACILITIES } from "./banyanDemoData";
 import logoPalmHarbor from "@/assets/logo-palm-harbor.png";
+import logoCoastalBridge from "@/assets/logo-coastal-bridge.png";
+import logoEverglade from "@/assets/logo-everglade.png";
 
 const PAYER = "Aetna";
 const STATE_LABEL = "Florida";
 const STATE_CODE = "FL";
-
-const FL_MATCHES = BANYAN_GRID_FACILITIES.filter((f) => f.state === "FL").slice(0, 3);
 
 type DemoFacility = {
   name: string;
@@ -44,35 +43,51 @@ type DemoOrgResult = {
   facilities: DemoFacility[];
 };
 
+/** Fictional example programs — never live customer logos. */
 const SEARCH_RESULTS: DemoOrgResult[] = [
   {
-    org_name: BANYAN_DEMO.orgName,
-    hq: BANYAN_DEMO.hqLabel,
-    logo: BANYAN_DEMO.logo,
+    org_name: "Palm Harbor Health Group",
+    hq: "Boca Raton, FL",
+    logo: logoPalmHarbor,
     preferred: true,
     inNetwork: true,
-    facilities: FL_MATCHES.map((f) => ({
-      name: f.name,
-      place: [f.city, f.state].filter(Boolean).join(", "),
-      level: f.levels_of_care?.[0] ?? "Residential",
-      payer: PAYER,
-    })),
-  },
-  {
-    org_name: "Palm Harbor Recovery",
-    hq: "Palm Harbor, FL",
-    logo: logoPalmHarbor,
     facilities: [
       {
-        name: "Palm Harbor Detox",
-        place: "Palm Harbor, FL",
+        name: "Palm Harbor Recovery",
+        place: "Boca Raton, FL",
         level: "Detox",
         payer: PAYER,
       },
       {
-        name: "Palm Harbor Residential",
-        place: "Palm Harbor, FL",
+        name: "Palm Harbor PHP",
+        place: "Boca Raton, FL",
+        level: "PHP",
+        payer: PAYER,
+      },
+    ],
+  },
+  {
+    org_name: "Coastal Bridge Partners",
+    hq: "Delray Beach, FL",
+    logo: logoCoastalBridge,
+    facilities: [
+      {
+        name: "Coastal Bridge Wellness",
+        place: "Delray Beach, FL",
         level: "Residential",
+        payer: PAYER,
+      },
+    ],
+  },
+  {
+    org_name: "Everglade Health Network",
+    hq: "Naples, FL",
+    logo: logoEverglade,
+    facilities: [
+      {
+        name: "Everglade Behavioral Health",
+        place: "Naples, FL",
+        level: "PHP",
         payer: PAYER,
       },
     ],

@@ -11,13 +11,10 @@ import {
 } from "lucide-react";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
-import {
-  BANYAN_DEMO,
-  BANYAN_GRID_FACILITIES,
-} from "./banyanDemoData";
+import { DEMO_GRID_FACILITIES, DEMO_ORG } from "./demoOrgData";
 import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 
-const BRAND = BANYAN_DEMO.brandColor;
+const BRAND = DEMO_ORG.brandColor;
 
 const staleReasons = [
   {
@@ -38,7 +35,7 @@ const staleReasons = [
   },
 ];
 
-const ONE_PAGER_FACILITIES = BANYAN_GRID_FACILITIES.slice(0, 6).map((f) => {
+const ONE_PAGER_FACILITIES = DEMO_GRID_FACILITIES.slice(0, 4).map((f) => {
   const state = f.state
     ? stateDisplayName(resolveStateCode(f.state) ?? f.state)
     : "";
@@ -112,7 +109,7 @@ function OnePagerPdfMockup() {
 
       <article
         className="relative rounded-[3px] border border-black/10 bg-white overflow-hidden ring-1 ring-black/5"
-        aria-label="Sample outdated Banyan Treatment Centers referral one-pager PDF"
+        aria-label="Sample outdated Northbend Recovery referral one-pager PDF"
         style={{
           boxShadow:
             "0 28px 56px -14px rgba(15, 23, 42, 0.32), 0 10px 20px -10px rgba(15, 23, 42, 0.2)",
@@ -123,7 +120,7 @@ function OnePagerPdfMockup() {
           {/* Hero — logo left, photo reads cleanly on the right */}
           <div className="relative h-[72px] sm:h-[88px] overflow-hidden">
             <img
-              src={BANYAN_DEMO.cover}
+              src={DEMO_ORG.cover}
               alt=""
               className="absolute inset-0 h-full w-full object-cover object-[70%_center]"
               draggable={false}
@@ -138,8 +135,8 @@ function OnePagerPdfMockup() {
             <div className="absolute inset-0 px-3 sm:px-3.5 flex items-center gap-2.5 sm:gap-3">
               <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-md bg-white p-1 shadow-md border border-white/95 shrink-0">
                 <img
-                  src={BANYAN_DEMO.logo}
-                  alt={BANYAN_DEMO.orgName}
+                  src={DEMO_ORG.logo}
+                  alt={DEMO_ORG.orgName}
                   className="h-full w-full object-contain"
                   draggable={false}
                 />
@@ -149,10 +146,10 @@ function OnePagerPdfMockup() {
                   Referral one-pager
                 </p>
                 <h3 className="font-heading text-[13px] sm:text-[15px] font-bold text-white leading-tight truncate drop-shadow-sm">
-                  {BANYAN_DEMO.orgName}
+                  {DEMO_ORG.orgName}
                 </h3>
                 <p className="mt-0.5 text-[8px] text-white/80 truncate">
-                  {BANYAN_DEMO.facilityCount} locations · HQ {BANYAN_DEMO.hqLabel}
+                  {DEMO_ORG.facilityCount} locations · HQ {DEMO_ORG.hqLabel}
                 </p>
               </div>
             </div>
@@ -160,8 +157,8 @@ function OnePagerPdfMockup() {
 
           <div className="px-3 sm:px-3.5 pt-2.5 sm:pt-3 pb-3 sm:pb-3.5 space-y-2.5">
             <p className="text-[9px] sm:text-[9.5px] text-[#3d4a42] leading-snug">
-              Joint Commission–accredited network offering detox, residential, PHP, IOP, and
-              mental health programs nationwide.
+              Joint Commission–accredited continuum offering detox, residential, PHP, and IOP
+              for substance use and co-occurring mental health.
             </p>
 
             <section>
@@ -197,7 +194,7 @@ function OnePagerPdfMockup() {
                   Facilities
                 </p>
                 <p className="text-[7.5px] font-medium text-[#6b7280]">
-                  Showing 6 of {BANYAN_DEMO.facilityCount}
+                  {ONE_PAGER_FACILITIES.length} locations
                 </p>
               </div>
               <ul className="grid grid-cols-1 gap-1">
@@ -238,10 +235,6 @@ function OnePagerPdfMockup() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-1 text-[7.5px] text-[#6b7280] italic">
-                +{BANYAN_DEMO.facilityCount - ONE_PAGER_FACILITIES.length} additional locations
-                nationwide
-              </p>
             </section>
 
             <div className="grid grid-cols-2 gap-2">
@@ -283,10 +276,10 @@ function OnePagerPdfMockup() {
                   BD contact
                 </p>
                 <p className="text-[9.5px] sm:text-[10px] font-bold leading-tight">
-                  {BANYAN_DEMO.userFullName}
+                  {DEMO_ORG.userFullName}
                 </p>
                 <p className="text-[8px] text-[#5b6560] leading-tight mt-0.5">
-                  {BANYAN_DEMO.userTitle}
+                  {DEMO_ORG.userTitle}
                 </p>
                 <div className="mt-1.5 space-y-0.5">
                   <p className="flex items-center gap-1 text-[8px] text-[#14201a]">
@@ -295,7 +288,7 @@ function OnePagerPdfMockup() {
                       style={{ color: BRAND }}
                       aria-hidden
                     />
-                    {BANYAN_DEMO.userPhone}
+                    {DEMO_ORG.userPhone}
                   </p>
                   <p className="flex items-center gap-1 text-[7.5px] sm:text-[8px] text-[#14201a] min-w-0">
                     <Mail
@@ -303,7 +296,7 @@ function OnePagerPdfMockup() {
                       style={{ color: BRAND }}
                       aria-hidden
                     />
-                    <span className="truncate">{BANYAN_DEMO.userEmail}</span>
+                    <span className="truncate">{DEMO_ORG.userEmail}</span>
                   </p>
                 </div>
               </section>

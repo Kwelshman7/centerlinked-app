@@ -23,7 +23,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
-import { BANYAN_DEMO, FEATURED_FACILITY } from "./banyanDemoData";
+import { DEMO_ORG, FEATURED_FACILITY } from "./demoOrgData";
 
 const navPrimary = [
   { label: "Home", icon: LayoutDashboard, active: true },
@@ -86,8 +86,8 @@ export function FacilityManageDesktopPreview() {
         </nav>
 
         <div className="border-t border-border/50 px-2.5 py-2.5">
-          <p className="text-[9px] font-medium truncate">{BANYAN_DEMO.userFullName}</p>
-          <p className="text-[8px] text-muted-foreground truncate">{BANYAN_DEMO.userEmail}</p>
+          <p className="text-[9px] font-medium truncate">{DEMO_ORG.userFullName}</p>
+          <p className="text-[8px] text-muted-foreground truncate">{DEMO_ORG.userEmail}</p>
         </div>
       </aside>
 
@@ -147,7 +147,7 @@ export function FacilityManageDesktopPreview() {
 
         {/* Details + referral sidebar */}
         <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-          <div className="grid grid-cols-[1fr_140px] sm:grid-cols-[1fr_160px]">
+          <div className="grid grid-cols-[1fr_180px] sm:grid-cols-[1fr_210px]">
             <div className="min-w-0 divide-y divide-border/50">
               <div className="px-2.5 py-2 grid grid-cols-2 gap-3">
                 <div className="min-w-0">
@@ -211,27 +211,27 @@ export function FacilityManageDesktopPreview() {
               </div>
             </div>
 
-            <aside className="border-l border-border/50 bg-muted/20 p-2.5 flex flex-col gap-2">
+            <aside className="border-l border-border/50 bg-muted/20 p-3.5 sm:p-4 flex flex-col gap-2.5">
               <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground">
                 For Referrals
               </p>
-              <div className="flex items-center gap-1.5">
-                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary/70 grid place-items-center text-primary-foreground text-[8px] font-bold shrink-0">
-                  {BANYAN_DEMO.userInitials}
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/70 grid place-items-center text-primary-foreground text-[9px] font-bold shrink-0">
+                  {DEMO_ORG.userInitials}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] font-semibold truncate leading-tight">{BANYAN_DEMO.userFullName}</p>
-                  <p className="text-[7px] text-muted-foreground truncate">{BANYAN_DEMO.userTitle}</p>
+                  <p className="text-[10px] font-semibold truncate leading-tight">{DEMO_ORG.userFullName}</p>
+                  <p className="text-[8px] text-muted-foreground truncate">{DEMO_ORG.userTitle}</p>
                 </div>
               </div>
-              <div className="space-y-1 mt-auto">
-                <span className="h-6 w-full rounded-md bg-primary text-primary-foreground text-[8px] font-semibold inline-flex items-center justify-center gap-1">
+              <div className="space-y-1.5 mt-auto">
+                <span className="h-7 w-full rounded-md bg-primary text-primary-foreground text-[8px] font-semibold inline-flex items-center justify-center gap-1">
                   <Mail className="h-2.5 w-2.5" /> Email
                 </span>
-                <span className="h-6 w-full rounded-md border border-border bg-background text-[8px] font-semibold inline-flex items-center justify-center gap-1">
+                <span className="h-7 w-full rounded-md border border-border bg-background text-[8px] font-semibold inline-flex items-center justify-center gap-1">
                   <MessageSquare className="h-2.5 w-2.5" /> Text
                 </span>
-                <span className="h-6 w-full rounded-md border border-border bg-background text-[8px] font-semibold inline-flex items-center justify-center gap-1">
+                <span className="h-7 w-full rounded-md border border-border bg-background text-[8px] font-semibold inline-flex items-center justify-center gap-1">
                   <Phone className="h-2.5 w-2.5" /> Call
                 </span>
               </div>

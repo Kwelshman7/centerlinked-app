@@ -374,7 +374,7 @@ export function FacilitySheetView({
       {/* Unified details */}
       {(hasFactsStrip || hasProgramDetails || hasServiceArea || repName || repEmail || repPhone) && (
         <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:overflow-visible">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] print:grid-cols-1">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px] print:grid-cols-1">
             <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50 print:border-0 print:rounded-none">
               {hasFactsStrip && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5 grid gap-4 sm:grid-cols-2 sm:gap-x-10">
@@ -525,7 +525,7 @@ export function FacilitySheetView({
             </div>
 
             {/* Desktop sidebar contact — sits at top of section and pops forward */}
-            <aside className="hidden lg:block print:hidden relative z-10 lg:sticky lg:top-20 lg:self-start lg:rounded-r-2xl px-3 pt-3 pb-5 xl:px-4 xl:pt-4">
+            <aside className="hidden lg:block print:hidden relative z-10 lg:sticky lg:top-20 lg:self-start lg:rounded-r-2xl px-4 pt-4 pb-6 xl:px-5 xl:pt-5">
               {hasContact ? (
                 <OrgHeroContactCard
                   contacts={[
@@ -546,7 +546,7 @@ export function FacilitySheetView({
                 />
               ) : (
                 <div
-                  className="rounded-xl border bg-card p-5 space-y-3 shadow-2xl -ml-2 ring-1 ring-black/5"
+                  className="rounded-xl border bg-card p-6 space-y-3 shadow-2xl -ml-2 ring-1 ring-black/5"
                   style={{ borderColor: `${brand}38` }}
                 >
                   <p

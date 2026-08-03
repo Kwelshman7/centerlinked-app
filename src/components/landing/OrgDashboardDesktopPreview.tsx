@@ -1,6 +1,6 @@
 /**
  * Desktop mock of the real org dashboard (/app/dashboard).
- * Mirrors OrgDashboard + AppLayout with live Banyan Treatment Centers data.
+ * Mirrors OrgDashboard + AppLayout with static Northbend demo data.
  */
 import {
   LayoutDashboard,
@@ -12,8 +12,8 @@ import {
   PanelLeftClose,
 } from "lucide-react";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
-import { BANYAN_DEMO, DEMO_FACILITIES } from "./banyanDemoData";
-import { BanyanDashboardPreviewBody } from "./BanyanDashboardPreviewBody";
+import { DEMO_FACILITIES, DEMO_ORG } from "./demoOrgData";
+import { DemoDashboardPreviewBody } from "./DemoDashboardPreviewBody";
 
 export { DEMO_FACILITIES };
 
@@ -83,13 +83,13 @@ export function OrgDashboardDesktopPreview({
         </nav>
 
         <div className="border-t border-border/50 px-2.5 py-2.5">
-          <p className="text-[9px] font-medium truncate">{BANYAN_DEMO.userFullName}</p>
-          <p className="text-[8px] text-muted-foreground truncate">{BANYAN_DEMO.userEmail}</p>
+          <p className="text-[9px] font-medium truncate">{DEMO_ORG.userFullName}</p>
+          <p className="text-[8px] text-muted-foreground truncate">{DEMO_ORG.userEmail}</p>
         </div>
       </aside>
 
       <main className="flex-1 min-w-0 overflow-hidden flex flex-col">
-        <BanyanDashboardPreviewBody highlightFacilityIndex={highlightFacilityIndex} density="desktop" />
+        <DemoDashboardPreviewBody highlightFacilityIndex={highlightFacilityIndex} density="desktop" />
       </main>
     </div>
   );

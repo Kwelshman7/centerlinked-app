@@ -34,7 +34,7 @@ const slides: FeatureCarouselSlide[] = [
     label: "How partners find you",
     title: "Search by Insurance, Location, and Level of Care.",
     caption:
-      "Professionals filter by insurance and state — then verified partners like Banyan surface ready to refer.",
+      "Professionals filter by insurance and state — then verified partners surface ready to refer.",
     /** Long enough for typing → state pick → results to play through. */
     durationMs: 11000,
     content: (

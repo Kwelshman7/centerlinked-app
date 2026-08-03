@@ -105,7 +105,7 @@ export function WhoFor() {
         ref={momentsReveal.ref}
         className="relative overflow-hidden bg-background scroll-mt-20"
       >
-        {/* Desktop photo only — sits on the right and fades into the section below */}
+        {/* Desktop photo — right half; crop bias keeps handshake near the copy */}
         <div
           className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58%] lg:block xl:w-[56%]"
           aria-hidden
@@ -113,14 +113,14 @@ export function WhoFor() {
           <img
             src={handshakeImg}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover object-[68%_center] scale-[1.02]"
+            className="absolute inset-0 h-full w-full object-cover object-[78%_center] scale-[1.02]"
           />
-          {/* Soft left blend into content */}
+          {/* Soft left blend — short enough that subjects stay next to the cards */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.78) 8%, hsl(var(--background) / 0.32) 24%, transparent 42%)",
+                "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.72) 5%, hsl(var(--background) / 0.28) 12%, transparent 22%)",
             }}
           />
           {/* Top edge soften */}
@@ -142,72 +142,77 @@ export function WhoFor() {
         </div>
 
         <div className="relative z-10 container py-14 sm:py-16 lg:py-20 lg:pb-28">
-          <div className="max-w-xl space-y-8 sm:space-y-10 lg:w-[min(100%,540px)] xl:w-[560px]">
-            <div className="space-y-4">
-              <SectionBadge
-                icon={Send}
-                className="border-primary/25 bg-primary/[0.06] text-primary"
-              >
-                When to send your link
-              </SectionBadge>
-              <DisplayHeading
-                as="h2"
-                className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
-              >
-                Never miss an opportunity to build a new relationship.
-              </DisplayHeading>
-              <p className="max-w-md text-sm sm:text-base text-muted-foreground leading-relaxed">
-                One link connects your partners with everything your
-                organization has to offer.
-              </p>
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 xl:gap-12 lg:items-center">
+            <div className="max-w-xl space-y-8 sm:space-y-10 lg:max-w-[34rem] xl:max-w-[36rem] lg:justify-self-end lg:w-full">
+              <div className="space-y-4">
+                <SectionBadge
+                  icon={Send}
+                  className="border-primary/25 bg-primary/[0.06] text-primary"
+                >
+                  When to send your link
+                </SectionBadge>
+                <DisplayHeading
+                  as="h2"
+                  className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+                >
+                  Never miss an opportunity to build a new relationship.
+                </DisplayHeading>
+                <p className="max-w-md text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  One link connects your partners with everything your
+                  organization has to offer.
+                </p>
+              </div>
+
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
+                {moments.map((moment, i) => {
+                  const Icon = moment.icon;
+                  return (
+                    <li
+                      key={moment.title}
+                      className={cn(
+                        "opacity-0",
+                        momentsReveal.inView && "animate-fade-up",
+                      )}
+                      style={
+                        momentsReveal.inView
+                          ? {
+                              animationDelay: `${120 + i * 80}ms`,
+                              animationFillMode: "forwards",
+                            }
+                          : undefined
+                      }
+                    >
+                      <article
+                        className={cn(
+                          "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
+                          "px-4 py-3.5 sm:px-4 sm:py-4",
+                          "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
+                          "transition-[transform,box-shadow] duration-300",
+                          "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <Icon className="h-4 w-4" aria-hidden />
+                          </span>
+                          <div className="min-w-0 flex-1 pt-0.5">
+                            <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug">
+                              {moment.title}
+                            </h3>
+                            <p className="mt-1 text-xs sm:text-[13px] text-muted-foreground leading-snug">
+                              {moment.body}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
 
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
-              {moments.map((moment, i) => {
-                const Icon = moment.icon;
-                return (
-                  <li
-                    key={moment.title}
-                    className={cn(
-                      "opacity-0",
-                      momentsReveal.inView && "animate-fade-up",
-                    )}
-                    style={
-                      momentsReveal.inView
-                        ? {
-                            animationDelay: `${120 + i * 80}ms`,
-                            animationFillMode: "forwards",
-                          }
-                        : undefined
-                    }
-                  >
-                    <article
-                      className={cn(
-                        "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
-                        "px-4 py-3.5 sm:px-4 sm:py-4",
-                        "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
-                        "transition-[transform,box-shadow] duration-300",
-                        "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Icon className="h-4 w-4" aria-hidden />
-                        </span>
-                        <div className="min-w-0 flex-1 pt-0.5">
-                          <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug">
-                            {moment.title}
-                          </h3>
-                          <p className="mt-1 text-xs sm:text-[13px] text-muted-foreground leading-snug">
-                            {moment.body}
-                          </p>
-                        </div>
-                      </div>
-                    </article>
-                  </li>
-                );
-              })}
-            </ul>
+            {/* Reserves the photo column so the grid gap stays intentional */}
+            <div className="hidden lg:block min-h-[28rem]" aria-hidden />
           </div>
         </div>
       </section>

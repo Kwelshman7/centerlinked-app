@@ -13,9 +13,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { ExpandableText } from "@/components/public/ExpandableText";
-import { BANYAN_DEMO, FEATURED_FACILITY } from "./banyanDemoData";
+import { DEMO_ORG, FEATURED_FACILITY } from "./demoOrgData";
 
-const BRAND = BANYAN_DEMO.brandColor;
+const BRAND = DEMO_ORG.brandColor;
 
 /** Keep a few payers visible without crowding the frame. */
 const PREVIEW_PAYERS = FEATURED_FACILITY.payers.slice(0, 5);
@@ -32,7 +32,7 @@ export function PublicFacilitySheetPreviewContent() {
           style={{ borderColor: `${BRAND}35` }}
         >
           <img
-            src={BANYAN_DEMO.logo}
+            src={DEMO_ORG.logo}
             alt=""
             className="w-full h-full object-contain p-0.5"
             draggable={false}
@@ -40,7 +40,7 @@ export function PublicFacilitySheetPreviewContent() {
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-heading font-bold text-[13px] truncate leading-tight">
-            {BANYAN_DEMO.orgName}
+            {DEMO_ORG.orgName}
           </p>
           <p className="text-[11px] text-muted-foreground truncate leading-tight">
             {FEATURED_FACILITY.name}
@@ -76,7 +76,7 @@ export function PublicFacilitySheetPreviewContent() {
 
           <div className="p-3.5 flex flex-col gap-2.5 min-w-0 border-t border-border/50">
             <nav className="flex items-center gap-1 text-[11px] text-muted-foreground min-w-0">
-              <span className="truncate">{BANYAN_DEMO.orgName}</span>
+              <span className="truncate">{DEMO_ORG.orgName}</span>
               <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />
               <span className="font-medium text-foreground truncate">
                 {FEATURED_FACILITY.name}

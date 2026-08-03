@@ -1,5 +1,5 @@
 /**
- * Shared dashboard body for landing demos — mirrors OrgDashboard layout with live Banyan data.
+ * Shared dashboard body for landing demos — mirrors OrgDashboard with static Northbend demo data.
  */
 import {
   Building2,
@@ -17,11 +17,11 @@ import {
 } from "lucide-react";
 import { FacilityGrid, FacilityGridCard } from "@/components/FacilityGridCard";
 import {
-  BANYAN_DEMO,
-  BANYAN_GRID_FACILITIES,
-  BANYAN_STATE_FILTERS,
+  DEMO_GRID_FACILITIES,
+  DEMO_ORG,
+  DEMO_STATE_FILTERS,
   FEATURED_FACILITY_INDEX,
-} from "./banyanDemoData";
+} from "./demoOrgData";
 import { cn } from "@/lib/utils";
 
 const quickActions = [
@@ -33,7 +33,7 @@ const quickActions = [
   { label: "Public page", icon: ExternalLink },
 ];
 
-export function BanyanDashboardPreviewBody({
+export function DemoDashboardPreviewBody({
   highlightFacilityIndex = null,
   /** Scale typography/spacing for phone vs laptop mock. */
   density = "desktop",
@@ -42,7 +42,7 @@ export function BanyanDashboardPreviewBody({
   density?: "desktop" | "mobile";
 }) {
   const isMobile = density === "mobile";
-  const brand = BANYAN_DEMO.brandColor;
+  const brand = DEMO_ORG.brandColor;
 
   return (
     <div
@@ -55,7 +55,7 @@ export function BanyanDashboardPreviewBody({
         <div className="min-w-0 flex items-center gap-2">
           {!isMobile && (
             <div className="h-6 w-6 rounded-md bg-white border border-border/60 overflow-hidden p-0.5 shrink-0 grid place-items-center">
-              <img src={BANYAN_DEMO.logo} alt="" className="h-full w-full object-contain" draggable={false} />
+              <img src={DEMO_ORG.logo} alt="" className="h-full w-full object-contain" draggable={false} />
             </div>
           )}
           <div className="min-w-0">
@@ -65,7 +65,7 @@ export function BanyanDashboardPreviewBody({
                 isMobile ? "text-[13px]" : "text-sm",
               )}
             >
-              Welcome back, {BANYAN_DEMO.userName}
+              Welcome back, {DEMO_ORG.userName}
             </h1>
             <p
               className={cn(
@@ -73,7 +73,7 @@ export function BanyanDashboardPreviewBody({
                 isMobile ? "text-[9px] mt-0.5" : "text-[9px]",
               )}
             >
-              {BANYAN_DEMO.orgName}
+              {DEMO_ORG.orgName}
             </p>
           </div>
         </div>
@@ -98,31 +98,19 @@ export function BanyanDashboardPreviewBody({
       </div>
 
       <div className={cn("grid shrink-0", isMobile ? "grid-cols-2 gap-1.5" : "grid-cols-4 gap-1")}>
-        <KpiTile label="Facilities" value={String(BANYAN_DEMO.facilityCount)} hint="Active" icon={Building2} isMobile={isMobile} />
-        <KpiTile label="Team" value={String(BANYAN_DEMO.teamCount)} hint="Members" icon={Users} isMobile={isMobile} />
+        <KpiTile label="Facilities" value={String(DEMO_ORG.facilityCount)} hint="Active" icon={Building2} isMobile={isMobile} />
+        <KpiTile label="Team" value={String(DEMO_ORG.teamCount)} hint="Members" icon={Users} isMobile={isMobile} />
         <KpiTile
           label="Engagement"
-          value={String(BANYAN_DEMO.engagementTotal)}
-          hint={`${BANYAN_DEMO.pageViews} views`}
+          value={String(DEMO_ORG.engagementTotal)}
+          hint={`${DEMO_ORG.pageViews} views`}
           icon={BarChart3}
           isMobile={isMobile}
         />
         <ContactKpi isMobile={isMobile} />
       </div>
 
-      {!isMobile && (
-        <div className="grid grid-cols-[1.35fr_1fr] gap-1 shrink-0">
-          <QuickActionsPanel />
-          <ThemePanel brand={brand} />
-        </div>
-      )}
-
-      {isMobile && (
-        <>
-          <QuickActionsPanel isMobile />
-          <ThemePanel brand={brand} isMobile />
-        </>
-      )}
+      <QuickActionsPanel isMobile={isMobile} />
 
       <div
         className={cn(
@@ -136,7 +124,7 @@ export function BanyanDashboardPreviewBody({
               Facilities
             </h2>
             <p className={cn("text-muted-foreground", isMobile ? "text-[8px]" : "text-[7px]")}>
-              {BANYAN_DEMO.facilityCount} locations
+              {DEMO_ORG.facilityCount} locations
             </p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
@@ -165,7 +153,7 @@ export function BanyanDashboardPreviewBody({
             isMobile ? "mb-1.5" : "mb-1.5",
           )}
         >
-          {BANYAN_STATE_FILTERS.map((s, i) => (
+          {DEMO_STATE_FILTERS.map((s, i) => (
             <span
               key={s}
               className={cn(
@@ -185,10 +173,10 @@ export function BanyanDashboardPreviewBody({
           className={cn("flex-1 min-h-0 overflow-y-auto overscroll-contain", isMobile ? "pr-0.5" : "")}
         >
           <FacilityGrid
-            count={BANYAN_GRID_FACILITIES.length}
-            className="demo-facility-grid !grid-cols-3 sm:!grid-cols-3 md:!grid-cols-3 lg:!grid-cols-3 gap-1.5"
+            count={DEMO_GRID_FACILITIES.length}
+            className="demo-facility-grid !grid-cols-2 sm:!grid-cols-2 md:!grid-cols-2 lg:!grid-cols-2 gap-1.5"
           >
-            {BANYAN_GRID_FACILITIES.map((f, i) => (
+            {DEMO_GRID_FACILITIES.map((f, i) => (
               <div
                 key={f.id}
                 data-demo-facility={i}
@@ -231,42 +219,6 @@ function QuickActionsPanel({ isMobile = false }: { isMobile?: boolean }) {
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-function ThemePanel({ brand, isMobile = false }: { brand: string; isMobile?: boolean }) {
-  return (
-    <div className={cn("rounded-md border border-border/60 bg-card shadow-sm", isMobile ? "p-2" : "p-1.5")}>
-      <p
-        className={cn(
-          "font-heading font-bold inline-flex items-center gap-1",
-          isMobile ? "text-[10px] mb-1.5" : "text-[9px] mb-1",
-        )}
-      >
-        <Palette className={cn("text-primary", isMobile ? "h-3 w-3" : "h-2.5 w-2.5")} /> Theme colors
-      </p>
-      <div className="flex items-center gap-1">
-        <span className="h-4 w-4 rounded border border-border shrink-0" style={{ backgroundColor: brand }} />
-        <span
-          className="h-4 w-4 rounded border border-border shrink-0"
-          style={{ backgroundColor: BANYAN_DEMO.themeSecondary }}
-        />
-        <div
-          className="h-4 flex-1 rounded-md border border-border/60"
-          style={{
-            background: `linear-gradient(135deg, ${brand} 0%, ${BANYAN_DEMO.themeSecondary} 100%)`,
-          }}
-        />
-        <span
-          className={cn(
-            "px-1.5 rounded-md bg-primary text-primary-foreground font-bold grid place-items-center shrink-0",
-            isMobile ? "h-5 text-[8px]" : "h-4 text-[6.5px]",
-          )}
-        >
-          Save
-        </span>
       </div>
     </div>
   );
@@ -322,9 +274,9 @@ function ContactKpi({ isMobile }: { isMobile: boolean }) {
       )}
     >
       {[
-        { label: "Calls", value: BANYAN_DEMO.calls, icon: Phone },
-        { label: "Texts", value: BANYAN_DEMO.texts, icon: MessageSquare },
-        { label: "Emails", value: BANYAN_DEMO.emails, icon: Mail },
+        { label: "Calls", value: DEMO_ORG.calls, icon: Phone },
+        { label: "Texts", value: DEMO_ORG.texts, icon: MessageSquare },
+        { label: "Emails", value: DEMO_ORG.emails, icon: Mail },
       ].map((m) => (
         <div key={m.label} className="text-center min-w-0 px-0.5">
           <m.icon className={cn("text-primary mx-auto", isMobile ? "h-2.5 w-2.5" : "h-2 w-2")} />

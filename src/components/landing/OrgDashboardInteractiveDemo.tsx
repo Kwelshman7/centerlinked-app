@@ -3,7 +3,7 @@ import { MousePointer2 } from "lucide-react";
 import { ScaledLaptopFrame } from "./LaptopFrame";
 import { OrgDashboardDesktopPreview } from "./OrgDashboardDesktopPreview";
 import { FacilityManageDesktopPreview } from "./FacilityManageDesktopPreview";
-import { FEATURED_FACILITY, FEATURED_FACILITY_INDEX } from "./banyanDemoData";
+import { FEATURED_FACILITY, FEATURED_FACILITY_INDEX } from "./demoOrgData";
 import { cn } from "@/lib/utils";
 
 type Phase = "dashboard" | "moving" | "click" | "facility" | "returning";

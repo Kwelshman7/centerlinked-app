@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 import { cn } from "@/lib/utils";
-import { BANYAN_DEMO } from "./banyanDemoData";
+import { DEMO_ORG } from "./demoOrgData";
 
 const steps: {
   num: string;
@@ -74,7 +74,7 @@ function TrustSignalCard({ state }: { state: (typeof trustStates)[number] }) {
     >
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
         <img
-          src={BANYAN_DEMO.cover}
+          src={DEMO_ORG.cover}
           alt=""
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
@@ -97,14 +97,14 @@ function TrustSignalCard({ state }: { state: (typeof trustStates)[number] }) {
       <div className="space-y-3.5 px-5 py-4 sm:px-5 sm:py-5">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm">
-            <img src={BANYAN_DEMO.logo} alt="" className="h-full w-full object-contain p-1.5" />
+            <img src={DEMO_ORG.logo} alt="" className="h-full w-full object-contain p-1.5" />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <p className="truncate font-display text-base font-semibold leading-snug text-foreground">
-              {BANYAN_DEMO.orgName}
+              {DEMO_ORG.orgName}
             </p>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {BANYAN_DEMO.hqLabel} · Behavioral health
+              {DEMO_ORG.hqLabel} · Behavioral health
             </p>
           </div>
         </div>
