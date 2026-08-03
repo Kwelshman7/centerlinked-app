@@ -1,4 +1,4 @@
-import { isPublicSharePath, isSocialPreviewBot } from "./server/og-meta.mjs";
+import { isPublicSharePath, isSocialPreviewBot } from "./server/og-share.mjs";
 
 export default function middleware(request) {
   const url = new URL(request.url);

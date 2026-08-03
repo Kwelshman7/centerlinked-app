@@ -1,11 +1,8 @@
 import type { Plugin } from "vite";
 import fs from "fs";
 import path from "path";
-import {
-  isPublicSharePath,
-  isSocialPreviewBot,
-  renderPreviewHtml,
-} from "./server/og-meta.mjs";
+import { isPublicSharePath, isSocialPreviewBot } from "./server/og-share.mjs";
+import { renderPreviewHtml } from "./server/og-meta.mjs";
 import { DEFAULT_OG_IMAGE, renderOrgOgImage } from "./server/og-image.mjs";
 
 /**

@@ -2,59 +2,14 @@ import {
   DEFAULT_OG_IMAGE,
   OG_HEIGHT,
   OG_WIDTH,
+  isPublicSharePath,
+  isSocialPreviewBot,
   resolveOrgShareImageUrl,
   resolvePublicLogoUrl,
-} from "./og-image.mjs";
+  siteOrigin,
+} from "./og-share.mjs";
 
-const RESERVED_SLUGS = new Set([
-  "login",
-  "signup",
-  "auth",
-  "request-access",
-  "privacy",
-  "terms",
-  "create-organization",
-  "app",
-  "p",
-  "o",
-  "assets",
-  "favicon.png",
-  "robots.txt",
-  "sitemap.xml",
-  "llms.txt",
-  "placeholder.svg",
-]);
-
-export function isSocialPreviewBot(userAgent) {
-  if (!userAgent) return false;
-  return /bot|crawl|slurp|facebookexternalhit|twitterbot|linkedinbot|whatsapp|discord|telegram|preview|embed|applebot|imessage|slack/i.test(
-    userAgent,
-  );
-}
-
-/** Public org/program URLs that should never use the default CenterLinked OG card. */
-export function isPublicSharePath(pathname) {
-  const path = pathname.split("?")[0].replace(/\/+$/, "") || "/";
-  if (path === "/") return false;
-  if (
-    path.startsWith("/app") ||
-    path.startsWith("/login") ||
-    path.startsWith("/signup") ||
-    path.startsWith("/auth") ||
-    path.startsWith("/request-access") ||
-    path.startsWith("/privacy") ||
-    path.startsWith("/terms") ||
-    path.startsWith("/create-organization") ||
-    path.startsWith("/assets")
-  ) {
-    return false;
-  }
-  if (/^\/o\/[^/]+\/p\/[^/]+$/.test(path)) return true;
-  if (/^\/o\/[^/]+$/.test(path)) return true;
-  if (/^\/p\/[^/]+$/.test(path)) return true;
-  const short = path.match(/^\/([^/]+)$/);
-  return !!(short && !RESERVED_SLUGS.has(short[1]));
-}
+export { isPublicSharePath, isSocialPreviewBot };
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -62,10 +17,6 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-}
-
-function siteOrigin() {
-  return (process.env.SITE_URL || "https://www.centerlinked.com").replace(/\/+$/, "");
 }
 
 function orgDescription(org) {
@@ -199,7 +150,7 @@ export async function resolvePublicMeta(pathname) {
   }
 
   const shortOrg = path.match(/^\/([^/]+)$/);
-  if (shortOrg && !RESERVED_SLUGS.has(shortOrg[1])) {
+  if (shortOrg && isPublicSharePath(path)) {
     const org = await supabaseRow(
       "organizations",
       `slug=eq.${encodeURIComponent(shortOrg[1])}&select=name,tagline,description,logo_url,cover_image_url,hq_city,hq_state,slug&limit=1`,
