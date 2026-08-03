@@ -1,6 +1,6 @@
 import { isPublicSharePath, isSocialPreviewBot } from "./server/og-share.mjs";
 
-export default function middleware(request) {
+export default async function middleware(request) {
   const url = new URL(request.url);
   const userAgent = request.headers.get("user-agent") ?? "";
 
@@ -8,9 +8,13 @@ export default function middleware(request) {
     return;
   }
 
-  const rewriteUrl = new URL("/api/og", url.origin);
-  rewriteUrl.searchParams.set("path", url.pathname);
-  return Response.rewrite(rewriteUrl);
+  // Proxy through the Node /api/og handler. Avoid Response.rewrite — it throws
+  // on Edge and surfaces as MIDDLEWARE_INVOCATION_FAILED for crawlers.
+  const ogUrl = new URL("/api/og", url.origin);
+  ogUrl.searchParams.set("path", url.pathname);
+  return fetch(ogUrl, {
+    headers: { "user-agent": userAgent },
+  });
 }
 
 export const config = {

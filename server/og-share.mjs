@@ -57,8 +57,33 @@ export function isPublicSharePath(pathname) {
   return !!(short && !RESERVED_SLUGS.has(short[1]));
 }
 
+function isUsablePublicOrigin(value) {
+  const raw = (value || "").trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(raw)) return null;
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    // Never emit localhost / loopback into production share metadata.
+    if (/^(localhost|127\.0\.0\.1)$/i.test(u.hostname)) return null;
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return null;
+  }
+}
+
 export function siteOrigin() {
-  return (process.env.SITE_URL || "https://www.centerlinked.com").replace(/\/+$/, "");
+  const candidates = [
+    process.env.SITE_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : null,
+    "https://www.centerlinked.com",
+  ];
+  for (const candidate of candidates) {
+    const origin = isUsablePublicOrigin(candidate);
+    if (origin) return origin;
+  }
+  return "https://www.centerlinked.com";
 }
 
 export function orgOgImagePath(slug) {
