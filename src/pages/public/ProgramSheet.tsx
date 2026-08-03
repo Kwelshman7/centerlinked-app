@@ -159,6 +159,9 @@ export default function ProgramSheet() {
       icon: orgRow?.logo_url,
       siteName: orgRow?.name ?? undefined,
       card: orgRow ? orgShareCardType(orgRow) : "summary_large_image",
+      imageAlt: orgRow?.name ? `${orgRow.name} logo` : undefined,
+      imageWidth: 1200,
+      imageHeight: 630,
     });
 
     // Canonical branded URL when visiting legacy /p/:slug

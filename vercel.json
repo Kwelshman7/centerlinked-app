@@ -2,6 +2,10 @@
   "functions": {
     "api/og.js": {
       "includeFiles": "dist/index.html"
+    },
+    "api/og-image.js": {
+      "memory": 1024,
+      "maxDuration": 15
     }
   },
   "rewrites": [

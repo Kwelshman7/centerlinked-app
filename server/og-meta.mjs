@@ -1,3 +1,11 @@
+import {
+  DEFAULT_OG_IMAGE,
+  OG_HEIGHT,
+  OG_WIDTH,
+  resolveOrgShareImageUrl,
+  resolvePublicLogoUrl,
+} from "./og-image.mjs";
+
 const RESERVED_SLUGS = new Set([
   "login",
   "signup",
@@ -56,6 +64,10 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;");
 }
 
+function siteOrigin() {
+  return (process.env.SITE_URL || "https://www.centerlinked.com").replace(/\/+$/, "");
+}
+
 function orgDescription(org) {
   const loc = [org.hq_city, org.hq_state].filter(Boolean).join(", ");
   return (
@@ -64,16 +76,25 @@ function orgDescription(org) {
   );
 }
 
-function buildMeta({ title, description, path, image, icon, siteName, card = "summary" }) {
-  const url = `${process.env.SITE_URL || "https://www.centerlinked.com"}${path.startsWith("/") ? path : `/${path}`}`;
+function buildMeta({ title, description, path, image, icon, siteName, imageAlt }) {
+  const origin = siteOrigin();
+  const normalizedPath = `/${String(path || "").replace(/^\/+/, "")}`;
+  const url = `${origin}${normalizedPath === "/" ? "" : normalizedPath}`;
+  const shareImage = image || DEFAULT_OG_IMAGE;
+  const isGenerated = shareImage.includes("/api/og-image");
+
   return {
     title,
     description: (description || "").trim() || "Referral profile.",
     url,
-    image: image || null,
+    image: shareImage,
+    imageAlt: imageAlt || `${siteName || title} logo`,
+    imageWidth: isGenerated || shareImage === DEFAULT_OG_IMAGE ? OG_WIDTH : undefined,
+    imageHeight: isGenerated || shareImage === DEFAULT_OG_IMAGE ? OG_HEIGHT : undefined,
+    imageType: isGenerated ? "image/png" : undefined,
     icon: icon || null,
     siteName: siteName || title,
-    card,
+    card: "summary_large_image",
   };
 }
 
@@ -82,15 +103,23 @@ async function supabaseRow(table, query) {
   const key = process.env.VITE_SUPABASE_ANON_KEY;
   if (!base || !key) return null;
 
-  const res = await fetch(`${base}/rest/v1/${table}?${query}`, {
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-    },
-  });
-  if (!res.ok) return null;
-  const rows = await res.json();
-  return rows[0] ?? null;
+  try {
+    const res = await fetch(`${base}/rest/v1/${table}?${query}`, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+    });
+    if (!res.ok) {
+      console.error("[og-meta] query failed", table, res.status);
+      return null;
+    }
+    const rows = await res.json();
+    return rows[0] ?? null;
+  } catch (err) {
+    console.error("[og-meta] query error", table, err?.message || err);
+    return null;
+  }
 }
 
 export async function resolvePublicMeta(pathname) {
@@ -115,10 +144,10 @@ export async function resolvePublicMeta(pathname) {
       title: `${facility.name} — ${org.name}`,
       description: facility.description || facility.tagline || orgDescription(org),
       path,
-      image: org.logo_url || facility.image_urls?.[0] || org.cover_image_url,
-      icon: org.logo_url,
+      image: resolveOrgShareImageUrl(org),
+      icon: resolvePublicLogoUrl(org.logo_url),
       siteName: org.name,
-      card: org.logo_url ? "summary" : "summary_large_image",
+      imageAlt: `${org.name} logo`,
     });
   }
 
@@ -133,10 +162,10 @@ export async function resolvePublicMeta(pathname) {
       title: org.name,
       description: orgDescription(org),
       path: `/o/${org.slug}`,
-      image: org.logo_url || org.cover_image_url,
-      icon: org.logo_url,
+      image: resolveOrgShareImageUrl(org),
+      icon: resolvePublicLogoUrl(org.logo_url),
       siteName: org.name,
-      card: org.logo_url ? "summary" : "summary_large_image",
+      imageAlt: `${org.name} logo`,
     });
   }
 
@@ -162,10 +191,10 @@ export async function resolvePublicMeta(pathname) {
       title: `${facility.name} — ${org.name}`,
       description: facility.description || facility.tagline || orgDescription(org),
       path: canonicalPath,
-      image: org.logo_url || facility.image_urls?.[0] || org.cover_image_url,
-      icon: org.logo_url,
+      image: resolveOrgShareImageUrl(org),
+      icon: resolvePublicLogoUrl(org.logo_url),
       siteName: org.name,
-      card: org.logo_url ? "summary" : "summary_large_image",
+      imageAlt: `${org.name} logo`,
     });
   }
 
@@ -180,10 +209,10 @@ export async function resolvePublicMeta(pathname) {
       title: org.name,
       description: orgDescription(org),
       path: `/o/${org.slug}`,
-      image: org.logo_url || org.cover_image_url,
-      icon: org.logo_url,
+      image: resolveOrgShareImageUrl(org),
+      icon: resolvePublicLogoUrl(org.logo_url),
       siteName: org.name,
-      card: org.logo_url ? "summary" : "summary_large_image",
+      imageAlt: `${org.name} logo`,
     });
   }
 
@@ -191,9 +220,14 @@ export async function resolvePublicMeta(pathname) {
 }
 
 export async function renderPreviewHtml(pathname, baseHtml) {
-  const meta = await resolvePublicMeta(pathname);
-  if (!meta) return null;
-  return injectSocialMeta(baseHtml, meta);
+  try {
+    const meta = await resolvePublicMeta(pathname);
+    if (!meta) return null;
+    return injectSocialMeta(baseHtml, meta);
+  } catch (err) {
+    console.error("[og-meta] render failed", err?.message || err);
+    return null;
+  }
 }
 
 export function injectSocialMeta(baseHtml, meta) {
@@ -201,8 +235,9 @@ export function injectSocialMeta(baseHtml, meta) {
   const description = escapeHtml(meta.description);
   const url = escapeHtml(meta.url);
   const siteName = escapeHtml(meta.siteName);
-  const card = meta.card === "summary_large_image" ? "summary_large_image" : "summary";
-  const image = meta.image ? escapeHtml(meta.image) : null;
+  const card = "summary_large_image";
+  const image = escapeHtml(meta.image || DEFAULT_OG_IMAGE);
+  const imageAlt = escapeHtml(meta.imageAlt || `${meta.siteName || meta.title} logo`);
   const icon = meta.icon ? escapeHtml(meta.icon) : null;
 
   let html = baseHtml
@@ -235,27 +270,28 @@ export function injectSocialMeta(baseHtml, meta) {
     );
   }
 
-  if (image) {
-    html = html
-      .replace(/<meta property="og:image"[^>]*>/i, `<meta property="og:image" content="${image}">`)
-      .replace(/<meta name="twitter:image"[^>]*>/i, `<meta name="twitter:image" content="${image}">`);
-    if (!html.includes('property="og:image:alt"')) {
-      html = html.replace(
-        /<meta property="og:image"/i,
-        `<meta property="og:image:alt" content="${siteName}">\n    <meta property="og:image"`,
-      );
-    } else {
-      html = html.replace(
-        /<meta property="og:image:alt"[^>]*>/i,
-        `<meta property="og:image:alt" content="${siteName}">`,
-      );
-    }
-  } else {
-    html = html
-      .replace(/\n?\s*<meta property="og:image"[^>]*>/i, "")
-      .replace(/\n?\s*<meta name="twitter:image"[^>]*>/i, "")
-      .replace(/\n?\s*<meta property="og:image:alt"[^>]*>/i, "");
-  }
+  // Always set share images so missing logos fall back to the CenterLinked default.
+  html = html
+    .replace(/<meta property="og:image"[^>]*>/i, `<meta property="og:image" content="${image}">`)
+    .replace(/<meta name="twitter:image"[^>]*>/i, `<meta name="twitter:image" content="${image}">`);
+
+  const imageExtra = [
+    `<meta property="og:image:alt" content="${imageAlt}">`,
+    meta.imageWidth ? `<meta property="og:image:width" content="${meta.imageWidth}">` : null,
+    meta.imageHeight ? `<meta property="og:image:height" content="${meta.imageHeight}">` : null,
+    meta.imageType ? `<meta property="og:image:type" content="${meta.imageType}">` : null,
+  ]
+    .filter(Boolean)
+    .join("\n    ");
+
+  html = html.replace(/\n?\s*<meta property="og:image:alt"[^>]*>/i, "");
+  html = html.replace(/\n?\s*<meta property="og:image:width"[^>]*>/i, "");
+  html = html.replace(/\n?\s*<meta property="og:image:height"[^>]*>/i, "");
+  html = html.replace(/\n?\s*<meta property="og:image:type"[^>]*>/i, "");
+  html = html.replace(
+    /<meta property="og:image"/i,
+    `${imageExtra}\n    <meta property="og:image"`,
+  );
 
   return html;
 }

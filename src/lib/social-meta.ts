@@ -4,6 +4,10 @@
 
 const SITE_URL = "https://www.centerlinked.com";
 
+/** Same default preview art as index.html / server/og-image.mjs. */
+export const DEFAULT_OG_IMAGE =
+  "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/170e9ec4-cd01-4bc9-83f3-f3d5bbee0de8";
+
 const DEFAULT_FAVICON = "/favicon.png";
 
 type SocialMeta = {
@@ -15,8 +19,11 @@ type SocialMeta = {
   icon?: string | null;
   /** Shown as og:site_name — use the org name for branded shares. */
   siteName?: string | null;
-  /** summary works best for org logos; large image for cover photos. */
+  /** Large cards match the generated 1200×630 org OG images. */
   card?: "summary" | "summary_large_image";
+  imageAlt?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
 };
 
 function setMeta(selector: string, attrs: Record<string, string>) {
@@ -64,11 +71,16 @@ export function applySocialMeta({
   image,
   icon,
   siteName,
-  card = "summary",
+  card = "summary_large_image",
+  imageAlt,
+  imageWidth,
+  imageHeight,
 }: SocialMeta) {
   const url = `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
   const desc = (description ?? "").trim() || "Referral profile.";
   const cardType = card;
+  const shareImage = (image ?? "").trim() || DEFAULT_OG_IMAGE;
+  const alt = (imageAlt ?? siteName ?? title).trim() || title;
 
   document.title = title;
 
@@ -89,14 +101,25 @@ export function applySocialMeta({
   ensure('meta[name="twitter:description"]', { name: "twitter:description", content: desc });
   ensure('meta[name="twitter:card"]', { name: "twitter:card", content: cardType });
 
-  if (image) {
-    ensure('meta[property="og:image"]', { property: "og:image", content: image });
-    ensure('meta[property="og:image:alt"]', { property: "og:image:alt", content: (siteName ?? title).trim() });
-    ensure('meta[name="twitter:image"]', { name: "twitter:image", content: image });
+  ensure('meta[property="og:image"]', { property: "og:image", content: shareImage });
+  ensure('meta[property="og:image:alt"]', { property: "og:image:alt", content: alt });
+  ensure('meta[name="twitter:image"]', { name: "twitter:image", content: shareImage });
+
+  if (imageWidth) {
+    ensure('meta[property="og:image:width"]', {
+      property: "og:image:width",
+      content: String(imageWidth),
+    });
   } else {
-    document.head.querySelector('meta[property="og:image"]')?.remove();
-    document.head.querySelector('meta[property="og:image:alt"]')?.remove();
-    document.head.querySelector('meta[name="twitter:image"]')?.remove();
+    document.head.querySelector('meta[property="og:image:width"]')?.remove();
+  }
+  if (imageHeight) {
+    ensure('meta[property="og:image:height"]', {
+      property: "og:image:height",
+      content: String(imageHeight),
+    });
+  } else {
+    document.head.querySelector('meta[property="og:image:height"]')?.remove();
   }
 
   document.head.querySelector('meta[name="twitter:site"]')?.remove();
@@ -107,14 +130,26 @@ export function applySocialMeta({
   return () => {};
 }
 
-/** Prefer org logo for share cards; fall back to cover or facility photo. */
-export function orgShareImage(org: {
-  logo_url?: string | null;
-  cover_image_url?: string | null;
-}): string | null {
-  return org.logo_url || org.cover_image_url || null;
+/** Absolute URL for the generated 1200×630 org share card. */
+export function orgOgImageUrl(slug: string): string {
+  return `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}`;
 }
 
-export function orgShareCardType(org: { logo_url?: string | null }): "summary" | "summary_large_image" {
-  return org.logo_url ? "summary" : "summary_large_image";
+/**
+ * Prefer a generated 1200×630 card when the org has a logo; otherwise the
+ * CenterLinked default social image. Never returns a relative path.
+ */
+export function orgShareImage(org: {
+  slug?: string | null;
+  logo_url?: string | null;
+  cover_image_url?: string | null;
+}): string {
+  if (org.slug && org.logo_url?.trim()) {
+    return orgOgImageUrl(org.slug);
+  }
+  return DEFAULT_OG_IMAGE;
+}
+
+export function orgShareCardType(_org?: { logo_url?: string | null }): "summary_large_image" {
+  return "summary_large_image";
 }

@@ -107,6 +107,9 @@ export default function OrgSheet() {
         icon: orgData.logo_url,
         siteName: orgData.name,
         card: orgShareCardType(orgData),
+        imageAlt: `${orgData.name} logo`,
+        imageWidth: 1200,
+        imageHeight: 630,
       });
 
       const { data: f } = await supabase
