@@ -47,7 +47,7 @@ const answers: {
     before: "Who you're",
     highlight: "in-network",
     after: "with",
-    body: "List accepted insurance providers and payor types.",
+    body: "List your current in-network contracts.",
   },
   {
     icon: Phone,
@@ -78,7 +78,7 @@ function AnswerCard({
   return (
     <li
       className={cn(
-        "opacity-0",
+        "h-full opacity-0",
         inView && "animate-fade-up",
       )}
       style={
@@ -92,14 +92,14 @@ function AnswerCard({
     >
       <article
         className={cn(
-          "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
+          "flex h-full min-h-[6.75rem] flex-col rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
           "px-3.5 py-3.5 sm:px-4 sm:py-4",
           "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
           "transition-[transform,box-shadow] duration-300",
           "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
         )}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex flex-1 items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm shadow-primary/25">
             <Icon className="h-[18px] w-[18px]" aria-hidden strokeWidth={2.25} />
           </span>
@@ -119,7 +119,13 @@ function AnswerCard({
   );
 }
 
-export function LinkAnswersReveal({ className }: { className?: string }) {
+export function LinkAnswersReveal({
+  className,
+  showTagline = true,
+}: {
+  className?: string;
+  showTagline?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
 
@@ -141,7 +147,7 @@ export function LinkAnswersReveal({ className }: { className?: string }) {
 
   return (
     <div ref={ref} className={cn("space-y-7 sm:space-y-8", className)}>
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
+      <ul className="grid grid-cols-1 auto-rows-fr gap-3 sm:grid-cols-2 sm:gap-3.5">
         {answers.map((answer, index) => (
           <AnswerCard
             key={`${answer.before}-${answer.highlight}`}
@@ -152,18 +158,20 @@ export function LinkAnswersReveal({ className }: { className?: string }) {
         ))}
       </ul>
 
-      <div className="flex items-center gap-3 sm:gap-4 pt-1">
-        <div className="h-px flex-1 bg-border/70" aria-hidden />
-        <p className="shrink-0 text-center text-xs sm:text-sm text-muted-foreground leading-none">
-          One link. Always up{" "}
-          <BadgeCheck
-            className="inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 align-[-2px] text-primary"
-            aria-hidden
-          />{" "}
-          to date. Built for trust.
-        </p>
-        <div className="h-px flex-1 bg-border/70" aria-hidden />
-      </div>
+      {showTagline ? (
+        <div className="flex items-center gap-3 sm:gap-4 pt-1">
+          <div className="h-px flex-1 bg-border/70" aria-hidden />
+          <p className="shrink-0 text-center text-xs sm:text-sm text-muted-foreground leading-none">
+            One link. Always up{" "}
+            <BadgeCheck
+              className="inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 align-[-2px] text-primary"
+              aria-hidden
+            />{" "}
+            to date. Built for trust.
+          </p>
+          <div className="h-px flex-1 bg-border/70" aria-hidden />
+        </div>
+      ) : null}
     </div>
   );
 }

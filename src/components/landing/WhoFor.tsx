@@ -13,6 +13,7 @@ import { SectionBadge } from "./SectionBadge";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 import { WhoForNetwork } from "./WhoForNetwork";
 import { LinkAnswersReveal } from "./LinkAnswersReveal";
+import { LinkAnswersDesktopVisual } from "./LinkAnswersDesktopVisual";
 import { cn } from "@/lib/utils";
 import handshakeImg from "@/assets/when-to-send-handshake.jpg";
 
@@ -43,22 +44,48 @@ const moments: {
   },
 ];
 
-function useInView<T extends HTMLElement>(threshold = 0.18) {
+function useInView<T extends HTMLElement>(threshold = 0.05) {
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || inView) return;
+
+    const reveal = () => setInView(true);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) setInView(true);
+        if (entry?.isIntersecting) {
+          reveal();
+          observer.disconnect();
+        }
       },
-      { threshold },
+      { threshold, rootMargin: "80px 0px 80px 0px" },
     );
     observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
+
+    // Hash navigation / late layout: re-check after paint and on scroll.
+    const check = () => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || 0;
+      if (rect.top < vh && rect.bottom > 0) reveal();
+    };
+    const raf = requestAnimationFrame(check);
+    const t1 = window.setTimeout(check, 120);
+    const t2 = window.setTimeout(check, 400);
+    window.addEventListener("scroll", check, { passive: true, once: true });
+    window.addEventListener("hashchange", check);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("hashchange", check);
+    };
+  }, [threshold, inView]);
 
   return { ref, inView };
 }
@@ -99,155 +126,189 @@ export function WhoFor() {
         </div>
       </section>
 
-      {/* When to send — desktop-only handshake photo, blends into the next section */}
-      <section
-        id="when-to-send"
-        ref={momentsReveal.ref}
-        className="relative overflow-hidden bg-background scroll-mt-20"
-      >
-        {/* Desktop photo — right half; crop bias keeps handshake near the copy */}
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58%] lg:block xl:w-[56%]"
-          aria-hidden
+      {/* When to send + What link answers — one continuous desktop story */}
+      <div className="relative bg-background">
+        <section
+          id="when-to-send"
+          ref={momentsReveal.ref}
+          className="relative overflow-hidden scroll-mt-20"
         >
-          <img
-            src={handshakeImg}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-[78%_center] scale-[1.02]"
-          />
-          {/* Soft left blend — short enough that subjects stay next to the cards */}
+          {/* Desktop photo — right half; crop bias keeps handshake near the copy */}
           <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.72) 5%, hsl(var(--background) / 0.28) 12%, transparent 22%)",
-            }}
-          />
-          {/* Top edge soften */}
-          <div
-            className="absolute inset-x-0 top-0 h-24"
-            style={{
-              background:
-                "linear-gradient(to bottom, hsl(var(--background)) 0%, transparent 100%)",
-            }}
-          />
-          {/* Bottom blend into the following section */}
-          <div
-            className="absolute inset-x-0 bottom-0 h-40 xl:h-48"
-            style={{
-              background:
-                "linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.72) 35%, transparent 100%)",
-            }}
-          />
-        </div>
+            className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-[54%] lg:block xl:w-[52%]"
+            aria-hidden
+          >
+            <img
+              src={handshakeImg}
+              alt=""
+              width={1536}
+              height={1024}
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover object-[78%_center]"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(90deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.72) 5%, hsl(var(--background) / 0.28) 12%, transparent 22%)",
+              }}
+            />
+            <div
+              className="absolute inset-x-0 top-0 h-24"
+              style={{
+                background:
+                  "linear-gradient(to bottom, hsl(var(--background)) 0%, transparent 100%)",
+              }}
+            />
+            {/* Dissolve fully to white before the next photo emerges */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-[62%]"
+              style={{
+                background:
+                  "linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background)) 18%, hsl(var(--background) / 0.85) 40%, hsl(var(--background) / 0.35) 68%, transparent 100%)",
+              }}
+            />
+          </div>
 
-        <div className="relative z-10 container py-14 sm:py-16 lg:py-20 lg:pb-28">
-          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 xl:gap-12 lg:items-center">
-            <div className="max-w-xl space-y-8 sm:space-y-10 lg:max-w-[34rem] xl:max-w-[36rem] lg:justify-self-end lg:w-full">
-              <div className="space-y-4">
+          <div className="relative z-10 container py-14 sm:py-16 lg:pt-20 lg:pb-24 xl:pb-28">
+            <div className="lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] lg:gap-6 xl:gap-8 lg:items-center">
+              <div className="max-w-xl space-y-7 sm:space-y-8 lg:max-w-[40rem] xl:max-w-[44rem] lg:justify-self-start lg:w-full lg:-translate-x-2 xl:-translate-x-5 lg:pb-4">
+                <div className="space-y-4">
+                  <SectionBadge
+                    icon={Send}
+                    className="border-primary/25 bg-primary/[0.06] text-primary"
+                  >
+                    When to send your link
+                  </SectionBadge>
+                  <DisplayHeading
+                    as="h2"
+                    className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+                  >
+                    Never miss an opportunity to build a new relationship.
+                  </DisplayHeading>
+                  <p className="max-w-md text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    One link connects your partners with everything your
+                    organization has to offer.
+                  </p>
+                </div>
+
+                <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
+                  {moments.map((moment, i) => {
+                    const Icon = moment.icon;
+                    return (
+                      <li
+                        key={moment.title}
+                        className={cn(
+                          momentsReveal.inView
+                            ? "animate-fade-up"
+                            : "opacity-100",
+                        )}
+                        style={
+                          momentsReveal.inView
+                            ? {
+                                animationDelay: `${120 + i * 80}ms`,
+                                animationFillMode: "forwards",
+                              }
+                            : undefined
+                        }
+                      >
+                        <article
+                          className={cn(
+                            "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
+                            "px-3.5 py-2.5 sm:px-4 sm:py-3",
+                            "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
+                            "transition-[transform,box-shadow] duration-300",
+                            "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
+                          )}
+                        >
+                          <div className="flex items-start gap-2.5 sm:gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <Icon className="h-3.5 w-3.5" aria-hidden />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug">
+                                {moment.title}
+                              </h3>
+                              <p className="mt-0.5 text-xs sm:text-[13px] text-muted-foreground leading-snug">
+                                {moment.body}
+                              </p>
+                            </div>
+                          </div>
+                        </article>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              <div className="hidden lg:block min-h-[22rem]" aria-hidden />
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="what-link-answers"
+          className="relative scroll-mt-20 py-16 sm:py-20 lg:py-8 xl:py-10 lg:mt-4 xl:mt-6"
+        >
+          {/* Mobile / tablet — stacked copy + cards only */}
+          <div className="container lg:hidden">
+            <div className="mx-auto max-w-3xl space-y-7 sm:space-y-8">
+              <div className="space-y-3.5 sm:space-y-4">
                 <SectionBadge
-                  icon={Send}
+                  icon={ListChecks}
                   className="border-primary/25 bg-primary/[0.06] text-primary"
                 >
-                  When to send your link
+                  What your link answers
                 </SectionBadge>
                 <DisplayHeading
                   as="h2"
                   className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
                 >
-                  Never miss an opportunity to build a new relationship.
+                  Everything your referral partners need
                 </DisplayHeading>
-                <p className="max-w-md text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  One link connects your partners with everything your
-                  organization has to offer.
+                <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  Case managers refer to the centers that make their jobs
+                  easier. That all starts with having access to the most up to
+                  date information about your program.
                 </p>
               </div>
 
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5">
-                {moments.map((moment, i) => {
-                  const Icon = moment.icon;
-                  return (
-                    <li
-                      key={moment.title}
-                      className={cn(
-                        "opacity-0",
-                        momentsReveal.inView && "animate-fade-up",
-                      )}
-                      style={
-                        momentsReveal.inView
-                          ? {
-                              animationDelay: `${120 + i * 80}ms`,
-                              animationFillMode: "forwards",
-                            }
-                          : undefined
-                      }
-                    >
-                      <article
-                        className={cn(
-                          "h-full rounded-xl border border-border/40 bg-card/95 backdrop-blur-[2px]",
-                          "px-4 py-3.5 sm:px-4 sm:py-4",
-                          "shadow-[0_10px_28px_-16px_rgba(15,23,42,0.28)]",
-                          "transition-[transform,box-shadow] duration-300",
-                          "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(15,23,42,0.32)]",
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <Icon className="h-4 w-4" aria-hidden />
-                          </span>
-                          <div className="min-w-0 flex-1 pt-0.5">
-                            <h3 className="text-sm sm:text-[15px] font-semibold text-foreground leading-snug">
-                              {moment.title}
-                            </h3>
-                            <p className="mt-1 text-xs sm:text-[13px] text-muted-foreground leading-snug">
-                              {moment.body}
-                            </p>
-                          </div>
-                        </div>
-                      </article>
-                    </li>
-                  );
-                })}
-              </ul>
+              <LinkAnswersReveal />
             </div>
-
-            {/* Reserves the photo column so the grid gap stays intentional */}
-            <div className="hidden lg:block min-h-[28rem]" aria-hidden />
           </div>
-        </div>
-      </section>
 
-      {/* What your link answers — separate section; photo fades out above it on desktop */}
-      <section
-        id="what-link-answers"
-        className="relative bg-background scroll-mt-20 py-14 sm:py-16 lg:py-20"
-      >
-        <div className="container">
-          <div className="mx-auto max-w-3xl space-y-7 sm:space-y-8 lg:mx-0 lg:max-w-xl xl:max-w-[560px]">
-            <div className="space-y-3.5 sm:space-y-4">
-              <SectionBadge
-                icon={ListChecks}
-                className="border-primary/25 bg-primary/[0.06] text-primary"
-              >
-                What your link answers
-              </SectionBadge>
-              <DisplayHeading
-                as="h2"
-                className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
-              >
-                Everything your referral partners need
-              </DisplayHeading>
-              <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
-                Case managers refer to the centers that make their jobs
-                easier. That all starts with having access to the most up to
-                date information about your program.
-              </p>
+          {/* Desktop — product visual left, copy right */}
+          <div className="hidden lg:grid lg:grid-cols-2 lg:items-stretch lg:min-h-[40rem] xl:min-h-[44rem]">
+            <LinkAnswersDesktopVisual />
+
+            <div className="relative z-10 flex items-center justify-end">
+              <div className="w-full max-w-xl xl:max-w-[36rem] px-8 xl:px-10 py-16 xl:py-20 space-y-7 xl:space-y-8 ml-10 xl:ml-20 2xl:ml-28 mr-2 xl:mr-6">
+                <div className="space-y-3.5 sm:space-y-4">
+                  <SectionBadge
+                    icon={ListChecks}
+                    className="border-primary/25 bg-primary/[0.06] text-primary"
+                  >
+                    What your link answers
+                  </SectionBadge>
+                  <DisplayHeading
+                    as="h2"
+                    className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+                  >
+                    Everything your referral partners need
+                  </DisplayHeading>
+                  <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    Case managers refer to the centers that make their jobs
+                    easier. That all starts with having access to the most up to
+                    date information about your program.
+                  </p>
+                </div>
+
+                <LinkAnswersReveal showTagline={false} />
+              </div>
             </div>
-
-            <LinkAnswersReveal />
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </>
   );
 }
