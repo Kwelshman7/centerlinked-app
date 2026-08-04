@@ -72,6 +72,12 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
+  IF NOT public.has_role(uid, 'super_admin'::public.app_role)
+     AND NOT public.org_allows_member_writes(_organization_id) THEN
+    RAISE EXCEPTION 'Organization account is suspended or archived'
+      USING ERRCODE = '42501';
+  END IF;
+
   fac_name := nullif(trim(coalesce(_facility->>'name', '')), '');
   IF fac_name IS NULL OR char_length(fac_name) > 200 THEN
     RAISE EXCEPTION 'Facility name is required (max 200 characters)';
@@ -365,6 +371,12 @@ BEGIN
     OR public.is_org_facility_admin(_organization_id, uid)
   ) THEN
     RAISE EXCEPTION 'Only organization admins can update organization profile'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF NOT public.has_role(uid, 'super_admin'::public.app_role)
+     AND NOT public.org_allows_member_writes(_organization_id) THEN
+    RAISE EXCEPTION 'Organization account is suspended or archived'
       USING ERRCODE = '42501';
   END IF;
 

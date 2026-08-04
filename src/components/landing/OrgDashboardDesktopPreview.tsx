@@ -88,7 +88,7 @@ export function OrgDashboardDesktopPreview({
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-hidden flex flex-col">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <DemoDashboardPreviewBody highlightFacilityIndex={highlightFacilityIndex} density="desktop" />
       </main>
     </div>

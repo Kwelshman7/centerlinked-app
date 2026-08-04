@@ -415,18 +415,37 @@
 .h-safe-tabbar { height: calc(64px + env(safe-area-inset-bottom)); }
 html, body, #root { overflow-x: hidden; max-width: 100%; }
 
-/* Landing dashboard demo — scale facility cards inside laptop/phone mocks */
-.demo-facility-grid .font-semibold.text-sm {
+/* Landing dashboard demo — keep a compact 2×2 facility grid visible in the laptop frame */
+.demo-facility-grid {
+  align-content: stretch;
+}
+
+.demo-facility-grid > * {
+  min-height: 0;
+}
+
+.demo-facility-grid .aspect-\[4\/3\] {
+  aspect-ratio: 16 / 9;
+  max-height: 4.75rem;
+}
+
+.demo-facility-grid .font-semibold.text-sm,
+.demo-facility-grid .font-semibold.text-xs {
   font-size: 8px;
   line-height: 1.25;
 }
 
-.demo-facility-grid .text-\[11px\] {
+.demo-facility-grid .text-\[11px\],
+.demo-facility-grid .text-\[10px\] {
   font-size: 7px;
 }
 
 .demo-facility-grid .text-\[9px\] {
   font-size: 6px;
+}
+
+.demo-facility-grid .px-2\.5.py-2 {
+  padding: 0.3rem 0.4rem;
 }
 
 /* Print / Save as PDF — hide chrome, keep sheet content */

@@ -12,6 +12,7 @@ import {
   PanelLeft,
   Menu,
   CreditCard,
+  Gauge,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { adminLinks } from "@/components/app/admin/SuperAdminPanel";
 import { BillingStatusBanner } from "@/components/app/BillingStatusBanner";
+import { OrgAccountStatusBanner } from "@/components/app/OrgAccountStatusBanner";
 
 type NavItem = { to: string; label: string; icon: typeof SearchIcon; end?: boolean };
 
@@ -37,6 +39,12 @@ export function AppLayout() {
       { to: "/app/search", label: "Search", icon: SearchIcon },
     ];
     if (isSuperAdmin) {
+      items.push({
+        to: "/app/admin/ops",
+        label: "Ops",
+        icon: Gauge,
+        end: true,
+      });
       items.push({
         to: "/app/admin/organizations",
         label: "Manage orgs",
@@ -250,6 +258,7 @@ export function AppLayout() {
           )}
         >
           <BillingStatusBanner />
+          <OrgAccountStatusBanner />
           <Outlet />
         </div>
       </main>

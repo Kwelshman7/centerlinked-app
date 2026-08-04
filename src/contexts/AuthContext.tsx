@@ -6,6 +6,10 @@ import { bootstrapSuperAdmin, checkBootstrapAdminCandidate } from "@/lib/bootstr
 import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { ensureProfile } from "@/lib/ensure-profile";
 import { claimPendingOrgInvite } from "@/lib/org-setup";
+import {
+  normalizeOrgAccountStatus,
+  type OrgAccountStatus,
+} from "@/lib/org-account-status";
 
 type AppRole = "super_admin" | "facility_admin" | "bd_rep";
 
@@ -29,6 +33,10 @@ interface AuthContextValue {
   isBootstrapAdmin: boolean;
   needsSuperAdminSetup: boolean;
   isFacilityAdmin: boolean;
+  orgAccountStatus: OrgAccountStatus | null;
+  isOrgSuspended: boolean;
+  isOrgArchived: boolean;
+  canMutateOrgData: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -40,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [orgAccountStatus, setOrgAccountStatus] = useState<OrgAccountStatus | null>(null);
   const [isBootstrapAdmin, setIsBootstrapAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const loadRef = useRef<Promise<void> | null>(null);
@@ -61,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         setProfile(null);
         setRoles([]);
+        setOrgAccountStatus(null);
         setIsBootstrapAdmin(false);
         return;
       }
@@ -102,8 +112,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: retryRoles } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id);
         nextRoles = ((retryRoles as { role: AppRole }[]) ?? []).map((r) => r.role);
       }
-      setProfile((prof as Profile) ?? null);
+      const nextProfile = (prof as Profile) ?? null;
+      setProfile(nextProfile);
       setRoles(nextRoles);
+
+      if (nextProfile?.organization_id) {
+        const { data: orgRow, error: orgError } = await supabase
+          .from("organizations")
+          .select("account_status")
+          .eq("id", nextProfile.organization_id)
+          .maybeSingle();
+        if (orgError?.message?.toLowerCase().includes("account_status")) {
+          setOrgAccountStatus("active");
+        } else {
+          setOrgAccountStatus(
+            normalizeOrgAccountStatus(
+              (orgRow as { account_status?: string | null } | null)?.account_status,
+            ),
+          );
+        }
+      } else {
+        setOrgAccountStatus(null);
+      }
     })().finally(() => {
       loadRef.current = null;
     });
@@ -123,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRoles([]);
+        setOrgAccountStatus(null);
         setIsBootstrapAdmin(false);
         setLoading(false);
       }
@@ -144,6 +175,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isSuperAdmin = roles.includes("super_admin");
   const needsSuperAdminSetup = isBootstrapAdmin && !isSuperAdmin;
+  const isOrgSuspended = !isSuperAdmin && orgAccountStatus === "suspended";
+  const isOrgArchived = !isSuperAdmin && orgAccountStatus === "archived";
+  const canMutateOrgData = isSuperAdmin || (!!profile?.organization_id && orgAccountStatus === "active");
 
   return (
     <AuthContext.Provider
@@ -157,6 +191,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isBootstrapAdmin,
         needsSuperAdminSetup,
         isFacilityAdmin: roles.includes("facility_admin") || isSuperAdmin,
+        orgAccountStatus,
+        isOrgSuspended,
+        isOrgArchived,
+        canMutateOrgData,
         signOut,
         refresh,
       }}

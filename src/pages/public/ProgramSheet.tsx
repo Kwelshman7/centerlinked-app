@@ -25,6 +25,7 @@ import { sanitizePhone } from "@/lib/phone";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import {
   isMissingOptionalOrgColumn,
+  isOrgAccountInactive,
   orgProgramSelect,
   orgProgramSelectFallback,
   orgSocialFromRow,
@@ -132,7 +133,12 @@ export default function ProgramSheet() {
 
     const orgRow = (o as OrgRow | null) ?? null;
 
-    if (orgSlug && orgRow?.slug && orgRow.slug !== orgSlug) {
+    if (!orgRow || isOrgAccountInactive(orgRow as { account_status?: string | null })) {
+      setNotFound(true);
+      return;
+    }
+
+    if (orgSlug && orgRow.slug && orgRow.slug !== orgSlug) {
       setNotFound(true);
       return;
     }

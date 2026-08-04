@@ -47,14 +47,14 @@ export function DemoDashboardPreviewBody({
   return (
     <div
       className={cn(
-        "flex flex-col bg-muted/30 text-foreground select-none pointer-events-none min-h-0",
-        isMobile ? "gap-2.5 p-2.5" : "gap-1.5 p-2.5",
+        "flex h-full min-h-0 flex-col bg-muted/30 text-foreground select-none pointer-events-none",
+        isMobile ? "gap-2 p-2.5" : "gap-1 p-2",
       )}
     >
       <div className={cn("flex items-start justify-between gap-2 shrink-0", isMobile && "px-0.5")}>
         <div className="min-w-0 flex items-center gap-2">
           {!isMobile && (
-            <div className="h-6 w-6 rounded-md bg-white border border-border/60 overflow-hidden p-0.5 shrink-0 grid place-items-center">
+            <div className="h-5 w-5 rounded-md bg-white border border-border/60 overflow-hidden p-0.5 shrink-0 grid place-items-center">
               <img src={DEMO_ORG.logo} alt="" className="h-full w-full object-contain" draggable={false} />
             </div>
           )}
@@ -62,7 +62,7 @@ export function DemoDashboardPreviewBody({
             <h1
               className={cn(
                 "font-heading font-bold tracking-tight truncate",
-                isMobile ? "text-[13px]" : "text-sm",
+                isMobile ? "text-[13px]" : "text-[11px]",
               )}
             >
               Welcome back, {DEMO_ORG.userName}
@@ -70,7 +70,7 @@ export function DemoDashboardPreviewBody({
             <p
               className={cn(
                 "text-muted-foreground truncate",
-                isMobile ? "text-[9px] mt-0.5" : "text-[9px]",
+                isMobile ? "text-[9px] mt-0.5" : "text-[8px]",
               )}
             >
               {DEMO_ORG.orgName}
@@ -110,12 +110,13 @@ export function DemoDashboardPreviewBody({
         <ContactKpi isMobile={isMobile} />
       </div>
 
-      <QuickActionsPanel isMobile={isMobile} />
+      {/* Keep quick actions on mobile only — desktop needs room for the 2×2 facility grid */}
+      {isMobile ? <QuickActionsPanel isMobile /> : null}
 
       <div
         className={cn(
-          "rounded-md border border-border/60 bg-card shadow-sm flex flex-col min-h-0",
-          isMobile ? "p-2 flex-1" : "p-1.5 flex-1",
+          "rounded-md border border-border/60 bg-card shadow-sm flex flex-col min-h-0 flex-1",
+          isMobile ? "p-2" : "p-1.5",
         )}
       >
         <div className="flex items-center justify-between gap-2 mb-1 shrink-0">
@@ -149,8 +150,8 @@ export function DemoDashboardPreviewBody({
 
         <div
           className={cn(
-            "flex items-center gap-1 overflow-x-auto shrink-0 pb-1",
-            isMobile ? "mb-1.5" : "mb-1.5",
+            "flex items-center gap-1 overflow-x-auto shrink-0",
+            isMobile ? "mb-1.5 pb-1" : "mb-1 pb-0.5",
           )}
         >
           {DEMO_STATE_FILTERS.map((s, i) => (
@@ -170,24 +171,27 @@ export function DemoDashboardPreviewBody({
 
         <div
           data-demo-scroll
-          className={cn("flex-1 min-h-0 overflow-y-auto overscroll-contain", isMobile ? "pr-0.5" : "")}
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain",
+            isMobile ? "pr-0.5" : "overflow-hidden",
+          )}
         >
           <FacilityGrid
             count={DEMO_GRID_FACILITIES.length}
-            className="demo-facility-grid !grid-cols-2 sm:!grid-cols-2 md:!grid-cols-2 lg:!grid-cols-2 gap-1.5"
+            className="demo-facility-grid !grid-cols-2 sm:!grid-cols-2 md:!grid-cols-2 lg:!grid-cols-2 gap-1.5 h-full content-stretch"
           >
             {DEMO_GRID_FACILITIES.map((f, i) => (
               <div
                 key={f.id}
                 data-demo-facility={i}
                 className={cn(
-                  "rounded-xl transition-all duration-200 h-full",
+                  "rounded-xl transition-all duration-200 h-full min-h-0",
                   highlightFacilityIndex === i &&
                     "ring-2 ring-primary/40 shadow-md scale-[1.02] z-[1] relative",
                   highlightFacilityIndex === i && i === FEATURED_FACILITY_INDEX && "ring-primary/50",
                 )}
               >
-                <FacilityGridCard facility={f} density="compact" />
+                <FacilityGridCard facility={f} density="compact" imageLoading="eager" />
               </div>
             ))}
           </FacilityGrid>

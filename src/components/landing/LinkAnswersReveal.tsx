@@ -6,7 +6,6 @@ import {
   MapPin,
   Shield,
   Phone,
-  BadgeCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -119,13 +118,7 @@ function AnswerCard({
   );
 }
 
-export function LinkAnswersReveal({
-  className,
-  showTagline = true,
-}: {
-  className?: string;
-  showTagline?: boolean;
-}) {
+export function LinkAnswersReveal({ className }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
 
@@ -146,7 +139,7 @@ export function LinkAnswersReveal({
   }, []);
 
   return (
-    <div ref={ref} className={cn("space-y-7 sm:space-y-8", className)}>
+    <div ref={ref} className={cn(className)}>
       <ul className="grid grid-cols-1 auto-rows-fr gap-3 sm:grid-cols-2 sm:gap-3.5">
         {answers.map((answer, index) => (
           <AnswerCard
@@ -157,21 +150,6 @@ export function LinkAnswersReveal({
           />
         ))}
       </ul>
-
-      {showTagline ? (
-        <div className="flex items-center gap-3 sm:gap-4 pt-1">
-          <div className="h-px flex-1 bg-border/70" aria-hidden />
-          <p className="shrink-0 text-center text-xs sm:text-sm text-muted-foreground leading-none">
-            One link. Always up{" "}
-            <BadgeCheck
-              className="inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 align-[-2px] text-primary"
-              aria-hidden
-            />{" "}
-            to date. Built for trust.
-          </p>
-          <div className="h-px flex-1 bg-border/70" aria-hidden />
-        </div>
-      ) : null}
     </div>
   );
 }

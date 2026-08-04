@@ -30,7 +30,7 @@ const moments: {
   {
     icon: Monitor,
     title: "At a conference",
-    body: "Share from the booth, a badge scan, or a quick text.",
+    body: "Share from the conference booth, a QR code, or a quick text.",
   },
   {
     icon: Hospital,
@@ -303,7 +303,7 @@ export function WhoFor() {
                   </p>
                 </div>
 
-                <LinkAnswersReveal showTagline={false} />
+                <LinkAnswersReveal />
               </div>
             </div>
           </div>
