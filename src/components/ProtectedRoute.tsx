@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { SuperAdminAccessDenied } from "@/components/app/admin/SuperAdminSetupAlert";
+import { OrgArchivedBlocked } from "@/components/app/OrgAccountStatusBanner";
 import { Loader2 } from "lucide-react";
 
 const ORG_OPTIONAL_PATHS = new Set([
@@ -11,7 +12,7 @@ const ORG_OPTIONAL_PATHS = new Set([
 ]);
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, profile, loading, isSuperAdmin } = useAuth();
+  const { user, profile, loading, isSuperAdmin, isOrgArchived } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -29,6 +30,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const onOrgOptionalPath = ORG_OPTIONAL_PATHS.has(location.pathname);
   if (!isSuperAdmin && !profile?.organization_id && !onOrgOptionalPath) {
     return <Navigate to="/setup-organization" replace />;
+  }
+
+  if (isOrgArchived && !onOrgOptionalPath) {
+    return <OrgArchivedBlocked />;
   }
 
   return <>{children}</>;

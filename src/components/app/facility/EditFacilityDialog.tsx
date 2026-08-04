@@ -93,7 +93,7 @@ export function EditFacilityDialog({
   triggerClassName,
   organizationId,
 }: Props) {
-  const { profile, isFacilityAdmin, isSuperAdmin } = useAuth();
+  const { profile, isFacilityAdmin, isSuperAdmin, canMutateOrgData } = useAuth();
   const canManageVisibility = isFacilityAdmin || isSuperAdmin;
   const orgId = organizationId || profile?.organization_id || null;
   const [open, setOpen] = useState(false);
@@ -108,6 +108,10 @@ export function EditFacilityDialog({
   const save = async () => {
     if (!orgId) {
       toast.error("Organization is required");
+      return;
+    }
+    if (!canMutateOrgData && !isSuperAdmin) {
+      toast.error("Organization is suspended — edits are locked");
       return;
     }
     setSaving(true);

@@ -19,7 +19,29 @@ const STYLES: Record<VerificationTier, { cls: string; Icon: typeof BadgeCheck }>
 
 export function VerificationBadge({ verifiedAt, frozen, size = "sm", className }: Props) {
   const state = verificationState(verifiedAt, frozen);
-  const { cls, Icon } = STYLES[state.tier];
+  return <VerificationTierBadge tier={state.tier} label={state.label} size={size} className={className} />;
+}
+
+const TIER_LABELS: Record<VerificationTier, string> = {
+  fresh: "Verified this month",
+  recent: "Recent",
+  stale: "Needs confirmation",
+  frozen: "Frozen — needs verification",
+  never: "Not yet verified",
+};
+
+export function VerificationTierBadge({
+  tier,
+  label,
+  size = "sm",
+  className,
+}: {
+  tier: VerificationTier;
+  label?: string;
+  size?: "sm" | "md";
+  className?: string;
+}) {
+  const { cls, Icon } = STYLES[tier];
   return (
     <span
       className={cn(
@@ -30,7 +52,7 @@ export function VerificationBadge({ verifiedAt, frozen, size = "sm", className }
       )}
     >
       <Icon className={size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5"} />
-      {state.label}
+      {label ?? TIER_LABELS[tier]}
     </span>
   );
 }

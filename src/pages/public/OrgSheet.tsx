@@ -12,6 +12,7 @@ import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import {
   isMissingOptionalOrgColumn,
+  isOrgAccountInactive,
   orgSheetSelect,
   orgSheetSelectFallback,
 } from "@/lib/org-public-select";
@@ -82,7 +83,7 @@ export default function OrgSheet() {
         o = fallback.data;
       }
 
-      if (!o) {
+      if (!o || isOrgAccountInactive(o as { account_status?: string | null })) {
         setNotFound(true);
         return;
       }

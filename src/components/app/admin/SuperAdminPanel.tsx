@@ -1,10 +1,26 @@
 import { Link, NavLink } from "react-router-dom";
-import { Building2, Inbox, Shield, ShieldCheck, CheckSquare, Database, Plus, UserPlus } from "lucide-react";
+import {
+  Building2,
+  Inbox,
+  Shield,
+  ShieldCheck,
+  CheckSquare,
+  Database,
+  Plus,
+  UserPlus,
+  Gauge,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const adminLinks = [
+const adminLinks: {
+  to: string;
+  label: string;
+  icon: typeof Building2;
+  end?: boolean;
+}[] = [
+  { to: "/app/admin/ops", label: "Ops dashboard", icon: Gauge, end: true },
   { to: "/app/admin/organizations", label: "Manage organizations", icon: Building2, end: true },
   { to: "/app/admin/organizations/new", label: "Add organization", icon: Plus },
   { to: "/app/admin/join-requests", label: "Join requests", icon: UserPlus },
@@ -12,7 +28,7 @@ const adminLinks = [
   { to: "/app/admin/claims", label: "Org claims", icon: ShieldCheck },
   { to: "/app/verifications", label: "Verifications", icon: CheckSquare },
   { to: "/app/admin/insurance", label: "Insurance DB", icon: Database },
-] as const;
+];
 
 export function SuperAdminBanner() {
   return (
@@ -27,11 +43,18 @@ export function SuperAdminBanner() {
             </p>
           </div>
         </div>
-        <Button asChild size="sm" className="shrink-0 w-full sm:w-auto">
-          <Link to="/app/admin/organizations">
-            <Building2 className="h-4 w-4" /> Manage organizations
-          </Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
+          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+            <Link to="/app/admin/ops">
+              <Gauge className="h-4 w-4" /> Ops dashboard
+            </Link>
+          </Button>
+          <Button asChild size="sm" className="w-full sm:w-auto">
+            <Link to="/app/admin/organizations">
+              <Building2 className="h-4 w-4" /> Manage organizations
+            </Link>
+          </Button>
+        </div>
       </div>
     </Card>
   );
