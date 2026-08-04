@@ -12,9 +12,9 @@ const TARGET_FACILITY = FEATURED_FACILITY_INDEX;
 const MOVE_MS = 1800;
 
 const HOLD = {
-  dashboard: 4200,
+  dashboard: 5600,
   click: 650,
-  facility: 7200,
+  facility: 5200,
   returning: 900,
 } as const;
 
@@ -117,34 +117,20 @@ export function OrgDashboardInteractiveDemo() {
     return () => io.disconnect();
   }, []);
 
-  const scrollTargetIntoView = useCallback(() => {
+  const resetFacilityScroll = useCallback(() => {
     const stage = stageRef.current;
-    if (!stage) return;
-
-    const facility = stage.querySelector(
-      `[data-demo-facility="${TARGET_FACILITY}"]`,
-    ) as HTMLElement | null;
-    const scrollRoot = stage.querySelector("[data-demo-scroll]") as HTMLElement | null;
-
-    if (!facility) return;
-
-    if (scrollRoot) {
-      const rootRect = scrollRoot.getBoundingClientRect();
-      const facilityRect = facility.getBoundingClientRect();
-      const offset =
-        facilityRect.top - rootRect.top - rootRect.height / 2 + facilityRect.height / 2;
-      scrollRoot.scrollTop += offset;
-      return;
-    }
-
-    facility.scrollIntoView({ block: "center", inline: "nearest" });
+    const scrollRoot = stage?.querySelector("[data-demo-scroll]") as HTMLElement | null;
+    if (scrollRoot) scrollRoot.scrollTop = 0;
   }, []);
 
   const measurePositions = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return;
 
-    scrollTargetIntoView();
+    // Keep the full 2×2 facility grid visible during the dashboard beat.
+    if (phase === "dashboard" || phase === "returning") {
+      resetFacilityScroll();
+    }
 
     const stageRect = stage.getBoundingClientRect();
     if (stageRect.width < 8 || stageRect.height < 8) return;
@@ -172,7 +158,7 @@ export function OrgDashboardInteractiveDemo() {
       setHome(nextHome);
       setTarget({ x: 36, y: 68 });
     }
-  }, [phase, scrollTargetIntoView]);
+  }, [phase, resetFacilityScroll]);
 
   useLayoutEffect(() => {
     measurePositions();
@@ -206,10 +192,12 @@ export function OrgDashboardInteractiveDemo() {
       while (!cancelled) {
         setPhase("dashboard");
         setCursor(home);
+        resetFacilityScroll();
         measurePositions();
         await wait(HOLD.dashboard);
         if (cancelled) break;
 
+        resetFacilityScroll();
         measurePositions();
         setPhase("moving");
         const stage = stageRef.current;
@@ -248,7 +236,7 @@ export function OrgDashboardInteractiveDemo() {
       cancelled = true;
       timers.forEach(clearTimeout);
     };
-    // home/target intentionally omitted — loop uses live DOM measure
+    // home/target/measurePositions intentionally omitted — loop uses live DOM measure
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inView, reduceMotion]);
 
