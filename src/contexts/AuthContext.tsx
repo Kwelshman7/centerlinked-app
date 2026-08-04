@@ -117,19 +117,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles(nextRoles);
 
       if (nextProfile?.organization_id) {
-        const { data: orgRow, error: orgError } = await supabase
-          .from("organizations")
-          .select("account_status")
-          .eq("id", nextProfile.organization_id)
-          .maybeSingle();
-        if (orgError?.message?.toLowerCase().includes("account_status")) {
+        const { data: status, error: orgError } = await supabase.rpc(
+          "org_account_status_of",
+          { _org_id: nextProfile.organization_id }
+        );
+        if (orgError) {
+          console.warn("org_account_status_of failed:", orgError.message);
           setOrgAccountStatus("active");
         } else {
-          setOrgAccountStatus(
-            normalizeOrgAccountStatus(
-              (orgRow as { account_status?: string | null } | null)?.account_status,
-            ),
-          );
+          setOrgAccountStatus(normalizeOrgAccountStatus(status));
         }
       } else {
         setOrgAccountStatus(null);

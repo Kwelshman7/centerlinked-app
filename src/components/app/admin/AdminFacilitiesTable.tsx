@@ -147,16 +147,19 @@ export function AdminFacilitiesTable() {
 
     const ids = list.map((r) => r.id);
     if (ids.length) {
-      const { data: contracts } = await supabase
-        .from("insurance_contracts")
-        .select("id,facility_id,payer_id,payer_name,in_network")
-        .in("facility_id", ids.slice(0, 500));
       const map = new Map<string, ContractRow[]>();
-      ((contracts as ContractRow[]) ?? []).forEach((c) => {
-        const arr = map.get(c.facility_id) ?? [];
-        arr.push(c);
-        map.set(c.facility_id, arr);
-      });
+      for (let i = 0; i < ids.length; i += 500) {
+        const batch = ids.slice(i, i + 500);
+        const { data: contracts } = await supabase
+          .from("insurance_contracts")
+          .select("id,facility_id,payer_id,payer_name,in_network")
+          .in("facility_id", batch);
+        ((contracts as ContractRow[]) ?? []).forEach((c) => {
+          const arr = map.get(c.facility_id) ?? [];
+          arr.push(c);
+          map.set(c.facility_id, arr);
+        });
+      }
       setContractsByFacility(map);
     } else {
       setContractsByFacility(new Map());
