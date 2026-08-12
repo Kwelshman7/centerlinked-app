@@ -213,7 +213,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
     ] as const;
 
     let error: { message?: string } | null = null;
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt <= optionalColumns.length; attempt++) {
       const result = await supabase.from("organizations").update(payload).eq("id", organizationId);
       error = result.error;
       if (!error) break;

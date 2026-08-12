@@ -2,9 +2,13 @@
 -- Apply each file with:
 --   npx supabase db query --linked -f supabase/<file>.sql
 --
+-- Schema prerequisites (safe / idempotent; required before org Settings save):
+--   org-footer-image.sql             -- organizations.footer_image_url
+--   org-social-links.sql             -- organizations.social_*_url
+--
 -- 1. revoke-dangerous-grants.sql     -- CRITICAL: revoke run_sql from clients
 -- 2. rls-tenant-hardening.sql        -- tighten organizations/profiles SELECT
--- 3. save-facility-with-contracts.sql
+-- 3. save-facility-with-contracts.sql  -- includes update_organization_profile
 -- 4. stripe-webhook-events.sql
 -- 5. approved-personal-emails.sql
 -- 6. security-hardening.sql

@@ -374,7 +374,7 @@ Central tenant entity: branded public org sheet, billing customer, membership ro
 | `footer_image_url` | text \| null | `org-footer-image.sql` |
 | `image_urls` | text[] | Gallery; `org-image-urls.sql` |
 | `brand_color` / `accent_color` | text \| null | Hex validated in RPC |
-| `social_*_url` | text \| null | facebook/instagram/linkedin/x |
+| `social_*_url` | text \| null | facebook/instagram/linkedin/x — `org-social-links.sql` (required for Settings save via `update_organization_profile`) |
 | `bd_contact_name` / `phone` / `email` | text \| null | |
 | `cta_primary_label` / `cta_secondary_label` | text \| null | |
 | `announcement` | text \| null | |

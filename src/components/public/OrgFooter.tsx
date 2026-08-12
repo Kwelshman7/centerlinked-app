@@ -54,6 +54,8 @@ interface Props {
   showReferSlot?: boolean;
   /** PDF export is available for individual facility/program sheets only. */
   showExportPdf?: boolean;
+  /** Custom one-pager exporter. Falls back to window.print() when omitted. */
+  onExportPdf?: () => void | Promise<void>;
 }
 
 function normalizeExternalUrl(url: string): string {
@@ -76,8 +78,10 @@ export function OrgFooter({
   orgLinkLabel,
   showReferSlot = false,
   showExportPdf = false,
+  onExportPdf,
 }: Props) {
   const [copied, setCopied] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const displayUrl =
     shareDisplayPath ?? (slug ? orgDisplayPath(slug) : "centerlinked.com");
   const fullUrl =
@@ -124,8 +128,18 @@ export function OrgFooter({
     await copy();
   };
 
-  const exportPdf = () => {
-    window.print();
+  const exportPdf = async () => {
+    if (exportingPdf) return;
+    if (!onExportPdf) {
+      window.print();
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      await onExportPdf();
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   const menuItems: {
@@ -141,7 +155,16 @@ export function OrgFooter({
       icon: copied ? Check : Share2,
       onClick: share,
     },
-    ...(showExportPdf ? [{ key: "pdf", label: "Export PDF", icon: FileText, onClick: exportPdf }] : []),
+    ...(showExportPdf
+      ? [
+          {
+            key: "pdf",
+            label: exportingPdf ? "Creating PDF…" : "Export PDF",
+            icon: FileText,
+            onClick: exportPdf,
+          },
+        ]
+      : []),
   ];
   const viewMoreItem =
     orgHref && orgLinkLabel
@@ -251,7 +274,8 @@ export function OrgFooter({
                   key={item.key}
                   type="button"
                   onClick={item.onClick}
-                  className={cn(FOOTER_ACTION_BTN_CLASS)}
+                  disabled={item.key === "pdf" && exportingPdf}
+                  className={cn(FOOTER_ACTION_BTN_CLASS, item.key === "pdf" && exportingPdf && "opacity-70")}
                   style={buttonStyle}
                 >
                   <Icon className={FOOTER_ACTION_ICON_CLASS} aria-hidden />

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
@@ -23,6 +24,7 @@ import {
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { sanitizePhone } from "@/lib/phone";
 import { trackOrgEvent } from "@/lib/track-org-event";
+import { exportFacilityOnePagerPdf } from "@/lib/export-facility-one-pager";
 import {
   isMissingOptionalOrgColumn,
   orgProgramSelect,
@@ -90,6 +92,24 @@ export default function ProgramSheet() {
   // Match the organization sheet exactly, including the logo-derived fallback
   // when a saved brand color is not present.
   const brand = useOrgBrandColor(org);
+
+  const handleExportPdf = useCallback(async () => {
+    if (!facility) return;
+    const toastId = toast.loading("Creating your referral one-pager…");
+    try {
+      await exportFacilityOnePagerPdf({
+        facility,
+        org,
+        contracts,
+        brandColor: brand,
+      });
+      if (org?.id) trackOrgEvent(org.id, "share_click");
+      toast.success("One-pager PDF downloaded", { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error("Couldn't create the PDF. Please try again.", { id: toastId });
+    }
+  }, [facility, org, contracts, brand]);
 
   const loadAll = async () => {
     if (!facilitySlug) return;
@@ -296,6 +316,7 @@ export default function ProgramSheet() {
           }
           orgLinkLabel="View More"
           showExportPdf
+          onExportPdf={handleExportPdf}
           showReferSlot={
             !!(
               sanitizePhone(facility.bd_contact_phone || org?.bd_contact_phone) ||
