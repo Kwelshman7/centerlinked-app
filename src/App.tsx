@@ -35,6 +35,7 @@ import OrganizationClaims from "./pages/app/admin/OrganizationClaims";
 import AdminCreateOrganization from "./pages/app/admin/AdminCreateOrganization";
 import AdminOrganizations from "./pages/app/admin/AdminOrganizations";
 import AdminOrgWorkspace from "./pages/app/admin/AdminOrgWorkspace";
+import AdminOpsDashboard from "./pages/app/admin/AdminOpsDashboard";
 import VerifyContracts from "./pages/app/VerifyContracts";
 import ProgramSheet from "./pages/public/ProgramSheet";
 import OrgSheet from "./pages/public/OrgSheet";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="admin/requests" element={<AdminRoute><AccessRequests /></AdminRoute>} />
               <Route path="admin/join-requests" element={<AdminRoute><JoinRequests /></AdminRoute>} />
               <Route path="admin/claims" element={<AdminRoute><OrganizationClaims /></AdminRoute>} />
+              <Route path="admin/ops" element={<AdminRoute><AdminOpsDashboard /></AdminRoute>} />
               <Route path="admin/organizations" element={<AdminRoute><AdminOrganizations /></AdminRoute>} />
               <Route path="admin/organizations/new" element={<AdminRoute><AdminCreateOrganization /></AdminRoute>} />
               <Route path="admin/organizations/:id" element={<AdminRoute><AdminOrgWorkspace /></AdminRoute>} />

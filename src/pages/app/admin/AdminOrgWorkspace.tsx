@@ -8,11 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
+  Archive,
   Building2,
   BadgeCheck,
+  Ban,
   ExternalLink,
   Lock,
   MapPin,
+  RotateCcw,
   Trash2,
   LayoutDashboard,
   Link2,
@@ -25,6 +28,12 @@ import { OrgDashboard } from "@/components/app/OrgDashboard";
 import { OrgSharedLinksPanel } from "@/components/app/OrgSharedLinksPanel";
 import { AdminOrgBrandingForm } from "@/components/app/admin/AdminOrgBrandingForm";
 import { EditOrganizationDialog, type OrgEditable } from "@/components/app/admin/EditOrganizationDialog";
+import { SetAccountStatusDialog } from "@/components/app/admin/SetAccountStatusDialog";
+import {
+  accountStatusLabel,
+  normalizeOrgAccountStatus,
+  type OrgAccountStatus,
+} from "@/lib/org-account-status";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -43,6 +52,7 @@ type TabId = (typeof TABS)[number];
 
 interface OrgHeader extends OrgEditable {
   slug: string | null;
+  account_status: OrgAccountStatus;
 }
 
 interface FacilityRow {
@@ -87,6 +97,7 @@ export default function AdminOrgWorkspace() {
   const [org, setOrg] = useState<OrgHeader | null>(null);
   const [facilities, setFacilities] = useState<FacilityRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
+  const [statusTarget, setStatusTarget] = useState<OrgAccountStatus | null>(null);
 
   const tab = useMemo(() => {
     const t = searchParams.get("tab");
@@ -106,17 +117,36 @@ export default function AdminOrgWorkspace() {
     if (!id) return;
     const quiet = opts?.quiet === true;
     if (!quiet) setLoading(true);
-    const [{ data: o }, { data: f }] = await Promise.all([
-      supabase
+    let orgRes = await supabase
+      .from("organizations")
+      .select(
+        "id,name,slug,logo_url,hq_city,hq_state,email_domain,website,description,verified,phone,bd_contact_name,bd_contact_phone,bd_contact_email,account_status",
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (orgRes.error?.message?.toLowerCase().includes("account_status")) {
+      orgRes = await supabase
         .from("organizations")
         .select(
           "id,name,slug,logo_url,hq_city,hq_state,email_domain,website,description,verified,phone,bd_contact_name,bd_contact_phone,bd_contact_email",
         )
         .eq("id", id)
-        .maybeSingle(),
-      supabase.from("facilities").select("*").eq("organization_id", id).order("name"),
-    ]);
-    setOrg((o as OrgHeader) ?? null);
+        .maybeSingle();
+    }
+    const { data: f } = await supabase
+      .from("facilities")
+      .select("*")
+      .eq("organization_id", id)
+      .order("name");
+    const o = orgRes.data as (OrgEditable & { slug: string | null; account_status?: string | null }) | null;
+    setOrg(
+      o
+        ? {
+            ...o,
+            account_status: normalizeOrgAccountStatus(o.account_status),
+          }
+        : null,
+    );
     const facs = (f as FacilityRow[]) ?? [];
     setFacilities(facs);
     if (facs.length > 0) {
@@ -196,6 +226,9 @@ export default function AdminOrgWorkspace() {
                     <BadgeCheck className="h-3.5 w-3.5 text-success" /> Verified
                   </Badge>
                 )}
+                <Badge variant="outline" className="text-[10px]">
+                  {accountStatusLabel(org.account_status)}
+                </Badge>
                 <Badge variant="outline" className="text-[10px]">Super-admin workspace</Badge>
               </div>
               <p className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
@@ -217,9 +250,38 @@ export default function AdminOrgWorkspace() {
                 </Link>
               </Button>
             )}
+            {org.account_status === "active" ? (
+              <>
+                <Button size="sm" variant="outline" onClick={() => setStatusTarget("suspended")}>
+                  <Ban className="h-4 w-4" /> Suspend
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setStatusTarget("archived")}>
+                  <Archive className="h-4 w-4" /> Archive
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setStatusTarget("active")}>
+                <RotateCcw className="h-4 w-4" /> Restore
+              </Button>
+            )}
           </div>
         </div>
       </Card>
+
+      {statusTarget && (
+        <SetAccountStatusDialog
+          open={!!statusTarget}
+          onOpenChange={(open) => !open && setStatusTarget(null)}
+          orgId={org.id}
+          orgName={org.name}
+          currentStatus={org.account_status}
+          nextStatus={statusTarget}
+          onDone={() => {
+            setStatusTarget(null);
+            void load({ quiet: true });
+          }}
+        />
+      )}
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)}>
         <TabsList className="flex flex-wrap h-auto gap-1">

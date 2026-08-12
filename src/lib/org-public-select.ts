@@ -7,13 +7,13 @@ const SOCIAL =
   "social_facebook_url,social_instagram_url,social_linkedin_url,social_x_url";
 
 export const orgProgramSelect =
-  `id,name,logo_url,footer_image_url,${SOCIAL},slug,bd_contact_name,bd_contact_phone,bd_contact_email,website,tagline,brand_color,accent_color,cover_image_url,verified,updated_at`;
+  `id,name,logo_url,footer_image_url,${SOCIAL},slug,bd_contact_name,bd_contact_phone,bd_contact_email,website,tagline,brand_color,accent_color,cover_image_url,verified,account_status,updated_at`;
 
 export const orgProgramSelectFallback =
   "id,name,logo_url,slug,bd_contact_name,bd_contact_phone,bd_contact_email,website,tagline,brand_color,accent_color,cover_image_url,verified,updated_at";
 
 export const orgSheetSelect =
-  `id,name,logo_url,footer_image_url,${SOCIAL},description,tagline,website,hq_city,hq_state,slug,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url,image_urls,verified,created_at,updated_at,program_badges,announcement,why_refer`;
+  `id,name,logo_url,footer_image_url,${SOCIAL},description,tagline,website,hq_city,hq_state,slug,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url,image_urls,verified,account_status,created_at,updated_at,program_badges,announcement,why_refer`;
 
 export const orgSheetSelectFallback =
   "id,name,logo_url,description,tagline,website,hq_city,hq_state,slug,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url,image_urls,verified,created_at,updated_at,program_badges,announcement,why_refer";
@@ -26,11 +26,17 @@ export function isMissingOptionalOrgColumn(error: { message?: string; code?: str
     msg.includes("social_facebook_url") ||
     msg.includes("social_instagram_url") ||
     msg.includes("social_linkedin_url") ||
-    msg.includes("social_x_url");
+    msg.includes("social_x_url") ||
+    msg.includes("account_status");
   return (
     missingCol &&
     (msg.includes("column") || msg.includes("does not exist") || error.code === "42703")
   );
+}
+
+export function isOrgAccountInactive(org: { account_status?: string | null } | null | undefined) {
+  const status = org?.account_status;
+  return status === "suspended" || status === "archived";
 }
 
 /** @deprecated use isMissingOptionalOrgColumn */
