@@ -2,6 +2,8 @@
 
 **Status: MANDATORY.** Every AI assistant working on the CenterLinked production app MUST follow these rules. Violations risk auth breakage, data leaks, billing failures, and public sheet regressions.
 
+Companion docs: `AGENTS.md` / `CLAUDE.md` (entry), `PRINCIPLES.md` (product intent — never guess), `CODING_STANDARDS.md` (how to write code here).
+
 Stack context (for orientation only): Vite React SPA, Supabase (Auth + Postgres + RLS/RPCs), Stripe (Checkout/Portal/webhooks), Vercel serverless `api/`, feature flags in `src/config/features.ts`.
 
 ---
