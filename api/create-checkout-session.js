@@ -1,4 +1,5 @@
 import { handleCreateCheckoutSession } from "../server/stripe/handlers/create-checkout-session.mjs";
+import { setBillingCors } from "../server/lib/cors.mjs";
 
 export const config = {
   api: {
@@ -13,10 +14,9 @@ function getBearerToken(req) {
 }
 
 export default async function handler(req, res) {
+  setBillingCors(req, res, "POST, OPTIONS");
+
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.status(204).end();
     return;
   }

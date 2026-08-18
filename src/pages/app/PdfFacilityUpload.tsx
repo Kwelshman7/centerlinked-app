@@ -330,6 +330,7 @@ export default function PdfFacilityUpload() {
 
       const payers = await loadApprovedPayers();
       const urls: string[] = [];
+      const failed: { name: string; error: string }[] = [];
       for (let fIdx = 0; fIdx < parsed.facilities.length; fIdx++) {
         const f = parsed.facilities[fIdx];
         const imageUrls = approvedByFacility[fIdx] ?? [];
@@ -361,8 +362,20 @@ export default function PdfFacilityUpload() {
           draft,
           contractsMode: "all",
         });
-        if (!result.ok) throw new Error(result.error);
+        if (!result.ok) {
+          failed.push({ name: f.name, error: result.error });
+          continue;
+        }
         if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
+      }
+
+      if (failed.length) {
+        toast.error(
+          `${urls.length} saved, ${failed.length} failed`,
+          { description: failed.map((x) => `${x.name}: ${x.error}`).join(" · ") },
+        );
+        setStage("review");
+        return;
       }
 
       setResultUrls(urls);

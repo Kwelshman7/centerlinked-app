@@ -238,6 +238,18 @@ BEGIN
       fac_verification
     )
     RETURNING id INTO fac_id;
+
+    UPDATE public.facilities
+    SET slug = trim(both '-' from
+      public.slugify(fac_name)
+      || CASE
+           WHEN fac_city IS NOT NULL THEN '-' || public.slugify(fac_city)
+           ELSE ''
+         END
+      || '-' || substr(replace(fac_id::text, '-', ''), 1, 6)
+    )
+    WHERE id = fac_id
+      AND (slug IS NULL OR btrim(slug) = '');
   ELSE
     SELECT f.id, f.organization_id
       INTO fac_id, org_id
@@ -277,6 +289,17 @@ BEGIN
       hidden_from_org_page = CASE
         WHEN has_hidden_key THEN fac_hidden
         ELSE public.facilities.hidden_from_org_page
+      END,
+      slug = CASE
+        WHEN slug IS NULL OR btrim(slug) = '' THEN trim(both '-' from
+          public.slugify(fac_name)
+          || CASE
+               WHEN fac_city IS NOT NULL THEN '-' || public.slugify(fac_city)
+               ELSE ''
+             END
+          || '-' || substr(replace(id::text, '-', ''), 1, 6)
+        )
+        ELSE slug
       END,
       updated_at = now()
     WHERE id = fac_id;

@@ -71,14 +71,23 @@ export default function FacilityDetail() {
   const [org, setOrg] = useState<SheetOrg | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [fixingSlug, setFixingSlug] = useState(false);
+  const [loading, setLoading] = useState(true);
   const isMine = !!facility && profile?.organization_id === facility.organization_id;
   const canSeePending = isMine || isSuperAdmin;
   const canShare = isMine || isSuperAdmin;
 
   const loadFacility = async () => {
-    if (!id) return;
-    const { data: f } = await supabase.from("facilities").select("*").eq("id", id).maybeSingle();
-    const fac = f as Facility | null;
+    if (!id) {
+      setFacility(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data: f, error } = await supabase.from("facilities").select("*").eq("id", id).maybeSingle();
+    if (error) {
+      toast.error(error.message || "Could not load facility");
+    }
+    const fac = (f as Facility | null) ?? null;
     setFacility(fac);
     if (fac) {
       const { data: o } = await supabase
@@ -87,6 +96,8 @@ export default function FacilityDetail() {
         .eq("id", fac.organization_id)
         .maybeSingle();
       setOrg((o as SheetOrg | null) ?? null);
+    } else {
+      setOrg(null);
     }
     const { data: c } = await supabase
       .from("insurance_contracts")
@@ -100,6 +111,7 @@ export default function FacilityDetail() {
       payer_status: row.payers?.status ?? null,
     }));
     setContracts(list);
+    setLoading(false);
   };
 
   const fixSlug = async () => {
@@ -134,7 +146,16 @@ export default function FacilityDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (!facility) return <div className="text-center py-20 text-muted-foreground">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!facility) {
+    return <div className="py-20 text-center text-muted-foreground">Facility not found.</div>;
+  }
 
   const sheetContracts: SheetContract[] = contracts
     .filter((c) => c.in_network && (c.payer_status !== "pending" || canSeePending))

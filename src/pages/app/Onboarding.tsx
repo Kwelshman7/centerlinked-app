@@ -123,8 +123,9 @@ export default function Onboarding() {
         .eq("id", profile.organization_id);
       if (orgErr) throw orgErr;
 
-      // 2. Save each facility + contracts atomically via RPC
       const validFacilities = facilities.filter((f) => f.name.trim());
+      const savedNames: string[] = [];
+      const failed: { name: string; error: string }[] = [];
       for (const facilityDraft of validFacilities) {
         const result = await saveFacilityWithContracts({
           organizationId: profile.organization_id,
@@ -132,7 +133,16 @@ export default function Onboarding() {
           includeHidden: true,
           contractsMode: "all",
         });
-        if (!result.ok) throw new Error(result.error);
+        if (result.ok) savedNames.push(facilityDraft.name.trim());
+        else failed.push({ name: facilityDraft.name.trim(), error: result.error });
+      }
+
+      if (failed.length) {
+        toast.error(
+          `${savedNames.length} saved, ${failed.length} failed`,
+          { description: failed.map((f) => `${f.name}: ${f.error}`).join(" · ") },
+        );
+        return;
       }
 
       await refresh();

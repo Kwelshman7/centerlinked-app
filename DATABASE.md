@@ -35,7 +35,7 @@ CenterLinked relies on Supabase Auth’s `auth.users` (and related Auth tables).
 
 Stored in `user_roles.role`. Also mirrored loosely via `organization_members.role_at_org` / invite / join-request text fields (`facility_admin`, `bd_rep`).
 
-`AuthContext` treats `isFacilityAdmin` as **`facility_admin` OR `super_admin`**.
+`AuthContext` treats `isFacilityAdmin` as **`super_admin`** or a true `is_org_facility_admin` result for the user’s current org (`organization_members.role_at_org = facility_admin`). Global `user_roles.facility_admin` alone is not enough.
 
 ### `payer_status`
 
@@ -65,20 +65,22 @@ Definitions live partly in `supabase/*.sql`; others exist in the live DB and app
 |-----|------|
 | `has_role(_role, _user_id)` | Core RLS helper; true if `user_roles` contains role |
 | `is_org_member(_user_id, _org_id)` | Core RLS helper for tenant membership |
-| `is_org_facility_admin(_org_id, _user_id)` | Super admin **or** org `facility_admin` membership / role |
+| `is_org_facility_admin(_org_id, _user_id)` | Super admin **or** `organization_members.role_at_org = facility_admin` for that org (no `user_roles` fallback after `membership-rpc-only.sql`) |
 | `org_has_facility_admin(_org_id)` | Whether org already has a facility admin |
 | `get_user_org(_user_id)` | Resolve user’s organization id |
 | `link_user_to_organization(...)` | SECURITY DEFINER: upsert membership, set `profiles.organization_id`, ensure `user_roles`. **Client EXECUTE revoked** in `revoke-dangerous-grants.sql` |
 | `create_organization_with_owner(...)` | Authenticated org creation + owner linkage |
 | `admin_create_organization(...)` | Super-admin org bootstrap |
 | `update_organization_profile(_organization_id, _profile)` | Validated non-billing org profile update |
-| `save_facility_with_contracts(...)` | Atomic facility upsert + contract replace modes `all` \| `in_network` \| `none` |
-| `claim_pending_org_invite()` | Auto-accept pending `org_invites` by email on login |
+| `save_facility_with_contracts(...)` | Atomic facility upsert + contract replace modes `all` \| `in_network` \| `none`. Sets `slug` on insert (and on update when missing). |
+| `stamp_facility_verified(_facility_id)` | SECURITY DEFINER monthly stamp: sets `contracts_verified_at` / `contracts_verified_by` and clears `verification_frozen` for org members |
+| `claim_pending_org_invite()` | Auto-accept pending `org_invites` by email on login. `facility_admin` is granted only if `invited_by` is an org facility admin or super admin |
+| `create_org_invite` / `revoke_org_invite` | Org-admin invite writes (Members UI) |
 | `get_org_setup_options()` | Domain-matched org + pending join request for setup UI |
 | `request_to_join_organization(_organization_id)` | Domain-gated join request |
 | `review_organization_join_request(_request_id, _approve)` | Approve/reject join (org admin or super admin) |
 | `list_org_join_requests` / `list_superadmin_join_requests` | Pending join queues |
-| `remove_org_member(_member_user_id, _organization_id)` | Used by Members UI; **not present in `types.ts` Functions** |
+| `remove_org_member(_member_user_id, _organization_id)` | Org admin or super admin; cannot remove last facility_admin except super_admin |
 | `is_personal_email_domain` / `is_email_auth_allowed` / `email_signup_eligible` | Auth eligibility gates |
 | `approve_personal_email` | Super-admin allowlist insert |
 | `bootstrap_super_admin` / `is_bootstrap_admin_candidate` | Allowlisted self-grant of `super_admin` |
@@ -87,10 +89,12 @@ Definitions live partly in `supabase/*.sql`; others exist in the live DB and app
 | `is_conversation_participant` | Messaging RLS helper |
 | `get_networked_org_ids()` | Referral-network helper |
 | `get_org_engagement_stats(_org_id)` | Aggregates from `org_analytics_events` |
-| `freeze_stale_facilities()` / `list_facilities_due_for_verification(_days)` | Monthly verification ops |
+| `freeze_stale_facilities()` / `list_facilities_due_for_verification(_days)` | Monthly verification ops. SQL in `supabase/freeze-stale-facilities.sql`. Freeze EXECUTE is **service_role only**; freezes approved facilities whose last stamp is older than 90 days |
 | `slugify(_input)` | Public program slug helper |
 | `run_sql(query)` | Dangerous; **EXECUTE revoked from anon/authenticated** in `revoke-dangerous-grants.sql` |
 | `protect_organization_billing_columns` (trigger fn) | Blocks client writes to Stripe billing columns |
+| `protect_facility_privileged_columns` (trigger fn) | Blocks client writes to approval columns and `verification_frozen` (`supabase/column-write-locks.sql`) |
+| `protect_organization_verified_column` / `protect_organization_member_role` / `protect_org_invite_role` / `protect_profile_organization_id` | Column locks for `organizations.verified`, membership/invite roles, and `profiles.organization_id` |
 | `enforce_facility_visibility_admin` (trigger fn) | Only org admins/super admins may change `hidden_from_org_page` |
 
 ---
@@ -859,7 +863,7 @@ Not specified in repository SQL.
 - No INSERT policy in snapshot (likely service role / SECURITY DEFINER writers)
 
 ### Business logic
-- Related RPCs in types: `list_facilities_due_for_verification`, `freeze_stale_facilities` (definitions not in repo SQL)
+- Related RPCs: `list_facilities_due_for_verification`, `freeze_stale_facilities` in `supabase/freeze-stale-facilities.sql` (service_role EXECUTE for freeze)
 
 ### Where used / files
 - Typed in `types.ts`; limited direct client usage found in `src/` (ops-oriented)
@@ -1330,16 +1334,16 @@ get_or_create_direct_conversation(other_user)
 
 ### Notable policy facts from snapshot + hardening SQL
 - Many tables enable RLS; `stripe_webhook_events`, `bootstrap_admin_emails`, `access_request_rate_limits` are service/DEFINER oriented with no client policies
-- Snapshot still shows broad SELECT on `organizations`, `profiles`, `organization_members`, `posts`, `post_likes` for authenticated users — `rls-tenant-hardening.sql` narrows **organizations** and **profiles** when applied
-- `organization_claims` and `early_access_leads` show overlapping legacy + hardened policies in snapshot/SQL history — apply order matters
+- Snapshot still shows broad SELECT on `organizations`, `profiles`, `organization_members`, `posts`, `post_likes` for authenticated users — `rls-tenant-hardening.sql` narrows **organizations** and **profiles** when applied; `membership-rpc-only.sql` narrows **organization_members** SELECT to own org / super_admin and removes client INSERT/UPDATE/DELETE
+- `organization_claims` and `early_access_leads` show overlapping legacy + hardened policies in snapshot/SQL history — apply order matters (`security-hardening.sql` / `access-request-intake-hardening.sql` drop leftover public INSERTs)
 - Billing columns on `organizations` are RLS-updatable for members in general UPDATE policy, but trigger rejects billing field changes for non-service roles
+- Privileged columns (`facilities` approval/freeze, `organizations.verified`, `organization_members.role_at_org`, `org_invites.role_at_org`, `profiles.organization_id`) are trigger-locked in `column-write-locks.sql`
 - Dangerous `run_sql` and direct `link_user_to_organization` client EXECUTE are revoked in `revoke-dangerous-grants.sql`
 
 ### Soft gates (not always hard DB constraints)
 - Work-email / personal allowlist for Auth
 - Org `verified` for public anon discovery (after hardening) and domain signup eligibility
-- Facility `verification_status` for public visibility
-- Facility `verification_frozen` for search prominence
+- Facility `verification_status` = `approved` **and** `verification_frozen` = false for Search, in-app directories, and public sheets (`src/lib/facility-visibility.ts`). Org sheets also honor `hidden_from_org_page`.
 - Join approval when org lacks a facility admin (super admin required)
 - Community UI feature flag (DB still open to authenticated per RLS)
 
@@ -1350,7 +1354,7 @@ get_or_create_direct_conversation(other_user)
 These are **observed scaling/risk facts** about the current model (not recommendations for redesign):
 
 1. **SPA + anon key + RLS:** Nearly all product reads/writes go through the browser. Correctness equals RLS + SECURITY DEFINER RPC quality. Policy drift between snapshot and hardening SQL is an operational risk.
-2. **Schema drift surfaces:** `facility_pdf_uploads`, `bootstrap_admin_emails`, and `access_request_rate_limits` are live concerns but missing from `types.ts`; `remove_org_member` is called but absent from typed Functions.
+2. **Schema drift surfaces:** `facility_pdf_uploads`, `bootstrap_admin_emails`, and `access_request_rate_limits` can lag `types.ts`. Confirm live apply with `supabase/inspect-live-security.sql`.
 3. **Analytics append-only growth:** `org_analytics_events` has no indexes specified in repo SQL; `get_org_engagement_stats` will dominate as event volume grows.
 4. **Search join shape:** Insurance search walks `insurance_contracts → facilities → organizations` with filters on enums/flags; missing indexes in repo SQL means production may rely on untracked indexes or sequential scans.
 5. **Denormalized payer names** on contracts require reconciliation scripts (`server/reconcile-facility-contracts.mjs`, `backfill-payer-ids.mjs`) as the payer dictionary evolves.
@@ -1358,7 +1362,7 @@ These are **observed scaling/risk facts** about the current model (not recommend
 7. **Messaging** lacks archive/soft-delete/pagination indexes in repo SQL; realtime feed currently listens to `posts` inserts.
 8. **Billing idempotency** depends on `stripe_webhook_events` primary key + service-role updates; filesystem on Vercel is ephemeral — durable state is Postgres/Stripe/Storage only.
 9. **Storage URLs as text columns** (not FK to Storage objects): deleting Storage objects does not cascade to table fields; orphan URLs are possible.
-10. **Monthly verification** combines client stamping with server RPCs (`freeze_stale_facilities`, reminder listing) whose SQL bodies are not in this repository — production behavior must be verified live before changing cadence assumptions.
+10. **Monthly verification** uses client `stamp_facility_verified` plus `freeze_stale_facilities` in `supabase/freeze-stale-facilities.sql` (must still be scheduled in Dashboard/pg_cron).
 
 ---
 
@@ -1378,6 +1382,10 @@ These are **observed scaling/risk facts** about the current model (not recommend
 | `supabase/rls-tenant-hardening.sql` | Tighten org/profile SELECT |
 | `supabase/revoke-dangerous-grants.sql` | Revoke `run_sql` / tighten EXECUTE |
 | `supabase/facility-*.sql` / `org-*.sql` | Column additive patches |
+| `supabase/column-write-locks.sql` | Privileged-column triggers + `stamp_facility_verified` |
+| `supabase/membership-rpc-only.sql` | Members/invites RPC-only + `remove_org_member` |
+| `supabase/freeze-stale-facilities.sql` | Freeze RPC (service_role) + due-list |
+| `supabase/inspect-live-security.sql` | Read-only apply-state inspection |
 | `supabase/migrations/20260802120000_production_security_bundle.sql` | Ordered apply checklist (docs-only `SELECT 1`) |
 | `supabase/migrations/00000000000000_rls_policy_snapshot.json` | Captured policy inventory |
 

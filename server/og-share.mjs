@@ -102,8 +102,32 @@ export function resolvePublicLogoUrl(logoUrl) {
   const raw = (logoUrl ?? "").trim();
   if (!raw) return null;
 
-  if (/^https:\/\//i.test(raw)) return raw;
-  if (/^http:\/\//i.test(raw)) return `https://${raw.slice("http://".length)}`;
+  if (/^https:\/\//i.test(raw)) {
+    try {
+      const host = new URL(raw).hostname.toLowerCase();
+      const supabaseHost = process.env.VITE_SUPABASE_URL
+        ? new URL(process.env.VITE_SUPABASE_URL).hostname.toLowerCase()
+        : "";
+      const siteHost = process.env.SITE_URL
+        ? new URL(process.env.SITE_URL).hostname.toLowerCase()
+        : "www.centerlinked.com";
+      if (
+        host === supabaseHost
+        || host.endsWith(".supabase.co")
+        || host === siteHost
+        || host === "www.centerlinked.com"
+        || host === "centerlinked.com"
+      ) {
+        return raw;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+  if (/^http:\/\//i.test(raw)) {
+    return resolvePublicLogoUrl(`https://${raw.slice("http://".length)}`);
+  }
 
   const base = (process.env.VITE_SUPABASE_URL || "").replace(/\/+$/, "");
   if (!base) return null;

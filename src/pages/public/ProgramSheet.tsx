@@ -37,6 +37,7 @@ interface Facility extends FacilitySheetData {
   description: string | null;
   tagline: string | null;
   verification_status: string;
+  verification_frozen?: boolean;
   phone?: string | null;
   website?: string | null;
   capacity?: number | null;
@@ -116,13 +117,13 @@ export default function ProgramSheet() {
     const { data: f } = await supabase
       .from("facilities")
       .select(
-        "id,organization_id,name,slug,description,tagline,short_description,address_line1,city,state,zip,phone,website,capacity,highlights,quick_highlights,accreditations,image_urls,levels_of_care,population_served,specializations,treatment_focus,insurance_status,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,hidden_from_org_page,created_at,updated_at,contracts_verified_at",
+        "id,organization_id,name,slug,description,tagline,short_description,address_line1,city,state,zip,phone,website,capacity,highlights,quick_highlights,accreditations,image_urls,levels_of_care,population_served,specializations,treatment_focus,insurance_status,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,verification_frozen,hidden_from_org_page,created_at,updated_at,contracts_verified_at",
       )
       .eq("slug", facilitySlug)
       .eq("verification_status", "approved")
       .maybeSingle();
 
-    if (!f) {
+    if (!f || (f as Facility).verification_frozen) {
       setNotFound(true);
       return;
     }
@@ -153,7 +154,7 @@ export default function ProgramSheet() {
     const orgRow = (o as OrgRow | null) ?? null;
 
     if (orgSlug && orgRow?.slug && orgRow.slug !== orgSlug) {
-      setNotFound(true);
+      navigate(`/o/${orgRow.slug}/p/${fac.slug}`, { replace: true });
       return;
     }
 

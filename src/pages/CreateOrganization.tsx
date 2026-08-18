@@ -70,11 +70,20 @@ export default function CreateOrganization() {
     }
 
     if (orgId && (form.bd_contact_name || form.bd_contact_phone || form.bd_contact_email)) {
-      await supabase.from("organizations").update({
+      const { error: bdError } = await supabase.from("organizations").update({
         bd_contact_name: form.bd_contact_name || null,
         bd_contact_phone: form.bd_contact_phone || null,
         bd_contact_email: form.bd_contact_email || null,
       }).eq("id", orgId);
+      if (bdError) {
+        toast.error("Organization created, but referral contact didn't save", {
+          description: bdError.message,
+        });
+        await refresh();
+        setSaving(false);
+        navigate("/app/onboarding", { replace: true });
+        return;
+      }
     }
     await refresh();
     setSaving(false);

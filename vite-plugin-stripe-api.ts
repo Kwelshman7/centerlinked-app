@@ -4,6 +4,7 @@ import { handleBillingOverview } from "./server/stripe/handlers/billing-overview
 import { handleCreateCheckoutSession } from "./server/stripe/handlers/create-checkout-session.mjs";
 import { handleCreatePortalSession } from "./server/stripe/handlers/create-portal-session.mjs";
 import { handleStripeWebhook } from "./server/stripe/handlers/webhook.mjs";
+import { setBillingCors } from "./server/lib/cors.mjs";
 
 const JSON_PATHS = new Set([
   "/api/create-checkout-session",
@@ -55,11 +56,9 @@ export function stripeApiPlugin(): Plugin {
         }
 
         if (pathname === "/api/billing-overview") {
+          setBillingCors(req, res, "GET, OPTIONS");
           if (req.method === "OPTIONS") {
             res.statusCode = 204;
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
             res.end();
             return;
           }
@@ -82,10 +81,8 @@ export function stripeApiPlugin(): Plugin {
         }
 
         if (req.method === "OPTIONS") {
+          setBillingCors(req, res, "POST, OPTIONS");
           res.statusCode = 204;
-          res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-          res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
           res.end();
           return;
         }
@@ -96,6 +93,7 @@ export function stripeApiPlugin(): Plugin {
         }
 
         try {
+          setBillingCors(req, res, "POST, OPTIONS");
           const body = await readJsonBody(req);
           if (body === null) {
             sendJson(res, 400, { error: "Invalid JSON body" });

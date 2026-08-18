@@ -48,15 +48,15 @@ The platform is invite-oriented / work-email gated. It is designed for professio
 - Marketing landing page (hero → who it’s for → problem → how it works → product proof → dashboard → monthly verification → pricing → FAQ → CTA)
 - Privacy Policy and Terms of Service
 - Early-access / request-access intake form
-- Public **organization sheets** (`/o/:slug` and `/:slug`)
-- Public **program / facility sheets** (`/o/:orgSlug/p/:programSlug`; legacy `/p/:slug` supported)
+- Public **organization sheets** (`/o/:slug` and `/:slug`) — approved, non-frozen facilities (`hidden_from_org_page` honored)
+- Public **program / facility sheets** (`/o/:orgSlug/p/:programSlug`; legacy `/p/:slug` supported) — frozen programs return not found
 
 ### Authenticated product
 - Organization setup, create, claim, and domain-based join requests
 - Organization dashboard (profile, engagement stats, shared links)
 - Multi-facility management (create/edit, photos, BD contacts, levels of care, specializations, etc.)
 - Insurance contracts per facility (linked to a curated payer database)
-- In-app **Search** by insurance, state, city, level of care
+- In-app **Search** by insurance, state, city, level of care (approved + not frozen; state CA/California normalized)
 - **Referral network** (preferred partner orgs; surfaced in search)
 - Team members and email invites
 - Monthly **contract verification** workflow (fresh / recent / stale / frozen)
@@ -242,7 +242,7 @@ app/
 1. **Signup / login** → AuthCallback → email allowlist checks → ensure profile → optional bootstrap admin / claim invite → `/setup-organization` or `/app`
 2. **Facility save** → client `saveFacilityWithContracts` → RPC `save_facility_with_contracts` (atomic facility + contracts)
 3. **Public share** → partner opens `/o/:slug` or program URL → approved facilities + contracts → `track-org-event` Edge Function (page views / contact clicks)
-4. **Search** → filters → query contracts joined to approved, non-frozen facilities → group by org → prioritize network partners
+4. **Search** → filters → query contracts joined to approved, non-frozen facilities → group by org → prioritize network partners. Public sheets use the same approved + not-frozen rule (`src/lib/facility-visibility.ts`).
 5. **Billing** → org admin starts Checkout via `/api/create-checkout-session` → Stripe webhook updates `organizations` subscription fields → soft banner in app if not active/trialing
 6. **Monthly verify** → `/app/facilities/:id/verify` stamps `contracts_verified_at` or edits contracts; frozen facilities excluded from search
 
@@ -351,6 +351,7 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 - Authenticated shell with dashboard, facilities, search, network, members, settings, billing
 - Public org and program sheets with analytics events
 - Stripe checkout, portal, webhook idempotency, billing UI
+- GitHub Actions CI (`lint` / `test` / `build` on PR and push to main)
 - Monthly verification UI and admin verifications page
 - Super-admin organization and insurance tools
 - PDF upload path (depends on deployed Supabase Edge Functions)
@@ -384,7 +385,7 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 6. **PDF parse / image extract Edge Functions** are invoked from the app but their source is not in this repo’s `api/` folder.
 7. **Catch-all public slug route** (`/:slug`) requires reserved-slug discipline so marketing/app paths are not shadowed.
 8. **Dark mode CSS tokens** exist without a full product theme toggle.
-9. **SQL change management** mixes formal migrations with many root-level `supabase/*.sql` one-offs — engineers must confirm what has already been applied in the live project.
+9. **SQL change management** is still a manual Supabase SQL Editor checklist (`supabase/migrations/20260802120000_production_security_bundle.sql`). Inspect with `supabase/inspect-live-security.sql` before assuming production matches the repo. GitHub Actions does not apply SQL.
 10. **Facility image pipeline** is offline/batch (Sharp + optional OpenAI), not part of the request path.
 
 ---
@@ -426,8 +427,8 @@ These are architectural facts that will matter as usage grows — not a roadmap.
 ## Getting Oriented as a New Engineer
 
 1. Read `.env.example` and set local env (never commit secrets).
-2. Run `npm install` and `npm run dev` (Vite on port 8080).
-3. Confirm Supabase URL/anon key, and that SQL for billing/RLS/auth allowlists has been applied to your project.
+2. Run `npm install` and `npm run dev` (Vite on port 8080). `npm test` covers checkout rules, visibility, and payer matching.
+3. Confirm Supabase URL/anon key, and that the security-bundle SQL files have been applied to your project (see `DATABASE.md` repository SQL map). Deploy SPA/API only after those RPCs exist, or stamp/invite calls 404.
 4. Trace a happy path: login → setup org → add facility → open public `/o/:slug` → run search → verify contracts → open billing.
 5. For server behavior, start from thin `api/*.js` files and follow into `server/**`.
 6. Treat `src/integrations/supabase/types.ts` + `supabase/*.sql` as the schema contract; verify live DB before assuming a one-off SQL file has been applied.

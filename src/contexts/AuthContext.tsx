@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [orgFacilityAdmin, setOrgFacilityAdmin] = useState(false);
   const [isBootstrapAdmin, setIsBootstrapAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const loadRef = useRef<Promise<void> | null>(null);
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         setProfile(null);
         setRoles([]);
+        setOrgFacilityAdmin(false);
         setIsBootstrapAdmin(false);
         return;
       }
@@ -102,8 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: retryRoles } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id);
         nextRoles = ((retryRoles as { role: AppRole }[]) ?? []).map((r) => r.role);
       }
-      setProfile((prof as Profile) ?? null);
+      const loadedProfile = (prof as Profile) ?? null;
+      let nextOrgAdmin = nextRoles.includes("super_admin");
+      if (!nextOrgAdmin && loadedProfile?.organization_id) {
+        const { data: isAdmin } = await supabase.rpc("is_org_facility_admin", {
+          _org_id: loadedProfile.organization_id,
+          _user_id: authUser.id,
+        });
+        nextOrgAdmin = Boolean(isAdmin);
+      }
+      setProfile(loadedProfile);
       setRoles(nextRoles);
+      setOrgFacilityAdmin(nextOrgAdmin);
     })().finally(() => {
       loadRef.current = null;
     });
@@ -123,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRoles([]);
+        setOrgFacilityAdmin(false);
         setIsBootstrapAdmin(false);
         setLoading(false);
       }
@@ -156,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin,
         isBootstrapAdmin,
         needsSuperAdminSetup,
-        isFacilityAdmin: roles.includes("facility_admin") || isSuperAdmin,
+        isFacilityAdmin: orgFacilityAdmin || isSuperAdmin,
         signOut,
         refresh,
       }}

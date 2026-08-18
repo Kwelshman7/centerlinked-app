@@ -34,7 +34,17 @@ export function resolveStateCode(raw: string | null | undefined): string | null 
   return upper;
 }
 
-/** Human-readable state name for display (title case). */
+/** True when a facility state matches a search/filter value (CA vs California). */
+export function stateMatchesFilter(
+  facilityState: string | null | undefined,
+  filter: string | null | undefined,
+): boolean {
+  if (!filter?.trim()) return true;
+  const want = resolveStateCode(filter);
+  const have = resolveStateCode(facilityState);
+  if (!want) return true;
+  return have === want;
+}
 export function stateDisplayName(codeOrRaw: string): string {
   const code = resolveStateCode(codeOrRaw);
   if (!code) return codeOrRaw;

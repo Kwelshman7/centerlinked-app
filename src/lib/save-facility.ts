@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { FacilityContractDraft, FacilityDraft } from "@/components/app/facility/facility-types";
+import { resolveStateCode } from "@/lib/us-states";
 
 export type ContractsMode = "all" | "in_network" | "none";
 
@@ -34,7 +35,7 @@ function draftToFacilityPayload(
     tagline: draft.tagline || null,
     address_line1: draft.address_line1 || null,
     city: draft.city || null,
-    state: draft.state || null,
+    state: resolveStateCode(draft.state) ?? (draft.state || null),
     zip: draft.zip || null,
     phone: draft.phone || null,
     website: draft.website || null,

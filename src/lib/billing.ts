@@ -115,7 +115,26 @@ async function postBillingJson(path: string, body: Record<string, unknown> = {})
 
 /** Start Stripe Checkout for membership or Done For You. */
 export async function startCheckout(plan: BillingPlan) {
-  return postBillingJson("/api/create-checkout-session", { plan });
+  const res = await fetch("/api/create-checkout-session", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ plan }),
+  });
+  const json = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    url?: string;
+    code?: string;
+  };
+  if (json.code === "use_portal") {
+    return openBillingPortal();
+  }
+  if (!res.ok) {
+    throw new Error(json.error || `Billing request failed (${res.status})`);
+  }
+  if (!json.url) {
+    throw new Error("Billing response missing redirect URL");
+  }
+  return json.url;
 }
 
 /** Open the Stripe Customer Portal (update card, invoices, cancel). */

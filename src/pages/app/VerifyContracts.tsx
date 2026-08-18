@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle2, Loader2, Pencil, Shield, Plus, Trash2 } from "
 import { toast } from "sonner";
 import { VerificationBadge } from "@/components/app/search/VerificationBadge";
 import { stampVerified, verificationState } from "@/lib/verification";
+import { replaceInNetworkContracts } from "@/lib/save-facility";
 import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
 
 
@@ -72,13 +73,14 @@ export default function VerifyContracts() {
   const state = verificationState(facility.contracts_verified_at, facility.verification_frozen);
 
   const logVerification = async (action: "confirmed_no_changes" | "updated_contracts") => {
-    if (!user) return;
-    await supabase.from("contract_verifications").insert({
+    if (!user) return { error: new Error("Not signed in") };
+    const { error } = await supabase.from("contract_verifications").insert({
       facility_id: facility.id,
       user_id: user.id,
       action,
       notes: notes.trim() || null,
     });
+    return { error };
   };
 
   const confirmNoChanges = async () => {
@@ -86,42 +88,61 @@ export default function VerifyContracts() {
     setSaving("confirm");
     const { error } = await stampVerified(facility.id, user.id);
     if (error) { toast.error(error.message); setSaving(null); return; }
-    await logVerification("confirmed_no_changes");
+    const { error: logError } = await logVerification("confirmed_no_changes");
+    if (logError) {
+      toast.error("Verified, but the audit log didn’t save", { description: logError.message });
+      setSaving(null);
+      return;
+    }
     toast.success("Contracts confirmed accurate");
     navigate(`/app/facilities/${facility.id}`);
   };
 
-  const removeContract = async (cid: string) => {
-    const { error } = await supabase.from("insurance_contracts").delete().eq("id", cid);
-    if (error) { toast.error(error.message); return; }
+  const removeContract = (cid: string) => {
     setContracts((cs) => cs.filter((c) => c.id !== cid));
   };
 
-  const addContract = async (payer: { id: string | null; name: string }) => {
+  const addContract = (payer: { id: string | null; name: string }) => {
     if (contracts.some((c) => c.payer_name.toLowerCase() === payer.name.toLowerCase())) {
       toast.info("Already on the list");
       return;
     }
-    const { data, error } = await supabase
-      .from("insurance_contracts")
-      .insert({
-        facility_id: facility.id,
-        payer_id: payer.id,
+    setContracts((cs) =>
+      [...cs, {
+        id: `draft-${payer.name}-${Date.now()}`,
         payer_name: payer.name,
+        payer_id: payer.id,
         in_network: true,
-      })
-      .select("id,payer_name,payer_id,in_network")
-      .single();
-    if (error) { toast.error(error.message); return; }
-    setContracts((cs) => [...cs, data as Contract].sort((a, b) => a.payer_name.localeCompare(b.payer_name)));
+      }].sort((a, b) => a.payer_name.localeCompare(b.payer_name)),
+    );
   };
 
   const saveEdits = async () => {
     if (!user) return;
     setSaving("update");
+    const replaced = await replaceInNetworkContracts({
+      organizationId: facility.organization_id,
+      facilityId: facility.id,
+      facilityName: facility.name,
+      contracts: contracts.map((c) => ({
+        payer_id: c.payer_id,
+        payer_name: c.payer_name,
+        in_network: true,
+      })),
+    });
+    if (!replaced.ok) {
+      toast.error(replaced.error);
+      setSaving(null);
+      return;
+    }
     const { error } = await stampVerified(facility.id, user.id);
     if (error) { toast.error(error.message); setSaving(null); return; }
-    await logVerification("updated_contracts");
+    const { error: logError } = await logVerification("updated_contracts");
+    if (logError) {
+      toast.error("Contracts saved, but the audit log didn’t save", { description: logError.message });
+      setSaving(null);
+      return;
+    }
     toast.success("Contracts updated and verified");
     navigate(`/app/facilities/${facility.id}`);
   };

@@ -1,4 +1,5 @@
 import { handleBillingOverview } from "../server/stripe/handlers/billing-overview.mjs";
+import { setBillingCors } from "../server/lib/cors.mjs";
 
 export const config = {
   api: {
@@ -13,10 +14,9 @@ function getBearerToken(req) {
 }
 
 export default async function handler(req, res) {
+  setBillingCors(req, res, "GET, OPTIONS");
+
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.status(204).end();
     return;
   }

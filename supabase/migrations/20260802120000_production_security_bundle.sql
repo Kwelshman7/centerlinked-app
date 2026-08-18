@@ -13,13 +13,22 @@
 -- 5. approved-personal-emails.sql
 -- 6. security-hardening.sql
 -- 7. access-request-intake-hardening.sql
+-- 8. column-write-locks.sql          -- P0 privileged-column triggers + stamp_facility_verified
+--                                    -- also revokes freeze_stale_facilities from anon/authenticated
+-- 9. membership-rpc-only.sql         -- members/invites SELECT-only + invite/remove RPCs
+-- 10. freeze-stale-facilities.sql    -- freeze RPC body + revoke anon EXECUTE; schedule separately
+--
+-- Read-only apply check (does not write):
+--   inspect-live-security.sql
 --
 -- Live policy inventory snapshot:
 --   supabase/migrations/00000000000000_rls_policy_snapshot.json (75 policies)
+--   Snapshot may lag applied SQL. Re-run inspect-live-security.sql after apply.
 --
 -- After deploy, configure Supabase Auth Hook → Before User Created:
 --   HTTPS URL: https://www.centerlinked.com/api/auth-before-user-created
 --   Secret env: BEFORE_USER_CREATED_HOOK_SECRET
+--   Dashboard → Authentication → Hooks → Before User Created. Cannot be verified from git.
 --
 -- This file is documentation-only (no executable statements).
 SELECT 1;

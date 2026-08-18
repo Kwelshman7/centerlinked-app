@@ -132,7 +132,9 @@ export function OrgResultCard({
         {showFacilities && shown.length > 0 ? (
           <ul className="divide-y divide-border/50 rounded-lg border border-border/60 bg-muted/25 overflow-hidden">
             {shown.map((f) => {
-              const href = f.slug ? programPublicPath(f.slug, o.org_slug) : "#";
+              const href = f.slug
+                ? programPublicPath(f.slug, o.org_slug)
+                : `/app/facilities/${f.id}`;
               const place = [f.city, f.state].filter(Boolean).join(", ");
               const level = f.levels_of_care?.[0];
               return (

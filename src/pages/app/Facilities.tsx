@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Building2, Search, MapPin, Shield, BadgeCheck, X, SlidersHorizontal, Plus } from "lucide-react";
 import { LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
+import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
 
 interface FacilityRow {
   id: string;
@@ -26,6 +27,8 @@ interface FacilityRow {
   levels_of_care: string[];
   highlights: string[];
   organization_id: string;
+  verification_status?: string;
+  verification_frozen?: boolean;
 }
 
 interface ContractRow {
@@ -56,14 +59,15 @@ export default function Facilities() {
       const [{ data: f }, { data: c }] = await Promise.all([
         supabase
           .from("facilities")
-          .select("id,name,tagline,city,state,image_urls,levels_of_care,highlights,organization_id")
+          .select("id,name,tagline,city,state,image_urls,levels_of_care,highlights,organization_id,verification_status,verification_frozen")
           .eq("verification_status", "approved")
+          .eq("verification_frozen", false)
           .order("name"),
         supabase
           .from("insurance_contracts")
           .select("facility_id,payer_name,in_network"),
       ]);
-      setFacilities((f as FacilityRow[]) ?? []);
+      setFacilities(((f as FacilityRow[]) ?? []).filter((row) => isPartnerVisibleFacility(row)));
       setContracts((c as ContractRow[]) ?? []);
       setLoading(false);
     })();

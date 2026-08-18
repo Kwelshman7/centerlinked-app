@@ -8,6 +8,9 @@ ALTER TABLE public.early_access_leads
   ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending',
   ADD COLUMN IF NOT EXISTS reviewed_at timestamptz;
 DROP POLICY IF EXISTS "early_access_leads_public_insert" ON public.early_access_leads;
+DROP POLICY IF EXISTS "anyone submits leads" ON public.early_access_leads;
+
+REVOKE INSERT ON TABLE public.early_access_leads FROM anon, authenticated;
 
 CREATE TABLE IF NOT EXISTS public.access_request_rate_limits (
   fingerprint text PRIMARY KEY CHECK (fingerprint ~ '^[a-f0-9]{64}$'),

@@ -99,8 +99,7 @@ async function handleCheckoutCompleted(admin, session) {
     subscription: subscriptionId ? { id: subscriptionId, metadata: session.metadata } : null,
   });
   if (!orgId) {
-    console.warn("[stripe-webhook] checkout.session.completed: org not found", session.id);
-    return;
+    throw new Error(`checkout.session.completed: organization not found (${session.id})`);
   }
 
   const setupPackage =
@@ -158,8 +157,7 @@ async function handleSubscriptionEvent(admin, subscription) {
     subscription,
   });
   if (!orgId) {
-    console.warn("[stripe-webhook] subscription event: org not found", subscription.id);
-    return;
+    throw new Error(`subscription event: organization not found (${subscription.id})`);
   }
 
   if (subscription.status === "canceled") {

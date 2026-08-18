@@ -63,14 +63,60 @@ async function supabaseOrgBySlug(slug) {
   }
 }
 
+function isBlockedIpLiteral(hostname) {
+  const h = String(hostname || "").toLowerCase();
+  if (h === "localhost" || h.endsWith(".localhost") || h === "metadata.google.internal") {
+    return true;
+  }
+  if (h === "::1" || h === "[::1]") return true;
+  const ipv4 = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!ipv4) return false;
+  const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+  if (a === 10 || a === 127 || a === 0) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  return false;
+}
+
+function allowedLogoHosts() {
+  const hosts = new Set(["www.centerlinked.com", "centerlinked.com"]);
+  for (const raw of [process.env.SITE_URL, process.env.VITE_SUPABASE_URL]) {
+    if (!raw) continue;
+    try {
+      hosts.add(new URL(raw).hostname.toLowerCase());
+    } catch {
+      /* ignore invalid env */
+    }
+  }
+  return hosts;
+}
+
+function isAllowedLogoFetchUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "https:") return false;
+  if (parsed.username || parsed.password) return false;
+  const host = parsed.hostname.toLowerCase();
+  if (isBlockedIpLiteral(host)) return false;
+  const allowed = allowedLogoHosts();
+  return allowed.has(host) || host.endsWith(".supabase.co");
+}
+
 async function fetchLogoBuffer(url) {
+  if (!isAllowedLogoFetchUrl(url)) return null;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LOGO_FETCH_MS);
   try {
     const res = await fetch(url, {
       signal: controller.signal,
       headers: { Accept: "image/*" },
-      redirect: "follow",
+      redirect: "error",
     });
     if (!res.ok) return null;
 

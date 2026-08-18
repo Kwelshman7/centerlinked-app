@@ -21,13 +21,6 @@ export function verificationState(
   return { tier: "stale", label: "Needs confirmation", daysAgo: days };
 }
 
-export async function stampVerified(facilityId: string, userId: string) {
-  return supabase
-    .from("facilities")
-    .update({
-      contracts_verified_at: new Date().toISOString(),
-      contracts_verified_by: userId,
-      verification_frozen: false,
-    })
-    .eq("id", facilityId);
+export async function stampVerified(facilityId: string, _userId?: string) {
+  return supabase.rpc("stamp_facility_verified", { _facility_id: facilityId });
 }

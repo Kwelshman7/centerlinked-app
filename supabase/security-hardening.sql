@@ -53,6 +53,9 @@ USING (user_id = auth.uid() OR public.has_role(auth.uid(), 'super_admin'::public
 ALTER TABLE public.early_access_leads ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "early_access_leads_public_insert" ON public.early_access_leads;
+DROP POLICY IF EXISTS "anyone submits leads" ON public.early_access_leads;
+
+REVOKE INSERT ON TABLE public.early_access_leads FROM anon, authenticated;
 
 DROP POLICY IF EXISTS "early_access_leads_admin_select" ON public.early_access_leads;
 CREATE POLICY "early_access_leads_admin_select"
@@ -67,6 +70,7 @@ USING (public.has_role(auth.uid(), 'super_admin'::public.app_role));
 ALTER TABLE public.organization_claims ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "organization_claims_insert_authenticated" ON public.organization_claims;
+DROP POLICY IF EXISTS "Anyone can submit a claim" ON public.organization_claims;
 CREATE POLICY "organization_claims_insert_authenticated"
 ON public.organization_claims
 FOR INSERT
@@ -90,6 +94,8 @@ FOR UPDATE
 TO authenticated
 USING (public.has_role(auth.uid(), 'super_admin'::public.app_role))
 WITH CHECK (public.has_role(auth.uid(), 'super_admin'::public.app_role));
+
+REVOKE INSERT ON TABLE public.organization_claims FROM anon;
 
 -- ---------------------------------------------------------------------------
 -- 5) RPC: check bootstrap candidacy without exposing allowlist to the client

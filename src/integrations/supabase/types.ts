@@ -157,6 +157,7 @@ export type Database = {
       bootstrap_super_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_bootstrap_admin_candidate: { Args: Record<PropertyKey, never>; Returns: boolean }
       claim_pending_org_invite: { Args: Record<PropertyKey, never>; Returns: Json }
+      create_org_invite: { Args: { _organization_id: string; _email: string; _role_at_org?: string }; Returns: string }
       create_organization_with_owner: { Args: { _description?: string; _email_domain: string; _hq_city?: string; _hq_state?: string; _logo_url?: string; _name: string; _num_facilities?: number; _phone?: string; _website?: string }; Returns: string }
       email_signup_eligible: { Args: { _email: string }; Returns: boolean }
       get_org_setup_options: { Args: Record<PropertyKey, never>; Returns: Json }
@@ -167,6 +168,8 @@ export type Database = {
       org_has_facility_admin: { Args: { _org_id: string }; Returns: boolean }
       request_to_join_organization: { Args: { _organization_id: string }; Returns: string }
       review_organization_join_request: { Args: { _request_id: string; _approve: boolean }; Returns: boolean }
+      revoke_org_invite: { Args: { _invite_id: string }; Returns: undefined }
+      remove_org_member: { Args: { _member_user_id: string; _organization_id: string }; Returns: undefined }
       freeze_stale_facilities: { Args: Record<PropertyKey, never>; Returns: number }
       get_networked_org_ids: { Args: Record<PropertyKey, never>; Returns: string[] }
       get_or_create_direct_conversation: { Args: { _other_user_id: string }; Returns: string }
@@ -188,6 +191,7 @@ export type Database = {
         }
         Returns: string
       }
+      stamp_facility_verified: { Args: { _facility_id: string }; Returns: undefined }
       update_organization_profile: {
         Args: { _organization_id: string; _profile: Json }
         Returns: undefined

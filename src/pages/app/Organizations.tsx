@@ -38,6 +38,7 @@ import {
   type PayerMatchInput,
 } from "@/lib/match-payer";
 import { toast } from "sonner";
+import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
 
 interface OrgRow {
   id: string;
@@ -61,6 +62,8 @@ interface FacilityRow {
   city: string | null;
   state: string | null;
   levels_of_care: string[] | null;
+  verification_status?: string;
+  verification_frozen?: boolean;
 }
 
 interface ContractRow {
@@ -101,15 +104,16 @@ export default function Organizations() {
       const [{ data: facs }, { data: cons }] = await Promise.all([
         supabase
           .from("facilities")
-          .select("id,organization_id,name,slug,city,state,levels_of_care")
+          .select("id,organization_id,name,slug,city,state,levels_of_care,verification_status,verification_frozen")
           .eq("verification_status", "approved")
+          .eq("verification_frozen", false)
           .order("name"),
         supabase
           .from("insurance_contracts")
           .select("facility_id,payer_id,payer_name,in_network")
           .eq("in_network", true),
       ]);
-      setFacilities((facs as FacilityRow[]) ?? []);
+      setFacilities(((facs as FacilityRow[]) ?? []).filter((row) => isPartnerVisibleFacility(row)));
       setContracts((cons as ContractRow[]) ?? []);
     })();
   }, []);

@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test": "node --test server/stripe/membership-checkout.test.mjs && node --experimental-strip-types --test src/lib/helpers.test.ts",
     "preview": "vite preview",
     "facility-images": "node server/facility-images/run-batch.mjs",
     "facility-images:status": "node server/facility-images/run-batch.mjs --status",

@@ -55,6 +55,24 @@ export async function assertOrgBillingAdmin(accessToken) {
     return { ok: false, error: "Join or create an organization before billing", status: 400 };
   }
 
+  const { data: isAdmin, error: adminError } = await client.rpc("is_org_facility_admin", {
+    _org_id: organizationId,
+    _user_id: userId,
+  });
+
+  if (adminError) {
+    console.error("[assertOrgBillingAdmin] is_org_facility_admin failed", adminError.message);
+    return { ok: false, error: "Could not verify billing permissions", status: 500 };
+  }
+
+  if (!isAdmin) {
+    return {
+      ok: false,
+      error: "Only organization admins can manage billing",
+      status: 403,
+    };
+  }
+
   const { data: roles, error: rolesError } = await client
     .from("user_roles")
     .select("role")
@@ -66,14 +84,6 @@ export async function assertOrgBillingAdmin(accessToken) {
   }
 
   const roleList = (roles || []).map((r) => r.role);
-  const canBill = roleList.includes("facility_admin") || roleList.includes("super_admin");
-  if (!canBill) {
-    return {
-      ok: false,
-      error: "Only organization admins can manage billing",
-      status: 403,
-    };
-  }
 
   return {
     ok: true,

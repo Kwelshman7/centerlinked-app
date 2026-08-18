@@ -110,11 +110,10 @@ export default function Members() {
       return;
     }
     setInviting(true);
-    const { error } = await supabase.from("org_invites").insert({
-      organization_id: profile.organization_id,
-      email,
-      role_at_org: "bd_rep",
-      invited_by: user?.id,
+    const { error } = await supabase.rpc("create_org_invite", {
+      _organization_id: profile.organization_id,
+      _email: email,
+      _role_at_org: "bd_rep",
     });
     setInviting(false);
     if (error) {
@@ -127,7 +126,7 @@ export default function Members() {
   };
 
   const cancelInvite = async (id: string) => {
-    const { error } = await supabase.from("org_invites").delete().eq("id", id);
+    const { error } = await supabase.rpc("revoke_org_invite", { _invite_id: id });
     if (error) { toast.error(error.message); return; }
     setInvites((cur) => cur.filter((i) => i.id !== id));
   };

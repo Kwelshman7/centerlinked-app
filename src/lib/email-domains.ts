@@ -43,9 +43,8 @@ export async function isEmailAuthAllowed(email: string): Promise<boolean> {
 
   const { data, error } = await supabase.rpc("is_email_auth_allowed", { _email: trimmed });
   if (error) {
-    console.warn("is_email_auth_allowed:", error.message);
-    // Fail closed for personal domains when the RPC is unavailable.
-    return !isPersonalEmail(trimmed);
+    console.warn("is_email_auth_allowed: RPC unavailable");
+    return false;
   }
   return !!data;
 }

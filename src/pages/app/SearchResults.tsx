@@ -11,12 +11,14 @@ import {
   OrgResultGrid,
   OrgSearchResult,
 } from "@/components/app/search/OrgResultCard";
+import { toast } from "sonner";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import {
   buildPayerOrFilter,
   contractMatchesPayer,
   type PayerMatchInput,
 } from "@/lib/match-payer";
+import { resolveStateCode, stateMatchesFilter, US_STATES } from "@/lib/us-states";
 
 type ContractRow = {
   payer_id: string | null;
@@ -50,6 +52,8 @@ export default function SearchResults() {
   const [params] = useSearchParams();
   const [baseResults, setBaseResults] = useState<OrgSearchBase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [truncated, setTruncated] = useState(false);
   const [editing, setEditing] = useState(false);
   const { partnerOrgIds } = useReferralNetwork();
 
@@ -72,6 +76,8 @@ export default function SearchResults() {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setLoadError(null);
+      setTruncated(false);
 
       let payer: PayerMatchInput | null = null;
       if (payerId) {
@@ -99,7 +105,13 @@ export default function SearchResults() {
 
       q = q.eq("facilities.verification_status", "approved");
       q = q.eq("facilities.verification_frozen", false);
-      if (state) q = q.eq("facilities.state", state);
+      const stateCode = resolveStateCode(state);
+      const stateName = stateCode ? US_STATES.find((s) => s.code === stateCode)?.name : null;
+      if (stateCode && stateName && stateName.toUpperCase() !== stateCode) {
+        q = q.or(`state.eq.${stateCode},state.ilike.${stateName}`, { referencedTable: "facilities" });
+      } else if (state) {
+        q = q.ilike("facilities.state", `%${state}%`);
+      }
       if (city) q = q.ilike("facilities.city", `%${city}%`);
       if (loc) q = q.contains("facilities.levels_of_care", [loc]);
 
@@ -108,13 +120,20 @@ export default function SearchResults() {
 
       if (error) {
         setBaseResults([]);
+        setLoadError(error.message || "Search failed");
+        toast.error("Search failed", { description: "Try again. If this continues, refresh the page." });
         setLoading(false);
         return;
       }
 
+      setTruncated((data?.length ?? 0) >= 500);
+
       let rows = (data as unknown as ContractRow[]) ?? [];
       if (payer) {
         rows = rows.filter((row) => contractMatchesPayer(row, payer!));
+      }
+      if (state) {
+        rows = rows.filter((row) => stateMatchesFilter(row.facilities?.state, state));
       }
 
       const byOrg = new Map<string, OrgSearchBase>();
@@ -205,8 +224,15 @@ export default function SearchResults() {
         <p className="text-xs text-muted-foreground mt-1">
           {loading
             ? "Searching…"
-            : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`}
+            : loadError
+              ? "Could not load results"
+              : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`}
         </p>
+        {truncated && !loading && !loadError ? (
+          <p className="text-xs text-amber-700 mt-1">
+            Showing a partial match (500 contracts). Narrow insurance, state, or level of care to see everything.
+          </p>
+        ) : null}
       </div>
 
       {loading ? (
@@ -215,6 +241,13 @@ export default function SearchResults() {
             <Skeleton key={i} className="h-[280px] sm:h-[320px] rounded-xl" />
           ))}
         </OrgResultGrid>
+      ) : loadError ? (
+        <Card className="p-8 text-center space-y-2">
+          <p className="font-medium">Search couldn’t load</p>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Check your connection and try again. This is not an empty result set.
+          </p>
+        </Card>
       ) : results.length > 0 ? (
         <OrgResultGrid>
           {results.map((o) => (

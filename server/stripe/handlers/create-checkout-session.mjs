@@ -1,5 +1,6 @@
 import { getStripe, stripePrices, appSiteUrl, randomSuffix } from "../client.mjs";
 import { assertOrgBillingAdmin, supabaseAdmin } from "../supabase.mjs";
+import { membershipCheckoutDecision } from "../membership-checkout.mjs";
 
 /**
  * Create a Stripe Checkout Session for org membership.
@@ -41,7 +42,7 @@ export async function handleCreateCheckoutSession(body, accessToken) {
   const { data: org, error: orgError } = await admin
     .from("organizations")
     .select(
-      "id,name,stripe_customer_id,subscription_status,setup_package,billing_email",
+      "id,name,stripe_customer_id,stripe_subscription_id,subscription_status,setup_package,billing_email",
     )
     .eq("id", auth.organizationId)
     .maybeSingle();
@@ -50,16 +51,28 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     return { status: 404, json: { error: "Organization not found" } };
   }
 
-  const alreadySubscribed =
-    org.subscription_status === "active" || org.subscription_status === "trialing";
+  const decision = membershipCheckoutDecision(org);
+  const alreadySubscribed = decision.alreadyActive;
 
-  if (alreadySubscribed) {
-    if (plan === "membership") {
+  if (!decision.allowMembershipCheckout) {
+    if (plan === "membership" && !decision.usePortal) {
       return {
         status: 400,
         json: { error: "Organization already has an active membership. Manage it in Billing." },
       };
     }
+    if (!alreadySubscribed) {
+      return {
+        status: 409,
+        json: {
+          error: "This organization already has a membership. Update payment details in Billing.",
+          code: "use_portal",
+        },
+      };
+    }
+  }
+
+  if (alreadySubscribed) {
     if (org.setup_package === "done_for_you") {
       return {
         status: 400,

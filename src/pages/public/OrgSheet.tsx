@@ -115,11 +115,12 @@ export default function OrgSheet() {
       const { data: f } = await supabase
         .from("facilities")
         .select(
-          "id,name,slug,city,state,address_line1,zip,image_urls,levels_of_care,population_served,specializations,highlights,accreditations,short_description,description,tagline,insurance_status,featured_payer,updated_at,contracts_verified_at,hidden_from_org_page",
+          "id,name,slug,city,state,address_line1,zip,image_urls,levels_of_care,population_served,specializations,highlights,accreditations,short_description,description,tagline,insurance_status,featured_payer,updated_at,contracts_verified_at,hidden_from_org_page,verification_frozen,verification_status",
         )
         .eq("organization_id", orgData.id)
         .eq("verification_status", "approved")
         .eq("hidden_from_org_page", false)
+        .eq("verification_frozen", false)
         .order("name");
 
       const facs = ((f as unknown) as ShowcaseFacility[]) ?? [];

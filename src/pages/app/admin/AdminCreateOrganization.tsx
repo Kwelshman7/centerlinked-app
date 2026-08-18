@@ -273,6 +273,7 @@ export default function AdminCreateOrganization() {
     if (!orgId || !parsedFacilities || !user) return;
     setCommitting(true);
     const urls: string[] = [];
+    const failed: { name: string; error: string }[] = [];
     try {
       const payers = await loadApprovedPayers();
       for (const f of parsedFacilities) {
@@ -303,8 +304,18 @@ export default function AdminCreateOrganization() {
           draft,
           contractsMode: "all",
         });
-        if (!result.ok) throw new Error(result.error);
+        if (!result.ok) {
+          failed.push({ name: f.name, error: result.error });
+          continue;
+        }
         if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
+      }
+      if (failed.length) {
+        toast.error(
+          `${urls.length} saved, ${failed.length} failed`,
+          { description: failed.map((x) => `${x.name}: ${x.error}`).join(" · ") },
+        );
+        return;
       }
       setCreatedFacilityUrls(urls);
       setStage("done");
@@ -343,6 +354,7 @@ export default function AdminCreateOrganization() {
     }
     setSavingManual(true);
     const urls: string[] = [];
+    const failed: { name: string; error: string }[] = [];
     try {
       const payers = await loadApprovedPayers();
       for (const f of manualFacilities) {
@@ -379,8 +391,18 @@ export default function AdminCreateOrganization() {
           draft,
           contractsMode: "all",
         });
-        if (!result.ok) throw new Error(result.error);
+        if (!result.ok) {
+          failed.push({ name: f.name.trim(), error: result.error });
+          continue;
+        }
         if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
+      }
+      if (failed.length) {
+        toast.error(
+          `${urls.length} saved, ${failed.length} failed`,
+          { description: failed.map((x) => `${x.name}: ${x.error}`).join(" · ") },
+        );
+        return;
       }
       setCreatedFacilityUrls(urls);
       setStage("done");
