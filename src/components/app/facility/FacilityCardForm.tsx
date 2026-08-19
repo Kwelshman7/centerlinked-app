@@ -13,6 +13,7 @@ import {
   SPECIALIZATION_OPTIONS,
   ACCREDITATION_OPTIONS,
 } from "./facility-types";
+import { accreditationKey, uniqueAccreditations } from "@/lib/accreditations";
 import { PayerCombobox } from "./PayerCombobox";
 import { FacilityBdRepFields } from "./FacilityBdRepFields";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +38,13 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
     item: string,
   ) => {
     const cur = value[key];
+    if (key === "accreditations") {
+      const itemKey = accreditationKey(item);
+      const isOn = cur.some((x) => accreditationKey(x) === itemKey);
+      const next = isOn ? cur.filter((x) => accreditationKey(x) !== itemKey) : [...cur, item];
+      set(key, uniqueAccreditations(next));
+      return;
+    }
     set(key, cur.includes(item) ? cur.filter((x) => x !== item) : [...cur, item]);
   };
 
@@ -263,21 +271,43 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
         {/* Accreditations */}
         <div className="space-y-2">
           <Label>Accreditations</Label>
+          <p className="text-xs text-muted-foreground">Shown on the public facility page hero.</p>
           <div className="flex flex-wrap gap-1.5">
-            {ACCREDITATION_OPTIONS.map((a) => (
-              <button
-                key={a}
-                type="button"
-                onClick={() => toggleArr("accreditations", a)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
-                  (value.accreditations ?? []).includes(a)
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border hover:border-primary/40 hover:bg-accent"
-                }`}
-              >
-                {a}
-              </button>
-            ))}
+            {ACCREDITATION_OPTIONS.map((a) => {
+              const selected = (value.accreditations ?? []).some(
+                (x) => accreditationKey(x) === accreditationKey(a),
+              );
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => toggleArr("accreditations", a)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
+                    selected
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-border hover:border-primary/40 hover:bg-accent"
+                  }`}
+                >
+                  {a}
+                </button>
+              );
+            })}
+            {(value.accreditations ?? [])
+              .filter(
+                (stored) =>
+                  !ACCREDITATION_OPTIONS.some((opt) => accreditationKey(opt) === accreditationKey(stored)),
+              )
+              .map((stored) => (
+                <button
+                  key={stored}
+                  type="button"
+                  onClick={() => toggleArr("accreditations", stored)}
+                  className="px-2.5 py-1 rounded-full text-xs font-medium border bg-primary text-primary-foreground border-primary"
+                  title="Click to remove"
+                >
+                  {stored} ×
+                </button>
+              ))}
           </div>
         </div>
 

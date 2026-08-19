@@ -3,6 +3,7 @@ import { Award, Building2, Mail, MapPin, Phone, ShieldCheck } from "lucide-react
 import type { FacilitySheetData, SheetContract, SheetOrg } from "@/components/public/FacilitySheetView";
 import { contrastingTextColor } from "@/lib/color-contrast";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
+import { uniqueAccreditations } from "@/lib/accreditations";
 import { DEFAULT_ACCENT, parseAccentColor, parseBrandColor } from "@/lib/public-urls";
 
 /** Letter at 96dpi — captures cleanly into an 8.5×11 PDF. */
@@ -160,10 +161,7 @@ export function FacilityOnePager({
     .slice(0, 8);
 
   const population = (facility.population_served ?? []).filter(Boolean).slice(0, 6);
-  const accreditations = (facility.accreditations ?? [])
-    .map((a) => a.trim())
-    .filter(Boolean)
-    .slice(0, 5);
+  const accreditations = uniqueAccreditations(facility.accreditations).slice(0, 5);
 
   const facilityHasOwnBd = !!(
     facility.bd_contact_name?.trim() &&

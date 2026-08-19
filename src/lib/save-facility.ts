@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { FacilityContractDraft, FacilityDraft } from "@/components/app/facility/facility-types";
+import { uniqueAccreditations } from "@/lib/accreditations";
 import { resolveStateCode } from "@/lib/us-states";
 
 export type ContractsMode = "all" | "in_network" | "none";
@@ -45,7 +46,7 @@ function draftToFacilityPayload(
     highlights: draft.highlights ?? [],
     population_served: draft.population_served ?? [],
     specializations: draft.specializations ?? [],
-    accreditations: draft.accreditations ?? [],
+    accreditations: uniqueAccreditations(draft.accreditations),
     image_urls: draft.image_urls ?? [],
     bd_contact_name: draft.bd_contact_name || null,
     bd_contact_phone: draft.bd_contact_phone || null,

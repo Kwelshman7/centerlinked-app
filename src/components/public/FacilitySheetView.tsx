@@ -8,7 +8,6 @@ import {
   ChevronRight,
   User,
   Award,
-  Clock,
   Check,
   Pencil,
   Sparkles,
@@ -26,6 +25,7 @@ import { ExpandableText } from "@/components/public/ExpandableText";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { useNearbyCities } from "@/hooks/useNearbyCities";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
+import { uniqueAccreditations } from "@/lib/accreditations";
 
 /** Fixed hero gallery dimensions — identical for every facility/org. */
 const HERO_IMAGE_HEIGHT = "h-[280px]";
@@ -204,10 +204,7 @@ export function FacilitySheetView({
     facility.description ||
     null;
 
-  const facilityType = facility.treatment_focus || facility.levels_of_care?.[0] || null;
-  const accreditations = (facility.accreditations ?? [])
-    .map((item) => item.trim())
-    .filter(Boolean);
+  const accreditations = uniqueAccreditations(facility.accreditations);
 
   const programFeatures = [
     ...(facility.quick_highlights ?? []),
@@ -219,8 +216,7 @@ export function FacilitySheetView({
     facility.description ||
     facility.tagline ||
     programFeatures.length > 0 ||
-    facility.population_served?.length > 0 ||
-    aboutHeaderExtra;
+    facility.population_served?.length > 0;
 
   const hasFactsStrip = (facility.levels_of_care?.length ?? 0) > 0 || contracts.length >= 0;
   const hasServiceArea = !!(address || cityStateZip);
@@ -231,7 +227,7 @@ export function FacilitySheetView({
     <div className={`space-y-5 lg:space-y-6 min-w-0 ${showMobileActionBar ? mobileContactBarPadding(tabBarOffset, footerVisible) : ""}`}>
       {/* Hero */}
       <section className="print-keep-together rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-        <div className="grid lg:grid-cols-2 lg:items-start print:grid-cols-1">
+        <div className="grid lg:grid-cols-2 print:grid-cols-1">
           <HeroGallery
             images={facility.image_urls ?? []}
             fallbackImage={coverImageUrl}
@@ -243,75 +239,64 @@ export function FacilitySheetView({
             className="order-1 lg:order-2 print:hidden"
           />
 
-          <div className="p-4 sm:p-6 lg:p-7 flex flex-col gap-3 min-w-0 self-start order-2 lg:order-1">
-            {mode === "public" && org?.slug && (
-              <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground print:hidden">
-                <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline">
-                  {org.name}
-                </Link>
-                <ChevronRight className="h-3.5 w-3.5" />
-                <span className="font-medium text-foreground truncate">{facility.name}</span>
-              </nav>
-            )}
-
-            <div>
-              {mode === "public" && org?.name ? (
-                <p className="hidden print:block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
-                  {org.name}
-                </p>
-              ) : null}
-              <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight">{facility.name}</h1>
-
-              <div className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+          <div className="p-5 sm:p-6 lg:p-7 flex flex-col min-w-0 order-2 lg:order-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                {mode === "public" && org?.slug && (
+                  <nav className="flex items-center gap-1.5 text-xs text-muted-foreground print:hidden">
+                    <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline truncate">
+                      {org.name}
+                    </Link>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium text-foreground truncate">{facility.name}</span>
+                  </nav>
+                )}
+                {mode === "public" && org?.name ? (
+                  <p className="hidden print:block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
+                    {org.name}
+                  </p>
+                ) : null}
+                <h1 className="font-heading text-2xl sm:text-[1.75rem] font-bold tracking-tight leading-tight mt-1">
+                  {facility.name}
+                </h1>
                 {cityStateZip && (
-                  <p className="inline-flex items-center gap-2">
-                    <MapPin className="h-4 w-4 shrink-0" style={{ color: brand }} />
+                  <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
                     <a href={directionsHref} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                       {cityStateZip}
                     </a>
                   </p>
                 )}
               </div>
+              {aboutHeaderExtra ? <div className="shrink-0 print:hidden">{aboutHeaderExtra}</div> : null}
             </div>
 
             {summaryText && (
-              <p className="text-sm leading-relaxed text-foreground/80 break-words">{summaryText}</p>
+              <p className="mt-3 text-sm leading-relaxed text-foreground/75 break-words">{summaryText}</p>
             )}
 
-            <div className="grid grid-cols-2 gap-x-5 sm:gap-x-8 gap-y-3 pt-0.5">
-              {facilityType && (
-                <MetaItem icon={Building2} label="Type" value={facilityType} brand={brand} />
-              )}
-              {lastUpdated && (
-                <MetaItem icon={Clock} label="Updated" value={lastUpdated} brand={brand} />
-              )}
-              {accreditations.length > 0 && (
-                <div className="col-span-2 flex items-start gap-2 min-w-0 pt-0.5">
-                  <Award className="h-4 w-4 shrink-0 mt-0.5" style={{ color: brand }} aria-hidden />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] sm:text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
-                      Accredited
-                    </p>
-                    <ul className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
-                      {accreditations.map((item) => (
-                        <li key={item} className="flex items-start gap-1.5 min-w-0">
-                          <Check
-                            className="h-3.5 w-3.5 shrink-0 mt-0.5"
-                            style={{ color: brand }}
-                            aria-hidden
-                          />
-                          <span className="text-xs sm:text-sm font-medium leading-snug text-foreground/90">
-                            {item}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </div>
+            {accreditations.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {accreditations.map((item) => (
+                  <span
+                    key={item}
+                    className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium text-foreground/90"
+                  >
+                    <Award className="h-3 w-3 shrink-0" style={{ color: brand }} aria-hidden />
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            {shareNode && <div className="pt-1 hidden lg:block print:hidden">{shareNode}</div>}
+            <div className="mt-auto pt-5 flex items-center justify-between gap-3 print:pt-3">
+              {lastUpdated ? (
+                <p className="text-xs text-muted-foreground">Updated {lastUpdated}</p>
+              ) : (
+                <span />
+              )}
+              {shareNode ? <div className="hidden lg:block print:hidden">{shareNode}</div> : null}
+            </div>
           </div>
         </div>
 
@@ -423,7 +408,7 @@ export function FacilitySheetView({
 
               {hasProgramDetails && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Program Details" headerExtra={aboutHeaderExtra} />
+                  <SectionHeading title="Program Details" />
 
                   {(facility.tagline || facility.description) && (
                     <div className="mb-4 sm:mb-5">
@@ -585,30 +570,6 @@ export function FacilitySheetView({
           onFooterVisibilityChange={setFooterVisible}
         />
       )}
-    </div>
-  );
-}
-
-function MetaItem({
-  icon: Icon,
-  label,
-  value,
-  brand,
-}: {
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  label: string;
-  value: string;
-  brand: string;
-}) {
-  return (
-    <div className="flex items-start gap-2 min-w-0">
-      <Icon className="h-4 w-4 shrink-0 mt-0.5" style={{ color: brand }} />
-      <div className="min-w-0">
-        <p className="text-[10px] sm:text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
-          {label}
-        </p>
-        <p className="text-xs sm:text-sm font-medium leading-snug line-clamp-2">{value}</p>
-      </div>
     </div>
   );
 }
