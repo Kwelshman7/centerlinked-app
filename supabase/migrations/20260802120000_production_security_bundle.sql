@@ -5,6 +5,7 @@
 -- Schema prerequisites (safe / idempotent; required before org Settings save):
 --   org-footer-image.sql             -- organizations.footer_image_url
 --   org-social-links.sql             -- organizations.social_*_url
+--   org-favicon.sql                  -- organizations.favicon_url
 --
 -- 1. revoke-dangerous-grants.sql     -- CRITICAL: revoke run_sql from clients
 -- 2. rls-tenant-hardening.sql        -- tighten organizations/profiles SELECT

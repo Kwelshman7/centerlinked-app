@@ -6,7 +6,7 @@ import { OrganizationSheetView, OrgSheetData } from "@/components/public/Organiz
 import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
 import { OrgClaimCard } from "@/components/public/OrgClaimCard";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
-import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
+import { applySocialMeta, orgShareCardType, orgShareIcon, orgShareImage } from "@/lib/social-meta";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
@@ -104,7 +104,7 @@ export default function OrgSheet() {
           `${orgData.name}${loc ? ` — ${loc}` : ""}. Referral profile.`,
         path: `/o/${orgData.slug ?? slug}`,
         image: orgShareImage(orgData),
-        icon: orgData.logo_url,
+        icon: orgShareIcon(o as { favicon_url?: string | null; logo_url?: string | null }),
         siteName: orgData.name,
         card: orgShareCardType(orgData),
         imageAlt: `${orgData.name} logo`,

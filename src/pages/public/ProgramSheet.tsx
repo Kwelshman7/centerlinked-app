@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { applySocialMeta, orgShareCardType, orgShareImage } from "@/lib/social-meta";
+import { applySocialMeta, orgShareCardType, orgShareIcon, orgShareImage } from "@/lib/social-meta";
 import { Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -50,6 +50,7 @@ interface OrgRow extends SheetOrg {
   cover_image_url?: string | null;
   verified?: boolean | null;
   updated_at?: string | null;
+  favicon_url?: string | null;
 }
 
 interface FullContract {
@@ -177,7 +178,7 @@ export default function ProgramSheet() {
         `${fac.name}${loc ? ` in ${loc}` : ""}. Program sheet.`,
       path: canonicalPath,
       image: orgRow ? orgShareImage(orgRow) : fac.image_urls?.[0] ?? null,
-      icon: orgRow?.logo_url,
+      icon: orgShareIcon(orgRow),
       siteName: orgRow?.name ?? undefined,
       card: orgRow ? orgShareCardType(orgRow) : "summary_large_image",
       imageAlt: orgRow?.name ? `${orgRow.name} logo` : undefined,

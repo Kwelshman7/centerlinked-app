@@ -106,7 +106,7 @@ Documented in `PROJECT.md` and used by the app:
 | Bucket | Typical use |
 |--------|-------------|
 | `facility-images` | Facility photo URLs stored on `facilities.image_urls` |
-| `org-logos` | `organizations.logo_url`, cover/footer/gallery branding assets |
+| `org-logos` | `organizations.logo_url`, `favicon_url`, cover/footer/gallery branding assets |
 | `avatars` | `profiles.avatar_url` |
 | `post-images` | `posts.image_urls` (community feed; feature-flagged) |
 | `claim-proofs` | `organization_claims.proof_url` |
@@ -374,6 +374,7 @@ Central tenant entity: branded public org sheet, billing customer, membership ro
 | `email_domain` | text \| null | Domain match for joins/signup |
 | `hq_city` / `hq_state` | text \| null | |
 | `logo_url` | text \| null | Storage `org-logos` |
+| `favicon_url` | text \| null | Share-link / tab icon; `org-favicon.sql` |
 | `cover_image_url` | text \| null | Hero |
 | `footer_image_url` | text \| null | `org-footer-image.sql` |
 | `image_urls` | text[] | Gallery; `org-image-urls.sql` |
@@ -416,7 +417,7 @@ Central tenant entity: branded public org sheet, billing customer, membership ro
 - Profile updates for branding should go through `update_organization_profile` (or admin paths); billing only via Stripe webhook/checkout service role
 
 ### Storage
-- `org-logos` for logo/cover/footer/gallery URLs stored as text on the row
+- `org-logos` for logo/cover/footer/gallery/favicon URLs stored as text on the row
 
 ### Where used / files
 - Widespread: public `OrgSheet`, search, dashboard, settings, admin org workspace/create/edit, Stripe handlers under `server/stripe/**`, welcome email, landing carousels, feed enrichment

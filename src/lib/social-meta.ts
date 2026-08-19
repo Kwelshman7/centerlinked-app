@@ -15,7 +15,7 @@ type SocialMeta = {
   description?: string | null;
   path: string;
   image?: string | null;
-  /** Tab/bookmark icon — prefer org.logo_url on public share pages. */
+  /** Tab/bookmark icon — prefer org.favicon_url, then logo_url, on public share pages. */
   icon?: string | null;
   /** Shown as og:site_name — use the org name for branded shares. */
   siteName?: string | null;
@@ -152,4 +152,15 @@ export function orgShareImage(org: {
 
 export function orgShareCardType(_org?: { logo_url?: string | null }): "summary_large_image" {
   return "summary_large_image";
+}
+
+/** Tab / share-preview icon. Dedicated favicon first, then the square logo. */
+export function orgShareIcon(org?: {
+  favicon_url?: string | null;
+  logo_url?: string | null;
+} | null): string | null {
+  const favicon = org?.favicon_url?.trim();
+  if (favicon) return favicon;
+  const logo = org?.logo_url?.trim();
+  return logo || null;
 }

@@ -83,6 +83,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
   const [orgCity, setOrgCity] = useState("");
   const [orgState, setOrgState] = useState("");
   const [orgLogo, setOrgLogo] = useState<string[]>([]);
+  const [orgFavicon, setOrgFavicon] = useState<string[]>([]);
   const [orgFooterImage, setOrgFooterImage] = useState<string[]>([]);
   const [emailDomain, setEmailDomain] = useState("");
   const [verified, setVerified] = useState(false);
@@ -113,6 +114,11 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
         setOrgCity(data.hq_city || "");
         setOrgState(data.hq_state || "");
         setOrgLogo(data.logo_url ? [data.logo_url] : []);
+        setOrgFavicon(
+          (data as { favicon_url?: string | null }).favicon_url
+            ? [(data as { favicon_url: string }).favicon_url]
+            : [],
+        );
         setOrgFooterImage(
           (data as { footer_image_url?: string | null }).footer_image_url
             ? [(data as { footer_image_url: string }).footer_image_url]
@@ -186,6 +192,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
       hq_city: orgCity.trim() || null,
       hq_state: orgState.trim() || null,
       logo_url: orgLogo[0] || null,
+      favicon_url: orgFavicon[0] || null,
       footer_image_url: orgFooterImage[0] || null,
       email_domain: emailDomain.trim() ? emailDomain.trim().toLowerCase() : null,
       verified,
@@ -206,6 +213,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
 
     const optionalColumns = [
       "footer_image_url",
+      "favicon_url",
       "social_facebook_url",
       "social_instagram_url",
       "social_linkedin_url",
@@ -395,7 +403,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
 
         <div className="border-t border-border/60" />
 
-        <Section id="look" title="Look" description="Logo and colors used across public pages.">
+        <Section id="look" title="Look" description="Logo, favicon, and colors used across public pages.">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] lg:gap-0 lg:items-stretch">
             <div className="min-w-0 lg:pr-6 lg:border-r lg:border-border/70">
               <Field label="Logo">
@@ -407,6 +415,22 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
                   label="Upload logo"
                   objectFit="contain"
                   recommendedSize="Square logo, PNG with transparent background preferred. Max 5 MB."
+                />
+              </Field>
+              <Field
+                label="Favicon"
+                hint="Browser tab and share-link preview icon. Falls back to the logo if empty."
+                className="pt-4"
+              >
+                <ImageUploader
+                  bucket="org-logos"
+                  value={orgFavicon}
+                  onChange={setOrgFavicon}
+                  max={1}
+                  label="Upload favicon"
+                  objectFit="contain"
+                  accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/webp,.ico,.png,.webp"
+                  recommendedSize="Square PNG, 512×512 px (32×32 minimum). ICO or PNG, max 5 MB."
                 />
               </Field>
             </div>

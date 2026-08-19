@@ -31,6 +31,7 @@ export default function Settings() {
   const [orgCity, setOrgCity] = useState("");
   const [orgState, setOrgState] = useState("");
   const [orgLogo, setOrgLogo] = useState<string[]>([]);
+  const [orgFavicon, setOrgFavicon] = useState<string[]>([]);
   const [orgFooterImage, setOrgFooterImage] = useState<string[]>([]);
   const [socialFacebook, setSocialFacebook] = useState("");
   const [socialInstagram, setSocialInstagram] = useState("");
@@ -80,6 +81,11 @@ export default function Settings() {
         setOrgCity(data.hq_city || "");
         setOrgState(data.hq_state || "");
         setOrgLogo(data.logo_url ? [data.logo_url] : []);
+        setOrgFavicon(
+          (data as { favicon_url?: string | null }).favicon_url
+            ? [(data as { favicon_url: string }).favicon_url]
+            : [],
+        );
         setOrgFooterImage(
           (data as { footer_image_url?: string | null }).footer_image_url
             ? [(data as { footer_image_url: string }).footer_image_url]
@@ -175,6 +181,7 @@ export default function Settings() {
         hq_city: orgCity,
         hq_state: orgState,
         logo_url: orgLogo[0] || null,
+        favicon_url: orgFavicon[0] || null,
         footer_image_url: orgFooterImage[0] || null,
         social_facebook_url: socialFacebook.trim() || null,
         social_instagram_url: socialInstagram.trim() || null,
@@ -301,7 +308,23 @@ export default function Settings() {
             </Button>
           </div>
           <form id="organization-settings-form" onSubmit={saveOrg} className="space-y-4">
-            <div className="space-y-2"><Label>Logo</Label><ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB." /></div>
+            <div className="space-y-2"><Label>Logo</Label><ImageUploader bucket="org-logos" value={orgLogo} onChange={setOrgLogo} max={1} label="Upload" objectFit="contain" recommendedSize="Recommended: 800×800 px minimum. PNG with transparent background works best. Max 5 MB." /></div>
+            <div className="space-y-2">
+              <Label>Favicon</Label>
+              <p className="text-xs text-muted-foreground">
+                Browser tab icon and share-link preview icon. Falls back to your logo if empty.
+              </p>
+              <ImageUploader
+                bucket="org-logos"
+                value={orgFavicon}
+                onChange={setOrgFavicon}
+                max={1}
+                label="Upload"
+                objectFit="contain"
+                accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/webp,.ico,.png,.webp"
+                recommendedSize="Recommended: square PNG, 512×512 px (32×32 minimum). ICO or PNG, max 5 MB. Transparent background works best."
+              />
+            </div>
             <div className="space-y-2">
               <Label>Footer banner</Label>
               <p className="text-xs text-muted-foreground">

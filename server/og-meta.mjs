@@ -49,7 +49,7 @@ function buildMeta({ title, description, path, image, icon, siteName, imageAlt }
   };
 }
 
-async function supabaseRow(table, query) {
+async function supabaseRow(table, query, opts = {}) {
   const base = process.env.VITE_SUPABASE_URL;
   const key = process.env.VITE_SUPABASE_ANON_KEY;
   if (!base || !key) return null;
@@ -62,15 +62,41 @@ async function supabaseRow(table, query) {
       },
     });
     if (!res.ok) {
-      console.error("[og-meta] query failed", table, res.status);
+      if (!opts.quiet) {
+        console.error("[og-meta] query failed", table, res.status);
+      }
       return null;
     }
     const rows = await res.json();
     return rows[0] ?? null;
   } catch (err) {
-    console.error("[og-meta] query error", table, err?.message || err);
+    if (!opts.quiet) {
+      console.error("[og-meta] query error", table, err?.message || err);
+    }
     return null;
   }
+}
+
+const ORG_SHARE_SELECT =
+  "name,tagline,description,logo_url,favicon_url,cover_image_url,hq_city,hq_state,slug";
+const ORG_SHARE_SELECT_FALLBACK =
+  "name,tagline,description,logo_url,cover_image_url,hq_city,hq_state,slug";
+
+async function supabaseOrg(filter) {
+  const row = await supabaseRow(
+    "organizations",
+    `${filter}&select=${ORG_SHARE_SELECT}&limit=1`,
+    { quiet: true },
+  );
+  if (row) return row;
+  return supabaseRow(
+    "organizations",
+    `${filter}&select=${ORG_SHARE_SELECT_FALLBACK}&limit=1`,
+  );
+}
+
+function resolveShareIcon(org) {
+  return resolvePublicLogoUrl(org?.favicon_url) || resolvePublicLogoUrl(org?.logo_url);
 }
 
 export async function resolvePublicMeta(pathname) {
@@ -85,9 +111,8 @@ export async function resolvePublicMeta(pathname) {
     );
     if (!facility) return null;
 
-    const org = await supabaseRow(
-      "organizations",
-      `id=eq.${encodeURIComponent(facility.organization_id)}&select=name,tagline,description,logo_url,cover_image_url,slug&limit=1`,
+    const org = await supabaseOrg(
+      `id=eq.${encodeURIComponent(facility.organization_id)}`,
     );
     if (!org || org.slug !== orgSlug) return null;
 
@@ -96,7 +121,7 @@ export async function resolvePublicMeta(pathname) {
       description: facility.description || facility.tagline || orgDescription(org),
       path,
       image: resolveOrgShareImageUrl(org),
-      icon: resolvePublicLogoUrl(org.logo_url),
+      icon: resolveShareIcon(org),
       siteName: org.name,
       imageAlt: `${org.name} logo`,
     });
@@ -104,9 +129,8 @@ export async function resolvePublicMeta(pathname) {
 
   const orgScoped = path.match(/^\/o\/([^/]+)$/);
   if (orgScoped) {
-    const org = await supabaseRow(
-      "organizations",
-      `slug=eq.${encodeURIComponent(orgScoped[1])}&select=name,tagline,description,logo_url,cover_image_url,hq_city,hq_state,slug&limit=1`,
+    const org = await supabaseOrg(
+      `slug=eq.${encodeURIComponent(orgScoped[1])}`,
     );
     if (!org) return null;
     return buildMeta({
@@ -114,7 +138,7 @@ export async function resolvePublicMeta(pathname) {
       description: orgDescription(org),
       path: `/o/${org.slug}`,
       image: resolveOrgShareImageUrl(org),
-      icon: resolvePublicLogoUrl(org.logo_url),
+      icon: resolveShareIcon(org),
       siteName: org.name,
       imageAlt: `${org.name} logo`,
     });
@@ -128,9 +152,8 @@ export async function resolvePublicMeta(pathname) {
     );
     if (!facility) return null;
 
-    const org = await supabaseRow(
-      "organizations",
-      `id=eq.${encodeURIComponent(facility.organization_id)}&select=name,tagline,description,logo_url,cover_image_url,slug&limit=1`,
+    const org = await supabaseOrg(
+      `id=eq.${encodeURIComponent(facility.organization_id)}`,
     );
     if (!org) return null;
 
@@ -143,7 +166,7 @@ export async function resolvePublicMeta(pathname) {
       description: facility.description || facility.tagline || orgDescription(org),
       path: canonicalPath,
       image: resolveOrgShareImageUrl(org),
-      icon: resolvePublicLogoUrl(org.logo_url),
+      icon: resolveShareIcon(org),
       siteName: org.name,
       imageAlt: `${org.name} logo`,
     });
@@ -151,9 +174,8 @@ export async function resolvePublicMeta(pathname) {
 
   const shortOrg = path.match(/^\/([^/]+)$/);
   if (shortOrg && isPublicSharePath(path)) {
-    const org = await supabaseRow(
-      "organizations",
-      `slug=eq.${encodeURIComponent(shortOrg[1])}&select=name,tagline,description,logo_url,cover_image_url,hq_city,hq_state,slug&limit=1`,
+    const org = await supabaseOrg(
+      `slug=eq.${encodeURIComponent(shortOrg[1])}`,
     );
     if (!org) return null;
     return buildMeta({
@@ -161,7 +183,7 @@ export async function resolvePublicMeta(pathname) {
       description: orgDescription(org),
       path: `/o/${org.slug}`,
       image: resolveOrgShareImageUrl(org),
-      icon: resolvePublicLogoUrl(org.logo_url),
+      icon: resolveShareIcon(org),
       siteName: org.name,
       imageAlt: `${org.name} logo`,
     });

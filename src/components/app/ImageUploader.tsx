@@ -18,6 +18,8 @@ interface ImageUploaderProps {
   coverLabel?: string;
   /** How previews are cropped. Use contain for logos. */
   objectFit?: "cover" | "contain";
+  /** File input accept list. Defaults to any image. */
+  accept?: string;
 }
 
 const BUCKET_RECOMMENDED_SIZES: Record<ImageUploaderProps["bucket"], string> = {
@@ -39,6 +41,7 @@ export function ImageUploader({
   allowCover = bucket === "facility-images",
   coverLabel = "Cover",
   objectFit = "cover",
+  accept = "image/*",
 }: ImageUploaderProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -140,8 +143,8 @@ export function ImageUploader({
             )}
             <input
               type="file"
-              accept="image/*"
-              multiple
+              accept={accept}
+              multiple={max > 1}
               className="hidden"
               disabled={uploading}
               onChange={(e) => handleFiles(e.target.files)}

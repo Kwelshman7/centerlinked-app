@@ -430,6 +430,7 @@ BEGIN
     hq_state = nullif(trim(coalesce(_profile->>'hq_state', '')), ''),
     logo_url = nullif(trim(coalesce(_profile->>'logo_url', '')), ''),
     footer_image_url = nullif(trim(coalesce(_profile->>'footer_image_url', '')), ''),
+    favicon_url = nullif(trim(coalesce(_profile->>'favicon_url', '')), ''),
     social_facebook_url = nullif(trim(coalesce(_profile->>'social_facebook_url', '')), ''),
     social_instagram_url = nullif(trim(coalesce(_profile->>'social_instagram_url', '')), ''),
     social_linkedin_url = nullif(trim(coalesce(_profile->>'social_linkedin_url', '')), ''),
