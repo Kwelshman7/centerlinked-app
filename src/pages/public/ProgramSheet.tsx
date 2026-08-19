@@ -15,7 +15,6 @@ import {
 import { OrgFooter } from "@/components/public/OrgFooter";
 import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
-import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
 import {
   programDisplayPath,
   programPublicPath,
@@ -67,7 +66,7 @@ export default function ProgramSheet() {
     programSlug?: string;
   }>();
   const navigate = useNavigate();
-  const { profile, isSuperAdmin } = useAuth();
+  const { profile, isSuperAdmin, isFacilityAdmin } = useAuth();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [org, setOrg] = useState<OrgRow | null>(null);
   const [fullContracts, setFullContracts] = useState<FullContract[]>([]);
@@ -75,8 +74,8 @@ export default function ProgramSheet() {
 
   const facilitySlug = programSlug ?? slug ?? null;
 
-  const canEdit =
-    !!facility && (isSuperAdmin || profile?.organization_id === facility.organization_id);
+  const isOwnOrg = !!facility && profile?.organization_id === facility.organization_id;
+  const canManage = isSuperAdmin || (!!isOwnOrg && isFacilityAdmin);
 
   const contracts = useMemo<SheetContract[]>(
     () =>
@@ -240,13 +239,11 @@ export default function ProgramSheet() {
           org={org}
           contracts={contracts}
           mode="public"
-          canShare={canEdit}
-          canEditPhotos={canEdit}
-          onPhotosUpdated={loadAll}
+          canShare={isOwnOrg || isSuperAdmin}
           brandColor={brand}
           coverImageUrl={org?.cover_image_url ?? null}
           aboutHeaderExtra={
-            canEdit ? (
+            canManage ? (
               <EditFacilityDialog
                 facility={{
                   id: facility.id,
@@ -277,23 +274,6 @@ export default function ProgramSheet() {
                   in_network: c.in_network,
                 }))}
                 organizationId={facility.organization_id}
-                onSaved={loadAll}
-              />
-            ) : null
-          }
-          contractsHeaderExtra={
-            canEdit ? (
-              <EditInsuranceContractsDialog
-                facilityId={facility.id}
-                organizationId={facility.organization_id}
-                facilityName={facility.name}
-                contracts={fullContracts.map((c) => ({
-                  id: c.id,
-                  payer_id: c.payer_id,
-                  payer_name: c.payer_name,
-                  in_network: c.in_network,
-                  pending: false,
-                }))}
                 onSaved={loadAll}
               />
             ) : null

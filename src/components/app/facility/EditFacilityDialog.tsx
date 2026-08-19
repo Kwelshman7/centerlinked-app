@@ -96,6 +96,8 @@ export function EditFacilityDialog({
   const { profile, isFacilityAdmin, isSuperAdmin } = useAuth();
   const canManageVisibility = isFacilityAdmin || isSuperAdmin;
   const orgId = organizationId || profile?.organization_id || null;
+  const canShowTrigger =
+    isSuperAdmin || (!!orgId && isFacilityAdmin && profile?.organization_id === orgId);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => toDraft(facility, contracts));
   const [saving, setSaving] = useState(false);
@@ -130,6 +132,8 @@ export function EditFacilityDialog({
       setSaving(false);
     }
   };
+
+  if (!canShowTrigger) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>

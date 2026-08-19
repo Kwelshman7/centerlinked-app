@@ -19,7 +19,6 @@ import {
 } from "@/components/public/FacilitySheetView";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
-import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
 
 interface Facility {
   id: string;
@@ -66,13 +65,14 @@ interface Contract {
 
 export default function FacilityDetail() {
   const { id } = useParams<{ id: string }>();
-  const { profile, isSuperAdmin } = useAuth();
+  const { profile, isSuperAdmin, isFacilityAdmin } = useAuth();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [org, setOrg] = useState<SheetOrg | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [fixingSlug, setFixingSlug] = useState(false);
   const [loading, setLoading] = useState(true);
   const isMine = !!facility && profile?.organization_id === facility.organization_id;
+  const canManage = isSuperAdmin || (isMine && isFacilityAdmin);
   const canSeePending = isMine || isSuperAdmin;
   const canShare = isMine || isSuperAdmin;
 
@@ -183,17 +183,19 @@ export default function FacilityDetail() {
               bd_contact_email={facility.bd_contact_email}
               onSaved={loadFacility}
             />
-            <EditFacilityDialog
-              facility={facility}
-              contracts={contracts.map((c) => ({
-                id: c.id,
-                payer_id: c.payer_id,
-                payer_name: c.payer_name,
-                in_network: c.in_network,
-              }))}
-              organizationId={facility.organization_id}
-              onSaved={loadFacility}
-            />
+            {canManage && (
+              <EditFacilityDialog
+                facility={facility}
+                contracts={contracts.map((c) => ({
+                  id: c.id,
+                  payer_id: c.payer_id,
+                  payer_name: c.payer_name,
+                  in_network: c.in_network,
+                }))}
+                organizationId={facility.organization_id}
+                onSaved={loadFacility}
+              />
+            )}
           </>
         )}
       </div>
@@ -232,8 +234,6 @@ export default function FacilityDetail() {
         contracts={sheetContracts}
         mode="internal"
         canShare={canShare}
-        canEditPhotos={isMine || isSuperAdmin}
-        onPhotosUpdated={loadFacility}
         coverImageUrl={org?.cover_image_url ?? null}
         contractsHeaderExtra={
           <div className="flex items-center gap-2 flex-wrap">
@@ -243,24 +243,9 @@ export default function FacilityDetail() {
               size="sm"
             />
             {(isMine || isSuperAdmin) && (
-              <>
-                <Button asChild size="sm" variant="ghost" className="h-8 px-2 text-xs">
-                  <Link to={`/app/facilities/${facility.id}/verify`}>Verify now</Link>
-                </Button>
-                <EditInsuranceContractsDialog
-                  facilityId={facility.id}
-                  organizationId={facility.organization_id}
-                  facilityName={facility.name}
-                  contracts={contracts.map((c) => ({
-                    id: c.id,
-                    payer_id: c.payer_id,
-                    payer_name: c.payer_name,
-                    in_network: c.in_network,
-                    pending: c.payer_status === "pending",
-                  }))}
-                  onSaved={loadFacility}
-                />
-              </>
+              <Button asChild size="sm" variant="ghost" className="h-8 px-2 text-xs">
+                <Link to={`/app/facilities/${facility.id}/verify`}>Verify now</Link>
+              </Button>
             )}
           </div>
         }
