@@ -15,6 +15,7 @@ export interface OrgSheetData {
   name: string;
   slug: string | null;
   logo_url: string | null;
+  favicon_url?: string | null;
   footer_image_url?: string | null;
   social_facebook_url?: string | null;
   social_instagram_url?: string | null;

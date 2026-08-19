@@ -131,22 +131,24 @@ export function applySocialMeta({
 }
 
 /** Absolute URL for the generated 1200×630 org share card. */
-export function orgOgImageUrl(slug: string): string {
-  return `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}`;
+export function orgOgImageUrl(slug: string, usesFavicon = false): string {
+  const extra = usesFavicon ? "&i=1" : "";
+  return `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}${extra}`;
 }
 
 /**
- * Prefer a generated 1200×630 card when the org has a logo; otherwise the
- * CenterLinked default social image. Never returns a relative path.
+ * Prefer a generated 1200×630 card when the org has a favicon or logo;
+ * otherwise the CenterLinked default social image. Never returns a relative path.
  */
 export function orgShareImage(org: {
   slug?: string | null;
   logo_url?: string | null;
+  favicon_url?: string | null;
   cover_image_url?: string | null;
 }): string {
-  if (org.slug && org.logo_url?.trim()) {
-    return orgOgImageUrl(org.slug);
-  }
+  if (!org.slug) return DEFAULT_OG_IMAGE;
+  if (org.favicon_url?.trim()) return orgOgImageUrl(org.slug, true);
+  if (org.logo_url?.trim()) return orgOgImageUrl(org.slug);
   return DEFAULT_OG_IMAGE;
 }
 

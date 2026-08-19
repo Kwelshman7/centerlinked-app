@@ -36,14 +36,14 @@ function escapeXml(value) {
     .replace(/>/g, "&gt;");
 }
 
-async function supabaseOrgBySlug(slug) {
+async function supabaseOrgQuery(slug, select) {
   const base = process.env.VITE_SUPABASE_URL;
   const key = process.env.VITE_SUPABASE_ANON_KEY;
-  if (!base || !key || !slug) return null;
+  if (!base || !key || !slug) return { ok: false, row: null };
 
   try {
     const res = await fetch(
-      `${base}/rest/v1/organizations?slug=eq.${encodeURIComponent(slug)}&select=name,slug,logo_url&limit=1`,
+      `${base}/rest/v1/organizations?slug=eq.${encodeURIComponent(slug)}&select=${select}&limit=1`,
       {
         headers: {
           apikey: key,
@@ -52,15 +52,25 @@ async function supabaseOrgBySlug(slug) {
       },
     );
     if (!res.ok) {
-      console.error("[og-image] org query failed", res.status);
-      return null;
+      return { ok: false, row: null, status: res.status };
     }
     const rows = await res.json();
-    return rows[0] ?? null;
+    return { ok: true, row: rows[0] ?? null };
   } catch (err) {
     console.error("[og-image] org query error", err?.message || err);
-    return null;
+    return { ok: false, row: null };
   }
+}
+
+async function supabaseOrgBySlug(slug) {
+  const withFavicon = await supabaseOrgQuery(slug, "name,slug,logo_url,favicon_url");
+  if (withFavicon.ok) return withFavicon.row;
+
+  const fallback = await supabaseOrgQuery(slug, "name,slug,logo_url");
+  if (!fallback.ok) {
+    console.error("[og-image] org query failed", fallback.status);
+  }
+  return fallback.row;
 }
 
 function isBlockedIpLiteral(hostname) {
@@ -163,8 +173,8 @@ function backgroundSvg(name) {
 }
 
 /**
- * Build a 1200×630 PNG with the org logo (contain) and name.
- * Returns null when the org/logo cannot be used — caller should fall back.
+ * Build a 1200×630 PNG with the org favicon (preferred) or logo, plus name.
+ * Returns null when the org/mark cannot be used — caller should fall back.
  */
 export async function renderOrgOgImage(slug) {
   if (!slug || typeof slug !== "string") return null;
@@ -172,10 +182,10 @@ export async function renderOrgOgImage(slug) {
   const org = await supabaseOrgBySlug(slug.trim());
   if (!org?.name) return null;
 
-  const logoUrl = resolvePublicLogoUrl(org.logo_url);
-  if (!logoUrl) return null;
-
-  const logoBuf = await fetchLogoBuffer(logoUrl);
+  let logoBuf = await fetchLogoBuffer(resolvePublicLogoUrl(org.favicon_url));
+  if (!logoBuf) {
+    logoBuf = await fetchLogoBuffer(resolvePublicLogoUrl(org.logo_url));
+  }
   if (!logoBuf) return null;
 
   try {

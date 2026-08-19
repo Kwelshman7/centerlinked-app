@@ -86,12 +86,16 @@ export function siteOrigin() {
   return "https://www.centerlinked.com";
 }
 
-export function orgOgImagePath(slug) {
-  return `/api/og-image?slug=${encodeURIComponent(slug)}`;
+export function orgOgImagePath(slug, opts = {}) {
+  const params = new URLSearchParams({ slug: String(slug) });
+  // Cache-bust when the card is built from a favicon so CDN entries for the
+  // older logo-only image are not reused.
+  if (opts.icon) params.set("i", "1");
+  return `/api/og-image?${params.toString()}`;
 }
 
-export function orgOgImageUrl(slug) {
-  return `${siteOrigin()}${orgOgImagePath(slug)}`;
+export function orgOgImageUrl(slug, opts = {}) {
+  return `${siteOrigin()}${orgOgImagePath(slug, opts)}`;
 }
 
 /**
@@ -140,7 +144,11 @@ export function resolvePublicLogoUrl(logoUrl) {
 
 /** Absolute share-image URL for an org, or the CenterLinked default. */
 export function resolveOrgShareImageUrl(org) {
-  if (org?.slug && resolvePublicLogoUrl(org.logo_url)) {
+  if (!org?.slug) return DEFAULT_OG_IMAGE;
+  if (resolvePublicLogoUrl(org.favicon_url)) {
+    return orgOgImageUrl(org.slug, { icon: true });
+  }
+  if (resolvePublicLogoUrl(org.logo_url)) {
     return orgOgImageUrl(org.slug);
   }
   return DEFAULT_OG_IMAGE;
