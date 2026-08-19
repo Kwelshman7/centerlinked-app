@@ -7,13 +7,20 @@ import { ImageUploader } from "@/components/app/ImageUploader";
 import { CheckCircle2, Trash2, Plus, Sparkles, X, EyeOff } from "lucide-react";
 import {
   FacilityDraft,
-  HIGHLIGHT_OPTIONS,
   LEVELS_OF_CARE,
-  POPULATION_OPTIONS,
-  SPECIALIZATION_OPTIONS,
   ACCREDITATION_OPTIONS,
 } from "./facility-types";
 import { accreditationKey, uniqueAccreditations } from "@/lib/accreditations";
+import {
+  extraProgramTags,
+  categorizeFacilityTags,
+  hasProgramTag,
+  persistProgramTags,
+  PROGRAM_OPTIONS,
+  PROGRAM_SECTIONS,
+  toggleProgramTag,
+  type ProgramTagKind,
+} from "@/lib/facility-program-tags";
 import { PayerCombobox } from "./PayerCombobox";
 import { FacilityBdRepFields } from "./FacilityBdRepFields";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,8 +40,10 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
   const set = <K extends keyof FacilityDraft>(k: K, v: FacilityDraft[K]) =>
     onChange({ ...value, [k]: v });
 
+  const programTags = categorizeFacilityTags(value);
+
   const toggleArr = (
-    key: "levels_of_care" | "highlights" | "population_served" | "specializations" | "accreditations",
+    key: "levels_of_care" | "accreditations",
     item: string,
   ) => {
     const cur = value[key];
@@ -48,14 +57,32 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
     set(key, cur.includes(item) ? cur.filter((x) => x !== item) : [...cur, item]);
   };
 
+  const setProgramKind = (kind: ProgramTagKind, items: string[]) => {
+    onChange({
+      ...value,
+      ...persistProgramTags({ ...programTags, [kind]: items }),
+    });
+  };
+
+  const toggleProgramKind = (kind: ProgramTagKind, item: string) => {
+    setProgramKind(kind, toggleProgramTag(programTags[kind], item));
+  };
+
   const addCustomHighlight = () => {
     const v = value.custom_highlight.trim();
     if (!v) return;
-    if (!value.highlights.includes(v)) {
-      onChange({ ...value, highlights: [...value.highlights, v], custom_highlight: "" });
-    } else {
+    if (hasProgramTag(programTags.amenities, v)) {
       set("custom_highlight", "");
+      return;
     }
+    onChange({
+      ...value,
+      ...persistProgramTags({
+        ...programTags,
+        amenities: [...programTags.amenities, v],
+      }),
+      custom_highlight: "",
+    });
   };
 
   const addContract = (payer: { id: string | null; name: string; pending?: boolean }) => {
@@ -177,95 +204,67 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
           </div>
         </div>
 
-        {/* Population Served */}
-        <div className="space-y-2">
-          <Label>Population served</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {POPULATION_OPTIONS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => toggleArr("population_served", p)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
-                  value.population_served.includes(p)
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border hover:border-primary/40 hover:bg-accent"
-                }`}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {PROGRAM_SECTIONS.map(({ kind, title }) => {
+            const options = PROGRAM_OPTIONS[kind];
+            const selected = programTags[kind];
+            const extras = extraProgramTags(selected, options);
+            return (
+              <div
+                key={kind}
+                className="rounded-xl border border-border/70 bg-muted/20 p-3.5 space-y-2.5"
               >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Type of Therapy */}
-        <div className="space-y-2">
-          <Label>Type of therapy</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {SPECIALIZATION_OPTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => toggleArr("specializations", s)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
-                  value.specializations.includes(s)
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border hover:border-primary/40 hover:bg-accent"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Amenities */}
-        <div className="space-y-2">
-          <Label>Amenities</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {HIGHLIGHT_OPTIONS.map((h) => (
-              <button
-                key={h}
-                type="button"
-                onClick={() => toggleArr("highlights", h)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
-                  value.highlights.includes(h)
-                    ? "bg-accent text-accent-foreground border-primary/40"
-                    : "bg-background border-border hover:border-primary/40"
-                }`}
-              >
-                {h}
-              </button>
-            ))}
-            {value.highlights
-              .filter((h) => !HIGHLIGHT_OPTIONS.includes(h as typeof HIGHLIGHT_OPTIONS[number]))
-              .map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => toggleArr("highlights", h)}
-                  className="px-2.5 py-1 rounded-full text-xs font-medium border bg-accent text-accent-foreground border-primary/40"
-                >
-                  {h} ×
-                </button>
-              ))}
-          </div>
-          <div className="flex gap-2 pt-1">
-            <Input
-              placeholder="Add a custom amenity"
-              value={value.custom_highlight}
-              onChange={(e) => set("custom_highlight", e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addCustomHighlight();
-                }
-              }}
-            />
-            <Button type="button" variant="outline" onClick={addCustomHighlight}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+                <Label className="text-sm font-bold tracking-tight">{title}</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {options.map((opt) => {
+                    const on = hasProgramTag(selected, opt);
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => toggleProgramKind(kind, opt)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
+                          on
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-border hover:border-primary/40 hover:bg-accent"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                  {extras.map((extra) => (
+                    <button
+                      key={extra}
+                      type="button"
+                      onClick={() => toggleProgramKind(kind, extra)}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium border bg-primary text-primary-foreground border-primary"
+                    >
+                      {extra} ×
+                    </button>
+                  ))}
+                </div>
+                {kind === "amenities" && (
+                  <div className="flex gap-2 pt-0.5">
+                    <Input
+                      placeholder="Add a custom amenity"
+                      value={value.custom_highlight}
+                      onChange={(e) => set("custom_highlight", e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomHighlight();
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="outline" onClick={addCustomHighlight}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Accreditations */}

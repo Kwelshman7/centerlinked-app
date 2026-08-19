@@ -4,6 +4,7 @@ import type { FacilitySheetData, SheetContract, SheetOrg } from "@/components/pu
 import { contrastingTextColor } from "@/lib/color-contrast";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { uniqueAccreditations } from "@/lib/accreditations";
+import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
 import { DEFAULT_ACCENT, parseAccentColor, parseBrandColor } from "@/lib/public-urls";
 
 /** Letter at 96dpi — captures cleanly into an 8.5×11 PDF. */
@@ -152,15 +153,11 @@ export function FacilityOnePager({
   const payers = inNetwork.slice(0, 24);
   const payerOverflow = Math.max(0, inNetwork.length - payers.length);
 
-  const features = [
-    ...(facility.quick_highlights ?? []),
-    ...(facility.highlights ?? []),
-    ...(facility.specializations ?? []),
-  ]
-    .filter((item, i, arr) => item?.trim() && arr.indexOf(item) === i)
-    .slice(0, 8);
-
-  const population = (facility.population_served ?? []).filter(Boolean).slice(0, 6);
+  const programTags = categorizeFacilityTags(facility);
+  const programSections = PROGRAM_SECTIONS.map(({ kind, title }) => ({
+    title,
+    items: programTags[kind].slice(0, 8),
+  })).filter((s) => s.items.length > 0);
   const accreditations = uniqueAccreditations(facility.accreditations).slice(0, 5);
 
   const facilityHasOwnBd = !!(
@@ -623,21 +620,51 @@ export function FacilityOnePager({
           )}
         </section>
 
-        {/* Features / population / accreditations */}
-        {(features.length > 0 || population.length > 0 || accreditations.length > 0) && (
+        {(programSections.length > 0 || accreditations.length > 0) && (
           <section
             style={{
               flex: 1,
               minHeight: 0,
               display: "grid",
-              gridTemplateColumns:
-                features.length > 0 && (population.length > 0 || accreditations.length > 0)
-                  ? "1.15fr 1fr"
-                  : "1fr",
+              gridTemplateColumns: programSections.length > 0 && accreditations.length > 0 ? "1.35fr 0.85fr" : "1fr",
               gap: 12,
             }}
           >
-            {features.length > 0 ? (
+            {programSections.length > 0 ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: programSections.length > 1 ? "1fr 1fr" : "1fr",
+                  gap: 10,
+                  minWidth: 0,
+                  alignContent: "start",
+                }}
+              >
+                {programSections.map((section) => (
+                  <div
+                    key={section.title}
+                    style={{
+                      borderRadius: 12,
+                      border: `1px solid ${rgba(brand, 0.14)}`,
+                      background: "#ffffff",
+                      padding: "12px 14px",
+                      minWidth: 0,
+                    }}
+                  >
+                    <SectionLabel color={brand}>{section.title}</SectionLabel>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
+                      {section.items.map((item) => (
+                        <Chip key={item} brand={brand}>
+                          {item}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {accreditations.length > 0 ? (
               <div
                 style={{
                   borderRadius: 12,
@@ -645,9 +672,10 @@ export function FacilityOnePager({
                   background: "#ffffff",
                   padding: "12px 14px",
                   minWidth: 0,
+                  alignSelf: "start",
                 }}
               >
-                <SectionLabel color={brand}>Program highlights</SectionLabel>
+                <SectionLabel color={brand}>Accreditations</SectionLabel>
                 <ul
                   style={{
                     margin: "8px 0 0",
@@ -658,108 +686,25 @@ export function FacilityOnePager({
                     gap: 5,
                   }}
                 >
-                  {features.map((item) => (
+                  {accreditations.map((item) => (
                     <li
                       key={item}
                       style={{
                         display: "flex",
-                        alignItems: "flex-start",
-                        gap: 7,
+                        alignItems: "center",
+                        gap: 6,
                         fontSize: 11.5,
-                        lineHeight: 1.35,
+                        fontWeight: 600,
                         color: "#1e293b",
-                        fontWeight: 500,
                       }}
                     >
-                      <span
-                        aria-hidden
-                        style={{
-                          width: 5,
-                          height: 5,
-                          marginTop: 5,
-                          borderRadius: 999,
-                          background: brand,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span
-                        style={{
-                          overflow: "hidden",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {item}
-                      </span>
+                      <Award style={{ width: 13, height: 13, color: brand, flexShrink: 0 }} aria-hidden />
+                      {item}
                     </li>
                   ))}
                 </ul>
               </div>
             ) : null}
-
-            {(population.length > 0 || accreditations.length > 0) && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
-                {population.length > 0 ? (
-                  <div
-                    style={{
-                      borderRadius: 12,
-                      border: `1px solid ${rgba(brand, 0.14)}`,
-                      background: "#ffffff",
-                      padding: "12px 14px",
-                    }}
-                  >
-                    <SectionLabel color={brand}>Population served</SectionLabel>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
-                      {population.map((p) => (
-                        <Chip key={p} brand={brand}>
-                          {p}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                {accreditations.length > 0 ? (
-                  <div
-                    style={{
-                      borderRadius: 12,
-                      border: `1px solid ${rgba(brand, 0.14)}`,
-                      background: "#ffffff",
-                      padding: "12px 14px",
-                    }}
-                  >
-                    <SectionLabel color={brand}>Accreditations</SectionLabel>
-                    <ul
-                      style={{
-                        margin: "8px 0 0",
-                        padding: 0,
-                        listStyle: "none",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 5,
-                      }}
-                    >
-                      {accreditations.map((item) => (
-                        <li
-                          key={item}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            fontSize: 11.5,
-                            fontWeight: 600,
-                            color: "#1e293b",
-                          }}
-                        >
-                          <Award style={{ width: 13, height: 13, color: brand, flexShrink: 0 }} aria-hidden />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            )}
           </section>
         )}
       </div>

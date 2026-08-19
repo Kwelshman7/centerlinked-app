@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,6 @@ import {
   Award,
   Check,
   Pencil,
-  Sparkles,
   ImageIcon,
   X,
   ChevronLeft,
@@ -26,6 +25,7 @@ import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { useNearbyCities } from "@/hooks/useNearbyCities";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { uniqueAccreditations } from "@/lib/accreditations";
+import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
 
 /** Fixed hero gallery dimensions — identical for every facility/org. */
 const HERO_IMAGE_HEIGHT = "h-[280px]";
@@ -122,14 +122,54 @@ function fmtDate(d: string | null | undefined) {
 function SectionHeading({
   title,
   headerExtra,
+  brand,
 }: {
   title: string;
-  headerExtra?: React.ReactNode;
+  headerExtra?: ReactNode;
+  brand?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 mb-3">
-      <h2 className="font-heading text-sm sm:text-[15px] font-bold tracking-tight">{title}</h2>
+    <div className="flex items-center justify-between gap-3 mb-3.5">
+      <div className="flex items-center gap-2.5 min-w-0">
+        {brand ? (
+          <span className="h-5 w-[3px] rounded-full shrink-0" style={{ background: brand }} aria-hidden />
+        ) : null}
+        <h2 className="font-heading text-base sm:text-[17px] font-bold tracking-tight text-foreground">
+          {title}
+        </h2>
+      </div>
       {headerExtra ? <div className="print:hidden">{headerExtra}</div> : null}
+    </div>
+  );
+}
+
+function ProgramTagCard({
+  title,
+  items,
+  brand,
+}: {
+  title: string;
+  items: string[];
+  brand: string;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-border/70 bg-muted/25 p-3.5 sm:p-4 min-w-0">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="h-4 w-[3px] rounded-full shrink-0" style={{ background: brand }} aria-hidden />
+        <h3 className="font-heading text-[13px] sm:text-sm font-bold tracking-tight text-foreground">
+          {title}
+        </h3>
+      </div>
+      <ul className="flex flex-wrap gap-1.5">
+        {items.map((item) => (
+          <li key={item} className="min-w-0">
+            <span className="inline-flex max-w-full items-center rounded-full border border-border/80 bg-background px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-foreground leading-snug">
+              {item}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -159,6 +199,14 @@ export function FacilitySheetView({
     .join(" · ");
 
   const cityStateZip = [[facility.city, facility.state].filter(Boolean).join(", "), facility.zip].filter(Boolean).join(" ");
+  const street = facility.address_line1?.trim().replace(/\.+$/, "") || "";
+  const locatedLine = street && cityStateZip
+    ? `Located at ${street}, ${cityStateZip}.`
+    : street
+      ? `Located at ${street}.`
+      : cityStateZip
+        ? `Located in ${cityStateZip}.`
+        : null;
 
   const inNetworkPayers = contracts.filter((c) => c.in_network);
   const directionsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${facility.name} ${address}`)}`;
@@ -206,17 +254,13 @@ export function FacilitySheetView({
 
   const accreditations = uniqueAccreditations(facility.accreditations);
 
-  const programFeatures = [
-    ...(facility.quick_highlights ?? []),
-    ...(facility.highlights ?? []),
-    ...(facility.specializations ?? []),
-  ].filter((item, index, arr) => arr.indexOf(item) === index);
+  const programTags = categorizeFacilityTags(facility);
+  const hasProgramTags = PROGRAM_SECTIONS.some(({ kind }) => programTags[kind].length > 0);
 
   const hasProgramDetails =
     facility.description ||
     facility.tagline ||
-    programFeatures.length > 0 ||
-    facility.population_served?.length > 0;
+    hasProgramTags;
 
   const hasFactsStrip = (facility.levels_of_care?.length ?? 0) > 0 || contracts.length >= 0;
   const hasServiceArea = !!(address || cityStateZip);
@@ -364,7 +408,7 @@ export function FacilitySheetView({
               {hasFactsStrip && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5 grid gap-4 sm:grid-cols-2 sm:gap-x-10">
                   <div className="min-w-0">
-                    <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} />
+                    <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} brand={brand} />
                     {inNetworkPayers.length > 0 ? (
                       <div className="flex flex-wrap items-center gap-1.5">
                         {inNetworkPayers.map((c) => (
@@ -390,7 +434,7 @@ export function FacilitySheetView({
 
                   {facility.levels_of_care?.length > 0 && (
                     <div className="min-w-0">
-                      <SectionHeading title="Care Levels" />
+                      <SectionHeading title="Care Levels" brand={brand} />
                       <div className="flex flex-wrap gap-1.5">
                         {facility.levels_of_care.map((level) => (
                           <span
@@ -408,7 +452,7 @@ export function FacilitySheetView({
 
               {hasProgramDetails && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Program Details" />
+                  <SectionHeading title="Program Details" brand={brand} />
 
                   {(facility.tagline || facility.description) && (
                     <div className="mb-4 sm:mb-5">
@@ -423,33 +467,16 @@ export function FacilitySheetView({
                     </div>
                   )}
 
-                  {programFeatures.length > 0 && (
-                    <ul className="grid grid-cols-2 gap-x-4 sm:gap-x-10 gap-y-2.5 sm:gap-y-3 mb-4 sm:mb-5">
-                      {programFeatures.map((item) => (
-                        <li key={item} className="flex items-start gap-1.5 sm:gap-2 min-w-0">
-                          <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
-                          <span className="text-[11px] sm:text-sm text-foreground/85 leading-snug line-clamp-2">
-                            {item}
-                          </span>
-                        </li>
+                  {hasProgramTags && (
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {PROGRAM_SECTIONS.map(({ kind, title }) => (
+                        <ProgramTagCard
+                          key={kind}
+                          title={title}
+                          items={programTags[kind]}
+                          brand={brand}
+                        />
                       ))}
-                    </ul>
-                  )}
-
-                  {facility.population_served?.length > 0 && (
-                    <div className={programFeatures.length > 0 ? "pt-4 border-t border-border/50" : ""}>
-                      <p className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground mb-2.5">
-                        Treats
-                      </p>
-                      <ul className="grid grid-cols-2 gap-x-4 sm:gap-x-10 gap-y-2">
-                        {facility.population_served.map((item) => (
-                          <li key={item} className="min-w-0">
-                            <span className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-2 py-1 text-[11px] sm:text-xs font-medium text-foreground leading-snug line-clamp-2">
-                              {item}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   )}
                 </div>
@@ -457,7 +484,7 @@ export function FacilitySheetView({
 
               {hasServiceArea && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Service Area" />
+                  <SectionHeading title="Service Area" brand={brand} />
                   <div className="grid md:grid-cols-[160px_1fr] gap-4 print:grid-cols-1">
                     <a
                       href={directionsHref}
@@ -474,10 +501,9 @@ export function FacilitySheetView({
                       <div className="absolute inset-0 bg-transparent group-hover:bg-black/5 transition-colors" />
                     </a>
                     <div className="min-w-0">
-                      {cityStateZip && (
+                      {locatedLine && (
                         <p className="text-sm text-foreground/80 leading-relaxed mb-2.5 break-words">
-                          Located in {cityStateZip}.
-                          {facility.address_line1 ? ` ${facility.address_line1}.` : ""}
+                          {locatedLine}
                         </p>
                       )}
                       {nearbyCitiesLoading ? (

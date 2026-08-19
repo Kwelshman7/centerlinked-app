@@ -11,7 +11,7 @@ export const LEVELS_OF_CARE = [
   "Dual Diagnosis",
 ] as const;
 
-// Amenities — physical facility features & on-site offerings
+/** Physical facility features & on-site offerings. */
 export const HIGHLIGHT_OPTIONS = [
   "Private rooms",
   "Shared rooms",
@@ -32,6 +32,7 @@ export const HIGHLIGHT_OPTIONS = [
   "Smoking permitted",
 ] as const;
 
+/** Demographics / who the program is built for. */
 export const POPULATION_OPTIONS = [
   "Adults (18+)",
   "Young Adults",
@@ -44,8 +45,11 @@ export const POPULATION_OPTIONS = [
   "Men",
 ] as const;
 
-// Type of Therapy — clinical modalities & specializations
-export const SPECIALIZATION_OPTIONS = [
+/** Clinical modalities. */
+export const THERAPY_OPTIONS = [
+  "Individual Therapy",
+  "Group Therapy",
+  "Family Therapy",
   "EMDR",
   "CBT",
   "DBT",
@@ -55,18 +59,27 @@ export const SPECIALIZATION_OPTIONS = [
   "Equine Therapy",
   "Art Therapy",
   "Music Therapy",
-  "Family Therapy",
-  "Group Therapy",
-  "Individual Therapy",
   "MAT",
-  "Dual Diagnosis",
-  "Co-Occurring Disorders",
-  "PTSD",
+] as const;
+
+/** Clinical conditions / diagnoses the program treats. */
+export const CONDITION_OPTIONS = [
   "Anxiety",
   "Depression",
+  "PTSD",
+  "Trauma",
+  "Bipolar",
+  "OCD",
+  "BPD",
   "Eating Disorders",
+  "Substance Use",
   "Process Addictions",
+  "Dual Diagnosis",
+  "Co-Occurring Disorders",
 ] as const;
+
+/** @deprecated Prefer THERAPY_OPTIONS + CONDITION_OPTIONS. Kept for older admin forms. */
+export const SPECIALIZATION_OPTIONS = [...THERAPY_OPTIONS, ...CONDITION_OPTIONS] as const;
 
 // Accreditations & certifications
 export const ACCREDITATION_OPTIONS = [
