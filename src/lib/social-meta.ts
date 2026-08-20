@@ -5,8 +5,7 @@
 const SITE_URL = "https://www.centerlinked.com";
 
 /** Same default preview art as index.html / server/og-image.mjs. */
-export const DEFAULT_OG_IMAGE =
-  "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/170e9ec4-cd01-4bc9-83f3-f3d5bbee0de8";
+export const DEFAULT_OG_IMAGE = "https://www.centerlinked.com/og-image.png";
 
 const DEFAULT_FAVICON = "/favicon.png";
 

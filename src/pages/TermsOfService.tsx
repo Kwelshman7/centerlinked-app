@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
 import { applySocialMeta } from "@/lib/social-meta";
 
-const EFFECTIVE_DATE = "January 4, 2026";
+const EFFECTIVE_DATE = "August 20, 2026";
 
 export default function TermsOfService() {
   useEffect(() => {
     applySocialMeta({
       title: "Terms of Service · CenterLinked",
       description:
-        "Terms governing use of CenterLinked, the private professional network for behavioral-health referral teams.",
+        "Terms governing use of CenterLinked, a B2B referral platform for behavioral-health treatment organizations.",
       path: "/terms",
     });
   }, []);
@@ -119,8 +119,11 @@ export default function TermsOfService() {
       <section>
         <h2>8. Fees</h2>
         <p>
-          Some features may be offered free during early access. We may introduce paid plans in the future. If fees apply
-          to your account, we will provide notice and any additional terms before charging you.
+          Organization membership is $99 per month. An optional one-time $499 Done For You setup is available. Fees are
+          billed to the subscribing organization through Stripe, not to referral partners who only view a public profile.
+          During early access, organizations may continue to use the Service if membership is not yet active; we may
+          change that at any time. Paid checkouts are subject to Stripe’s terms. If we change prices, we will provide
+          notice before charging a new amount.
         </p>
       </section>
 

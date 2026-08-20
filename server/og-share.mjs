@@ -4,8 +4,7 @@ export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
 /** Same default preview art as index.html — used when an org has no usable logo. */
-export const DEFAULT_OG_IMAGE =
-  "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/170e9ec4-cd01-4bc9-83f3-f3d5bbee0de8";
+export const DEFAULT_OG_IMAGE = "https://www.centerlinked.com/og-image.png";
 
 const RESERVED_SLUGS = new Set([
   "login",
@@ -20,6 +19,7 @@ const RESERVED_SLUGS = new Set([
   "o",
   "assets",
   "favicon.png",
+  "og-image.png",
   "robots.txt",
   "sitemap.xml",
   "llms.txt",

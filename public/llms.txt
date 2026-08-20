@@ -1,16 +1,19 @@
 # CenterLinked
 
-> The professional network for addiction-treatment business development reps. Share program updates, levels of care, and insurance networks with verified referral partners.
+> One live organization referral link for behavioral-health and addiction-treatment BD teams. Not a patient directory.
 
-CenterLinked is a secure, verified-only platform for treatment-center BD professionals to connect with peers, post census and program updates, and find in-network referral partners across the country.
+CenterLinked is a B2B referral platform. Treatment organizations maintain a branded profile — facilities, levels of care, in-network insurance, and who to contact — and share one URL with professional referral partners.
+
+It is invite-oriented and work-email gated. It does not store PHI, provide medical advice, or list programs for consumers searching for treatment.
 
 ## Pages
 
-- [Home](/): Product overview, features, pricing, and FAQ.
-- [Login](/login): Sign in to your verified CenterLinked account.
-- [Signup](/signup): Apply for a verified CenterLinked account (work email required).
+- [Home](/): Product overview, pricing, and FAQ.
+- [Login](/login): Sign in with a work email.
+- [Signup](/signup): Create an account (work email required).
+- [Request access](/request-access): Ask to join if you do not yet have an invite.
+- [Privacy](/privacy) and [Terms](/terms).
 
-## Optional
+## Pricing
 
-- [Pricing](/#pricing): Plans for individuals and organizations.
-- [FAQ](/#faq): Common questions about verification, security, and team access.
+Organization membership is $99/month. Optional Done For You setup is $499 once, then the same $99/month membership.

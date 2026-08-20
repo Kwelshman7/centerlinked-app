@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
 import { applySocialMeta } from "@/lib/social-meta";
 
-const EFFECTIVE_DATE = "January 4, 2026";
+const EFFECTIVE_DATE = "August 20, 2026";
 
 export default function PrivacyPolicy() {
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
     <LegalPageLayout title="Privacy Policy" effectiveDate={EFFECTIVE_DATE}>
       <section>
         <p>
-          CenterLinked ("CenterLinked," "we," "us," or "our") operates a private professional network for
+          CenterLinked ("CenterLinked," "we," "us," or "our") operates a B2B referral platform for
           behavioral-health and addiction-treatment organizations and their referral partners. This Privacy Policy
           explains how we collect, use, share, and protect information when you visit{" "}
           <a href="https://www.centerlinked.com">www.centerlinked.com</a> or use our services.
@@ -50,8 +50,8 @@ export default function PrivacyPolicy() {
             related professional content.
           </li>
           <li>
-            <strong className="text-foreground">Access requests:</strong> information submitted through our early-access
-            or invite-request forms, including name, work email, organization, role, and optional notes.
+            <strong className="text-foreground">Access requests:</strong> information submitted through our
+            invite-request forms, including name, work email, organization, role, and optional notes.
           </li>
           <li>
             <strong className="text-foreground">Usage and technical data:</strong> IP address, browser type, device

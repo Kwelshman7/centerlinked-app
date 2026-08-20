@@ -18,5 +18,5 @@ export default async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/((?!api/|assets/|favicon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt).*)"],
+  matcher: ["/((?!api/|assets/|favicon\\.png|og-image\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt).*)"],
 };

@@ -406,9 +406,7 @@ export function FacilitySheetView({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] sm:text-xs uppercase tracking-wide font-semibold text-muted-foreground">
-                        Out-of-network
-                      </p>
+                      <p className="text-sm text-muted-foreground">None listed</p>
                     )}
                   </div>
 

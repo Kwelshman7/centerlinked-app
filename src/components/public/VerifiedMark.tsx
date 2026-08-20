@@ -5,9 +5,9 @@ function formatUpdatedDate(d: string | null | undefined) {
   if (!d) return null;
   try {
     return new Date(d).toLocaleDateString("en-US", {
-      month: "numeric",
+      month: "long",
       day: "numeric",
-      year: "2-digit",
+      year: "numeric",
     });
   } catch {
     return null;
