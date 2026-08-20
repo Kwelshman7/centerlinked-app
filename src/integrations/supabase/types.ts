@@ -171,6 +171,8 @@ export type Database = {
       revoke_org_invite: { Args: { _invite_id: string }; Returns: undefined }
       remove_org_member: { Args: { _member_user_id: string; _organization_id: string }; Returns: undefined }
       freeze_stale_facilities: { Args: Record<PropertyKey, never>; Returns: number }
+      get_public_org_sheet: { Args: { _slug: string }; Returns: Json }
+      get_public_program_sheet: { Args: { _slug: string; _org_slug?: string | null }; Returns: Json }
       get_networked_org_ids: { Args: Record<PropertyKey, never>; Returns: string[] }
       get_or_create_direct_conversation: { Args: { _other_user_id: string }; Returns: string }
       get_org_engagement_stats: { Args: { _org_id: string }; Returns: { call_clicks: number; call_clicks_30d: number; email_clicks: number; email_clicks_30d: number; page_views: number; page_views_30d: number; referral_clicks: number; referral_clicks_30d: number; share_clicks: number; share_clicks_30d: number; text_clicks: number; text_clicks_30d: number }[] }

@@ -44,13 +44,15 @@ export function AppLayout() {
         end: true,
       });
     }
-    items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
+    if (user && (isSuperAdmin || profile?.organization_id) && !needsSuperAdminSetup) {
+      items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
+    }
     if (canManageBilling) {
       items.push({ to: "/app/billing", label: "Billing", icon: CreditCard });
     }
     items.push({ to: "/app/settings", label: "Settings", icon: Settings });
     return items;
-  }, [isSuperAdmin, canManageBilling]);
+  }, [isSuperAdmin, canManageBilling, user, profile?.organization_id, needsSuperAdminSetup]);
 
   const mobilePrimary: NavItem[] = useMemo(() => {
     if (!needsSuperAdminSetup) return primary;

@@ -8,7 +8,9 @@
 --   org-favicon.sql                  -- organizations.favicon_url
 --
 -- 1. revoke-dangerous-grants.sql     -- CRITICAL: revoke run_sql from clients
--- 2. rls-tenant-hardening.sql        -- tighten organizations/profiles SELECT
+-- 2. rls-tenant-hardening.sql        -- tighten organizations/profiles SELECT;
+--                                    -- drop anon facility/contract catalog SELECT;
+--                                    -- public share RPCs (get_public_org_sheet / get_public_program_sheet)
 -- 3. save-facility-with-contracts.sql  -- includes update_organization_profile
 -- 4. stripe-webhook-events.sql
 -- 5. approved-personal-emails.sql

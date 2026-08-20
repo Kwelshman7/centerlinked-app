@@ -19,6 +19,7 @@ import {
 } from "@/components/public/FacilitySheetView";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
+import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 
 interface Facility {
   id: string;
@@ -74,7 +75,6 @@ export default function FacilityDetail() {
   const isMine = !!facility && profile?.organization_id === facility.organization_id;
   const canManage = isSuperAdmin || (isMine && isFacilityAdmin);
   const canSeePending = isMine || isSuperAdmin;
-  const canShare = isMine || isSuperAdmin;
 
   const loadFacility = async () => {
     if (!id) {
@@ -196,6 +196,17 @@ export default function FacilityDetail() {
                 onSaved={loadFacility}
               />
             )}
+            {facility.slug && (
+              <ShareSheetButton
+                slug={facility.slug}
+                orgSlug={org?.slug}
+                kind="facility"
+                variant="default"
+                size="sm"
+                label="Share Facility"
+                hideCopy
+              />
+            )}
           </>
         )}
       </div>
@@ -233,7 +244,6 @@ export default function FacilityDetail() {
         org={org}
         contracts={sheetContracts}
         mode="internal"
-        canShare={canShare}
         coverImageUrl={org?.cover_image_url ?? null}
         contractsHeaderExtra={
           <div className="flex items-center gap-2 flex-wrap">

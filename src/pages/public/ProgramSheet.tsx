@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { applySocialMeta, orgShareCardType, orgShareIcon, orgShareImage } from "@/lib/social-meta";
 import { Building2 } from "lucide-react";
@@ -14,6 +13,7 @@ import {
 } from "@/components/public/FacilitySheetView";
 import { OrgFooter } from "@/components/public/OrgFooter";
 import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
+import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import {
   programDisplayPath,
@@ -24,12 +24,8 @@ import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { sanitizePhone } from "@/lib/phone";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { exportFacilityOnePagerPdf } from "@/lib/export-facility-one-pager";
-import {
-  isMissingOptionalOrgColumn,
-  orgProgramSelect,
-  orgProgramSelectFallback,
-  orgSocialFromRow,
-} from "@/lib/org-public-select";
+import { orgSocialFromRow } from "@/lib/org-public-select";
+import { fetchPublicProgramSheet } from "@/lib/public-sheet-data";
 
 interface Facility extends FacilitySheetData {
   organization_id: string;
@@ -76,6 +72,7 @@ export default function ProgramSheet() {
 
   const isOwnOrg = !!facility && profile?.organization_id === facility.organization_id;
   const canManage = isSuperAdmin || (!!isOwnOrg && isFacilityAdmin);
+  const canShare = isOwnOrg || isSuperAdmin;
 
   const contracts = useMemo<SheetContract[]>(
     () =>
@@ -114,44 +111,14 @@ export default function ProgramSheet() {
 
   const loadAll = async () => {
     if (!facilitySlug) return;
-    const { data: f } = await supabase
-      .from("facilities")
-      .select(
-        "id,organization_id,name,slug,description,tagline,short_description,address_line1,city,state,zip,phone,website,capacity,highlights,quick_highlights,accreditations,image_urls,levels_of_care,population_served,specializations,treatment_focus,insurance_status,bd_contact_name,bd_contact_phone,bd_contact_email,verification_status,verification_frozen,hidden_from_org_page,created_at,updated_at,contracts_verified_at",
-      )
-      .eq("slug", facilitySlug)
-      .eq("verification_status", "approved")
-      .maybeSingle();
-
-    if (!f || (f as Facility).verification_frozen) {
+    const payload = await fetchPublicProgramSheet(facilitySlug);
+    if (!payload) {
       setNotFound(true);
       return;
     }
 
-    const fac = f as Facility;
-    const orgQuery = await supabase
-      .from("organizations")
-      .select(orgProgramSelect)
-      .eq("id", fac.organization_id)
-      .maybeSingle();
-
-    let o = orgQuery.data;
-    if (orgQuery.error && isMissingOptionalOrgColumn(orgQuery.error)) {
-      const fallback = await supabase
-        .from("organizations")
-        .select(orgProgramSelectFallback)
-        .eq("id", fac.organization_id)
-        .maybeSingle();
-      o = fallback.data;
-    }
-
-    const { data: c } = await supabase
-      .from("insurance_contracts")
-      .select("id,payer_id,payer_name,in_network")
-      .eq("facility_id", fac.id)
-      .order("payer_name");
-
-    const orgRow = (o as OrgRow | null) ?? null;
+    const fac = payload.facility;
+    const orgRow = payload.org;
 
     if (orgSlug && orgRow?.slug && orgRow.slug !== orgSlug) {
       navigate(`/o/${orgRow.slug}/p/${fac.slug}`, { replace: true });
@@ -160,7 +127,7 @@ export default function ProgramSheet() {
 
     setFacility(fac);
     setOrg(orgRow);
-    setFullContracts((c as FullContract[]) ?? []);
+    setFullContracts(payload.contracts);
 
     if (orgRow?.id) {
       trackOrgEvent(orgRow.id, "page_view");
@@ -185,7 +152,6 @@ export default function ProgramSheet() {
       imageHeight: 630,
     });
 
-    // Canonical branded URL when visiting legacy /p/:slug
     if (!orgSlug && orgRow?.slug && fac.slug && typeof window !== "undefined") {
       const branded = programPublicPath(fac.slug, orgRow.slug);
       if (window.location.pathname !== branded) {
@@ -221,14 +187,35 @@ export default function ProgramSheet() {
     return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
   }
 
+  const shareAction =
+    canShare && facility.slug ? (
+      <ShareSheetButton
+        slug={facility.slug}
+        orgSlug={org?.slug}
+        kind="facility"
+        variant="default"
+        size="sm"
+        label="Share Facility"
+        hideCopy
+        className="shadow-sm hover:opacity-90"
+        style={{ backgroundColor: brand, borderColor: brand }}
+      />
+    ) : null;
+
   return (
     <div className="min-h-screen bg-muted/30 overflow-x-hidden">
       {org ? (
-        <ProgramOrgHeader org={org} facilityName={facility.name} brand={brand} />
+        <ProgramOrgHeader
+          org={org}
+          facilityName={facility.name}
+          brand={brand}
+          trailing={shareAction}
+        />
       ) : (
         <header className="bg-slate-900 text-white border-b border-slate-800 print:hidden">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center">
-            <span className="font-heading font-bold">{facility.name}</span>
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
+            <span className="font-heading font-bold truncate">{facility.name}</span>
+            {shareAction}
           </div>
         </header>
       )}
@@ -239,7 +226,6 @@ export default function ProgramSheet() {
           org={org}
           contracts={contracts}
           mode="public"
-          canShare={isOwnOrg || isSuperAdmin}
           brandColor={brand}
           coverImageUrl={org?.cover_image_url ?? null}
           aboutHeaderExtra={

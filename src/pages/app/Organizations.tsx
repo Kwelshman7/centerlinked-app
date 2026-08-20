@@ -75,7 +75,29 @@ interface ContractRow {
 
 const ANY = "__any__";
 const PAGE_SIZE = 24;
+const FETCH_PAGE = 1000;
 type View = "network" | "all";
+
+async function fetchAllRows<T>(
+  run: (from: number, to: number) => PromiseLike<{
+    data: T[] | null;
+    count: number | null;
+    error: { message?: string } | null;
+  }>,
+): Promise<T[]> {
+  const { data, count, error } = await run(0, FETCH_PAGE - 1);
+  if (error) return [];
+  const first = data ?? [];
+  const total = count ?? first.length;
+  if (first.length >= total) return first;
+  const pageSize = Math.max(first.length, 1);
+  const out = [...first];
+  for (let from = first.length; from < total; from += pageSize) {
+    const next = await run(from, from + pageSize - 1);
+    out.push(...(next.data ?? []));
+  }
+  return out;
+}
 
 export default function Organizations() {
   const { isSuperAdmin } = useAuth();
@@ -101,20 +123,30 @@ export default function Organizations() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: facs }, { data: cons }] = await Promise.all([
-        supabase
-          .from("facilities")
-          .select("id,organization_id,name,slug,city,state,levels_of_care,verification_status,verification_frozen")
-          .eq("verification_status", "approved")
-          .eq("verification_frozen", false)
-          .order("name"),
-        supabase
-          .from("insurance_contracts")
-          .select("facility_id,payer_id,payer_name,in_network")
-          .eq("in_network", true),
+      const [facs, cons] = await Promise.all([
+        fetchAllRows<FacilityRow>((from, to) =>
+          supabase
+            .from("facilities")
+            .select(
+              "id,organization_id,name,slug,city,state,levels_of_care,verification_status,verification_frozen",
+              { count: "exact" },
+            )
+            .eq("verification_status", "approved")
+            .eq("verification_frozen", false)
+            .order("name")
+            .range(from, to),
+        ),
+        fetchAllRows<ContractRow>((from, to) =>
+          supabase
+            .from("insurance_contracts")
+            .select("facility_id,payer_id,payer_name,in_network", { count: "exact" })
+            .eq("in_network", true)
+            .order("facility_id")
+            .range(from, to),
+        ),
       ]);
-      setFacilities(((facs as FacilityRow[]) ?? []).filter((row) => isPartnerVisibleFacility(row)));
-      setContracts((cons as ContractRow[]) ?? []);
+      setFacilities(facs.filter((row) => isPartnerVisibleFacility(row)));
+      setContracts(cons);
     })();
   }, []);
 
@@ -142,14 +174,18 @@ export default function Organizations() {
     if (view !== "all" || allLoaded) return;
     (async () => {
       setAllLoading(true);
-      const { data } = await supabase
-        .from("organizations")
-        .select(
-          "id,name,slug,logo_url,hq_city,hq_state,description,verified,bd_contact_name,bd_contact_phone,bd_contact_email",
-        )
-        .order("verified", { ascending: false })
-        .order("name");
-      setAllOrgs((data as OrgRow[]) ?? []);
+      const data = await fetchAllRows<OrgRow>((from, to) =>
+        supabase
+          .from("organizations")
+          .select(
+            "id,name,slug,logo_url,hq_city,hq_state,description,verified,bd_contact_name,bd_contact_phone,bd_contact_email",
+            { count: "exact" },
+          )
+          .order("verified", { ascending: false })
+          .order("name")
+          .range(from, to),
+      );
+      setAllOrgs(data);
       setAllLoading(false);
       setAllLoaded(true);
     })();

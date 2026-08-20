@@ -50,7 +50,8 @@ export function OrgResultCard({
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const orgHref = o.org_slug ? `/o/${o.org_slug}` : "#";
-  const shown = o.facilities.slice(0, facilityLimit);
+  const shown =
+    collapsibleFacilities && expanded ? o.facilities : o.facilities.slice(0, facilityLimit);
   const overflow = Math.max(0, o.facilities.length - shown.length);
   const showFacilities = !collapsibleFacilities || expanded;
   const matchLabel = `${o.facilities.length} ${o.facilities.length === 1 ? "match" : "matches"}`;
@@ -158,7 +159,7 @@ export function OrgResultCard({
                 </li>
               );
             })}
-            {overflow > 0 && (
+            {overflow > 0 && !expanded && (
               <li className="px-2 sm:px-2.5 py-1.5 text-[10px] text-muted-foreground bg-muted/40">
                 <Link to={orgHref} className="hover:text-foreground transition-colors">
                   +{overflow} more {overflow === 1 ? "facility" : "facilities"}

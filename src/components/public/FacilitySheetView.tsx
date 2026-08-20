@@ -16,7 +16,6 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
-import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 import { EditPhotosDialog } from "@/components/public/FacilityPhotoGallery";
 import { MobileContactBar, mobileContactBarPadding } from "@/components/public/MobileContactBar";
 import { OrgHeroContactCard } from "@/components/public/OrgHeroContactCard";
@@ -95,7 +94,6 @@ interface Props {
   org: SheetOrg | null;
   contracts: SheetContract[];
   mode: "public" | "internal";
-  canShare: boolean;
   updatedByName?: string | null;
   contractsHeaderExtra?: React.ReactNode;
   aboutHeaderExtra?: React.ReactNode;
@@ -180,7 +178,6 @@ export function FacilitySheetView({
   org,
   contracts,
   mode,
-  canShare,
   updatedByName,
   contractsHeaderExtra,
   aboutHeaderExtra,
@@ -229,20 +226,6 @@ export function FacilitySheetView({
       ? "Organization Business Development Contact"
       : "Business Development Representative";
 
-  const shareNode =
-    canShare && facility.slug ? (
-      <ShareSheetButton
-        slug={facility.slug}
-        orgSlug={org?.slug}
-        kind="facility"
-        variant="default"
-        size="default"
-        label="Share Facility"
-        hideCopy
-        className="shadow-sm hover:opacity-90"
-        style={{ backgroundColor: brand, borderColor: brand }}
-      />
-    ) : null;
   /** Mobile sticky bar matches org pages — single Refer a Patient contact sheet. */
   const showMobileActionBar = hasContact;
 
@@ -333,14 +316,11 @@ export function FacilitySheetView({
               </div>
             )}
 
-            <div className="mt-auto pt-5 flex items-center justify-between gap-3 print:pt-3">
-              {lastUpdated ? (
-                <p className="text-xs text-muted-foreground">Updated {lastUpdated}</p>
-              ) : (
-                <span />
-              )}
-              {shareNode ? <div className="hidden lg:block print:hidden">{shareNode}</div> : null}
-            </div>
+            {lastUpdated ? (
+              <p className="mt-auto pt-5 text-xs text-muted-foreground print:pt-3">
+                Updated {lastUpdated}
+              </p>
+            ) : null}
           </div>
         </div>
 

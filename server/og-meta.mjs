@@ -82,6 +82,32 @@ const ORG_SHARE_SELECT =
 const ORG_SHARE_SELECT_FALLBACK =
   "name,tagline,description,logo_url,cover_image_url,hq_city,hq_state,slug";
 
+async function supabaseRpc(fn, args) {
+  const base = process.env.VITE_SUPABASE_URL;
+  const key = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!base || !key) return null;
+
+  try {
+    const res = await fetch(`${base}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(args),
+    });
+    if (!res.ok) {
+      console.error("[og-meta] rpc failed", fn, res.status);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("[og-meta] rpc error", fn, err?.message || err);
+    return null;
+  }
+}
+
 async function supabaseOrg(filter) {
   const row = await supabaseRow(
     "organizations",
@@ -105,16 +131,10 @@ export async function resolvePublicMeta(pathname) {
   const orgProgram = path.match(/^\/o\/([^/]+)\/p\/([^/]+)$/);
   if (orgProgram) {
     const [, orgSlug, programSlug] = orgProgram;
-    const facility = await supabaseRow(
-      "facilities",
-      `slug=eq.${encodeURIComponent(programSlug)}&verification_status=eq.approved&select=name,tagline,description,image_urls,organization_id&limit=1`,
-    );
-    if (!facility) return null;
-
-    const org = await supabaseOrg(
-      `id=eq.${encodeURIComponent(facility.organization_id)}`,
-    );
-    if (!org || org.slug !== orgSlug) return null;
+    const payload = await supabaseRpc("get_public_program_sheet", { _slug: programSlug });
+    const facility = payload?.facility;
+    const org = payload?.org;
+    if (!facility || !org || org.slug !== orgSlug) return null;
 
     return buildMeta({
       title: `${facility.name} — ${org.name}`,
@@ -146,29 +166,25 @@ export async function resolvePublicMeta(pathname) {
 
   const legacyProgram = path.match(/^\/p\/([^/]+)$/);
   if (legacyProgram) {
-    const facility = await supabaseRow(
-      "facilities",
-      `slug=eq.${encodeURIComponent(legacyProgram[1])}&verification_status=eq.approved&select=name,tagline,description,image_urls,organization_id&limit=1`,
-    );
+    const payload = await supabaseRpc("get_public_program_sheet", {
+      _slug: legacyProgram[1],
+    });
+    const facility = payload?.facility;
+    const org = payload?.org;
     if (!facility) return null;
 
-    const org = await supabaseOrg(
-      `id=eq.${encodeURIComponent(facility.organization_id)}`,
-    );
-    if (!org) return null;
-
-    const canonicalPath = org.slug
+    const canonicalPath = org?.slug
       ? `/o/${org.slug}/p/${legacyProgram[1]}`
       : `/p/${legacyProgram[1]}`;
 
     return buildMeta({
-      title: `${facility.name} — ${org.name}`,
-      description: facility.description || facility.tagline || orgDescription(org),
+      title: `${facility.name} — ${org?.name ?? "Program"}`,
+      description: facility.description || facility.tagline || (org ? orgDescription(org) : ""),
       path: canonicalPath,
-      image: resolveOrgShareImageUrl(org),
+      image: org ? resolveOrgShareImageUrl(org) : undefined,
       icon: resolveShareIcon(org),
-      siteName: org.name,
-      imageAlt: `${org.name} logo`,
+      siteName: org?.name,
+      imageAlt: org?.name ? `${org.name} logo` : undefined,
     });
   }
 
