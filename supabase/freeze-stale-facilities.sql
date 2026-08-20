@@ -7,15 +7,10 @@
 -- Run: paste into Supabase SQL Editor, or:
 --   npx supabase db query --linked -f supabase/freeze-stale-facilities.sql
 --
--- Schedule (pick one; do not expose an anonymous HTTP freeze endpoint):
---   1) Supabase Dashboard → Database → Extensions → pg_cron, then:
---        select cron.schedule(
---          'freeze-stale-facilities-daily',
---          '15 8 * * *',
---          $$select public.freeze_stale_facilities()$$
---        );
---   2) External cron (GitHub Actions / Render) using the service-role key
---      against POST /rest/v1/rpc/freeze_stale_facilities.
+-- Schedule (do not expose an anonymous HTTP freeze endpoint).
+-- pg_cron runs as the database owner, not anon. Idempotent re-apply is safe.
+-- UTC 08:15 daily. Alternative: GitHub Actions / Render with service-role
+-- POST /rest/v1/rpc/freeze_stale_facilities.
 --
 -- EXECUTE is service_role only. Anon was able to freeze the catalog (Phase 0).
 
@@ -45,6 +40,9 @@ $$;
 REVOKE ALL ON FUNCTION public.freeze_stale_facilities() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.freeze_stale_facilities() FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.freeze_stale_facilities() TO service_role;
+
+-- Live function used a different OUT column order; CREATE OR REPLACE cannot change it.
+DROP FUNCTION IF EXISTS public.list_facilities_due_for_verification(integer);
 
 CREATE OR REPLACE FUNCTION public.list_facilities_due_for_verification(_days integer DEFAULT 60)
 RETURNS TABLE (
@@ -81,6 +79,19 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.list_facilities_due_for_verification(integer) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.list_facilities_due_for_verification(integer) FROM anon;
+REVOKE ALL ON FUNCTION public.list_facilities_due_for_verification(integer) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.list_facilities_due_for_verification(integer) TO authenticated, service_role;
+
+-- Daily freeze. pg_cron is available on this project; the job runs as the
+-- database owner (not anon). Re-apply unschedules the same job name first.
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+SELECT cron.unschedule(jobid)
+FROM cron.job
+WHERE jobname = 'freeze-stale-facilities-daily';
+
+SELECT cron.schedule(
+  'freeze-stale-facilities-daily',
+  '15 8 * * *',
+  $$select public.freeze_stale_facilities()$$
+);

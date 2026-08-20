@@ -146,8 +146,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.stamp_facility_verified(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.stamp_facility_verified(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.stamp_facility_verified(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.stamp_facility_verified(uuid) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- organizations.verified

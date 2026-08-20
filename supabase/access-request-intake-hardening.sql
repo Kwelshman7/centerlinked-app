@@ -60,5 +60,5 @@ END;
 $$;
 
 REVOKE ALL ON TABLE public.access_request_rate_limits FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.consume_access_request_rate_limit(text, integer, integer) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.consume_access_request_rate_limit(text, integer, integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.consume_access_request_rate_limit(text, integer, integer) TO service_role;

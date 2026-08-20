@@ -1363,7 +1363,7 @@ These are **observed scaling/risk facts** about the current model (not recommend
 7. **Messaging** lacks archive/soft-delete/pagination indexes in repo SQL; realtime feed currently listens to `posts` inserts.
 8. **Billing idempotency** depends on `stripe_webhook_events` primary key + service-role updates; filesystem on Vercel is ephemeral — durable state is Postgres/Stripe/Storage only.
 9. **Storage URLs as text columns** (not FK to Storage objects): deleting Storage objects does not cascade to table fields; orphan URLs are possible.
-10. **Monthly verification** uses client `stamp_facility_verified` plus `freeze_stale_facilities` in `supabase/freeze-stale-facilities.sql` (must still be scheduled in Dashboard/pg_cron).
+10. **Monthly verification** uses client `stamp_facility_verified` plus `freeze_stale_facilities` in `supabase/freeze-stale-facilities.sql`. Live project schedules `freeze-stale-facilities-daily` via pg_cron (`15 8 * * *` UTC). Freeze EXECUTE remains service_role only.
 
 ---
 
@@ -1385,7 +1385,7 @@ These are **observed scaling/risk facts** about the current model (not recommend
 | `supabase/facility-*.sql` / `org-*.sql` | Column additive patches |
 | `supabase/column-write-locks.sql` | Privileged-column triggers + `stamp_facility_verified` |
 | `supabase/membership-rpc-only.sql` | Members/invites RPC-only + `remove_org_member` |
-| `supabase/freeze-stale-facilities.sql` | Freeze RPC (service_role) + due-list |
+| `supabase/freeze-stale-facilities.sql` | Freeze RPC (service_role) + due-list + pg_cron `freeze-stale-facilities-daily` |
 | `supabase/inspect-live-security.sql` | Read-only apply-state inspection |
 | `supabase/migrations/20260802120000_production_security_bundle.sql` | Ordered apply checklist (docs-only `SELECT 1`) |
 | `supabase/migrations/00000000000000_rls_policy_snapshot.json` | Captured policy inventory |

@@ -28,8 +28,8 @@ AS $$
   );
 $$;
 
-REVOKE ALL ON FUNCTION public.is_org_facility_admin(uuid, uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_org_facility_admin(uuid, uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.is_org_facility_admin(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_org_facility_admin(uuid, uuid) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- 2) claim_pending_org_invite: never grant facility_admin from a forged invite
@@ -112,8 +112,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.claim_pending_org_invite() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.claim_pending_org_invite() TO authenticated;
+REVOKE ALL ON FUNCTION public.claim_pending_org_invite() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.claim_pending_org_invite() TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- 3) create / revoke invite
@@ -199,8 +199,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.create_org_invite(uuid, text, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.create_org_invite(uuid, text, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.create_org_invite(uuid, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_org_invite(uuid, text, text) TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.revoke_org_invite(_invite_id uuid)
 RETURNS void
@@ -233,8 +233,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.revoke_org_invite(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.revoke_org_invite(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.revoke_org_invite(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.revoke_org_invite(uuid) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- 4) remove_org_member (called from Members.tsx; was missing from repo SQL)
@@ -300,8 +300,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.remove_org_member(uuid, uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.remove_org_member(uuid, uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.remove_org_member(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.remove_org_member(uuid, uuid) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- 5) RLS: SELECT only for members/invites (writes via SECURITY DEFINER)
