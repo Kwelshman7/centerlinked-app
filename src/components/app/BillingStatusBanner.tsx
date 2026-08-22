@@ -56,7 +56,7 @@ export function BillingStatusBanner() {
           <p className="text-xs text-muted-foreground mt-0.5">
             {pastDue
               ? "Update your payment method to keep billing current."
-              : "Organizations run on a $99/month membership. You can still use the app if membership is not active yet."}
+              : "Organizations run on a membership priced by how many facilities you list — from $99/month for one location. You can still use the app if membership is not active yet."}
           </p>
         </div>
       </div>

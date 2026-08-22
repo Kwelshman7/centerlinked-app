@@ -61,6 +61,8 @@ interface Props {
   description?: string | null;
   /** Most recent verification timestamp for the footer verified mark. */
   verifiedAt?: string | null;
+  showExportPdf?: boolean;
+  onExportPdf?: () => void | Promise<void>;
 }
 
 export function OrganizationSheetView({
@@ -80,6 +82,8 @@ export function OrganizationSheetView({
   facilityPayersById,
   description,
   verifiedAt,
+  showExportPdf = false,
+  onExportPdf,
 }: Props) {
   const [footerVisible, setFooterVisible] = useState(false);
   const stateFiltered = useMemo(() => {
@@ -223,6 +227,8 @@ export function OrganizationSheetView({
         social={orgSocialFromRow(org)}
         shareTitle={org.name}
         showReferSlot={hasContact}
+        showExportPdf={showExportPdf}
+        onExportPdf={onExportPdf}
       />
 
       {hasContact && heroContact && (

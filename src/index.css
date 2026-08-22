@@ -413,7 +413,16 @@
 .pt-safe { padding-top: env(safe-area-inset-top); }
 .bottom-safe { bottom: env(safe-area-inset-bottom); }
 .h-safe-tabbar { height: calc(64px + env(safe-area-inset-bottom)); }
-html, body, #root { overflow-x: hidden; max-width: 100%; }
+/* Only html: overflow-x:hidden computes overflow-y to auto and creates a
+   viewport scrollport. Applying it to body and #root as well nests extra
+   scroll containers and can clip long app pages (e.g. Manage organizations). */
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+body, #root {
+  max-width: 100%;
+}
 
 /* Landing dashboard demo — scale facility cards inside laptop/phone mocks */
 .demo-facility-grid .font-semibold.text-sm {

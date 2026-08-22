@@ -1,6 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { BillingInterval, MembershipTierId } from "@/lib/pricing";
 
+/** Legacy Checkout body still accepted by `/api/create-checkout-session`. */
 export type BillingPlan = "membership" | "done_for_you";
+
+export type CheckoutOptions = {
+  membershipTier: MembershipTierId;
+  interval?: BillingInterval;
+  doneForYou?: boolean;
+};
 
 export type OrgBilling = {
   subscription_status: string;
@@ -113,12 +121,28 @@ async function postBillingJson(path: string, body: Record<string, unknown> = {})
   return json.url;
 }
 
-/** Start Stripe Checkout for membership or Done For You. */
-export async function startCheckout(plan: BillingPlan) {
+function checkoutBody(plan: CheckoutOptions | BillingPlan) {
+  if (typeof plan === "string") {
+    return {
+      plan,
+      membershipTier: "profile" as MembershipTierId,
+      interval: "month" as BillingInterval,
+      doneForYou: plan === "done_for_you",
+    };
+  }
+  return {
+    membershipTier: plan.membershipTier,
+    interval: plan.interval || "month",
+    doneForYou: !!plan.doneForYou,
+  };
+}
+
+/** Start Stripe Checkout for a membership tier, optional annual billing, and optional DFY. */
+export async function startCheckout(plan: CheckoutOptions | BillingPlan) {
   const res = await fetch("/api/create-checkout-session", {
     method: "POST",
     headers: await authHeaders(),
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify(checkoutBody(plan)),
   });
   const json = (await res.json().catch(() => ({}))) as {
     error?: string;

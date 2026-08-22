@@ -795,8 +795,8 @@ From `.env.example` — **never commit real secrets**.
 | `SITE_URL` | Canonical site URL for emails/OG |
 | `STRIPE_SECRET_KEY` | Stripe API |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signature |
-| `STRIPE_PRICE_MEMBERSHIP` | $99/mo price id |
-| `STRIPE_PRICE_SETUP` | $499 Done For You price id |
+| `STRIPE_PRICE_MEMBERSHIP` | Profile $99/mo price id (Network/Group/annual use Checkout `price_data`) |
+| `STRIPE_PRICE_SETUP` | 1-facility Done For You $499 price id (larger DFY uses `price_data`) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Optional; Checkout is hosted redirect |
 | `OPENAI_API_KEY` | Optional facility-images pipeline quality checks |
 | `PORT` | Local Vite port (default 8080) |

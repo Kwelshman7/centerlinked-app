@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
 import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
@@ -10,6 +11,7 @@ import { trackOrgEvent } from "@/lib/track-org-event";
 import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { fetchPublicOrgSheet } from "@/lib/public-sheet-data";
+import { orgPublicUrl } from "@/lib/public-urls";
 
 function uniqueFacilityStates(facilities: ShowcaseFacility[]) {
   const states = new Set<string>();
@@ -133,6 +135,30 @@ export default function OrgSheet() {
     return latest ?? org?.updated_at ?? null;
   }, [facilities, org?.updated_at]);
 
+  const handleExportPdf = useCallback(async () => {
+    if (!org) return;
+    const toastId = toast.loading("Creating your referral overview…");
+    try {
+      const { exportOrgOnePagerPdf } = await import("@/lib/export-org-one-pager");
+      const profileUrl =
+        org.slug && typeof window !== "undefined"
+          ? orgPublicUrl(window.location.origin, org.slug)
+          : null;
+      await exportOrgOnePagerPdf({
+        org,
+        facilities,
+        facilityPayersById,
+        brandColor: brand,
+        profileUrl,
+      });
+      trackOrgEvent(org.id, "share_click");
+      toast.success("Referral overview PDF downloaded", { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error("Couldn't create the PDF. Please try again.", { id: toastId });
+    }
+  }, [org, facilities, facilityPayersById, brand]);
+
   if (notFound) {
     return (
       <div className="min-h-screen grid place-items-center text-muted-foreground p-8 text-center">
@@ -206,6 +232,8 @@ export default function OrgSheet() {
           facilityPayersById={facilityPayersById}
           description={briefDescription}
           verifiedAt={verifiedAt}
+          showExportPdf
+          onExportPdf={handleExportPdf}
         />
       </main>
     </div>

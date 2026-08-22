@@ -188,7 +188,7 @@ export function AppLayout() {
   const mainPad = collapsed ? "lg:pl-16" : "lg:pl-64";
 
   return (
-    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
+    <div className="min-h-dvh bg-muted/30">
       <aside className={cn("hidden lg:flex fixed inset-y-0 left-0 flex-col bg-card border-r border-border/50 z-30 transition-[width] duration-200", sidebarWidth)}>
         <SidebarContent />
       </aside>

@@ -28,8 +28,7 @@ export default function Dashboard() {
       const { data } = await supabase
         .from("organizations")
         .select("id,name,slug,logo_url")
-        .order("name")
-        .limit(8);
+        .order("name");
       setRecentOrgs((data as OrgPick[]) ?? []);
     })();
   }, [isSuperAdmin, orgId]);

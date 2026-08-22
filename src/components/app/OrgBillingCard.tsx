@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CreditCard } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import {
   formatSetupPackage,
   formatSubscriptionStatus,
   isSubscriptionActive,
-  openBillingPortal,
-  startCheckout,
   type OrgBilling,
 } from "@/lib/billing";
+import { PRICING_SUMMARY } from "@/lib/pricing";
 
 type Props = {
   billing: OrgBilling | null;
@@ -19,28 +17,8 @@ type Props = {
 };
 
 export function OrgBillingCard({ billing, canManage }: Props) {
-  const [loading, setLoading] = useState<"membership" | "done_for_you" | "portal" | null>(null);
-
   const status = billing?.subscription_status || "none";
   const active = isSubscriptionActive(status);
-  const hasCustomer = !!billing?.stripe_customer_id;
-  const hasDfy = billing?.setup_package === "done_for_you";
-
-  const run = async (kind: "membership" | "done_for_you" | "portal") => {
-    if (!canManage) {
-      toast.error("Only organization admins can manage billing.");
-      return;
-    }
-    setLoading(kind);
-    try {
-      const url =
-        kind === "portal" ? await openBillingPortal() : await startCheckout(kind);
-      window.location.href = url;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Billing request failed");
-      setLoading(null);
-    }
-  };
 
   const renewal =
     billing?.subscription_current_period_end &&
@@ -58,9 +36,7 @@ export function OrgBillingCard({ billing, canManage }: Props) {
             <CreditCard className="h-5 w-5 text-primary" />
             Billing
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Organization membership is $99/month. Optionally add a one-time $499 Done For You setup.
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">{PRICING_SUMMARY}</p>
         </div>
       </div>
 
@@ -73,7 +49,7 @@ export function OrgBillingCard({ billing, canManage }: Props) {
         </div>
         <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
-            Plan
+            Setup
           </p>
           <p className="font-heading font-semibold mt-0.5">
             {formatSetupPackage(billing?.setup_package)}
@@ -88,41 +64,9 @@ export function OrgBillingCard({ billing, canManage }: Props) {
       </div>
 
       {canManage ? (
-        <div className="flex flex-wrap gap-2">
-          {!active && (
-            <Button
-              type="button"
-              onClick={() => run("membership")}
-              disabled={!!loading}
-            >
-              {loading === "membership" && <Loader2 className="h-4 w-4 animate-spin" />}
-              Subscribe · $99/mo
-            </Button>
-          )}
-          {!hasDfy && (
-            <Button
-              type="button"
-              variant={active ? "default" : "outline"}
-              onClick={() => run("done_for_you")}
-              disabled={!!loading}
-            >
-              {loading === "done_for_you" && <Loader2 className="h-4 w-4 animate-spin" />}
-              {active ? "Add Done For You · $499" : "Done For You · $499 + $99/mo"}
-            </Button>
-          )}
-          {hasCustomer && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => run("portal")}
-              disabled={!!loading}
-            >
-              {loading === "portal" && <Loader2 className="h-4 w-4 animate-spin" />}
-              Manage billing
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
+        <Button asChild>
+          <Link to="/app/billing">{active ? "Manage billing" : "Choose a plan"}</Link>
+        </Button>
       ) : (
         <p className="text-sm text-muted-foreground">
           Ask an organization admin to manage billing for this account.

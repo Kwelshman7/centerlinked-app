@@ -1,10 +1,16 @@
 import { getStripe, stripePrices, appSiteUrl, randomSuffix } from "../client.mjs";
 import { assertOrgBillingAdmin, supabaseAdmin } from "../supabase.mjs";
 import { membershipCheckoutDecision } from "../membership-checkout.mjs";
+import {
+  checkoutLineItems,
+  checkoutMetadata,
+  parseCheckoutRequest,
+} from "../checkout-request.mjs";
 
 /**
  * Create a Stripe Checkout Session for org membership.
- * Body: { plan?: "membership" | "done_for_you" }
+ * Body: { membershipTier?, interval?, doneForYou? }
+ * Legacy: { plan?: "membership" | "done_for_you" }
  */
 export async function handleCreateCheckoutSession(body, accessToken) {
   const auth = await assertOrgBillingAdmin(accessToken);
@@ -18,17 +24,21 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
 
+  const request = parseCheckoutRequest(body);
+  if (!request.ok) {
+    return { status: request.status, json: { error: request.error } };
+  }
+
   const prices = stripePrices();
-  if (!prices.membership) {
+  if (request.membershipTier === "profile" && request.interval === "month" && !prices.membership) {
     console.error("[create-checkout-session] STRIPE_PRICE_MEMBERSHIP is not configured");
     return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
-
-  const plan = String(body?.plan || "membership").trim() === "done_for_you"
-    ? "done_for_you"
-    : "membership";
-
-  if (plan === "done_for_you" && !prices.setup) {
+  if (
+    request.doneForYou &&
+    request.membershipTier === "profile" &&
+    !prices.setup
+  ) {
     console.error("[create-checkout-session] STRIPE_PRICE_SETUP is not configured");
     return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
@@ -53,9 +63,11 @@ export async function handleCreateCheckoutSession(body, accessToken) {
 
   const decision = membershipCheckoutDecision(org);
   const alreadySubscribed = decision.alreadyActive;
+  const wantsMembership = !alreadySubscribed;
+  const wantsDfyOnly = alreadySubscribed && request.doneForYou;
 
   if (!decision.allowMembershipCheckout) {
-    if (plan === "membership" && !decision.usePortal) {
+    if (wantsMembership && !request.doneForYou && !decision.usePortal) {
       return {
         status: 400,
         json: { error: "Organization already has an active membership. Manage it in Billing." },
@@ -73,6 +85,12 @@ export async function handleCreateCheckoutSession(body, accessToken) {
   }
 
   if (alreadySubscribed) {
+    if (!request.doneForYou) {
+      return {
+        status: 400,
+        json: { error: "Organization already has an active membership. Manage it in Billing." },
+      };
+    }
     if (org.setup_package === "done_for_you") {
       return {
         status: 400,
@@ -119,13 +137,13 @@ export async function handleCreateCheckoutSession(body, accessToken) {
   }
 
   const site = appSiteUrl();
-  const integrationId =
-    plan === "done_for_you"
-      ? `centerlinked_dfy_${randomSuffix()}`
-      : `centerlinked_membership_${randomSuffix()}`;
+  const integrationId = request.doneForYou
+    ? `centerlinked_dfy_${randomSuffix()}`
+    : `centerlinked_membership_${randomSuffix()}`;
 
-  // Collapse double-submits within a 30s window for the same org/plan.
-  const checkoutIdempotencyKey = `cl_cs_${org.id}_${plan}_${Math.floor(Date.now() / 30_000)}`;
+  const checkoutIdempotencyKey = `cl_cs_${org.id}_${request.membershipTier}_${request.interval}_${
+    request.doneForYou ? "dfy" : "mem"
+  }_${alreadySubscribed ? "add" : "new"}_${Math.floor(Date.now() / 30_000)}`;
 
   async function createSession(sessionParams) {
     try {
@@ -143,24 +161,24 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     }
   }
 
+  const meta = {
+    ...checkoutMetadata(request, { setupOnly: wantsDfyOnly }),
+    organization_id: org.id,
+  };
+
   /** Already on membership — charge setup fee only as a one-time payment. */
-  if (alreadySubscribed && plan === "done_for_you") {
+  if (wantsDfyOnly) {
     const sessionParams = {
       mode: "payment",
       customer: customerId,
       client_reference_id: org.id,
-      line_items: [{ price: prices.setup, quantity: 1 }],
+      line_items: checkoutLineItems(prices, request, { setupOnly: true }),
       success_url: `${site}/app/billing?billing=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/app/billing`,
       allow_promotion_codes: true,
       // CenterLinked is merchant of record — Managed Payments (Stripe MoR) needs product tax codes.
       managed_payments: { enabled: false },
-      metadata: {
-        organization_id: org.id,
-        plan: "done_for_you",
-        setup_package: "done_for_you",
-        setup_only: "true",
-      },
+      metadata: meta,
       integration_identifier: integrationId,
     };
 
@@ -168,31 +186,23 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     return { status: 200, json: { url: session.url, id: session.id } };
   }
 
-  const line_items = [{ price: prices.membership, quantity: 1 }];
-  if (plan === "done_for_you") {
-    line_items.push({ price: prices.setup, quantity: 1 });
-  }
-
   const sessionParams = {
     mode: "subscription",
     customer: customerId,
     client_reference_id: org.id,
-    line_items,
+    line_items: checkoutLineItems(prices, request),
     success_url: `${site}/app/billing?billing=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${site}/app/billing`,
     allow_promotion_codes: true,
     // CenterLinked is merchant of record — Managed Payments (Stripe MoR) needs product tax codes.
     managed_payments: { enabled: false },
-    metadata: {
-      organization_id: org.id,
-      plan,
-      setup_package: plan === "done_for_you" ? "done_for_you" : "self_serve",
-    },
+    metadata: meta,
     subscription_data: {
       metadata: {
         organization_id: org.id,
-        plan,
-        setup_package: plan === "done_for_you" ? "done_for_you" : "self_serve",
+        membership_tier: request.membershipTier,
+        billing_interval: request.interval,
+        setup_package: meta.setup_package,
       },
     },
     integration_identifier: integrationId,

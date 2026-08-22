@@ -59,13 +59,14 @@ async function applySubscription(admin, orgId, subscription, extras = {}) {
   if (error) throw new Error(error.message);
 }
 
-async function notifyDoneForYouPurchase({ orgName, orgId, email }) {
+async function notifyDoneForYouPurchase({ orgName, orgId, email, membershipTier }) {
   const subject = `Done For You purchase · ${orgName}`;
   const text = [
     "A Done For You setup package was purchased.",
     "",
     `Organization: ${orgName}`,
     `Organization ID: ${orgId}`,
+    membershipTier ? `Package: ${membershipTier}` : null,
     email ? `Billing email: ${email}` : null,
   ]
     .filter(Boolean)
@@ -140,6 +141,7 @@ async function handleCheckoutCompleted(admin, session) {
     await notifyDoneForYouPurchase({
       orgName: org?.name || orgId,
       orgId,
+      membershipTier: session.metadata?.membership_tier || null,
       email: org?.billing_email || session.customer_details?.email,
     });
   }

@@ -52,9 +52,8 @@ interface Props {
   orgLinkLabel?: string;
   /** Reserve / show the Refer Patient action (dock target for the sticky CTA). */
   showReferSlot?: boolean;
-  /** PDF export is available for individual facility/program sheets only. */
   showExportPdf?: boolean;
-  /** Custom one-pager exporter. Falls back to window.print() when omitted. */
+  /** Dedicated one-pager exporter. Falls back to window.print() when omitted. */
   onExportPdf?: () => void | Promise<void>;
 }
 

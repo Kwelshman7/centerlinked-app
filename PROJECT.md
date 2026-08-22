@@ -61,7 +61,7 @@ The platform is invite-oriented / work-email gated. It is designed for professio
 - Team members and email invites
 - Monthly **contract verification** workflow (fresh / recent / stale / frozen)
 - PDF facility upload + parse review flow (via Supabase Edge Functions)
-- Stripe billing: $99/mo membership and optional $499 Done For You setup
+- Stripe billing: facility-banded membership (Profile $99/mo, Network $249/mo, Group $499/mo; annual = 2 months free) and optional Done For You setup ($499 / $1,200 / $2,500). 16+ is quoted.
 - Settings and org branding (logo, colors, cover/footer images, social links, CTAs)
 
 ### Super-admin tooling
@@ -129,7 +129,7 @@ As expressed by product copy, schema FAQ, and current Phase-1 feature flag:
 1. Replace stale referral handoffs (PDFs / brochures / cards) with one live org link
 2. Make insurance, levels of care, locations, and contacts easy for partners to reopen
 3. Keep profiles trustworthy via monthly verification (stale/frozen facilities lose search prominence)
-4. Monetize via org membership ($99/mo) with optional Done For You setup ($499)
+4. Monetize via facility-banded org membership (Profile $99/mo, Network $249/mo, Group $499/mo; annual option) with optional Done For You setup scaled to facility count
 5. Ship core Search + Program/Org Sheet flows first; keep community (feed/messages) behind a flag
 
 ---
@@ -331,8 +331,8 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 | `SITE_URL` | Canonical site origin for links/emails (prod: https://www.centerlinked.com) |
 | `STRIPE_SECRET_KEY` | Stripe API secret (restricted key preferred) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature verification |
-| `STRIPE_PRICE_MEMBERSHIP` | Price ID for $99/mo membership |
-| `STRIPE_PRICE_SETUP` | Price ID for $499 Done For You setup |
+| `STRIPE_PRICE_MEMBERSHIP` | Price ID for Profile $99/mo membership (other tiers use Checkout `price_data`) |
+| `STRIPE_PRICE_SETUP` | Price ID for 1-facility Done For You $499 (larger DFY packages use Checkout `price_data`) |
 | `OPENAI_API_KEY` | Optional; facility-image quality checks |
 
 ### Configured outside this file
@@ -362,7 +362,7 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 - **Org claim approve:** Admin UI notes that approval does not automatically link the claimant user to the org
 - **Hero partner logo carousel:** Implemented but disabled (`SHOW_ORG_LOGO_CAROUSEL = false`)
 - **`email_signup_eligible` RPC:** Present in SQL/types; live auth path uses `is_email_auth_allowed` instead
-- **Terms §8 vs Pricing:** Terms still describe fees in “may apply after early access” language while Stripe pricing is live in the product
+- **Terms §8 vs Pricing:** Fees in Terms now match the facility-banded catalog; early-access copy still allows use without an active membership
 
 ### Explicitly gated off
 - **Community Feed + Messenger** (`FEATURES.community = false`) — code and tables remain; routes redirect to `/app`
