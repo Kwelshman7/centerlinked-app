@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Clock, Check, X, Mail, Plus, Trash2 } from "lucide-react";
+import { Clock, Check, X, Mail, Plus, Trash2, UserPlus } from "lucide-react";
 import { isPersonalEmail } from "@/lib/email-domains";
+import { adminAssignUserToOrganization } from "@/lib/org-setup";
+import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
 
 interface Request {
   id: string;
@@ -29,6 +31,11 @@ interface ApprovedPersonalEmail {
   created_at: string;
 }
 
+interface OrgOption {
+  id: string;
+  name: string;
+}
+
 export default function AccessRequests() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const [requests, setRequests] = useState<Request[]>([]);
@@ -37,16 +44,21 @@ export default function AccessRequests() {
   const [manualEmail, setManualEmail] = useState("");
   const [manualNotes, setManualNotes] = useState("");
   const [savingAllow, setSavingAllow] = useState(false);
+  const [orgs, setOrgs] = useState<OrgOption[]>([]);
+  const [assignOrgByRequest, setAssignOrgByRequest] = useState<Record<string, string>>({});
+  const [assigningId, setAssigningId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const [{ data, error }, { data: allowData, error: allowError }] = await Promise.all([
+    const [{ data, error }, { data: allowData, error: allowError }, { data: orgData }] = await Promise.all([
       supabase.from("early_access_leads").select("*").order("created_at", { ascending: false }),
       supabase
         .from("approved_personal_emails")
         .select("email,notes,created_at")
         .order("created_at", { ascending: false }),
+      supabase.from("organizations").select("id,name").order("name"),
     ]);
+    setOrgs((orgData as OrgOption[]) ?? []);
 
     if (error) {
       toast.error(error.message);
@@ -118,6 +130,55 @@ export default function AccessRequests() {
     void load();
   };
 
+  const suggestedOrgId = (organizationName: string) => {
+    const needle = organizationName.trim().toLowerCase();
+    if (!needle) return "";
+    const exact = orgs.find((o) => o.name.toLowerCase() === needle);
+    if (exact) return exact.id;
+    const partial = orgs.find(
+      (o) => o.name.toLowerCase().includes(needle) || needle.includes(o.name.toLowerCase()),
+    );
+    return partial?.id ?? "";
+  };
+
+  const assignToOrg = async (req: Request) => {
+    const organizationId = assignOrgByRequest[req.id] || suggestedOrgId(req.organization);
+    if (!organizationId) {
+      toast.error("Choose an organization first");
+      return;
+    }
+    setAssigningId(req.id);
+    try {
+      const result = await adminAssignUserToOrganization({
+        email: req.email,
+        organizationId,
+        roleAtOrg: "facility_admin",
+      });
+      try {
+        await sendOrgWelcomeEmail({
+          organization_id: organizationId,
+          to_email: req.email,
+          to_name: req.full_name,
+          kind: "assigned",
+          already_linked: result.linked,
+        });
+      } catch (emailErr) {
+        toast.error(emailErr instanceof Error ? emailErr.message : "Assigned, but the email did not send");
+        setAssigningId(null);
+        return;
+      }
+      toast.success(
+        result.linked
+          ? `${req.full_name} is now the org admin`
+          : `Invite sent — ${req.full_name} becomes admin on first sign-in`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not assign this user");
+    } finally {
+      setAssigningId(null);
+    }
+  };
+
   const addApprovedEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = manualEmail.trim().toLowerCase();
@@ -159,7 +220,8 @@ export default function AccessRequests() {
       <div>
         <h1 className="font-heading text-2xl font-bold">Access requests</h1>
         <p className="text-sm text-muted-foreground">
-          Review membership requests. Approving a personal email also unlocks login for that address.
+          Approve unlocks login. Then assign them as org admin — if they already have an account they
+          are linked immediately; otherwise they land on that organization the first time they sign in.
         </p>
       </div>
 
@@ -208,11 +270,42 @@ export default function AccessRequests() {
                       <X className="h-4 w-4" /> Deny
                     </Button>
                     <Button size="sm" onClick={() => void setStatus(r, "approved")}>
-                      <Check className="h-4 w-4" /> Approve
+                      <Check className="h-4 w-4" /> Approve login
                     </Button>
                   </div>
                 )}
               </div>
+              {r.status === "approved" && (
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-end gap-2 border-t border-border/50 pt-3">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Label htmlFor={`assign-org-${r.id}`}>Assign as organization admin</Label>
+                    <select
+                      id={`assign-org-${r.id}`}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={assignOrgByRequest[r.id] ?? suggestedOrgId(r.organization)}
+                      onChange={(e) =>
+                        setAssignOrgByRequest((prev) => ({ ...prev, [r.id]: e.target.value }))
+                      }
+                    >
+                      <option value="">Select organization…</option>
+                      {orgs.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={assigningId === r.id}
+                    onClick={() => void assignToOrg(r)}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {assigningId === r.id ? "Assigning…" : "Assign & email"}
+                  </Button>
+                </div>
+              )}
             </Card>
           ))}
         </div>
@@ -283,8 +376,7 @@ export default function AccessRequests() {
       </Card>
 
       <p className="text-xs text-muted-foreground">
-        Tip: after approving, create or verify their organization (mark <strong>verified</strong>). That sends the
-        Welcome to CenterLinked email automatically.
+        After Approve login, use Assign & email. Create the organization first if it is not in the list.
       </p>
     </div>
   );

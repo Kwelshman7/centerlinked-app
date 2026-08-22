@@ -3,7 +3,7 @@
 export const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || "admin@centerlinked.com";
 
 export const EMAIL_FROM =
-  process.env.EMAIL_FROM || "CenterLinked <Admin@centerlinked.com>";
+  process.env.EMAIL_FROM || "CenterLinked <admin@centerlinked.com>";
 
 export function siteUrl() {
   const raw = process.env.SITE_URL || process.env.VITE_SITE_URL || "https://www.centerlinked.com";

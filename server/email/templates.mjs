@@ -146,47 +146,105 @@ export function accountCreatedEmail({ recipientName }) {
   const login = appLoginUrl();
 
   const bodyHtml = `
-    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">Your account is ready</h1>
+    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">Welcome to CenterLinked</h1>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
       Hi ${escapeHtml(name)},
     </p>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Welcome to <strong style="color:${BRAND.text};">CenterLinked</strong> — the private referral network
-      for treatment business development teams. Your account is set up and ready to use.
+      Your account is ready. CenterLinked is the private referral network for treatment
+      business-development teams — one live organization link your partners can reopen.
     </p>
-    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${BRAND.text};">Next steps</p>
-    <ol style="margin:8px 0 0;padding-left:20px;font-size:15px;line-height:1.7;color:${BRAND.muted};">
-      <li>Complete your organization and facility profiles</li>
-      <li>Add your BD contact details for partners</li>
-      <li>Share your live referral page when you're ready</li>
-    </ol>
-    ${ctaButton(login, "Open CenterLinked")}
+    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${BRAND.text};">Next step</p>
+    <p style="margin:8px 0 0;font-size:15px;line-height:1.7;color:${BRAND.muted};">
+      Sign in. If your team already invited you, you’ll land on that organization automatically.
+      Otherwise you’ll be asked to join or create your organization.
+    </p>
+    ${ctaButton(login, "Sign in to CenterLinked")}
     <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:${BRAND.muted};">
-      Questions? Reply to this email or reach us at
+      Questions? Reply to this email or write
       <a href="mailto:admin@centerlinked.com" style="color:${BRAND.primary};text-decoration:none;">admin@centerlinked.com</a>.
     </p>
   `;
 
   return {
-    subject: "Your CenterLinked account is ready",
+    subject: "Welcome to CenterLinked",
     html: layout({
-      preheader: "Your account is ready — open the app to get started.",
-      title: "Your account is ready",
+      preheader: "Your account is ready — sign in to join your organization.",
+      title: "Welcome to CenterLinked",
       bodyHtml,
     }),
     text: [
-      "Your CenterLinked account is ready",
+      "Welcome to CenterLinked",
       "",
       `Hi ${name},`,
       "",
-      "Welcome to CenterLinked. Your account is set up and ready to use.",
+      "Your account is ready. CenterLinked is the private referral network for treatment BD teams.",
       "",
-      "Next steps:",
-      "1. Complete your organization and facility profiles",
-      "2. Add your BD contact details for partners",
-      "3. Share your live referral page when you're ready",
+      "Sign in. If your team already invited you, you'll land on that organization automatically.",
+      "Otherwise you'll be asked to join or create your organization.",
       "",
-      `Open the app: ${login}`,
+      `Sign in: ${login}`,
+      "",
+      "Questions? admin@centerlinked.com",
+    ].join("\n"),
+  };
+}
+
+/**
+ * Super-admin assigned this person as org admin (account may or may not exist yet).
+ */
+export function orgAssignedEmail({ recipientName, organizationName, alreadyLinked }) {
+  const name = recipientName?.trim() || "there";
+  const org = organizationName?.trim() || "your organization";
+  const login = appLoginUrl();
+  const signupUrl = `${siteUrl()}/signup`;
+
+  const bodyHtml = `
+    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">
+      You’re the admin for ${escapeHtml(org)}
+    </h1>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
+      Hi ${escapeHtml(name)},
+    </p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
+      CenterLinked assigned you as organization admin for
+      <strong style="color:${BRAND.text};">${escapeHtml(org)}</strong>.
+      ${
+        alreadyLinked
+          ? "Sign in and you’ll go straight to the dashboard."
+          : "Create your account with this same email, then sign in — you’ll land on the organization automatically."
+      }
+    </p>
+    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${BRAND.text};">From there you can</p>
+    <ol style="margin:8px 0 0;padding-left:20px;font-size:15px;line-height:1.7;color:${BRAND.muted};">
+      <li>Add facilities, insurance, and who to contact</li>
+      <li>Invite your BD and admissions teammates</li>
+      <li>Share your live organization link with referral partners</li>
+    </ol>
+    ${ctaButton(alreadyLinked ? login : signupUrl, alreadyLinked ? "Open CenterLinked" : "Create your account")}
+    <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:${BRAND.muted};">
+      Already have an account? <a href="${login}" style="color:${BRAND.primary};text-decoration:none;">Sign in</a>.
+      Questions? <a href="mailto:admin@centerlinked.com" style="color:${BRAND.primary};text-decoration:none;">admin@centerlinked.com</a>.
+    </p>
+  `;
+
+  return {
+    subject: `You’re the admin for ${org} on CenterLinked`,
+    html: layout({
+      preheader: `${org} is ready for you on CenterLinked.`,
+      title: `You’re the admin for ${org}`,
+      bodyHtml,
+    }),
+    text: [
+      `You're the admin for ${org} on CenterLinked`,
+      "",
+      `Hi ${name},`,
+      "",
+      alreadyLinked
+        ? "Sign in and you'll go straight to the dashboard."
+        : "Create your account with this same email, then sign in — you'll land on the organization automatically.",
+      "",
+      alreadyLinked ? `Sign in: ${login}` : `Create your account: ${signupUrl}`,
       "",
       "Questions? admin@centerlinked.com",
     ].join("\n"),

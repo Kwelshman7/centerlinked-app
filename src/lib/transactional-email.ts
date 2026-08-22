@@ -41,6 +41,8 @@ export async function sendOrgWelcomeEmail(input: {
   organization_id: string;
   to_email?: string;
   to_name?: string;
+  kind?: "welcome" | "assigned";
+  already_linked?: boolean;
 }) {
   return postJson("/api/send-welcome", input, true);
 }

@@ -64,3 +64,26 @@ export async function reviewJoinRequest(requestId: string, approve: boolean): Pr
   });
   if (error) throw error;
 }
+
+export type AdminAssignResult = {
+  linked: boolean;
+  invited: boolean;
+  user_id?: string;
+  invite_id?: string;
+  role_at_org?: string;
+  already_pending?: boolean;
+};
+
+export async function adminAssignUserToOrganization(input: {
+  email: string;
+  organizationId: string;
+  roleAtOrg?: "facility_admin" | "bd_rep";
+}): Promise<AdminAssignResult> {
+  const { data, error } = await supabase.rpc("admin_assign_user_to_organization", {
+    _email: input.email.trim().toLowerCase(),
+    _organization_id: input.organizationId,
+    _role_at_org: input.roleAtOrg || "facility_admin",
+  });
+  if (error) throw error;
+  return (data ?? {}) as AdminAssignResult;
+}

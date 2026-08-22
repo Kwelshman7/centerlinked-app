@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "../send.mjs";
-import { orgWelcomeEmail } from "../templates.mjs";
+import { orgAssignedEmail, orgWelcomeEmail } from "../templates.mjs";
 
 function supabaseAdmin() {
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -101,7 +101,7 @@ async function resolveRecipient(admin, org) {
 /**
  * Send welcome email after an organization is verified.
  * Auth: Bearer access token of a super_admin.
- * Body: { organization_id, to_email?, to_name? }
+ * Body: { organization_id, to_email?, to_name?, kind?: "welcome" | "assigned", already_linked? }
  */
 export async function handleSendWelcome(body, accessToken) {
   const auth = await assertSuperAdmin(accessToken);
@@ -130,7 +130,10 @@ export async function handleSendWelcome(body, accessToken) {
     return { status: 404, json: { error: "Organization not found" } };
   }
 
-  if (!org.verified) {
+  const kind = String(body?.kind || "welcome").trim() === "assigned" ? "assigned" : "welcome";
+  const alreadyLinked = body?.already_linked === true || body?.already_linked === "true";
+
+  if (kind === "welcome" && !org.verified) {
     return { status: 400, json: { error: "Organization is not verified yet" } };
   }
 
@@ -155,10 +158,17 @@ export async function handleSendWelcome(body, accessToken) {
     };
   }
 
-  const template = orgWelcomeEmail({
-    recipientName: recipient.name,
-    organizationName: org.name,
-  });
+  const template =
+    kind === "assigned"
+      ? orgAssignedEmail({
+          recipientName: recipient.name,
+          organizationName: org.name,
+          alreadyLinked,
+        })
+      : orgWelcomeEmail({
+          recipientName: recipient.name,
+          organizationName: org.name,
+        });
 
   const result = await sendEmail({
     to: recipient.email,

@@ -5,7 +5,6 @@ import { adminNotifyAddress, sendEmail } from "../send.mjs";
 import {
   accountCreatedEmail,
   adminNewSignupEmail,
-  loginNoticeEmail,
 } from "../templates.mjs";
 
 const authEventSchema = z
@@ -149,25 +148,6 @@ export async function handleNotifyAuthEvent(body, accessToken) {
     };
   }
 
-  const template = loginNoticeEmail({
-    recipientName: fullName,
-    signedInAt: new Date().toUTCString(),
-  });
-
-  const result = await sendEmail({
-    to: email,
-    subject: template.subject,
-    html: template.html,
-    text: template.text,
-  });
-
-  if (!result.ok) {
-    console.error("[notify-auth-event:login]", result.error);
-    return {
-      status: 502,
-      json: { error: "Could not send notification email" },
-    };
-  }
-
-  return { status: 200, json: { ok: true, event } };
+  // Login notices are not sent — they read as security spam and are not part of onboarding.
+  return { status: 200, json: { ok: true, event, skipped: true } };
 }

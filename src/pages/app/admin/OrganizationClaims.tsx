@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { adminAssignUserToOrganization } from "@/lib/org-setup";
+import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
 import { Clock, Check, X, Mail, Phone, FileText, ExternalLink, Building2 } from "lucide-react";
 
 interface Claim {
@@ -61,6 +63,38 @@ export default function OrganizationClaims() {
       .update({ status, reviewed_at: new Date().toISOString(), reviewed_by: user?.id ?? null })
       .eq("id", id);
     if (error) { toast.error(error.message); return; }
+
+    if (status === "approved") {
+      const claim = claims.find((c) => c.id === id);
+      if (claim?.claimant_email && claim.organization_id) {
+        try {
+          const result = await adminAssignUserToOrganization({
+            email: claim.claimant_email,
+            organizationId: claim.organization_id,
+            roleAtOrg: "facility_admin",
+          });
+          await sendOrgWelcomeEmail({
+            organization_id: claim.organization_id,
+            to_email: claim.claimant_email,
+            to_name: claim.claimant_name,
+            kind: "assigned",
+            already_linked: result.linked,
+          });
+          toast.success("Claim approved — user assigned as org admin and emailed");
+          load();
+          return;
+        } catch (assignErr) {
+          toast.error(
+            assignErr instanceof Error
+              ? `Claim approved, but assign failed: ${assignErr.message}`
+              : "Claim approved, but the user was not linked automatically",
+          );
+          load();
+          return;
+        }
+      }
+    }
+
     toast.success(`Claim ${status}`);
     load();
   };
@@ -135,7 +169,7 @@ export default function OrganizationClaims() {
           </div>
         )}
       <p className="text-xs text-muted-foreground">
-        Approving a claim does not yet auto-link the user. After approving, manually invite them as a facility admin from the organization's Members page.
+        Approving a claim now assigns the claimant as organization admin and emails them. If they have not created an account yet, they are attached on first sign-in.
       </p>
     </div>
   );

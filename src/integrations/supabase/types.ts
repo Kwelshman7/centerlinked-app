@@ -153,6 +153,7 @@ export type Database = {
     }
     Views: { [_ in never]: never }
     Functions: {
+      admin_assign_user_to_organization: { Args: { _email: string; _organization_id: string; _role_at_org?: string }; Returns: Json }
       admin_create_organization: { Args: { _bd_contact_email?: string; _bd_contact_name?: string; _bd_contact_phone?: string; _description?: string; _email_domain?: string; _hq_city?: string; _hq_state?: string; _logo_url?: string; _name: string; _num_facilities?: number; _phone?: string; _verified?: boolean; _website?: string }; Returns: string }
       bootstrap_super_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_bootstrap_admin_candidate: { Args: Record<PropertyKey, never>; Returns: boolean }
