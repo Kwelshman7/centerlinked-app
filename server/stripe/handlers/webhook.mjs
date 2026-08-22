@@ -2,6 +2,7 @@ import { getStripe } from "../client.mjs";
 import { supabaseAdmin } from "../supabase.mjs";
 import { sendEmail } from "../../email/send.mjs";
 import { ADMIN_NOTIFY_EMAIL } from "../../email/config.mjs";
+import { doneForYouAdminEmail } from "../../email/templates.mjs";
 
 function periodEndIso(subscription) {
   const itemEnd = subscription?.items?.data?.[0]?.current_period_end;
@@ -60,23 +61,13 @@ async function applySubscription(admin, orgId, subscription, extras = {}) {
 }
 
 async function notifyDoneForYouPurchase({ orgName, orgId, email, membershipTier }) {
-  const subject = `Done For You purchase · ${orgName}`;
-  const text = [
-    "A Done For You setup package was purchased.",
-    "",
-    `Organization: ${orgName}`,
-    `Organization ID: ${orgId}`,
-    membershipTier ? `Package: ${membershipTier}` : null,
-    email ? `Billing email: ${email}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
+  const template = doneForYouAdminEmail({ orgName, orgId, email, membershipTier });
   const result = await sendEmail({
     to: ADMIN_NOTIFY_EMAIL,
-    subject,
-    text,
-    html: `<pre style="font-family:sans-serif;white-space:pre-wrap">${text}</pre>`,
+    subject: template.subject,
+    text: template.text,
+    html: template.html,
+    replyTo: email || undefined,
   });
   if (!result.ok) {
     console.warn("[stripe-webhook] DFY notify failed:", result.error);

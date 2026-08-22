@@ -1,4 +1,4 @@
-import { ADMIN_NOTIFY_EMAIL, EMAIL_FROM } from "./config.mjs";
+import { ADMIN_NOTIFY_EMAIL, EMAIL_FROM, supportEmail } from "./config.mjs";
 
 /**
  * Send an email via Resend's HTTP API.
@@ -17,8 +17,8 @@ export async function sendEmail({ to, subject, html, text, replyTo }) {
     subject,
     html,
     text,
+    reply_to: replyTo || supportEmail(),
   };
-  if (replyTo) payload.reply_to = replyTo;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

@@ -10,8 +10,13 @@ export function siteUrl() {
   return raw.replace(/\/$/, "");
 }
 
+export function supportEmail() {
+  return "admin@centerlinked.com";
+}
+
+/** Hosted on production so images load even when SITE_URL is localhost or a preview. */
 export function logoUrl() {
-  return `${siteUrl()}/centerlinked-logo-full.png`;
+  return "https://www.centerlinked.com/centerlinked-logo-full.png";
 }
 
 export function appLoginUrl() {

@@ -1,14 +1,18 @@
-import { adminRequestsUrl, appLoginUrl, logoUrl, siteUrl } from "./config.mjs";
+import { adminRequestsUrl, appLoginUrl, logoUrl, siteUrl, supportEmail } from "./config.mjs";
 
 const BRAND = {
-  primary: "#1E8BB5",
-  primaryDark: "#176F92",
-  text: "#1a2332",
-  muted: "#5c6b7a",
-  border: "#e2e8f0",
-  bg: "#f4f7f9",
+  primary: "#2088b8",
+  primaryDark: "#176f92",
+  navy: "#003048",
+  text: "#1b2730",
+  muted: "#5a6b75",
+  border: "#dce6ec",
+  bg: "#eef3f6",
   card: "#ffffff",
 };
+
+const FONT = "Arial, Helvetica, sans-serif";
+const SUPPORT = supportEmail();
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -18,42 +22,95 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
+function heading(text) {
+  return `<h1 style="margin:0 0 16px;font-family:${FONT};font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.navy};">${text}</h1>`;
+}
+
+function para(text) {
+  return `<p style="margin:0 0 16px;font-family:${FONT};font-size:15px;line-height:1.65;color:${BRAND.text};">${text}</p>`;
+}
+
+function mutedPara(text) {
+  return `<p style="margin:0 0 16px;font-family:${FONT};font-size:15px;line-height:1.65;color:${BRAND.muted};">${text}</p>`;
+}
+
+function label(text) {
+  return `<p style="margin:8px 0 8px;font-family:${FONT};font-size:12px;line-height:1.4;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${BRAND.primary};">${escapeHtml(text)}</p>`;
+}
+
+function supportLine() {
+  return `<p style="margin:24px 0 0;font-family:${FONT};font-size:13px;line-height:1.55;color:${BRAND.muted};">
+    Questions? Reply to this email or write
+    <a href="mailto:${SUPPORT}" style="color:${BRAND.primary};text-decoration:none;">${SUPPORT}</a>.
+  </p>`;
+}
+
 function layout({ preheader, title, bodyHtml }) {
   const logo = logoUrl();
+  const site = siteUrl();
+  const year = new Date().getFullYear();
+  const hiddenPad = "&#847;&zwnj;&nbsp;".repeat(30);
+
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no" />
   <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
   <title>${escapeHtml(title)}</title>
-  <!--[if mso]><style>table,td{font-family:Arial,sans-serif!important}</style><![endif]-->
+  <!--[if mso]>
+  <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+  <style>table,td,a{font-family:Arial,Helvetica,sans-serif!important}</style>
+  <![endif]-->
 </head>
-<body style="margin:0;padding:0;background:${BRAND.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${BRAND.text};">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.bg};padding:32px 16px;">
+<body style="margin:0;padding:0;background:${BRAND.bg};font-family:${FONT};color:${BRAND.text};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${BRAND.bg};opacity:0;">
+    ${escapeHtml(preheader)}${hiddenPad}
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.bg};">
     <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${BRAND.card};border-radius:16px;border:1px solid ${BRAND.border};overflow:hidden;">
+      <td align="center" style="padding:32px 16px;">
+        <!--[if mso]><table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">
           <tr>
-            <td style="padding:28px 32px 12px;text-align:center;border-bottom:1px solid ${BRAND.border};">
-              <img src="${logo}" alt="CenterLinked" width="200" style="display:inline-block;max-width:200px;height:auto;border:0;" />
+            <td align="center" style="padding:0 8px 20px;">
+              <a href="${site}" style="text-decoration:none;">
+                <img src="${logo}" alt="CenterLinked" width="188" height="49" style="display:block;width:188px;max-width:188px;height:auto;border:0;" />
+              </a>
             </td>
           </tr>
           <tr>
-            <td style="padding:28px 32px 8px;">
-              ${bodyHtml}
+            <td style="background:${BRAND.card};border:1px solid ${BRAND.border};border-radius:12px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="height:4px;line-height:4px;font-size:0;background:${BRAND.primary};border-radius:12px 12px 0 0;">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td style="padding:32px 36px 36px;">
+                    ${bodyHtml}
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <tr>
-            <td style="padding:8px 32px 28px;text-align:center;">
-              <p style="margin:0;font-size:12px;line-height:1.5;color:${BRAND.muted};">
-                © ${new Date().getFullYear()} CenterLinked ·
-                <a href="${siteUrl()}" style="color:${BRAND.primary};text-decoration:none;">centerlinked.com</a>
+            <td align="center" style="padding:24px 16px 8px;">
+              <p style="margin:0 0 6px;font-family:${FONT};font-size:12px;line-height:1.5;color:${BRAND.muted};">
+                CenterLinked · The private referral network for treatment organizations
+              </p>
+              <p style="margin:0;font-family:${FONT};font-size:12px;line-height:1.5;color:${BRAND.muted};">
+                © ${year}
+                <a href="${site}" style="color:${BRAND.primary};text-decoration:none;">centerlinked.com</a>
+                ·
+                <a href="mailto:${SUPPORT}" style="color:${BRAND.primary};text-decoration:none;">${SUPPORT}</a>
               </p>
             </td>
           </tr>
         </table>
+        <!--[if mso]></td></tr></table><![endif]-->
       </td>
     </tr>
   </table>
@@ -62,24 +119,51 @@ function layout({ preheader, title, bodyHtml }) {
 }
 
 function ctaButton(href, label) {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px auto 8px;">
+  const safeHref = escapeHtml(href);
+  const safeLabel = escapeHtml(label);
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:28px auto 4px;">
   <tr>
-    <td style="border-radius:10px;background:${BRAND.primary};">
-      <a href="${href}" target="_blank" rel="noopener noreferrer"
-        style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">
-        ${escapeHtml(label)}
+    <td align="center">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:44px;v-text-anchor:middle;width:240px;" arcsize="14%" fillcolor="${BRAND.primary}" stroke="f">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;">${safeLabel}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-- -->
+      <a href="${safeHref}" target="_blank" rel="noopener noreferrer"
+        style="display:inline-block;padding:13px 28px;font-family:${FONT};font-size:15px;line-height:1.2;font-weight:700;color:#ffffff;text-decoration:none;background:${BRAND.primary};border-radius:8px;">
+        ${safeLabel}
       </a>
+      <!--<![endif]-->
     </td>
   </tr>
 </table>`;
 }
 
-function detailRow(label, value) {
+function detailRow(labelText, value) {
   if (!value) return "";
   return `<tr>
-    <td style="padding:10px 0;border-bottom:1px solid ${BRAND.border};font-size:13px;color:${BRAND.muted};width:140px;vertical-align:top;">${escapeHtml(label)}</td>
-    <td style="padding:10px 0;border-bottom:1px solid ${BRAND.border};font-size:14px;color:${BRAND.text};font-weight:500;">${escapeHtml(value)}</td>
+    <td style="padding:11px 0;border-bottom:1px solid ${BRAND.border};font-family:${FONT};font-size:12px;line-height:1.4;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${BRAND.muted};width:132px;vertical-align:top;">${escapeHtml(labelText)}</td>
+    <td style="padding:11px 0;border-bottom:1px solid ${BRAND.border};font-family:${FONT};font-size:15px;line-height:1.5;color:${BRAND.text};">${escapeHtml(value)}</td>
   </tr>`;
+}
+
+function detailTable(rowsHtml) {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 8px;">${rowsHtml}</table>`;
+}
+
+function listItems(items) {
+  const rows = items
+    .map(
+      (item) =>
+        `<tr>
+          <td style="padding:0 10px 8px 0;width:16px;vertical-align:top;font-family:${FONT};font-size:15px;line-height:1.65;color:${BRAND.primary};">•</td>
+          <td style="padding:0 0 8px;font-family:${FONT};font-size:15px;line-height:1.65;color:${BRAND.text};">${item}</td>
+        </tr>`,
+    )
+    .join("");
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 8px;">${rows}</table>`;
 }
 
 /**
@@ -96,26 +180,23 @@ export function accessRequestAdminEmail(payload) {
   } = payload;
 
   const bodyHtml = `
-    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">New access request</h1>
-    <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      A treatment organization submitted a request to join CenterLinked.
-    </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+    ${label("Admin notice")}
+    ${heading("New access request")}
+    ${mutedPara("A treatment organization asked to join CenterLinked.")}
+    ${detailTable(`
       ${detailRow("Name", full_name)}
       ${detailRow("Work email", email)}
       ${detailRow("Organization", organization)}
       ${detailRow("Role", role)}
       ${detailRow("Facilities", num_facilities != null && num_facilities !== "" ? String(num_facilities) : null)}
       ${detailRow("Notes", notes)}
-    </table>
-    ${ctaButton(adminRequestsUrl(), "Review in admin")}
-    <p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:${BRAND.muted};">
-      After approval, verify their organization so they can sign up and receive a welcome email.
-    </p>
+    `)}
+    ${ctaButton(adminRequestsUrl(), "Review request")}
+    ${mutedPara("Approve login first, then assign them as organization admin and email them.")}
   `;
 
   return {
-    subject: `New CenterLinked access request — ${organization || full_name}`,
+    subject: `Access request — ${organization || full_name}`,
     html: layout({
       preheader: `${full_name} requested access for ${organization}`,
       title: "New access request",
@@ -146,30 +227,19 @@ export function accountCreatedEmail({ recipientName }) {
   const login = appLoginUrl();
 
   const bodyHtml = `
-    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">Welcome to CenterLinked</h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Hi ${escapeHtml(name)},
-    </p>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Your account is ready. CenterLinked is the private referral network for treatment
-      business-development teams — one live organization link your partners can reopen.
-    </p>
-    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${BRAND.text};">Next step</p>
-    <p style="margin:8px 0 0;font-size:15px;line-height:1.7;color:${BRAND.muted};">
-      Sign in. If your team already invited you, you’ll land on that organization automatically.
-      Otherwise you’ll be asked to join or create your organization.
-    </p>
+    ${heading("Welcome to CenterLinked")}
+    ${para(`Hi ${escapeHtml(name)},`)}
+    ${para("Your account is ready. CenterLinked is the private referral network for treatment business-development teams — one live organization page your partners can reopen.")}
+    ${label("Next step")}
+    ${para("Sign in with this email. If your team already invited you, you will land on that organization automatically. Otherwise you can join or create your organization.")}
     ${ctaButton(login, "Sign in to CenterLinked")}
-    <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:${BRAND.muted};">
-      Questions? Reply to this email or write
-      <a href="mailto:admin@centerlinked.com" style="color:${BRAND.primary};text-decoration:none;">admin@centerlinked.com</a>.
-    </p>
+    ${supportLine()}
   `;
 
   return {
     subject: "Welcome to CenterLinked",
     html: layout({
-      preheader: "Your account is ready — sign in to join your organization.",
+      preheader: "Your account is ready. Sign in to join your organization.",
       title: "Welcome to CenterLinked",
       bodyHtml,
     }),
@@ -180,12 +250,12 @@ export function accountCreatedEmail({ recipientName }) {
       "",
       "Your account is ready. CenterLinked is the private referral network for treatment BD teams.",
       "",
-      "Sign in. If your team already invited you, you'll land on that organization automatically.",
-      "Otherwise you'll be asked to join or create your organization.",
+      "Sign in with this email. If your team already invited you, you will land on that organization automatically.",
+      "Otherwise you can join or create your organization.",
       "",
       `Sign in: ${login}`,
       "",
-      "Questions? admin@centerlinked.com",
+      `Questions? ${SUPPORT}`,
     ].join("\n"),
   };
 }
@@ -200,53 +270,45 @@ export function orgAssignedEmail({ recipientName, organizationName, alreadyLinke
   const signupUrl = `${siteUrl()}/signup`;
 
   const bodyHtml = `
-    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">
-      You’re the admin for ${escapeHtml(org)}
-    </h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Hi ${escapeHtml(name)},
-    </p>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      CenterLinked assigned you as organization admin for
-      <strong style="color:${BRAND.text};">${escapeHtml(org)}</strong>.
-      ${
-        alreadyLinked
-          ? "Sign in and you’ll go straight to the dashboard."
-          : "Create your account with this same email, then sign in — you’ll land on the organization automatically."
-      }
-    </p>
-    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${BRAND.text};">From there you can</p>
-    <ol style="margin:8px 0 0;padding-left:20px;font-size:15px;line-height:1.7;color:${BRAND.muted};">
-      <li>Add facilities, insurance, and who to contact</li>
-      <li>Invite your BD and admissions teammates</li>
-      <li>Share your live organization link with referral partners</li>
-    </ol>
+    ${heading(`You are the admin for ${escapeHtml(org)}`)}
+    ${para(`Hi ${escapeHtml(name)},`)}
+    ${para(
+      alreadyLinked
+        ? `You have been assigned as organization admin for <strong style="color:${BRAND.navy};">${escapeHtml(org)}</strong> on CenterLinked. Sign in and you will go straight to the dashboard.`
+        : `You have been assigned as organization admin for <strong style="color:${BRAND.navy};">${escapeHtml(org)}</strong> on CenterLinked. Create your account with this same email, then sign in — you will land on the organization automatically.`,
+    )}
+    ${label("From there you can")}
+    ${listItems([
+      "Add facilities, insurance, and who to contact",
+      "Invite your BD and admissions teammates",
+      "Share your live organization link with referral partners",
+    ])}
     ${ctaButton(alreadyLinked ? login : signupUrl, alreadyLinked ? "Open CenterLinked" : "Create your account")}
-    <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:${BRAND.muted};">
+    <p style="margin:20px 0 0;font-family:${FONT};font-size:13px;line-height:1.55;color:${BRAND.muted};">
       Already have an account? <a href="${login}" style="color:${BRAND.primary};text-decoration:none;">Sign in</a>.
-      Questions? <a href="mailto:admin@centerlinked.com" style="color:${BRAND.primary};text-decoration:none;">admin@centerlinked.com</a>.
+      Questions? <a href="mailto:${SUPPORT}" style="color:${BRAND.primary};text-decoration:none;">${SUPPORT}</a>.
     </p>
   `;
 
   return {
-    subject: `You’re the admin for ${org} on CenterLinked`,
+    subject: `You are the admin for ${org} on CenterLinked`,
     html: layout({
       preheader: `${org} is ready for you on CenterLinked.`,
-      title: `You’re the admin for ${org}`,
+      title: `You are the admin for ${org}`,
       bodyHtml,
     }),
     text: [
-      `You're the admin for ${org} on CenterLinked`,
+      `You are the admin for ${org} on CenterLinked`,
       "",
       `Hi ${name},`,
       "",
       alreadyLinked
-        ? "Sign in and you'll go straight to the dashboard."
-        : "Create your account with this same email, then sign in — you'll land on the organization automatically.",
+        ? "Sign in and you will go straight to the dashboard."
+        : "Create your account with this same email, then sign in — you will land on the organization automatically.",
       "",
       alreadyLinked ? `Sign in: ${login}` : `Create your account: ${signupUrl}`,
       "",
-      "Questions? admin@centerlinked.com",
+      `Questions? ${SUPPORT}`,
     ].join("\n"),
   };
 }
@@ -256,19 +318,18 @@ export function orgAssignedEmail({ recipientName, organizationName, alreadyLinke
  */
 export function adminNewSignupEmail({ full_name, email }) {
   const bodyHtml = `
-    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">New account signup</h1>
-    <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Someone created a CenterLinked account.
-    </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+    ${label("Admin notice")}
+    ${heading("New account signup")}
+    ${mutedPara("Someone created a CenterLinked account.")}
+    ${detailTable(`
       ${detailRow("Name", full_name)}
       ${detailRow("Email", email)}
-    </table>
+    `)}
     ${ctaButton(adminRequestsUrl(), "Open admin")}
   `;
 
   return {
-    subject: `New CenterLinked signup — ${full_name || email}`,
+    subject: `New signup — ${full_name || email}`,
     html: layout({
       preheader: `${full_name || email} created an account`,
       title: "New account signup",
@@ -289,6 +350,7 @@ export function adminNewSignupEmail({ full_name, email }) {
 
 /**
  * Security-style notice after a successful sign-in.
+ * Kept for possible future use; login events are not sent today.
  */
 export function loginNoticeEmail({ recipientName, signedInAt }) {
   const name = recipientName?.trim() || "there";
@@ -296,21 +358,11 @@ export function loginNoticeEmail({ recipientName, signedInAt }) {
   const login = appLoginUrl();
 
   const bodyHtml = `
-    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">New sign-in</h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Hi ${escapeHtml(name)},
-    </p>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Someone just signed in to your CenterLinked account.
-    </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
-      ${detailRow("When", when)}
-    </table>
-    <p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:${BRAND.muted};">
-      If this was you, no action is needed. If you didn't sign in, reply to this email or contact
-      <a href="mailto:admin@centerlinked.com" style="color:${BRAND.primary};text-decoration:none;">admin@centerlinked.com</a>
-      right away.
-    </p>
+    ${heading("New sign-in")}
+    ${para(`Hi ${escapeHtml(name)},`)}
+    ${para("Someone just signed in to your CenterLinked account.")}
+    ${detailTable(detailRow("When", when))}
+    ${para(`If this was you, no action is needed. If you did not sign in, reply to this email or contact <a href="mailto:${SUPPORT}" style="color:${BRAND.primary};text-decoration:none;">${SUPPORT}</a> right away.`)}
     ${ctaButton(login, "Open CenterLinked")}
   `;
 
@@ -330,7 +382,7 @@ export function loginNoticeEmail({ recipientName, signedInAt }) {
       `When: ${when}`,
       "",
       "If this was you, no action is needed.",
-      "If you didn't sign in, contact admin@centerlinked.com right away.",
+      `If you did not sign in, contact ${SUPPORT} right away.`,
       "",
       `Open the app: ${login}`,
     ].join("\n"),
@@ -346,31 +398,23 @@ export function orgWelcomeEmail({ recipientName, organizationName }) {
   const login = appLoginUrl();
 
   const bodyHtml = `
-    <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.text};">Welcome to CenterLinked</h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      Hi ${escapeHtml(name)},
-    </p>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${BRAND.muted};">
-      <strong style="color:${BRAND.text};">${escapeHtml(org)}</strong> is approved and ready on CenterLinked —
-      the private referral network for treatment business development teams.
-    </p>
-    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${BRAND.text};">How to get started</p>
-    <ol style="margin:8px 0 0;padding-left:20px;font-size:15px;line-height:1.7;color:${BRAND.muted};">
-      <li>Sign in with your work email</li>
-      <li>Complete your organization and facility profiles</li>
-      <li>Share your live referral page with partners</li>
-    </ol>
-    ${ctaButton(login, "Open the app &amp; log in")}
-    <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:${BRAND.muted};">
-      Questions? Reply to this email or reach us at
-      <a href="mailto:admin@centerlinked.com" style="color:${BRAND.primary};text-decoration:none;">admin@centerlinked.com</a>.
-    </p>
+    ${heading("Welcome to CenterLinked")}
+    ${para(`Hi ${escapeHtml(name)},`)}
+    ${para(`<strong style="color:${BRAND.navy};">${escapeHtml(org)}</strong> is approved and ready on CenterLinked — the private referral network for treatment business-development teams.`)}
+    ${label("How to get started")}
+    ${listItems([
+      "Sign in with your work email",
+      "Complete your organization and facility profiles",
+      "Share your live referral page with partners",
+    ])}
+    ${ctaButton(login, "Open CenterLinked")}
+    ${supportLine()}
   `;
 
   return {
-    subject: "Welcome to CenterLinked",
+    subject: `Welcome to CenterLinked — ${org}`,
     html: layout({
-      preheader: `${org} is approved — open the app to get started.`,
+      preheader: `${org} is approved. Open the app to get started.`,
       title: "Welcome to CenterLinked",
       bodyHtml,
     }),
@@ -388,7 +432,44 @@ export function orgWelcomeEmail({ recipientName, organizationName }) {
       "",
       `Open the app: ${login}`,
       "",
-      "Questions? admin@centerlinked.com",
+      `Questions? ${SUPPORT}`,
     ].join("\n"),
+  };
+}
+
+/**
+ * Internal notice when an org buys Done For You setup.
+ */
+export function doneForYouAdminEmail({ orgName, orgId, email, membershipTier }) {
+  const bodyHtml = `
+    ${label("Admin notice")}
+    ${heading("Done For You purchase")}
+    ${mutedPara("A setup package was purchased. The organization is waiting on onboarding.")}
+    ${detailTable(`
+      ${detailRow("Organization", orgName)}
+      ${detailRow("Organization ID", orgId)}
+      ${detailRow("Package", membershipTier)}
+      ${detailRow("Billing email", email)}
+    `)}
+    ${ctaButton(adminRequestsUrl(), "Open admin")}
+  `;
+
+  return {
+    subject: `Done For You purchase — ${orgName}`,
+    html: layout({
+      preheader: `${orgName} purchased Done For You setup.`,
+      title: "Done For You purchase",
+      bodyHtml,
+    }),
+    text: [
+      "A Done For You setup package was purchased.",
+      "",
+      `Organization: ${orgName}`,
+      orgId ? `Organization ID: ${orgId}` : null,
+      membershipTier ? `Package: ${membershipTier}` : null,
+      email ? `Billing email: ${email}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
   };
 }
