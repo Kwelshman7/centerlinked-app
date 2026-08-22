@@ -16,7 +16,14 @@ export function getStripe() {
 export function stripePrices() {
   return {
     membership: process.env.STRIPE_PRICE_MEMBERSHIP || "",
+    profileYear: process.env.STRIPE_PRICE_PROFILE_YEAR || "",
+    network: process.env.STRIPE_PRICE_NETWORK || "",
+    networkYear: process.env.STRIPE_PRICE_NETWORK_YEAR || "",
+    group: process.env.STRIPE_PRICE_GROUP || "",
+    groupYear: process.env.STRIPE_PRICE_GROUP_YEAR || "",
     setup: process.env.STRIPE_PRICE_SETUP || "",
+    setupNetwork: process.env.STRIPE_PRICE_SETUP_NETWORK || "",
+    setupGroup: process.env.STRIPE_PRICE_SETUP_GROUP || "",
   };
 }
 

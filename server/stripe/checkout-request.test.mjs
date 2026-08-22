@@ -57,25 +57,34 @@ test("Profile DFY uses configured setup price id when present", () => {
   assert.deepEqual(items[1], { price: "price_setup", quantity: 1 });
 });
 
-test("Network monthly uses price_data at $249", () => {
+test("Network monthly uses configured Network price id when present", () => {
   const parsed = parseCheckoutRequest({ membershipTier: "network", interval: "month" });
-  const items = checkoutLineItems({ membership: "price_profile", setup: "price_setup" }, parsed);
-  assert.equal(items[0].price_data.unit_amount, 24900);
-  assert.equal(items[0].price_data.recurring.interval, "month");
+  const items = checkoutLineItems(
+    { membership: "price_profile", network: "price_network", setup: "price_setup" },
+    parsed,
+  );
+  assert.deepEqual(items, [{ price: "price_network", quantity: 1 }]);
 });
 
-test("Group annual uses price_data at $4990", () => {
+test("Group annual uses configured Group annual price id when present", () => {
+  const parsed = parseCheckoutRequest({ membershipTier: "group", interval: "year" });
+  const items = checkoutLineItems({ groupYear: "price_group_year" }, parsed);
+  assert.deepEqual(items, [{ price: "price_group_year", quantity: 1 }]);
+});
+
+test("Group annual falls back to price_data at $4990 without a price id", () => {
   const parsed = parseCheckoutRequest({ membershipTier: "group", interval: "year" });
   const items = checkoutLineItems({ membership: "", setup: "" }, parsed);
   assert.equal(items[0].price_data.unit_amount, 499000);
   assert.equal(items[0].price_data.recurring.interval, "year");
 });
 
-test("setup-only Network DFY is $1200", () => {
+test("setup-only Network DFY uses configured Network setup price id", () => {
   const parsed = parseCheckoutRequest({ membershipTier: "network", doneForYou: true });
-  const items = checkoutLineItems({ membership: "price_profile", setup: "price_setup" }, parsed, {
-    setupOnly: true,
-  });
-  assert.equal(items.length, 1);
-  assert.equal(items[0].price_data.unit_amount, 120000);
+  const items = checkoutLineItems(
+    { membership: "price_profile", setup: "price_setup", setupNetwork: "price_dfy_network" },
+    parsed,
+    { setupOnly: true },
+  );
+  assert.deepEqual(items, [{ price: "price_dfy_network", quantity: 1 }]);
 });

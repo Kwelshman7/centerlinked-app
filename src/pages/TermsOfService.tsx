@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
 import { applySocialMeta } from "@/lib/social-meta";
 
-const EFFECTIVE_DATE = "August 21, 2026";
+const EFFECTIVE_DATE = "August 22, 2026";
 
 export default function TermsOfService() {
   useEffect(() => {
@@ -172,9 +172,9 @@ export default function TermsOfService() {
       <section>
         <h2>13. Governing law</h2>
         <p>
-          These Terms are governed by the laws of the State of Delaware, United States, without regard to conflict-of-law
+          These Terms are governed by the laws of the State of Florida, United States, without regard to conflict-of-law
           principles. Except where prohibited, exclusive jurisdiction for disputes arising out of these Terms lies in the
-          state or federal courts located in Delaware, and you consent to personal jurisdiction in those courts.
+          state or federal courts located in Florida, and you consent to personal jurisdiction in those courts.
         </p>
       </section>
 

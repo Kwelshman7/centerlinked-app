@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CenterLinked Inc. — Business Plan · August 22, 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal: #2088b8;
+      --teal-dark: #176a90;
+      --ink: #1a2332;
+      --muted: #4b5563;
+      --line: #d7e3ea;
+      --paper: #f4f8fb;
+      --card: #e8f3f8;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      color: var(--ink);
+      font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.5;
+      background: #fff;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: Montserrat, Inter, sans-serif;
+      color: var(--ink);
+      page-break-after: avoid;
+    }
+
+    h1 { font-size: 22pt; letter-spacing: -0.03em; margin: 0 0 10px; }
+    h2 {
+      font-size: 13.5pt;
+      letter-spacing: -0.02em;
+      margin: 20px 0 8px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid var(--teal);
+      break-after: avoid;
+    }
+    h3 { font-size: 11pt; margin: 16px 0 6px; color: var(--teal-dark); }
+    p { margin: 0 0 9px; }
+    ul, ol { margin: 0 0 10px; padding-left: 1.15em; }
+    li { margin: 0 0 4px; }
+    strong { font-weight: 650; }
+
+    a { color: var(--teal-dark); text-decoration: none; }
+
+    .cover-wrap {
+      page-break-after: always;
+      break-after: page;
+    }
+
+    /* Cover */
+    .cover {
+      height: 11in;
+      padding: 40px 48px 32px;
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(32, 136, 184, 0.22), transparent 46%),
+        linear-gradient(165deg, #0f1c28 0%, #163044 48%, #1a4a63 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+    .cover-kicker {
+      font-size: 9pt;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #9fd4ea;
+      font-weight: 600;
+    }
+    .cover img.logo { height: 42px; width: auto; display: block; margin: 28px 0 36px; }
+    .cover h1 {
+      color: #fff;
+      font-size: 36pt;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin: 0 0 14px;
+    }
+    .cover .subtitle {
+      font-size: 13.5pt;
+      color: #d5eaf3;
+      max-width: 520px;
+      line-height: 1.4;
+      margin-bottom: 28px;
+    }
+    .cover-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 28px;
+      max-width: 520px;
+      font-size: 10pt;
+    }
+    .cover-meta dt { color: #8fbdd0; font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; }
+    .cover-meta dd { margin: 2px 0 0; font-weight: 600; }
+    .cover-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid rgba(255,255,255,0.18);
+      padding-top: 18px;
+      font-size: 9pt;
+      color: #b7d4e2;
+    }
+    .confidential-pill {
+      display: inline-block;
+      border: 1px solid #7ec4df;
+      color: #c9ebf7;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 8.5pt;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    /* Interior */
+    .inner { padding: 8px 8px 18px; }
+    .running {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      font-weight: 700;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+      margin-bottom: 22px;
+    }
+
+    .lede {
+      font-size: 11.5pt;
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    .note {
+      background: var(--paper);
+      border-left: 3px solid var(--teal);
+      padding: 10px 14px;
+      margin: 12px 0 16px;
+      font-size: 9.5pt;
+      color: #334155;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 16px;
+      font-size: 9.4pt;
+      page-break-inside: avoid;
+    }
+    th {
+      text-align: left;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 650;
+      padding: 7px 8px;
+      font-size: 8.6pt;
+      letter-spacing: 0.02em;
+    }
+    td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: var(--paper); }
+
+    .kv td:first-child { width: 34%; font-weight: 600; color: var(--teal-dark); }
+
+    .toc ol { columns: 2; column-gap: 36px; padding-left: 1.2em; }
+    .toc li { margin: 0 0 5px; font-size: 10pt; }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .kpi div {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 11px;
+    }
+    .kpi .n { font-family: Montserrat, sans-serif; font-size: 14pt; font-weight: 750; color: var(--teal-dark); letter-spacing: -0.03em; }
+    .kpi .l { font-size: 8pt; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .avoid { page-break-inside: avoid; }
+
+    footer.doc {
+      margin-top: 22px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 8pt;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .appendix { page-break-before: always; break-before: page; }
+
+    @page { size: letter; margin: 0.55in 0.6in 0.6in; }
+    @page :first { margin: 0; }
+    @media print {
+      .cover { height: 11in; }
+      a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="cover-wrap"><div class="cover">
+    <div>
+      <div class="cover-kicker">Confidential business plan</div>
+      <img class="logo" src="../src/assets/centerlinked-logo-full.png" alt="CenterLinked" />
+      <h1>Business Plan</h1>
+      <p class="subtitle">A live referral profile for behavioral-health BD teams — not a patient directory.</p>
+      <dl class="cover-meta">
+        <div><dt>Entity</dt><dd>CenterLinked Inc.</dd></div>
+        <div><dt>Date</dt><dd>August 22, 2026</dd></div>
+        <div><dt>Product</dt><dd>www.centerlinked.com</dd></div>
+        <div><dt>Location</dt><dd>Florida</dd></div>
+        <div><dt>Governing law</dt><dd>Florida</dd></div>
+        <div><dt>Status</dt><dd>Production · early access</dd></div>
+      </dl>
+    </div>
+    <div class="cover-foot">
+      <span class="confidential-pill">Confidential</span>
+      <span>Membership live · billing soft-gated · community off</span>
+    </div>
+  </div></section>
+
+  <section class="inner">
+    <div class="running"><span>CenterLinked Inc.</span><span>Business Plan · August 22, 2026</span></div>
+    <h2 style="margin-top:0">Document snapshot</h2>
+    <table class="kv">
+      <tr><td>Classification</td><td>Confidential — internal and invited advisors only</td></tr>
+      <tr><td>Prepared for</td><td>Founder / operating use; not a fundraising deck</td></tr>
+      <tr><td>Location / governing law</td><td>Florida (Terms of Service §13, effective August 22, 2026)</td></tr>
+      <tr><td>Source of facts</td><td>Live product, current Terms, and <code>src/lib/pricing.ts</code></td></tr>
+    </table>
+    <div class="note">
+      Operating numbers (customers, ARR, conversion, burn, headcount) are not in the product repository and are <strong>not invented here</strong>. Fill those from Stripe, admin tools, and the founder’s books before using this document with investors or lenders.
+    </div>
+
+    <h2>Table of contents</h2>
+    <div class="toc">
+      <ol>
+        <li>Executive summary</li>
+        <li>Company overview</li>
+        <li>The problem</li>
+        <li>Solution and product</li>
+        <li>Market</li>
+        <li>Customers</li>
+        <li>Competitive landscape</li>
+        <li>Business model</li>
+        <li>Go-to-market</li>
+        <li>Operations and technology</li>
+        <li>Regulatory, privacy, and brand risk</li>
+        <li>Traction</li>
+        <li>18-month operating plan</li>
+        <li>Team, financials, and funding</li>
+        <li>Risks and mitigations</li>
+        <li>The line we will not cross</li>
+        <li>Why this can work</li>
+        <li>Appendix A — Pricing catalog</li>
+        <li>Appendix B — Shipped product surface</li>
+        <li>Appendix C — Open items before third-party use</li>
+        <li>Appendix D — Sources and notes</li>
+      </ol>
+    </div>
+
+    <h2>1. Executive summary</h2>
+    <p class="lede">CenterLinked is a <strong>B2B professional referral platform</strong> for behavioral-health and addiction-treatment organizations. It replaces stale PDFs, brochures, and business cards with <strong>one live, branded organization link</strong> that referral partners can reopen: who the org is, where facilities are, what they treat, which insurance they are in-network with, and who to contact.</p>
+    <p>The people who <strong>maintain</strong> the product are BD, admissions, and marketing teams. The people who <strong>reopen the link</strong> are hospitals, discharge planners, case managers, therapists, other BD reps, and probation officers.</p>
+    <p><strong>Why this exists:</strong> treatment orgs lose referrals when partners work from outdated one-pagers. Insurance networks change, BD contacts rotate, locations open, and levels of care shift. A PDF does not.</p>
+    <p><strong>The job to be done:</strong> when a professional is ready to place a client, they need four facts fast — level of care, insurance fit, location, and a real person to call — and they need those facts to still be true next month.</p>
+    <p><strong>Commercial model:</strong> membership is priced by <strong>live facilities</strong>, not seats. Referral partners who only view a public profile are not billed. Search placement is not for sale. Team seats are unlimited on every paid plan so the whole BD team shares one link.</p>
+
+<table>
+      <thead><tr><th>Plan</th><th>Live facilities</th><th>Monthly</th><th>Annual (2 months free)</th><th>Done For You</th></tr></thead>
+      <tbody>
+        <tr><td>Profile</td><td>1</td><td>$99</td><td>$990</td><td>$499</td></tr>
+        <tr><td>Network</td><td>2–5</td><td>$249</td><td>$2,490</td><td>$1,200</td></tr>
+        <tr><td>Group</td><td>6–15</td><td>$499</td><td>$4,990</td><td>$2,500</td></tr>
+        <tr><td>Enterprise</td><td>16+</td><td>Custom (floor ~$799/mo)</td><td>Custom</td><td>Quote</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Phase 1 is shipped.</strong> Public org and program sheets, authenticated Search, facility and insurance truth, monthly verification, org dashboard, branding, team invites, referral network, downloadable org/facility one-pagers, Stripe checkout and portal, and super-admin curation are live at centerlinked.com. Community Feed and Messenger exist in the codebase and are <strong>gated off</strong>.</p>
+    <p><strong>What we are not:</strong> a consumer treatment directory, a patient portal, a PHI store, a lead-gen marketplace, or a social network as the core product.</p>
+    <div class="note"><strong>Honest status:</strong> product-complete, commercially early. Billing is live and soft-gated — inactive orgs see a banner; Search and Facilities are not hard-locked. Facility-band copy is live; the app does not yet block adding facilities above the subscribed band.</div>
+
+    <h2>2. Company overview</h2>
+    <table class="kv">
+      <tr><td>Legal name</td><td>CenterLinked Inc.</td></tr>
+      <tr><td>Location</td><td>Florida</td></tr>
+      <tr><td>Governing law</td><td>Florida (Terms of Service §13)</td></tr>
+      <tr><td>Domain</td><td>centerlinked.com</td></tr>
+      <tr><td>Category</td><td>Vertical SaaS / professional network infrastructure for behavioral-health BD</td></tr>
+      <tr><td>Phase</td><td>Phase 1 shipped</td></tr>
+      <tr><td>Access model</td><td>Invite-oriented, work-email gated</td></tr>
+      <tr><td>Billing posture</td><td>Soft-gated early access; Stripe membership and Done For You live</td></tr>
+    </table>
+    <p><strong>Mission:</strong> make referral handoffs more trustworthy, easier to reopen, and safer to operate.</p>
+    <p><strong>How the company earns the right to exist:</strong> BD teams already spend money on collateral that decays. CenterLinked is the persistent URL that replaces that collateral, plus the monthly verification habit that keeps it trustworthy.</p>
+    <h3>How a customer uses it</h3>
+    <ol>
+      <li><strong>Claim the organization.</strong> Request access, create a work-email account, and claim or create the treatment organization so the team has a home base.</li>
+      <li><strong>Build the profile.</strong> Add locations, insurance contracts, levels of care, contacts, photos, and how to refer — once, in the dashboard.</li>
+      <li><strong>Share the link.</strong> BD, admissions, and marketing send one URL (and can download a one-pager that still points back to that URL). Every reopen shows current information.</li>
+    </ol>
+
+<h2 style="margin-top:0">3. The problem</h2>
+    <p>Behavioral-health BD is relationship-driven. Placement decisions are not “rehab near me.” They are professional judgments that need four facts fast: <strong>level of care, insurance fit, location, and a real person to call</strong>.</p>
+    <p>Today those facts live in the wrong artifacts:</p>
+    <table>
+      <thead><tr><th>Where the facts live today</th><th>Why it fails</th></tr></thead>
+      <tbody>
+        <tr><td>PDFs, brochures, business cards</td><td>Go stale the week a payer drops, a BD rep leaves, or a location opens</td></tr>
+        <tr><td>Org marketing websites</td><td>Built for patients and families; named in-network payers are buried or absent</td></tr>
+        <tr><td>Consumer directories</td><td>Wrong audience; vague on named contracts; optimized for consumer SEO</td></tr>
+        <tr><td>Internal CRM</td><td>Pipeline for the selling org — does not show <em>partners</em> who you are</td></tr>
+      </tbody>
+    </table>
+    <p>The cost is missed and misrouted referrals. A discharge planner who cannot confirm in-network status, or who calls a disconnected BD cell, sends the client somewhere else.</p>
+    <p>CenterLinked does <strong>not</strong> guarantee placements. It reduces friction so the right partner can confirm fit and reach the right contact.</p>
+
+    <h2>4. Solution and product</h2>
+    <p>One persistent URL per organization, plus per-program sheets. Update the dashboard once; every partner who reopens the link sees current information.</p>
+    <h3>4.1 The public leave-behind</h3>
+    <ul>
+      <li><strong>Organization sheet</strong> at <code>/o/:slug</code> and <code>/:slug</code> — branded profile of the org, approved non-frozen facilities, how to refer.</li>
+      <li><strong>Program / facility sheet</strong> at <code>/o/:org/p/:program</code> — a single location or program. Frozen programs return not found.</li>
+      <li><strong>Social preview:</strong> OG HTML rewritten for crawlers so a shared link looks like the org, not a generic app card.</li>
+      <li><strong>Downloadable one-pagers:</strong> org overview and facility one-pagers generated from the live sheet — a conference leave-behind that still points at the live URL.</li>
+    </ul>
+    <p>Public sheets honor <code>hidden_from_org_page</code> and only surface approved, non-frozen facilities.</p>
+    <h3>4.2 Trust layer — monthly verification</h3>
+    <table>
+      <thead><tr><th>Tier</th><th>Window</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Fresh</td><td>≤ 30 days</td><td>Verified this month</td></tr>
+        <tr><td>Recent</td><td>31–60 days</td><td>Still usable; aging</td></tr>
+        <tr><td>Stale</td><td>61–90 days</td><td>Needs confirmation</td></tr>
+        <tr><td>Frozen</td><td>&gt; 90 days (or flagged)</td><td>Drops out of Search; program sheets return not found</td></tr>
+      </tbody>
+    </table>
+    <p>Verification is the product’s honesty mechanism. Catalog growth that outruns verification is a company risk, not a vanity metric.</p>
+
+<h3 style="margin-top:0">4.3 Authenticated product</h3>
+    <ul>
+      <li>Organization setup, create, claim, and domain-based join</li>
+      <li>Dashboard: profile, engagement (sheet views / contact clicks), shared links</li>
+      <li>Multi-facility management: photos, BD contacts, levels of care, specializations</li>
+      <li>Insurance contracts per facility, linked to a curated payer database</li>
+      <li>In-app <strong>Search</strong> by insurance, state, city, and level of care (approved + not frozen)</li>
+      <li><strong>Referral network</strong> — preferred partner orgs, surfaced in Search</li>
+      <li>Team members and email invites (unlimited seats)</li>
+      <li>Monthly contract verification workflow</li>
+      <li>PDF facility upload + parse review (Supabase Edge Functions)</li>
+      <li>Org branding: logo, colors, cover/footer images, social links, CTAs</li>
+      <li>Stripe billing: facility-banded membership, annual option, Done For You, Customer Portal</li>
+    </ul>
+    <h3>4.4 Super-admin</h3>
+    <p>Access requests, personal-email allowlist, organization claims, join requests, facility verifications queue, payer database, org workspace create.</p>
+    <h3>4.5 Explicitly out of Phase 1</h3>
+    <p>Community <strong>Feed</strong> and <strong>Messenger</strong>. UI and tables exist. <code>FEATURES.community === false</code>. Routes redirect to <code>/app</code>. Do not turn this on until sheets + Search are clearly the habit.</p>
+
+    <h2>5. Market</h2>
+    <p>Industry backdrop (published estimates, <strong>not</strong> CenterLinked data): U.S. mental health and addiction treatment is a large, fragmented market. IBISWorld counts on the order of <strong>5,128 residential mental-health / substance-abuse businesses</strong> (2026). Licensed SUD facilities have been estimated around <strong>17,000</strong>. Those figures describe the industry we sell into, not software TAM, and they mix facilities with organizations.</p>
+    <p><strong>Bottoms-up software TAM:</strong> U.S. behavioral-health organizations that take <strong>professional</strong> referrals and would pay to keep a live profile current. A defensible org-count is on the order of <strong>5,000–15,000</strong> (many facilities sit under one org). This is a focused vertical, not a horizontal “all healthcare” TAM.</p>
+    <p>At facility-banded pricing, ARPU is no longer a flat $1,188/year:</p>
+    <table>
+      <thead><tr><th>Mix of 400 paying orgs</th><th>Illustrative ARR</th></tr></thead>
+      <tbody>
+        <tr><td>All Profile ($99/mo)</td><td>~$475k</td></tr>
+        <tr><td>50% Profile / 35% Network / 15% Group</td><td>~$1.07M</td></tr>
+      </tbody>
+    </table>
+    <div class="note">These are <strong>scenarios, not forecasts</strong>. They exist to show that a cheap Profile on-ramp can still build catalog density while the ICP (multi-site groups) pays like multi-site groups.</div>
+    <p><strong>What we are not sizing:</strong> consumer “rehab near me” search, patient-pay lead gen, or national directory advertising. Winning that market would require becoming a different company.</p>
+
+<h2 style="margin-top:0">6. Customers</h2>
+    <h3>Who pays</h3>
+    <p>The <strong>organization</strong>. Checkout is restricted to <code>facility_admin</code> or <code>super_admin</code>. Typical buyers: org leadership, BD leadership, admissions / marketing.</p>
+    <h3>Who operates</h3>
+    <p>BD reps, admissions, marketing. Work-email only. <strong>Seats are unlimited</strong> on every plan — charging per rep would punish the behavior we want (the whole team sharing one link).</p>
+    <h3>Who consumes the link (does not pay)</h3>
+    <p>Hospitals, therapists, case managers, other BD reps, probation officers, discharge planners. They are the reason the link exists. They are never the invoice.</p>
+    <div class="two avoid">
+      <div>
+        <h3>ICP</h3>
+        <p>Multi-location treatment orgs with an active BD team — regional groups (Network) and multi-site platforms (Group / Enterprise). They already print collateral, already work conferences, and already lose deals to stale insurance lists.</p>
+      </div>
+      <div>
+        <h3>Anti-ICP</h3>
+        <p>Consumer SEO shops and anyone who wants CenterLinked to “get us patients from Google.” That buyer will churn or demand features that destroy the brand.</p>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Role</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>super_admin</code></td><td>Platform operator</td></tr>
+        <tr><td><code>facility_admin</code></td><td>Org admin — profile, facilities, billing, members</td></tr>
+        <tr><td><code>bd_rep</code></td><td>Standard org member (default invite / join)</td></tr>
+      </tbody>
+    </table>
+    <p>UI gates are not security. RLS and SECURITY DEFINER RPCs are.</p>
+
+    <h2>7. Competitive landscape</h2>
+    <table>
+      <thead><tr><th>Alternative</th><th>Why CenterLinked is different</th></tr></thead>
+      <tbody>
+        <tr><td>PDFs / brochures / cards</td><td>Go stale; version chaos across every BD inbox</td></tr>
+        <tr><td>Org website</td><td>Wrong audience; insurance buried; not built as a leave-behind</td></tr>
+        <tr><td>Rehabs.com, Recovery.com, Psychology Today</td><td>Consumer directories; paid listings; not a professional source of truth</td></tr>
+        <tr><td>CRM</td><td>Internal pipeline — does not show partners who you are</td></tr>
+        <tr><td>Paid “featured listing” directories</td><td>CenterLinked does not sell Search placement</td></tr>
+        <tr><td>Generic link-in-bio / microsite tools</td><td>No payer database, no monthly freeze semantics, no work-email professional network</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Positioning line:</strong> not a directory for families. A live referral profile for professionals.</p>
+    <p>There is no serious incumbent whose only job is “one verified org link for BD.” That is an advantage and a risk: the category has to be explained, not captured.</p>
+
+<h2 style="margin-top:0">8. Business model</h2>
+    <p><strong>Who pays:</strong> the organization. Never the referral partner. Never a pay-to-rank Search slot.</p>
+    <p><strong>Membership</strong> is priced on live facilities the org maintains, in bands (not metered overage). Orgs upgrade when they outgrow a band. Everything that is the product stays in every paid plan: org + program sheets, branding, insurance, contacts, unlimited team, Search, monthly verification.</p>
+    <p>Annual billing is <strong>two months free</strong> ($990 / $2,490 / $4,990). Enterprise (16+) is quoted, with a published floor around $799/month.</p>
+    <p><strong>Done For You</strong> is labor-scaled setup on top of membership. $499 is the one-location landing number. A 10-location build is $2,500, not $499. 16+ is quoted. DFY sold below the labor it takes destroys margin on the best accounts.</p>
+    <h3>Early access (current commercial reality)</h3>
+    <ul>
+      <li>Inactive subscriptions see a dismissible banner. Search and Facilities are not hard-locked.</li>
+      <li>Terms §8: this may change; notice before a new price is charged.</li>
+      <li>Facility-band copy is live. The app does not yet block adding facilities above the subscribed band.</li>
+    </ul>
+    <h3>Unit economics (structural, not measured)</h3>
+    <p>Software COGS (Supabase, Vercel, Stripe, Resend) is low relative to price. The constraint is <strong>ops cost per org</strong>: access review, payer curation, DFY builds, verification follow-up.</p>
+    <p><strong>Unknowns to fill from Stripe and admin tools (do not guess):</strong> access-request → paying conversion; mix across tiers; DFY attach; annual vs monthly mix; logo retention / churn at month 6 and 12; support and DFY hours per org.</p>
+
+    <h2>9. Go-to-market</h2>
+    <p>Invite + request-access + work-email. <strong>Not consumer SEO.</strong></p>
+    <ol>
+      <li><strong>Founder-led BD</strong> into treatment orgs you already know. Conference follow-up is the native use case — the link (and one-pager) is the leave-behind.</li>
+      <li><strong>Done For You</strong> as the wedge for busy CEOs, now priced so a 10-location build is not $499.</li>
+      <li><strong>Make the public link the habit:</strong> QR, email signature, post-meeting text, one-pager handout. The URL is the product.</li>
+      <li><strong>Density in 1–2 metros</strong> so authenticated Search is actually useful.</li>
+      <li><strong>Do not</strong> buy “rehab near me.” <strong>Do not</strong> promise to fill beds.</li>
+    </ol>
+    <p><strong>Channels that fit:</strong> treatment conferences, existing BD relationships, warm intros, and the public sheet itself when a partner asks “who are you in-network with?”</p>
+    <p><strong>Channels that do not fit:</strong> consumer paid search, patient lead marketplaces, open self-serve consumer signup.</p>
+
+<h2 style="margin-top:0">10. Operations and technology</h2>
+    <p><strong>Stack:</strong> Vite 5 + React 18 SPA, TypeScript, Tailwind + shadcn/ui. Supabase (Auth, Postgres + RLS, Storage, Edge Functions). Stripe Checkout, Customer Portal, webhooks. Resend. Deployed on Vercel (SPA + <code>api/</code> serverless + <code>middleware.js</code> for OG).</p>
+    <p><strong>Access:</strong> work-email gated. Personal domains blocked unless listed in <code>approved_personal_emails</code> or <code>bootstrap_admin_emails</code>. Enforced client-side (<code>is_email_auth_allowed</code>) and via <code>/api/auth-before-user-created</code>.</p>
+    <p><strong>Facility writes</strong> go through <code>saveFacilityWithContracts</code> → RPC <code>save_facility_with_contracts</code>.</p>
+    <table>
+      <thead><tr><th>Catalog item</th><th>How it is charged</th></tr></thead>
+      <tbody>
+        <tr><td>Profile $99/mo</td><td><code>STRIPE_PRICE_MEMBERSHIP</code></td></tr>
+        <tr><td>Profile annual $990</td><td><code>STRIPE_PRICE_PROFILE_YEAR</code></td></tr>
+        <tr><td>Network / Group month + year</td><td>Dedicated Stripe Price IDs</td></tr>
+        <tr><td>Done For You (1 / 2–5 / 6–15)</td><td>Dedicated one-time Price IDs</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Security posture that is also a sales asset:</strong> no PHI by design, work-email gate, tenant isolation via RLS. The browser never receives <code>SUPABASE_SERVICE_ROLE</code> or other secrets.</p>
+
+    <h2>11. Regulatory, privacy, and brand risk</h2>
+    <p>CenterLinked is an <strong>organization profile platform</strong>. It is not a covered entity’s clinical system and must not become one.</p>
+    <table>
+      <thead><tr><th>Rule</th><th>Why it is existential</th></tr></thead>
+      <tbody>
+        <tr><td>No patient records / PHI</td><td>A single PHI incident would redefine the company as a healthcare app it is not staffed or designed to be</td></tr>
+        <tr><td>No placement guarantee</td><td>Terms and FAQ already say this; promising beds is a legal and brand lie</td></tr>
+        <tr><td>Named in-network listings are for fit</td><td>Benefits verification stays in admissions</td></tr>
+        <tr><td>Work-email gate</td><td>Keeps the network professional and reduces consumer-directory drift</td></tr>
+        <tr><td>No paid Search rank</td><td>Selling placement would make the catalog untrustworthy</td></tr>
+      </tbody>
+    </table>
+    <p>Wrong-but-confident expansion into patient matching or PHI would destroy the company faster than slow sales. Terms (effective August 22, 2026) and Privacy Policy are live. Fees in Terms §8 match the facility-banded catalog. Governing law and venue are <strong>Florida</strong>.</p>
+
+<h2 style="margin-top:0">12. Traction</h2>
+    <p><strong>Shipped and in production:</strong> marketing landing; auth and work-email gate; access intake; org setup / claim / join; dashboard, facilities, Search, referral network, members, settings, branding; public org and program sheets + OG; org and facility one-pagers; Stripe checkout, portal, webhook idempotency; monthly verification; super-admin tools; PDF upload / parse path.</p>
+    <table>
+      <thead><tr><th>Metric</th><th>Source</th><th>Status in this plan</th></tr></thead>
+      <tbody>
+        <tr><td>Orgs created vs approved vs paying</td><td>Admin + Stripe</td><td>Unknown — do not invent</td></tr>
+        <tr><td>Mix by Profile / Network / Group</td><td>Stripe + organizations</td><td>Unknown</td></tr>
+        <tr><td>Facilities live vs frozen</td><td>Admin / DB</td><td>Unknown</td></tr>
+        <tr><td>Public-link reopens and contact clicks</td><td>org_analytics_events</td><td>Unknown</td></tr>
+        <tr><td>DFY attach</td><td>Stripe</td><td>Unknown</td></tr>
+        <tr><td>Access-request volume and conversion</td><td>early_access_leads</td><td>Unknown</td></tr>
+        <tr><td>Verify-on-time rate</td><td>contracts_verified_at</td><td>Unknown</td></tr>
+      </tbody>
+    </table>
+    <div class="note">Until those are filled, describe the company as <strong>product-complete, commercially early</strong>.</div>
+
+    <h2>13. 18-month operating plan</h2>
+    <h3>Months 0–6 — Density and habit</h3>
+    <p>Tight ICP. Shareable link within days (DFY default for first cohort). Do not turn on community. Instrument the leave-behind: shares, QR, one-pager downloads, reopens.</p>
+    <p><strong>Success:</strong> member orgs have a live link they actually send; first metro has enough approved facilities that Search is not empty.</p>
+    <h3>Months 6–12 — Catalog that Search is worth opening</h3>
+    <p>One or two geographies. Instrument shares, reopens, verify-on-time rate. Sell annual in Checkout (already offered). Use DFY to land multi-site groups at Network/Group, not only Profile.</p>
+    <p><strong>Success:</strong> Search is useful for a real insurance + geography query in the focus metros; annual mix is visible in Stripe.</p>
+    <h3>Months 12–18 — Enforce what we sell</h3>
+    <p>Named date to hard-gate unpaid orgs (or grandfather early-access logos). Enforce facility bands on create/save if mix shows gaming. Revisit community only if sheets + Search are clearly the habit.</p>
+    <p><strong>Success metrics</strong> (targets to set from real baselines, not invented here): % of member orgs with a fresh verification; public-link reopens per org per month; paid conversion after early access; logo retention at month 6 and 12; share of revenue from Network + Group vs Profile.</p>
+
+<h2 style="margin-top:0">14. Team, financials, and funding</h2>
+    <p><strong>Not in the product repo.</strong> Do not send this plan to a third party with invented headcount, salaries, burn, runway, or a raise amount.</p>
+    <p>What belongs in a companion one-pager (founder-prepared, not guessed here): legal capitalization and officers; current monthly burn and runway; Stripe MRR / ARR and cash collected; whether a raise is contemplated, and for what use of proceeds; who operates access review, payer curation, and DFY delivery.</p>
+    <p>This document is the <strong>product and commercial plan</strong>. It is not a substitute for financial statements.</p>
+
+    <h2>15. Risks and mitigations</h2>
+    <table>
+      <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Slow adoption</td><td>DFY wedge; founder-led; metro density; keep $99 Profile on-ramp</td></tr>
+        <tr><td>Catalog rot</td><td>Freeze semantics; do not grow faster than verification</td></tr>
+        <tr><td>Billing stays soft forever</td><td>Named date to hard-gate or grandfather</td></tr>
+        <tr><td>Facility-band gaming</td><td>Enforce caps when early access ends</td></tr>
+        <tr><td>Confused with consumer directories</td><td>Keep work-email gate; refuse patient features</td></tr>
+        <tr><td>PHI creep</td><td>Product principles; no clinical workflows</td></tr>
+        <tr><td>DFY labor overrun</td><td>Never sell $499 for a 12-site build</td></tr>
+        <tr><td>Search empty in new geos</td><td>Density before national slogans</td></tr>
+        <tr><td>Community turned on too early</td><td>Flag stays off until sheets + Search are the habit</td></tr>
+        <tr><td>Live Stripe catalog lag</td><td>Mirror the test catalog in live Stripe and Vercel env</td></tr>
+      </tbody>
+    </table>
+
+    <h2>16. The line we will not cross</h2>
+    <p>Even if a feature would be “easy”: consumer treatment directory; patient intake, scheduling, medical advice, or clinical decision support; PHI / patient records; open self-serve consumer lead generation; social network as the Phase-1 core; paid Search placement.</p>
+    <p>If a request would make CenterLinked any of the above, the answer is no.</p>
+
+    <h2>17. Why this can work</h2>
+    <p>The job is real: BD teams already spend money on collateral that decays. The product is live and narrow. Trust is designed in (work email, monthly verify, freeze). Pricing now matches the unit that creates work and value — <strong>facilities</strong> — while seats stay free so the whole BD team shares one link.</p>
+    <p>The honest constraint: this is a focused vertical SaaS. It wins by becoming the default leave-behind in professional placements, not by winning Google for “rehab.”</p>
+
+<h2 class="appendix">Appendix A — Pricing catalog</h2>
+    <p>Source of truth: <code>src/lib/pricing.ts</code> and <code>server/stripe/pricing.mjs</code>. Must stay in sync with landing, billing UI, Terms §8, and <code>public/llms.txt</code>.</p>
+    <p><strong>Included on every paid plan:</strong> organization dashboard · public shareable profile · unlimited team seats · unlimited profile updates · monthly verification · insurance and level of care listings · referral contact management · authenticated Search.</p>
+    <table>
+      <thead><tr><th>Plan</th><th>Facilities</th><th>Monthly</th><th>Annual</th><th>Positioning</th></tr></thead>
+      <tbody>
+        <tr><td>Profile</td><td>1</td><td>$99</td><td>$990</td><td>One location. One live link.</td></tr>
+        <tr><td>Network</td><td>2–5</td><td>$249</td><td>$2,490</td><td>Regional groups. Featured as “Most groups.”</td></tr>
+        <tr><td>Group</td><td>6–15</td><td>$499</td><td>$4,990</td><td>Multi-site source of truth.</td></tr>
+        <tr><td>Enterprise</td><td>16+</td><td>Quote from ~$799/mo</td><td>Quote</td><td>National platforms. Request access.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Done For You band</th><th>One-time amount</th></tr></thead>
+      <tbody>
+        <tr><td>1 facility</td><td>$499</td></tr>
+        <tr><td>2–5 facilities</td><td>$1,200</td></tr>
+        <tr><td>6–15 facilities</td><td>$2,500</td></tr>
+        <tr><td>16+</td><td>Quote</td></tr>
+      </tbody>
+    </table>
+    <p>Referral partners who only view a public profile are not billed.</p>
+
+    <h2>Appendix B — Shipped product surface</h2>
+    <table>
+      <thead><tr><th>Surface</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Landing + Privacy + Terms</td><td>Live</td></tr>
+        <tr><td>Request access</td><td>Live</td></tr>
+        <tr><td>Auth (email, Google, work-email gate)</td><td>Live</td></tr>
+        <tr><td>Org setup / claim / join</td><td>Live</td></tr>
+        <tr><td>Org dashboard, facilities, insurance</td><td>Live</td></tr>
+        <tr><td>Monthly verification</td><td>Live</td></tr>
+        <tr><td>Authenticated Search + referral network</td><td>Live</td></tr>
+        <tr><td>Team members / invites</td><td>Live</td></tr>
+        <tr><td>Public org + program sheets + OG</td><td>Live</td></tr>
+        <tr><td>Org / facility one-pagers</td><td>Live</td></tr>
+        <tr><td>Stripe membership + DFY + portal</td><td>Live (soft-gated)</td></tr>
+        <tr><td>Super-admin tools</td><td>Live</td></tr>
+        <tr><td>PDF parse onboarding</td><td>Live (Edge Functions)</td></tr>
+        <tr><td>Community Feed / Messenger</td><td>Built, gated off</td></tr>
+      </tbody>
+    </table>
+
+<h2 style="margin-top:0">Appendix C — Open items before third-party use</h2>
+    <p>Do not send this plan to an investor, bank, or large customer until the founder fills:</p>
+    <ol>
+      <li>Paying org count and MRR / ARR (Stripe)</li>
+      <li>Tier mix and DFY attach</li>
+      <li>Access-request conversion</li>
+      <li>Facilities live vs frozen; verify-on-time rate</li>
+      <li>Public-link reopens per org</li>
+      <li>Team, burn, runway</li>
+      <li>Named date (or grandfather policy) for ending soft-gated billing</li>
+      <li>Mirror the Stripe catalog and price IDs into <strong>live</strong> Stripe and Vercel</li>
+    </ol>
+
+    <h2>Appendix D — Sources and notes</h2>
+    <ul>
+      <li>Product facts: live app at https://www.centerlinked.com, PROJECT.md, PRINCIPLES.md, ARCHITECTURE.md</li>
+      <li>Pricing: src/lib/pricing.ts, Terms of Service §8 (effective August 22, 2026)</li>
+      <li>Verification windows: src/lib/verification.ts</li>
+      <li>Industry backdrop: IBISWorld residential MH/SA business count (2026) and published licensed-SUD facility estimates — industry context only, not CenterLinked TAM</li>
+      <li>This plan does not invent customers, revenue, conversion, burn, or headcount</li>
+    </ul>
+    <p style="margin-top:28px; font-family: Montserrat, sans-serif; font-weight: 700; color: var(--teal-dark);">CenterLinked Inc. · Florida · Confidential · August 22, 2026 · www.centerlinked.com</p>
+  
+    <footer class="doc"><span>Confidential</span><span>End of document</span></footer>
+  </section>
+</body>
+</html>

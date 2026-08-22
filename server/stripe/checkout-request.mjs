@@ -40,9 +40,30 @@ export function parseCheckoutRequest(body) {
   };
 }
 
+function membershipPriceId(prices, membershipTier, interval) {
+  if (membershipTier === "profile") {
+    return interval === "year" ? prices.profileYear : prices.membership;
+  }
+  if (membershipTier === "network") {
+    return interval === "year" ? prices.networkYear : prices.network;
+  }
+  if (membershipTier === "group") {
+    return interval === "year" ? prices.groupYear : prices.group;
+  }
+  return "";
+}
+
+function dfyPriceId(prices, membershipTier) {
+  if (membershipTier === "profile") return prices.setup;
+  if (membershipTier === "network") return prices.setupNetwork;
+  if (membershipTier === "group") return prices.setupGroup;
+  return "";
+}
+
 function membershipLineItem(prices, membershipTier, interval) {
-  if (membershipTier === "profile" && interval === "month" && prices.membership) {
-    return { price: prices.membership, quantity: 1 };
+  const priceId = membershipPriceId(prices, membershipTier, interval);
+  if (priceId) {
+    return { price: priceId, quantity: 1 };
   }
 
   const tier = MEMBERSHIP_TIERS[membershipTier];
@@ -62,8 +83,9 @@ function membershipLineItem(prices, membershipTier, interval) {
 }
 
 function dfyLineItem(prices, membershipTier) {
-  if (membershipTier === "profile" && prices.setup) {
-    return { price: prices.setup, quantity: 1 };
+  const priceId = dfyPriceId(prices, membershipTier);
+  if (priceId) {
+    return { price: priceId, quantity: 1 };
   }
 
   const pkg = DFY_PACKAGES[membershipTier];
