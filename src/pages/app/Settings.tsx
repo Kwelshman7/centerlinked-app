@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { mergeOrgImages } from "@/lib/org-hero";
 import { formatSubscriptionStatus, type OrgBilling } from "@/lib/billing";
 import { toast } from "sonner";
+import { verificationState } from "@/lib/verification";
 
 export default function Settings() {
   const { profile, user, isFacilityAdmin, isSuperAdmin, needsSuperAdminSetup, refresh } = useAuth();
@@ -124,11 +125,20 @@ export default function Settings() {
       }
       const { data: fs } = await supabase
         .from("facilities")
-        .select("id,verification_status")
+        .select("id,verification_status,contracts_verified_at,verification_frozen")
         .eq("organization_id", orgId);
-      const facList = (fs as Array<{ id: string; verification_status: string }>) ?? [];
+      const facList =
+        (fs as Array<{
+          id: string;
+          verification_status: string;
+          contracts_verified_at: string | null;
+          verification_frozen: boolean | null;
+        }>) ?? [];
       setFacilitiesCount(facList.length);
-      setVerifiedFacilitiesCount(facList.filter((x) => x.verification_status === "approved").length);
+      setVerifiedFacilitiesCount(
+        facList.filter((x) => verificationState(x.contracts_verified_at, x.verification_frozen).tier === "fresh")
+          .length,
+      );
       if (facList.length > 0) {
         const { data: cs } = await supabase
           .from("insurance_contracts")
@@ -213,7 +223,7 @@ export default function Settings() {
   const removeWhy = (i: number) => setWhyRefer((arr) => arr.filter((_, idx) => idx !== i));
 
   const orgStats = [
-    { label: "Facilities", value: facilitiesCount, sub: `${verifiedFacilitiesCount} verified`, icon: Building2 },
+    { label: "Facilities", value: facilitiesCount, sub: `${verifiedFacilitiesCount} verified this month`, icon: Building2 },
     { label: "Insurance Payers", value: payersCount, sub: `${contractsCount} contracts`, icon: ShieldCheck },
     { label: "Team Members", value: membersCount, sub: "active", icon: Users },
     { label: "Status", value: orgVerified ? "Verified" : "Pending", sub: orgVerified ? "trusted partner" : "in review", icon: BadgeCheck },

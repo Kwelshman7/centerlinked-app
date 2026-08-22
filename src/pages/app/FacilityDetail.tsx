@@ -66,15 +66,18 @@ interface Contract {
 
 export default function FacilityDetail() {
   const { id } = useParams<{ id: string }>();
-  const { profile, isSuperAdmin, isFacilityAdmin } = useAuth();
+  const { profile, isSuperAdmin } = useAuth();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [org, setOrg] = useState<SheetOrg | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [fixingSlug, setFixingSlug] = useState(false);
   const [loading, setLoading] = useState(true);
   const isMine = !!facility && profile?.organization_id === facility.organization_id;
-  const canManage = isSuperAdmin || (isMine && isFacilityAdmin);
+  const canManage = isSuperAdmin || isMine;
   const canSeePending = isMine || isSuperAdmin;
+  const orgPublicLive = org?.verified === true && !!org?.slug;
+  const facilityPublicLive =
+    facility?.verification_status === "approved" && !facility?.verification_frozen && !!facility?.slug;
 
   const loadFacility = async () => {
     if (!id) {
@@ -92,7 +95,7 @@ export default function FacilityDetail() {
     if (fac) {
       const { data: o } = await supabase
         .from("organizations")
-        .select("id,name,slug,logo_url,bd_contact_name,bd_contact_phone,bd_contact_email,website,brand_color,accent_color,cover_image_url")
+        .select("id,name,slug,logo_url,bd_contact_name,bd_contact_phone,bd_contact_email,website,brand_color,accent_color,cover_image_url,verified")
         .eq("id", fac.organization_id)
         .maybeSingle();
       setOrg((o as SheetOrg | null) ?? null);
@@ -165,13 +168,26 @@ export default function FacilityDetail() {
     <div className="max-w-[1400px] mx-auto pb-8 space-y-6">
       {/* Top action bar */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
-        {org?.slug && (
+        {org?.slug && orgPublicLive ? (
           <Button asChild type="button" variant="outline" size="sm">
             <Link to={`/o/${org.slug}`}>
               <ExternalLink className="h-4 w-4" /> View Organization
             </Link>
           </Button>
-        )}
+        ) : org?.slug && (isMine || isSuperAdmin) ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              toast.message("Public page isn’t live yet", {
+                description: "It goes live after CenterLinked approves the organization.",
+              })
+            }
+          >
+            <ExternalLink className="h-4 w-4" /> View Organization
+          </Button>
+        ) : null}
         {(isMine || isSuperAdmin) && (
           <>
             <AssignFacilityBdDialog
@@ -196,7 +212,7 @@ export default function FacilityDetail() {
                 onSaved={loadFacility}
               />
             )}
-            {facility.slug && (
+            {facility.slug && facilityPublicLive ? (
               <ShareSheetButton
                 slug={facility.slug}
                 orgSlug={org?.slug}
@@ -206,7 +222,19 @@ export default function FacilityDetail() {
                 label="Share Facility"
                 hideCopy
               />
-            )}
+            ) : facility.slug ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() =>
+                  toast.message("Facility isn’t public yet", {
+                    description: "Share becomes available after this facility is approved.",
+                  })
+                }
+              >
+                Share Facility
+              </Button>
+            ) : null}
           </>
         )}
       </div>

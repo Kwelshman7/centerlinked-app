@@ -16,6 +16,7 @@ import {
 import { Building2, Search, MapPin, Shield, BadgeCheck, X, SlidersHorizontal, Plus } from "lucide-react";
 import { LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
 import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FacilityRow {
   id: string;
@@ -41,8 +42,10 @@ const ANY = "__any__";
 const PAGE_SIZE = 24;
 
 export default function Facilities() {
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [facilities, setFacilities] = useState<FacilityRow[]>([]);
+  const [ownUnlisted, setOwnUnlisted] = useState<FacilityRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
 
   const [q, setQ] = useState("");
@@ -67,11 +70,22 @@ export default function Facilities() {
           .from("insurance_contracts")
           .select("facility_id,payer_name,in_network"),
       ]);
-      setFacilities(((f as FacilityRow[]) ?? []).filter((row) => isPartnerVisibleFacility(row)));
+      const visible = ((f as FacilityRow[]) ?? []).filter((row) => isPartnerVisibleFacility(row));
+      setFacilities(visible);
       setContracts((c as ContractRow[]) ?? []);
+      if (profile?.organization_id) {
+        const { data: mine } = await supabase
+          .from("facilities")
+          .select("id,name,tagline,city,state,image_urls,levels_of_care,highlights,organization_id,verification_status,verification_frozen")
+          .eq("organization_id", profile.organization_id);
+        const visibleIds = new Set(visible.map((row) => row.id));
+        setOwnUnlisted(((mine as FacilityRow[]) ?? []).filter((row) => !visibleIds.has(row.id)));
+      } else {
+        setOwnUnlisted([]);
+      }
       setLoading(false);
     })();
-  }, []);
+  }, [profile?.organization_id]);
 
   const contractsByFacility = useMemo(() => {
     const m = new Map<string, ContractRow[]>();
@@ -125,6 +139,10 @@ export default function Facilities() {
 
   const visibleFacilities = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = visibleFacilities.length < filtered.length;
+  const qLower = q.trim().toLowerCase();
+  const ownUnlistedMatch = qLower
+    ? ownUnlisted.filter((f) => `${f.name} ${f.tagline ?? ""}`.toLowerCase().includes(qLower))
+    : ownUnlisted;
 
   return (
     <div className="space-y-6">
@@ -223,18 +241,31 @@ export default function Facilities() {
             <>
               <p className="font-medium">No verified programs yet</p>
               <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-                Programs appear here once they've been submitted and verified. Add your own facilities to get started.
+                {ownUnlisted.length > 0
+                  ? "This directory only lists approved public programs. Your facilities are on Home until they’re approved."
+                  : "Programs appear here once they've been submitted and verified. Add your own facilities to get started."}
               </p>
               <Button asChild size="sm" className="mt-4">
-                <Link to="/app/onboarding?add=1">
-                  <Plus className="h-4 w-4" /> Add a facility
+                <Link to={ownUnlisted.length > 0 ? "/app#org-facilities" : "/app/onboarding?add=1"}>
+                  <Plus className="h-4 w-4" /> {ownUnlisted.length > 0 ? "Open Home" : "Add a facility"}
                 </Link>
               </Button>
             </>
           ) : (
             <>
               <p className="font-medium">No programs match your search</p>
-              <p className="text-sm text-muted-foreground mt-1">Try clearing a filter or broadening your criteria.</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                {ownUnlistedMatch.length > 0
+                  ? "Your own facilities aren’t listed here until they’re approved. Open them from Home."
+                  : "This directory only shows approved public programs. Try clearing a filter or broadening your criteria."}
+              </p>
+              {ownUnlistedMatch.length > 0 && (
+                <Button asChild size="sm" className="mt-4">
+                  <Link to={ownUnlistedMatch.length === 1 ? `/app/facilities/${ownUnlistedMatch[0].id}` : "/app#org-facilities"}>
+                    Open {ownUnlistedMatch.length === 1 ? "your facility" : "Home"}
+                  </Link>
+                </Button>
+              )}
               {activeCount > 0 && (
                 <Button variant="outline" size="sm" className="mt-4" onClick={clearAll}>
                   <X className="h-4 w-4" /> Clear filters

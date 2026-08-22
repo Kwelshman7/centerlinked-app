@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { Building2 } from "lucide-react";
 import { OrgHeroSection } from "@/components/public/OrgHeroSection";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
 import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
 import { OrgClaimCard } from "@/components/public/OrgClaimCard";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
+import { Button } from "@/components/ui/button";
 import { applySocialMeta, orgShareCardType, orgShareIcon, orgShareImage } from "@/lib/social-meta";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { fetchPublicOrgSheet } from "@/lib/public-sheet-data";
 import { orgPublicUrl } from "@/lib/public-urls";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 function uniqueFacilityStates(facilities: ShowcaseFacility[]) {
   const states = new Set<string>();
@@ -35,11 +39,13 @@ function uniqueFacilityLevels(facilities: ShowcaseFacility[]) {
 
 export default function OrgSheet() {
   const { slug } = useParams<{ slug: string }>();
+  const { profile, isSuperAdmin } = useAuth();
   const [org, setOrg] = useState<OrgSheetData | null>(null);
   const [facilities, setFacilities] = useState<ShowcaseFacility[]>([]);
   const [facilityPayersById, setFacilityPayersById] = useState<Map<string, string[]>>(new Map());
   const [heroContact, setHeroContact] = useState<HeroContact | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [ownPending, setOwnPending] = useState(false);
   const [selectedState, setSelectedState] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [selectedInsurance, setSelectedInsurance] = useState("all");
@@ -54,10 +60,23 @@ export default function OrgSheet() {
 
   useEffect(() => {
     if (!slug) return;
+    setNotFound(false);
+    setOwnPending(false);
+    setOrg(null);
     (async () => {
       const payload = await fetchPublicOrgSheet(slug);
       if (!payload) {
-        setNotFound(true);
+        const { data: own } = await supabase
+          .from("organizations")
+          .select("id,verified")
+          .eq("slug", slug)
+          .maybeSingle();
+        const isOwnPending =
+          !!own &&
+          own.verified !== true &&
+          (isSuperAdmin || profile?.organization_id === own.id);
+        setOwnPending(isOwnPending);
+        setNotFound(!isOwnPending);
         return;
       }
 
@@ -112,7 +131,7 @@ export default function OrgSheet() {
         setHeroContact(null);
       }
     })();
-  }, [slug]);
+  }, [slug, profile?.organization_id, isSuperAdmin]);
 
   const brand = useOrgBrandColor(org);
   const facilityStates = useMemo(() => uniqueFacilityStates(facilities), [facilities]);
@@ -159,10 +178,30 @@ export default function OrgSheet() {
     }
   }, [org, facilities, facilityPayersById, brand]);
 
-  if (notFound) {
+  if (ownPending || notFound) {
     return (
-      <div className="min-h-screen grid place-items-center text-muted-foreground p-8 text-center">
-        Organization not found.
+      <div className="min-h-screen grid place-items-center text-center p-8">
+        <div>
+          <Building2 className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <h1 className="font-heading text-2xl font-bold">
+            {ownPending ? "Public page isn’t live yet" : "Organization not found"}
+          </h1>
+          <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+            {ownPending
+              ? "This organization is still pending review. Referral partners won’t see the page until it’s approved."
+              : "This link may have been rotated, or the organization isn’t public yet."}
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+            {ownPending && (
+              <Button asChild>
+                <Link to="/app">Back to Home</Link>
+              </Button>
+            )}
+            <Button asChild variant={ownPending ? "outline" : "default"}>
+              <Link to="/">Back to CenterLinked</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

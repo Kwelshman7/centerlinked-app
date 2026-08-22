@@ -97,7 +97,7 @@ export function EditFacilityDialog({
   const canManageVisibility = isFacilityAdmin || isSuperAdmin;
   const orgId = organizationId || profile?.organization_id || null;
   const canShowTrigger =
-    isSuperAdmin || (!!orgId && isFacilityAdmin && profile?.organization_id === orgId);
+    isSuperAdmin || (!!orgId && profile?.organization_id === orgId);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => toDraft(facility, contracts));
   const [saving, setSaving] = useState(false);

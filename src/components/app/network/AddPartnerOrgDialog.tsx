@@ -25,12 +25,16 @@ export function AddPartnerOrgDialog({ excludeIds, onAdd }: Props) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [results, setResults] = useState<OrgResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!open) return;
-    const t = setTimeout(async () => {
+    if (!open) {
       setLoading(true);
+      setResults([]);
+      return;
+    }
+    setLoading(true);
+    const t = setTimeout(async () => {
       let query = supabase
         .from("organizations")
         .select("id,name,logo_url,hq_city,hq_state")

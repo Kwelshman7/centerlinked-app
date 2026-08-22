@@ -65,15 +65,21 @@ export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Sel
   useEffect(() => { load(); }, []);
 
   const grouped = useMemo(() => {
-    const approved = payers.filter((p) => p.status === "approved" && p.active !== false);
-    const myPending = approvedOnly ? [] : payers.filter((p) => p.status === "pending");
+    const q = search.trim().toLowerCase();
+    const matches = (p: PayerOption) => {
+      if (!q) return true;
+      if (p.name.toLowerCase().includes(q)) return true;
+      return (p.aliases ?? []).some((alias) => alias.toLowerCase().includes(q));
+    };
+    const approved = payers.filter((p) => p.status === "approved" && p.active !== false && matches(p));
+    const myPending = approvedOnly ? [] : payers.filter((p) => p.status === "pending" && matches(p));
     const groups: Record<string, PayerOption[]> = {};
     approved.forEach((p) => {
       const k = p.category || "other";
       (groups[k] ||= []).push(p);
     });
     return { groups, myPending };
-  }, [payers]);
+  }, [payers, search, approvedOnly]);
 
   const trimmed = search.trim();
   const exactMatch = payers.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
@@ -126,7 +132,7 @@ export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Sel
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[min(360px,calc(100vw-2rem))] p-0" align="start">
-        <Command shouldFilter={true}>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search insurance payers…"
             value={search}

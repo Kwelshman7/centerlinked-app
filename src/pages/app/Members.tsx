@@ -149,7 +149,11 @@ export default function Members() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold">Members</h1>
-        <p className="text-sm text-muted-foreground">BD reps in your organization. Invites must use your work email domain{orgDomain ? ` (@${orgDomain})` : ""}.</p>
+        <p className="text-sm text-muted-foreground">
+          {isFacilityAdmin
+            ? `BD reps in your organization. Invites must use your work email domain${orgDomain ? ` (@${orgDomain})` : ""}.`
+            : "Team members in your organization. Only an organization admin can send work-email invites."}
+        </p>
       </div>
 
       {isFacilityAdmin && joinRequests.length > 0 && (
@@ -229,7 +233,9 @@ export default function Members() {
           <div>
             <p className="font-medium">No team members yet</p>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-              Invite your BD reps so they can access the network and share facility links with referral partners.
+              {isFacilityAdmin
+                ? "Invite your BD reps so they can access the network and share facility links with referral partners."
+                : "Ask an organization admin to invite teammates with a work email."}
             </p>
           </div>
           {isFacilityAdmin && (

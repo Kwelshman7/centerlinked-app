@@ -33,6 +33,7 @@ interface OrgRow {
   slug: string | null;
   logo_url: string | null;
   brand_color: string | null;
+  verified: boolean | null;
 }
 
 interface FacilityRow {
@@ -117,7 +118,9 @@ export function OrgDashboard({
     ? `/app/admin/organizations/${organizationId}?tab=facilities`
     : facilityCount === 0
       ? "/app/onboarding?add=1"
-      : "/app/facilities";
+      : facilityCount === 1
+        ? `/app/facilities/${allFacilities[0].id}`
+        : "/app#org-facilities";
 
   const brandingHref = adminMode
     ? `/app/admin/organizations/${organizationId}?tab=branding`
@@ -167,7 +170,7 @@ export function OrgDashboard({
       const [{ data: o }, { count: mCount }] = await Promise.all([
         supabase
           .from("organizations")
-          .select("id,name,slug,logo_url,brand_color")
+          .select("id,name,slug,logo_url,brand_color,verified")
           .eq("id", organizationId)
           .maybeSingle(),
         supabase
@@ -209,15 +212,31 @@ export function OrgDashboard({
     org?.slug && typeof window !== "undefined"
       ? `${window.location.origin}${orgPublicPath(org.slug)}`
       : null;
+  const publicLive = !!publicUrl && org?.verified === true;
 
   const handleViewPublic = () => {
-    if (publicUrl) window.open(publicUrl, "_blank", "noopener,noreferrer");
-    else toast.error("Organization link isn't ready yet — add a slug in Branding.");
+    if (publicLive && publicUrl) {
+      window.open(publicUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (!org?.slug) {
+      toast.error("Organization link isn't ready yet — add a slug in Branding.");
+      return;
+    }
+    toast.message("Public page isn’t live yet", {
+      description: "It goes live after CenterLinked approves the organization.",
+    });
   };
 
   const handleShare = async () => {
     if (!publicUrl || !org) {
       toast.error("Organization link isn't ready yet.");
+      return;
+    }
+    if (!publicLive) {
+      toast.message("Public page isn’t live yet", {
+        description: "Share becomes available after the organization is approved.",
+      });
       return;
     }
     const ok = await shareOrCopyUrl({ url: publicUrl, title: org.name });
@@ -258,7 +277,7 @@ export function OrgDashboard({
             {org?.name && <p className="text-sm text-muted-foreground mt-1 truncate">{org.name}</p>}
           </div>
           <div className="grid grid-cols-2 gap-2 shrink-0 sm:flex sm:items-center sm:flex-wrap">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleViewPublic} disabled={!publicUrl}>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleViewPublic} disabled={!org?.slug}>
               <ExternalLink className="h-4 w-4" /> Public page
             </Button>
             <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} triggerClassName="w-full sm:w-auto" />
@@ -311,7 +330,11 @@ export function OrgDashboard({
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
             <h2 className="font-heading text-sm font-bold">Quick actions</h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5 sm:hidden">Manage your profile, team, and facilities.</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {org && !publicLive
+                ? "Public page and share stay off until the organization is approved."
+                : "Manage your profile, team, and facilities."}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -350,7 +373,7 @@ export function OrgDashboard({
             variant="outline"
             className="h-11 justify-start sm:h-10"
             onClick={handleShare}
-            disabled={!publicUrl}
+            disabled={!org?.slug}
           >
             <Share2 className="h-4 w-4" /> Share link
           </Button>
@@ -359,7 +382,7 @@ export function OrgDashboard({
             variant="outline"
             className="h-11 justify-start sm:h-10"
             onClick={handleViewPublic}
-            disabled={!publicUrl}
+            disabled={!org?.slug}
           >
             <ExternalLink className="h-4 w-4" /> Public page
           </Button>
@@ -367,7 +390,7 @@ export function OrgDashboard({
       </Card>
 
       {/* Facilities grid */}
-      <Card className="p-3 sm:p-4">
+      <Card id="org-facilities" className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <div className="min-w-0">
             <h2 className="font-heading text-base font-bold">Facilities</h2>
@@ -432,6 +455,11 @@ export function OrgDashboard({
                       )}
                     </p>
                     <div className="flex items-center shrink-0">
+                      <Button asChild type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]">
+                        <Link to={facilityDetailHref(f.id)}>
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </Link>
+                      </Button>
                       {canManageFacilityVisibility && (
                         <Button
                           type="button"
