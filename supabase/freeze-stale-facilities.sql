@@ -57,8 +57,15 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  uid uuid := auth.uid();
   days integer := COALESCE(_days, 60);
 BEGIN
+  IF coalesce(auth.role(), '') <> 'service_role'
+     AND NOT public.has_role(uid, 'super_admin'::public.app_role) THEN
+    RAISE EXCEPTION 'Not allowed to list facilities due for verification'
+      USING ERRCODE = '42501';
+  END IF;
+
   IF days < 1 OR days > 3650 THEN
     RAISE EXCEPTION 'days must be between 1 and 3650';
   END IF;

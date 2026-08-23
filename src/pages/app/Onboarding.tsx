@@ -25,6 +25,7 @@ import {
   Phone as PhoneIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { orgOnboardingSelect } from "@/lib/org-public-select";
 
 interface OrgDraft {
   name: string;
@@ -63,7 +64,7 @@ export default function Onboarding() {
       setOrgLoaded(true);
       return;
     }
-    supabase.from("organizations").select("*").eq("id", profile.organization_id).maybeSingle().then(({ data }) => {
+    supabase.from("organizations").select(orgOnboardingSelect).eq("id", profile.organization_id).maybeSingle().then(({ data }) => {
       if (data) {
         setOrg({
           name: data.name ?? "",

@@ -18,6 +18,16 @@ export const orgSheetSelect =
 export const orgSheetSelectFallback =
   "id,name,logo_url,description,tagline,website,hq_city,hq_state,slug,bd_contact_name,bd_contact_phone,bd_contact_email,brand_color,accent_color,cover_image_url,image_urls,verified,created_at,updated_at,program_badges,announcement,why_refer";
 
+/** Signed-in Settings / admin branding. Never include billing columns. */
+export const orgDashboardSelect =
+  `id,name,slug,description,website,hq_city,hq_state,phone,email_domain,num_facilities,logo_url,favicon_url,footer_image_url,${SOCIAL},bd_contact_name,bd_contact_phone,bd_contact_email,verified,tagline,brand_color,accent_color,cover_image_url,image_urls,announcement,program_badges,cta_primary_label,cta_secondary_label,why_refer`;
+
+export const orgDashboardSelectFallback =
+  "id,name,slug,description,website,hq_city,hq_state,phone,email_domain,num_facilities,logo_url,bd_contact_name,bd_contact_phone,bd_contact_email,verified,tagline,brand_color,accent_color,cover_image_url,image_urls,announcement,program_badges,cta_primary_label,cta_secondary_label,why_refer";
+
+export const orgOnboardingSelect =
+  "id,name,website,hq_city,hq_state,description,phone,num_facilities,logo_url";
+
 export function isMissingOptionalOrgColumn(error: { message?: string; code?: string } | null) {
   if (!error?.message) return false;
   const msg = error.message.toLowerCase();

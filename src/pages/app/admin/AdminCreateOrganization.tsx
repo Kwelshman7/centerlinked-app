@@ -21,6 +21,7 @@ import {
   SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS, emptyFacility,
 } from "@/components/app/facility/facility-types";
 import { fileToBase64 } from "@/lib/files";
+import { assertImageFile, assertPdfFile } from "@/lib/upload-guards";
 import { buildFacilityContractDrafts } from "@/lib/match-payer";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
 import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
@@ -219,8 +220,12 @@ export default function AdminCreateOrganization() {
   /* ---------- Logo upload ---------- */
   const uploadLogo = async (file: File) => {
     if (!file) return;
-    const ext = file.name.split(".").pop() || "png";
-    const path = `admin-staged/${crypto.randomUUID()}.${ext}`;
+    const imageCheck = assertImageFile(file);
+    if (!imageCheck.ok) {
+      toast.error(imageCheck.error);
+      return;
+    }
+    const path = `admin-staged/${crypto.randomUUID()}.${imageCheck.ext}`;
     const { error } = await supabase.storage.from("org-logos")
       .upload(path, file, { contentType: file.type, upsert: true });
     if (error) { toast.error(error.message); return; }
@@ -232,12 +237,9 @@ export default function AdminCreateOrganization() {
   /* ---------- STAGE 2a: PDF flow ---------- */
   const handlePdf = async (file: File) => {
     if (!orgId) return;
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      toast.error("PDF files only");
-      return;
-    }
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("PDF must be under 15MB");
+    const pdfCheck = await assertPdfFile(file);
+    if (!pdfCheck.ok) {
+      toast.error(pdfCheck.error);
       return;
     }
     setPdfFilename(file.name);

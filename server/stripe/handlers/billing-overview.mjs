@@ -59,13 +59,13 @@ export async function handleBillingOverview(accessToken) {
         const item = sub.items?.data?.[0];
         const product = item?.price?.product;
         const pm = sub.default_payment_method;
+        // API 2025-03-31.basil+ moved period end onto subscription items.
+        const periodEnd = item?.current_period_end ?? sub.current_period_end;
         subscription = {
           id: sub.id,
           status: sub.status,
           cancel_at_period_end: !!sub.cancel_at_period_end,
-          current_period_end: sub.current_period_end
-            ? new Date(sub.current_period_end * 1000).toISOString()
-            : null,
+          current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
           price_id: item?.price?.id || org.subscription_price_id || null,
           product_name:
             typeof product === "object" && product?.name

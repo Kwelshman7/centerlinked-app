@@ -166,6 +166,36 @@ export async function openBillingPortal() {
   return postBillingJson("/api/create-portal-session", {});
 }
 
+function mapOrgBilling(row: Record<string, unknown> | null | undefined): OrgBilling | null {
+  if (!row) return null;
+  return {
+    subscription_status: String(row.subscription_status || "none"),
+    subscription_current_period_end: (row.subscription_current_period_end as string) || null,
+    setup_package: (row.setup_package as string) || null,
+    stripe_customer_id: (row.stripe_customer_id as string) || null,
+    billing_email: (row.billing_email as string) || null,
+  };
+}
+
+/**
+ * Billing snapshot for the signed-in user's org.
+ * Prefers get_organization_billing (works after billing columns are revoked).
+ * Falls back to a direct select until that SQL is applied.
+ */
+export async function fetchOrganizationBilling(orgId: string): Promise<OrgBilling | null> {
+  const { data, error } = await supabase.rpc("get_organization_billing", { _org_id: orgId });
+  if (!error && data && typeof data === "object") {
+    return mapOrgBilling(data as Record<string, unknown>);
+  }
+
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("subscription_status,subscription_current_period_end,setup_package,stripe_customer_id,billing_email")
+    .eq("id", orgId)
+    .maybeSingle();
+  return mapOrgBilling(org as Record<string, unknown> | null);
+}
+
 /** Load subscription snapshot + invoice history for org admins. */
 export async function fetchBillingOverview(): Promise<BillingOverview> {
   const res = await fetch("/api/billing-overview", {

@@ -13,6 +13,14 @@ import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { notifyAuthEvent } from "@/lib/transactional-email";
 import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 
+function safeInternalPath(from: string | undefined) {
+  if (!from) return undefined;
+  if (!from.startsWith("/")) return undefined;
+  if (from.startsWith("//") || from.includes("\\")) return undefined;
+  if (from === "/login" || from.startsWith("/login?")) return undefined;
+  return from;
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,7 +29,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const from = (location.state as { from?: string } | null)?.from;
+  const from = safeInternalPath((location.state as { from?: string } | null)?.from);
 
   useEffect(() => {
     applySocialMeta({

@@ -32,6 +32,7 @@ WHERE n.nspname = 'public'
     'protect_org_invite_role',
     'protect_profile_organization_id',
     'stamp_facility_verified',
+    'get_organization_billing',
     'run_sql',
     'link_user_to_organization',
     'save_facility_with_contracts',
@@ -60,6 +61,8 @@ WHERE r.specific_schema = 'public'
     'is_email_auth_allowed',
     'save_facility_with_contracts',
     'stamp_facility_verified',
+    'get_organization_billing',
+    'list_facilities_due_for_verification',
     'claim_pending_org_invite',
     'remove_org_member'
   )
@@ -111,7 +114,9 @@ WHERE schemaname = 'public'
     'organization_claims',
     'user_roles',
     'stripe_webhook_events',
-    'access_request_rate_limits'
+    'access_request_rate_limits',
+    'posts',
+    'post_likes'
   )
 ORDER BY tablename, policyname;
 
@@ -123,3 +128,28 @@ ORDER BY tablename, policyname;
 --   organization_claims: NO policy "Anyone can submit a claim"
 --   stripe_webhook_events: RLS on, no anon/authenticated policies
 --   user_roles: policy "user_roles_insert_super_admin_only"
+--   posts: policy "org members view own org posts" (not "auth users view posts")
+--   post_likes: policy "org members view own org likes" (not "auth users view likes")
+--
+-- ---------------------------------------------------------------------------
+-- 6) Organization billing columns must not be selectable by anon/authenticated
+-- ---------------------------------------------------------------------------
+SELECT
+  c.column_name,
+  c.grantee,
+  c.privilege_type
+FROM information_schema.column_privileges c
+WHERE c.table_schema = 'public'
+  AND c.table_name = 'organizations'
+  AND c.column_name IN (
+    'stripe_customer_id',
+    'stripe_subscription_id',
+    'subscription_status',
+    'subscription_price_id',
+    'subscription_current_period_end',
+    'setup_package',
+    'billing_email'
+  )
+  AND c.grantee IN ('PUBLIC', 'anon', 'authenticated', 'service_role')
+ORDER BY c.column_name, c.grantee;
+-- Expected: no SELECT for PUBLIC / anon / authenticated. service_role may have SELECT.

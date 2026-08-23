@@ -52,3 +52,19 @@ export function programDisplayPath(facilitySlug: string, orgSlug?: string | null
 export function orgDisplayPath(orgSlug: string): string {
   return `centerlinked.com/o/${orgSlug}`;
 }
+
+/** http(s) only. Rejects javascript:, data:, and protocol-relative tricks. */
+export function safeHttpUrl(raw: string | null | undefined): string | null {
+  const trimmed = String(raw ?? "").trim();
+  if (!trimmed) return null;
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(withScheme);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    if (parsed.username || parsed.password) return null;
+    if (!parsed.hostname) return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}

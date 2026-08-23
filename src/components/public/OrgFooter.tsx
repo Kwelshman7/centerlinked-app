@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { trackOrgEvent } from "@/lib/track-org-event";
-import { orgDisplayPath, orgPublicPath } from "@/lib/public-urls";
+import { orgDisplayPath, orgPublicPath, safeHttpUrl } from "@/lib/public-urls";
 import {
   contrastingTextColor,
   footerMutedText,
@@ -55,13 +55,6 @@ interface Props {
   showExportPdf?: boolean;
   /** Dedicated one-pager exporter. Falls back to window.print() when omitted. */
   onExportPdf?: () => void | Promise<void>;
-}
-
-function normalizeExternalUrl(url: string): string {
-  const trimmed = url.trim();
-  if (!trimmed) return trimmed;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
 }
 
 export function OrgFooter({
@@ -180,7 +173,9 @@ export function OrgFooter({
     { key: "x", href: social?.x, icon: Twitter, label: "X" },
     { key: "instagram", href: social?.instagram, icon: Instagram, label: "Instagram" },
     { key: "linkedin", href: social?.linkedin, icon: Linkedin, label: "LinkedIn" },
-  ].filter((s) => !!s.href?.trim());
+  ]
+    .map((s) => ({ ...s, href: safeHttpUrl(s.href) }))
+    .filter((s): s is typeof s & { href: string } => !!s.href);
 
   const logoNode = logoUrl ? (
     <img
@@ -292,7 +287,7 @@ export function OrgFooter({
                 return (
                   <li key={item.key}>
                     <a
-                      href={normalizeExternalUrl(item.href!)}
+                      href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={item.label}

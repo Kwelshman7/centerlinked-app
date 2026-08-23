@@ -201,9 +201,11 @@ BEGIN
 
   SELECT f.id, f.organization_id INTO fac_id, org_id
   FROM public.facilities f
+  JOIN public.organizations o ON o.id = f.organization_id
   WHERE f.slug = slug_val
     AND f.verification_status = 'approved'
     AND COALESCE(f.verification_frozen, false) = false
+    AND o.verified = true
   LIMIT 1;
 
   IF fac_id IS NULL THEN
@@ -306,3 +308,34 @@ GRANT EXECUTE ON FUNCTION public.get_public_org_sheet(text) TO anon, authenticat
 
 REVOKE ALL ON FUNCTION public.get_public_program_sheet(text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_program_sheet(text, text) TO anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Community tables: own-org SELECT (UI gate is not security)
+-- ---------------------------------------------------------------------------
+DROP POLICY IF EXISTS "auth users view posts" ON public.posts;
+DROP POLICY IF EXISTS "org members view own org posts" ON public.posts;
+CREATE POLICY "org members view own org posts"
+ON public.posts
+FOR SELECT
+TO authenticated
+USING (
+  public.has_role(auth.uid(), 'super_admin'::public.app_role)
+  OR public.is_org_member(auth.uid(), organization_id)
+);
+
+DROP POLICY IF EXISTS "auth users view likes" ON public.post_likes;
+DROP POLICY IF EXISTS "org members view own org likes" ON public.post_likes;
+CREATE POLICY "org members view own org likes"
+ON public.post_likes
+FOR SELECT
+TO authenticated
+USING (
+  user_id = auth.uid()
+  OR public.has_role(auth.uid(), 'super_admin'::public.app_role)
+  OR EXISTS (
+    SELECT 1
+    FROM public.posts p
+    WHERE p.id = post_likes.post_id
+      AND public.is_org_member(auth.uid(), p.organization_id)
+  )
+);

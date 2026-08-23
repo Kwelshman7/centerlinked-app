@@ -3,6 +3,7 @@ import {
   DEFAULT_OG_IMAGE,
   OG_HEIGHT,
   OG_WIDTH,
+  isAllowedLogoHost,
   orgOgImagePath,
   orgOgImageUrl,
   resolveOrgShareImageUrl,
@@ -89,19 +90,6 @@ function isBlockedIpLiteral(hostname) {
   return false;
 }
 
-function allowedLogoHosts() {
-  const hosts = new Set(["www.centerlinked.com", "centerlinked.com"]);
-  for (const raw of [process.env.SITE_URL, process.env.VITE_SUPABASE_URL]) {
-    if (!raw) continue;
-    try {
-      hosts.add(new URL(raw).hostname.toLowerCase());
-    } catch {
-      /* ignore invalid env */
-    }
-  }
-  return hosts;
-}
-
 function isAllowedLogoFetchUrl(url) {
   let parsed;
   try {
@@ -113,8 +101,7 @@ function isAllowedLogoFetchUrl(url) {
   if (parsed.username || parsed.password) return false;
   const host = parsed.hostname.toLowerCase();
   if (isBlockedIpLiteral(host)) return false;
-  const allowed = allowedLogoHosts();
-  return allowed.has(host) || host.endsWith(".supabase.co");
+  return isAllowedLogoHost(host);
 }
 
 async function fetchLogoBuffer(url) {

@@ -55,6 +55,7 @@ AS $$
 DECLARE
   approval_changed boolean;
   freeze_changed boolean;
+  preferred_changed boolean;
 BEGIN
   IF public.db_session_is_privileged_writer() THEN
     RETURN NEW;
@@ -68,6 +69,9 @@ BEGIN
       OR NEW.verified_by IS NOT NULL
       OR NEW.rejection_reason IS NOT NULL;
     freeze_changed := COALESCE(NEW.verification_frozen, false) IS DISTINCT FROM false;
+    preferred_changed :=
+      COALESCE(NEW.preferred_provider, false) IS DISTINCT FROM false
+      OR NEW.preferred_until IS NOT NULL;
   ELSE
     approval_changed :=
       NEW.verification_status IS DISTINCT FROM OLD.verification_status
@@ -75,6 +79,9 @@ BEGIN
       OR NEW.verified_by IS DISTINCT FROM OLD.verified_by
       OR NEW.rejection_reason IS DISTINCT FROM OLD.rejection_reason;
     freeze_changed := NEW.verification_frozen IS DISTINCT FROM OLD.verification_frozen;
+    preferred_changed :=
+      NEW.preferred_provider IS DISTINCT FROM OLD.preferred_provider
+      OR NEW.preferred_until IS DISTINCT FROM OLD.preferred_until;
   END IF;
 
   IF freeze_changed THEN
@@ -82,9 +89,13 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  IF approval_changed THEN
+  IF approval_changed OR preferred_changed THEN
     IF public.has_role(auth.uid(), 'super_admin'::public.app_role) THEN
       RETURN NEW;
+    END IF;
+    IF preferred_changed AND NOT approval_changed THEN
+      RAISE EXCEPTION 'Facility preferred-provider fields are read-only'
+        USING ERRCODE = '42501';
     END IF;
     RAISE EXCEPTION 'Facility approval fields are read-only'
       USING ERRCODE = '42501';

@@ -60,9 +60,19 @@ export function ImageUploader({
           toast.error(`${file.name} is over 5MB`);
           continue;
         }
-        const ext = file.name.split(".").pop();
+        if (!file.type.startsWith("image/") || file.type === "image/svg+xml") {
+          toast.error(`${file.name} must be a JPG, PNG, GIF, or WebP image`);
+          continue;
+        }
+        const ext = (file.name.split(".").pop() || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+          toast.error(`${file.name} must be a JPG, PNG, GIF, or WebP image`);
+          continue;
+        }
         const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from(bucket).upload(path, file);
+        const { error } = await supabase.storage.from(bucket).upload(path, file, {
+          contentType: file.type,
+        });
         if (error) {
           toast.error(error.message);
           continue;

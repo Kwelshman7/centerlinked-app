@@ -13,6 +13,7 @@ import { orgDisplayPath } from "@/lib/public-urls";
 import { mergeOrgImages } from "@/lib/org-hero";
 import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
 import { cn } from "@/lib/utils";
+import { isMissingOptionalOrgColumn, orgDashboardSelect, orgDashboardSelectFallback } from "@/lib/org-public-select";
 
 interface Props {
   organizationId: string;
@@ -105,7 +106,11 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
     if (!organizationId) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from("organizations").select("*").eq("id", organizationId).maybeSingle();
+      let { data, error } = await supabase.from("organizations").select(orgDashboardSelect).eq("id", organizationId).maybeSingle();
+      if (isMissingOptionalOrgColumn(error)) {
+        ({ data, error } = await supabase.from("organizations").select(orgDashboardSelectFallback).eq("id", organizationId).maybeSingle());
+      }
+      void error;
       if (data) {
         setOrgName(data.name || "");
         setOrgSlug((data as { slug?: string | null }).slug || "");

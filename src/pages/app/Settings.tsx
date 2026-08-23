@@ -13,7 +13,8 @@ import { SuperAdminSettingsCard } from "@/components/app/admin/SuperAdminPanel";
 import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
 import { cn } from "@/lib/utils";
 import { mergeOrgImages } from "@/lib/org-hero";
-import { formatSubscriptionStatus, type OrgBilling } from "@/lib/billing";
+import { fetchOrganizationBilling, formatSubscriptionStatus, type OrgBilling } from "@/lib/billing";
+import { isMissingOptionalOrgColumn, orgDashboardSelect, orgDashboardSelectFallback } from "@/lib/org-public-select";
 import { toast } from "sonner";
 import { verificationState } from "@/lib/verification";
 
@@ -74,7 +75,11 @@ export default function Settings() {
     if (!profile?.organization_id) return;
     const orgId = profile.organization_id;
     (async () => {
-      const { data } = await supabase.from("organizations").select("*").eq("id", orgId).maybeSingle();
+      let { data, error } = await supabase.from("organizations").select(orgDashboardSelect).eq("id", orgId).maybeSingle();
+      if (isMissingOptionalOrgColumn(error)) {
+        ({ data, error } = await supabase.from("organizations").select(orgDashboardSelectFallback).eq("id", orgId).maybeSingle());
+      }
+      void error;
       if (data) {
         setOrgName(data.name || "");
         setOrgDesc(data.description || "");
@@ -115,13 +120,7 @@ export default function Settings() {
         if (Array.isArray(wr)) {
           setWhyRefer(wr.filter((x): x is { title: string; body: string } => !!x && typeof x === "object" && "title" in x && "body" in x));
         }
-        setBilling({
-          subscription_status: data.subscription_status || "none",
-          subscription_current_period_end: data.subscription_current_period_end || null,
-          setup_package: data.setup_package || null,
-          stripe_customer_id: data.stripe_customer_id || null,
-          billing_email: data.billing_email || null,
-        });
+        setBilling(await fetchOrganizationBilling(orgId));
       }
       const { data: fs } = await supabase
         .from("facilities")

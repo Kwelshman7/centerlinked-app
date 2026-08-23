@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { isSubscriptionActive } from "@/lib/billing";
+import { fetchOrganizationBilling, isSubscriptionActive } from "@/lib/billing";
 import { Button } from "@/components/ui/button";
 
 /** Soft prompt when the org is not on an active membership. */
@@ -19,13 +18,9 @@ export function BillingStatusBanner() {
     }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("organizations")
-        .select("subscription_status")
-        .eq("id", profile.organization_id!)
-        .maybeSingle();
+      const billing = await fetchOrganizationBilling(profile.organization_id!);
       if (!cancelled) {
-        setStatus((data as { subscription_status?: string } | null)?.subscription_status ?? "none");
+        setStatus(billing?.subscription_status ?? "none");
       }
     })();
     return () => {

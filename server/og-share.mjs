@@ -98,6 +98,21 @@ export function orgOgImageUrl(slug, opts = {}) {
   return `${siteOrigin()}${orgOgImagePath(slug, opts)}`;
 }
 
+/** Project storage host + CenterLinked site hosts only. No *.supabase.co wildcard. */
+export function isAllowedLogoHost(hostname) {
+  const host = String(hostname || "").toLowerCase();
+  const allowed = new Set(["www.centerlinked.com", "centerlinked.com"]);
+  for (const raw of [process.env.SITE_URL, process.env.VITE_SUPABASE_URL]) {
+    if (!raw) continue;
+    try {
+      allowed.add(new URL(raw).hostname.toLowerCase());
+    } catch {
+      /* ignore invalid env */
+    }
+  }
+  return allowed.has(host);
+}
+
 /**
  * Normalize stored logo values to a public HTTPS URL.
  * Uploads already store full public URLs; also accept bare storage paths.
@@ -109,21 +124,7 @@ export function resolvePublicLogoUrl(logoUrl) {
   if (/^https:\/\//i.test(raw)) {
     try {
       const host = new URL(raw).hostname.toLowerCase();
-      const supabaseHost = process.env.VITE_SUPABASE_URL
-        ? new URL(process.env.VITE_SUPABASE_URL).hostname.toLowerCase()
-        : "";
-      const siteHost = process.env.SITE_URL
-        ? new URL(process.env.SITE_URL).hostname.toLowerCase()
-        : "www.centerlinked.com";
-      if (
-        host === supabaseHost
-        || host.endsWith(".supabase.co")
-        || host === siteHost
-        || host === "www.centerlinked.com"
-        || host === "centerlinked.com"
-      ) {
-        return raw;
-      }
+      if (isAllowedLogoHost(host)) return raw;
     } catch {
       return null;
     }

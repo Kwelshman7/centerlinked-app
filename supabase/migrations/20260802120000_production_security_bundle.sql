@@ -20,6 +20,10 @@
 --                                    -- also revokes freeze_stale_facilities from anon/authenticated
 -- 9. membership-rpc-only.sql         -- members/invites SELECT-only + invite/remove RPCs
 -- 10. freeze-stale-facilities.sql    -- freeze RPC body + revoke anon EXECUTE; schedule separately
+-- 11. security-followup-20260823.sql -- billing column REVOKE + get_organization_billing;
+--                                    -- billing INSERT lock; preferred_provider lock;
+--                                    -- due-list auth; posts/likes tenant SELECT;
+--                                    -- get_public_program_sheet requires org.verified
 --
 -- Read-only apply check (does not write):
 --   inspect-live-security.sql

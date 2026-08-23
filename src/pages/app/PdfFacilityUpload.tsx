@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fileToBase64 } from "@/lib/files";
+import { assertPdfFile } from "@/lib/upload-guards";
 import { programPublicPath } from "@/lib/public-urls";
 import { buildFacilityContractDrafts } from "@/lib/match-payer";
 import { emptyFacility } from "@/components/app/facility/facility-types";
@@ -117,12 +118,9 @@ export default function PdfFacilityUpload() {
 
 
   const handleFile = async (file: File) => {
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      toast.error("Please upload a PDF version of your one-pager.");
-      return;
-    }
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Please upload a PDF under 15MB.");
+    const pdfCheck = await assertPdfFile(file);
+    if (!pdfCheck.ok) {
+      toast.error(pdfCheck.error);
       return;
     }
     setFileName(file.name);

@@ -89,11 +89,12 @@ Definitions live partly in `supabase/*.sql`; others exist in the live DB and app
 | `is_conversation_participant` | Messaging RLS helper |
 | `get_networked_org_ids()` | Referral-network helper |
 | `get_org_engagement_stats(_org_id)` | Aggregates from `org_analytics_events` |
-| `freeze_stale_facilities()` / `list_facilities_due_for_verification(_days)` | Monthly verification ops. SQL in `supabase/freeze-stale-facilities.sql`. Freeze EXECUTE is **service_role only**; freezes approved facilities whose last stamp is older than 90 days |
+| `freeze_stale_facilities()` / `list_facilities_due_for_verification(_days)` | Monthly verification ops. SQL in `supabase/freeze-stale-facilities.sql`. Freeze EXECUTE is **service_role only**; due-list is super_admin or service_role. Freezes approved facilities whose last stamp is older than 90 days |
+| `get_organization_billing(_org_id)` | Org member / super_admin billing snapshot. Billing columns are revoked from anon/authenticated (`supabase/security-followup-20260823.sql`) |
 | `slugify(_input)` | Public program slug helper |
 | `run_sql(query)` | Dangerous; **EXECUTE revoked from anon/authenticated** in `revoke-dangerous-grants.sql` |
-| `protect_organization_billing_columns` (trigger fn) | Blocks client writes to Stripe billing columns |
-| `protect_facility_privileged_columns` (trigger fn) | Blocks client writes to approval columns and `verification_frozen` (`supabase/column-write-locks.sql`) |
+| `protect_organization_billing_columns` (trigger fn) | Blocks client writes to Stripe billing columns on INSERT or UPDATE |
+| `protect_facility_privileged_columns` (trigger fn) | Blocks client writes to approval columns, `verification_frozen`, and `preferred_provider` / `preferred_until` (`supabase/column-write-locks.sql`) |
 | `protect_organization_verified_column` / `protect_organization_member_role` / `protect_org_invite_role` / `protect_profile_organization_id` | Column locks for `organizations.verified`, membership/invite roles, and `profiles.organization_id` |
 | `enforce_facility_visibility_admin` (trigger fn) | Only org admins/super admins may change `hidden_from_org_page` |
 
@@ -407,7 +408,7 @@ Central tenant entity: branded public org sheet, billing customer, membership ro
 
 ### Constraints / foreign keys
 - Billing column comments in `org-billing.sql`
-- Trigger `protect_organization_billing_columns` BEFORE UPDATE blocks non-service-role changes to Stripe/billing fields
+- Trigger `protect_organization_billing_columns` BEFORE INSERT OR UPDATE blocks non-service-role changes to Stripe/billing fields. Anon/authenticated cannot SELECT those columns; org members use `get_organization_billing`.
 
 ### Business logic / RLS
 - Snapshot: anon SELECT `USING true`; authenticated SELECT `USING true`; INSERT if `created_by = auth.uid()`; UPDATE for members/super admin; DELETE super admin only
@@ -864,7 +865,7 @@ Not specified in repository SQL.
 - No INSERT policy in snapshot (likely service role / SECURITY DEFINER writers)
 
 ### Business logic
-- Related RPCs: `list_facilities_due_for_verification`, `freeze_stale_facilities` in `supabase/freeze-stale-facilities.sql` (service_role EXECUTE for freeze)
+- Related RPCs: `list_facilities_due_for_verification`, `freeze_stale_facilities` in `supabase/freeze-stale-facilities.sql` (service_role EXECUTE for freeze; due-list is super_admin or service_role)
 
 ### Where used / files
 - Typed in `types.ts`; limited direct client usage found in `src/` (ops-oriented)

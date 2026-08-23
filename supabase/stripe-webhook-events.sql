@@ -25,6 +25,8 @@ RETURNS trigger
 LANGUAGE plpgsql
 SET search_path = public
 AS $$
+DECLARE
+  billing_changed boolean;
 BEGIN
   -- PostgREST service_role and DB owners may write billing fields.
   IF coalesce(auth.role(), '') = 'service_role'
@@ -32,13 +34,27 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  IF NEW.stripe_customer_id IS DISTINCT FROM OLD.stripe_customer_id
-     OR NEW.stripe_subscription_id IS DISTINCT FROM OLD.stripe_subscription_id
-     OR NEW.subscription_status IS DISTINCT FROM OLD.subscription_status
-     OR NEW.subscription_price_id IS DISTINCT FROM OLD.subscription_price_id
-     OR NEW.subscription_current_period_end IS DISTINCT FROM OLD.subscription_current_period_end
-     OR NEW.setup_package IS DISTINCT FROM OLD.setup_package
-     OR NEW.billing_email IS DISTINCT FROM OLD.billing_email THEN
+  IF TG_OP = 'INSERT' THEN
+    billing_changed :=
+      NEW.stripe_customer_id IS NOT NULL
+      OR NEW.stripe_subscription_id IS NOT NULL
+      OR COALESCE(NEW.subscription_status, 'none') IS DISTINCT FROM 'none'
+      OR NEW.subscription_price_id IS NOT NULL
+      OR NEW.subscription_current_period_end IS NOT NULL
+      OR NEW.setup_package IS NOT NULL
+      OR NEW.billing_email IS NOT NULL;
+  ELSE
+    billing_changed :=
+      NEW.stripe_customer_id IS DISTINCT FROM OLD.stripe_customer_id
+      OR NEW.stripe_subscription_id IS DISTINCT FROM OLD.stripe_subscription_id
+      OR NEW.subscription_status IS DISTINCT FROM OLD.subscription_status
+      OR NEW.subscription_price_id IS DISTINCT FROM OLD.subscription_price_id
+      OR NEW.subscription_current_period_end IS DISTINCT FROM OLD.subscription_current_period_end
+      OR NEW.setup_package IS DISTINCT FROM OLD.setup_package
+      OR NEW.billing_email IS DISTINCT FROM OLD.billing_email;
+  END IF;
+
+  IF billing_changed THEN
     RAISE EXCEPTION 'Organization billing fields are read-only';
   END IF;
 
@@ -48,6 +64,6 @@ $$;
 
 DROP TRIGGER IF EXISTS protect_organization_billing_columns ON public.organizations;
 CREATE TRIGGER protect_organization_billing_columns
-  BEFORE UPDATE ON public.organizations
+  BEFORE INSERT OR UPDATE ON public.organizations
   FOR EACH ROW
   EXECUTE FUNCTION public.protect_organization_billing_columns();

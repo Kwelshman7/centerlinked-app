@@ -2,6 +2,7 @@ import { Phone, MessageSquare, Mail, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackOrgEvent } from "@/lib/track-org-event";
 import { sanitizePhone } from "@/lib/phone";
+import { safeHttpUrl } from "@/lib/public-urls";
 import { cn } from "@/lib/utils";
 
 export interface HeroContact {
@@ -34,7 +35,7 @@ function websiteLabel(url: string) {
 }
 
 function websiteHref(url: string) {
-  return url.startsWith("http") ? url : `https://${url}`;
+  return safeHttpUrl(url);
 }
 
 function initials(name: string) {
@@ -233,9 +234,9 @@ export function OrgHeroContactCard({
                 </Button>
               </div>
 
-              {site ? (
+              {site && websiteHref(site) ? (
                 <a
-                  href={websiteHref(site)}
+                  href={websiteHref(site)!}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold hover:underline"

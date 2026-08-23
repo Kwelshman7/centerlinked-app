@@ -22,6 +22,14 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
+function safeSubjectPart(value) {
+  return String(value ?? "")
+    .replace(/[\r\n\u0000]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
 function heading(text) {
   return `<h1 style="margin:0 0 16px;font-family:${FONT};font-size:22px;line-height:1.3;font-weight:700;color:${BRAND.navy};">${text}</h1>`;
 }
@@ -196,7 +204,7 @@ export function accessRequestAdminEmail(payload) {
   `;
 
   return {
-    subject: `Access request — ${organization || full_name}`,
+    subject: `Access request — ${safeSubjectPart(organization || full_name)}`,
     html: layout({
       preheader: `${full_name} requested access for ${organization}`,
       title: "New access request",
@@ -291,7 +299,7 @@ export function orgAssignedEmail({ recipientName, organizationName, alreadyLinke
   `;
 
   return {
-    subject: `You are the admin for ${org} on CenterLinked`,
+    subject: `You are the admin for ${safeSubjectPart(org)} on CenterLinked`,
     html: layout({
       preheader: `${org} is ready for you on CenterLinked.`,
       title: `You are the admin for ${org}`,
@@ -329,7 +337,7 @@ export function adminNewSignupEmail({ full_name, email }) {
   `;
 
   return {
-    subject: `New signup — ${full_name || email}`,
+    subject: `New signup — ${safeSubjectPart(full_name || email)}`,
     html: layout({
       preheader: `${full_name || email} created an account`,
       title: "New account signup",
@@ -412,7 +420,7 @@ export function orgWelcomeEmail({ recipientName, organizationName }) {
   `;
 
   return {
-    subject: `Welcome to CenterLinked — ${org}`,
+    subject: `Welcome to CenterLinked — ${safeSubjectPart(org)}`,
     html: layout({
       preheader: `${org} is approved. Open the app to get started.`,
       title: "Welcome to CenterLinked",
@@ -455,7 +463,7 @@ export function doneForYouAdminEmail({ orgName, orgId, email, membershipTier }) 
   `;
 
   return {
-    subject: `Done For You purchase — ${orgName}`,
+    subject: `Done For You purchase — ${safeSubjectPart(orgName)}`,
     html: layout({
       preheader: `${orgName} purchased Done For You setup.`,
       title: "Done For You purchase",
