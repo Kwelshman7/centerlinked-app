@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Search, MapPin, Shield, BadgeCheck, X, SlidersHorizontal, Plus } from "lucide-react";
+import { Building2, Search, MapPin, Shield, BadgeCheck, X, SlidersHorizontal, Plus, Clock } from "lucide-react";
 import { LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
 import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +40,13 @@ interface ContractRow {
 
 const ANY = "__any__";
 const PAGE_SIZE = 24;
+
+function ownStatusLabel(f: FacilityRow) {
+  if (f.verification_status === "rejected") return "Not approved";
+  if (f.verification_frozen) return "Frozen";
+  if (f.verification_status === "pending") return "Pending review";
+  return "Not public yet";
+}
 
 export default function Facilities() {
   const { profile } = useAuth();
@@ -234,121 +241,171 @@ export default function Facilities() {
             <Skeleton key={i} className="h-72 rounded-xl" />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <Card className="p-10 text-center">
-          <Building2 className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          {facilities.length === 0 ? (
-            <>
-              <p className="font-medium">No verified programs yet</p>
-              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-                {ownUnlisted.length > 0
-                  ? "This directory only lists approved public programs. Your facilities are on Home until they’re approved."
-                  : "Programs appear here once they've been submitted and verified. Add your own facilities to get started."}
-              </p>
-              <Button asChild size="sm" className="mt-4">
-                <Link to={ownUnlisted.length > 0 ? "/app#org-facilities" : "/app/onboarding?add=1"}>
-                  <Plus className="h-4 w-4" /> {ownUnlisted.length > 0 ? "Open Home" : "Add a facility"}
-                </Link>
-              </Button>
-            </>
+      ) : (
+        <div className="space-y-6">
+          {ownUnlistedMatch.length > 0 && (
+            <div className="space-y-3">
+              <div>
+                <h2 className="font-heading text-base font-semibold">Your programs</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Visible to your team here. They stay out of the public directory until they’re approved.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {ownUnlistedMatch.map((f) => (
+                  <Link
+                    key={f.id}
+                    to={`/app/facilities/${f.id}`}
+                    className="group rounded-xl border border-amber-500/30 bg-card overflow-hidden hover:border-amber-500/50 hover:shadow-lg transition-all flex flex-col"
+                  >
+                    <div className="aspect-video bg-muted overflow-hidden relative">
+                      {f.image_urls?.[0] ? (
+                        <img
+                          src={f.image_urls[0]}
+                          alt={f.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full grid place-items-center text-muted-foreground">
+                          <Building2 className="h-10 w-10" />
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium shadow-sm">
+                        <Clock className="h-3.5 w-3.5 text-amber-700" /> {ownStatusLabel(f)}
+                      </div>
+                    </div>
+                    <div className="p-4 flex flex-col gap-2 flex-1">
+                      <div>
+                        <h3 className="font-semibold leading-tight line-clamp-1">{f.name}</h3>
+                        {(f.city || f.state) && (
+                          <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {[f.city, f.state].filter(Boolean).join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {filtered.length === 0 ? (
+            <Card className="p-10 text-center">
+              <Building2 className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              {facilities.length === 0 ? (
+                <>
+                  <p className="font-medium">
+                    {ownUnlistedMatch.length > 0 ? "No public programs yet" : "No verified programs yet"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                    {ownUnlistedMatch.length > 0
+                      ? "Partner search only lists approved programs. Yours are listed above for your team."
+                      : "Programs appear here once they've been submitted and verified. Add your own facilities to get started."}
+                  </p>
+                  {ownUnlistedMatch.length === 0 && (
+                    <Button asChild size="sm" className="mt-4">
+                      <Link to="/app/onboarding?add=1">
+                        <Plus className="h-4 w-4" /> Add a facility
+                      </Link>
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="font-medium">No public programs match your search</p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                    {ownUnlistedMatch.length > 0
+                      ? "Your matching programs are listed above. They aren’t public until they’re approved."
+                      : "This directory only shows approved public programs. Try clearing a filter or broadening your criteria."}
+                  </p>
+                  {activeCount > 0 && (
+                    <Button variant="outline" size="sm" className="mt-4" onClick={clearAll}>
+                      <X className="h-4 w-4" /> Clear filters
+                    </Button>
+                  )}
+                </>
+              )}
+            </Card>
           ) : (
             <>
-              <p className="font-medium">No programs match your search</p>
-              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                {ownUnlistedMatch.length > 0
-                  ? "Your own facilities aren’t listed here until they’re approved. Open them from Home."
-                  : "This directory only shows approved public programs. Try clearing a filter or broadening your criteria."}
-              </p>
-              {ownUnlistedMatch.length > 0 && (
-                <Button asChild size="sm" className="mt-4">
-                  <Link to={ownUnlistedMatch.length === 1 ? `/app/facilities/${ownUnlistedMatch[0].id}` : "/app#org-facilities"}>
-                    Open {ownUnlistedMatch.length === 1 ? "your facility" : "Home"}
-                  </Link>
-                </Button>
-              )}
-              {activeCount > 0 && (
-                <Button variant="outline" size="sm" className="mt-4" onClick={clearAll}>
-                  <X className="h-4 w-4" /> Clear filters
-                </Button>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {visibleFacilities.map((f) => {
+                  const cs = contractsByFacility.get(f.id) ?? [];
+                  const inNet = cs.filter((c) => c.in_network);
+                  return (
+                    <Link
+                      key={f.id}
+                      to={`/app/facilities/${f.id}`}
+                      className="group rounded-xl border border-border bg-card overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all flex flex-col"
+                    >
+                      <div className="aspect-video bg-muted overflow-hidden relative">
+                        {f.image_urls?.[0] ? (
+                          <img
+                            src={f.image_urls[0]}
+                            alt={f.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full grid place-items-center text-muted-foreground">
+                            <Building2 className="h-10 w-10" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium shadow-sm">
+                          <BadgeCheck className="h-3.5 w-3.5 text-success" /> Verified
+                        </div>
+                      </div>
+                      <div className="p-4 flex flex-col gap-2 flex-1">
+                        <div>
+                          <h3 className="font-semibold leading-tight line-clamp-1">{f.name}</h3>
+                          {(f.city || f.state) && (
+                            <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {[f.city, f.state].filter(Boolean).join(", ")}
+                            </p>
+                          )}
+                        </div>
+
+                        {f.levels_of_care?.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {f.levels_of_care.slice(0, 3).map((l) => (
+                              <Badge key={l} variant="secondary" className="text-[10px] font-medium">{l}</Badge>
+                            ))}
+                            {f.levels_of_care.length > 3 && (
+                              <Badge variant="secondary" className="text-[10px]">+{f.levels_of_care.length - 3}</Badge>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="mt-auto pt-2 border-t border-border/60">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Shield className="h-3.5 w-3.5 text-primary" />
+                            {inNet.length > 0 ? (
+                              <span className="truncate">
+                                <span className="font-medium text-foreground">{inNet.length}</span> in-network {inNet.length === 1 ? "contract" : "contracts"}
+                              </span>
+                            ) : (
+                              <span>No listed contracts</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              {hasMore && (
+                <div className="flex justify-center">
+                  <Button variant="outline" onClick={() => setPage((p) => p + 1)}>
+                    Load more ({filtered.length - visibleFacilities.length} remaining)
+                  </Button>
+                </div>
               )}
             </>
           )}
-        </Card>
-      ) : (
-        <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleFacilities.map((f) => {
-            const cs = contractsByFacility.get(f.id) ?? [];
-            const inNet = cs.filter((c) => c.in_network);
-            return (
-              <Link
-                key={f.id}
-                to={`/app/facilities/${f.id}`}
-                className="group rounded-xl border border-border bg-card overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all flex flex-col"
-              >
-                <div className="aspect-video bg-muted overflow-hidden relative">
-                  {f.image_urls?.[0] ? (
-                    <img
-                      src={f.image_urls[0]}
-                      alt={f.name}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full grid place-items-center text-muted-foreground">
-                      <Building2 className="h-10 w-10" />
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium shadow-sm">
-                    <BadgeCheck className="h-3.5 w-3.5 text-success" /> Verified
-                  </div>
-                </div>
-                <div className="p-4 flex flex-col gap-2 flex-1">
-                  <div>
-                    <h3 className="font-semibold leading-tight line-clamp-1">{f.name}</h3>
-                    {(f.city || f.state) && (
-                      <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {[f.city, f.state].filter(Boolean).join(", ")}
-                      </p>
-                    )}
-                  </div>
-
-                  {f.levels_of_care?.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {f.levels_of_care.slice(0, 3).map((l) => (
-                        <Badge key={l} variant="secondary" className="text-[10px] font-medium">{l}</Badge>
-                      ))}
-                      {f.levels_of_care.length > 3 && (
-                        <Badge variant="secondary" className="text-[10px]">+{f.levels_of_care.length - 3}</Badge>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mt-auto pt-2 border-t border-border/60">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Shield className="h-3.5 w-3.5 text-primary" />
-                      {inNet.length > 0 ? (
-                        <span className="truncate">
-                          <span className="font-medium text-foreground">{inNet.length}</span> in-network {inNet.length === 1 ? "contract" : "contracts"}
-                        </span>
-                      ) : (
-                        <span>No listed contracts</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-        {hasMore && (
-          <div className="flex justify-center">
-            <Button variant="outline" onClick={() => setPage((p) => p + 1)}>
-              Load more ({filtered.length - visibleFacilities.length} remaining)
-            </Button>
-          </div>
-        )}
         </div>
       )}
     </div>

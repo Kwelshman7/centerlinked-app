@@ -143,8 +143,11 @@ BEGIN
     RAISE EXCEPTION 'organization_id is required';
   END IF;
 
-  IF NOT public.is_org_facility_admin(_organization_id, uid) THEN
-    RAISE EXCEPTION 'Only organization admins can invite members' USING ERRCODE = '42501';
+  IF NOT (
+    public.is_org_facility_admin(_organization_id, uid)
+    OR public.is_org_member(uid, _organization_id)
+  ) THEN
+    RAISE EXCEPTION 'Only organization members can invite teammates' USING ERRCODE = '42501';
   END IF;
 
   email_val := lower(trim(coalesce(_email, '')));
@@ -159,6 +162,12 @@ BEGIN
   role_val := lower(trim(coalesce(_role_at_org, 'bd_rep')));
   IF role_val NOT IN ('bd_rep', 'facility_admin') THEN
     RAISE EXCEPTION 'Invite role must be bd_rep or facility_admin';
+  END IF;
+
+  IF role_val = 'facility_admin'
+     AND NOT public.is_org_facility_admin(_organization_id, uid) THEN
+    RAISE EXCEPTION 'Only organization admins can invite facility admins'
+      USING ERRCODE = '42501';
   END IF;
 
   SELECT lower(nullif(trim(email_domain), '')) INTO org_domain
@@ -221,8 +230,11 @@ BEGIN
     RAISE EXCEPTION 'Invite not found';
   END IF;
 
-  IF NOT public.is_org_facility_admin(invite_row.organization_id, uid) THEN
-    RAISE EXCEPTION 'Only organization admins can revoke invites' USING ERRCODE = '42501';
+  IF NOT (
+    public.is_org_facility_admin(invite_row.organization_id, uid)
+    OR public.is_org_member(uid, invite_row.organization_id)
+  ) THEN
+    RAISE EXCEPTION 'Only organization members can revoke invites' USING ERRCODE = '42501';
   END IF;
 
   IF invite_row.status <> 'pending' THEN

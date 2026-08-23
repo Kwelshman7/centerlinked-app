@@ -75,7 +75,7 @@ Definitions live partly in `supabase/*.sql`; others exist in the live DB and app
 | `save_facility_with_contracts(...)` | Atomic facility upsert + contract replace modes `all` \| `in_network` \| `none`. Sets `slug` on insert (and on update when missing). |
 | `stamp_facility_verified(_facility_id)` | SECURITY DEFINER monthly stamp: sets `contracts_verified_at` / `contracts_verified_by` and clears `verification_frozen` for org members |
 | `claim_pending_org_invite()` | Auto-accept pending `org_invites` by email on login. `facility_admin` is granted only if `invited_by` is an org facility admin or super admin |
-| `create_org_invite` / `revoke_org_invite` | Org-admin invite writes (Members UI) |
+| `create_org_invite` / `revoke_org_invite` | Org members invite/revoke BD reps; facility-admin invites stay admin-only (Members UI) |
 | `get_org_setup_options()` | Domain-matched org + pending join request for setup UI |
 | `request_to_join_organization(_organization_id)` | Domain-gated join request |
 | `review_organization_join_request(_request_id, _approve)` | Approve/reject join (org admin or super admin) |

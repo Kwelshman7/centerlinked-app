@@ -150,9 +150,13 @@ export default function Members() {
       <div>
         <h1 className="font-heading text-2xl font-bold">Members</h1>
         <p className="text-sm text-muted-foreground">
-          {isFacilityAdmin
-            ? `BD reps in your organization. Invites must use your work email domain${orgDomain ? ` (@${orgDomain})` : ""}.`
-            : "Team members in your organization. Only an organization admin can send work-email invites."}
+          {profile?.organization_id
+            ? `Invite BD reps with a work email${orgDomain ? ` (@${orgDomain})` : ""}. ${
+                isFacilityAdmin
+                  ? "Organization admins can also approve join requests and remove members."
+                  : "Organization admins approve join requests and remove members."
+              }`
+            : "Team members in your organization."}
         </p>
       </div>
 
@@ -197,7 +201,7 @@ export default function Members() {
         </Card>
       )}
 
-      {isFacilityAdmin && profile?.organization_id && (
+      {profile?.organization_id && (
         <Card className="p-5">
           <h2 className="font-heading text-base font-semibold mb-3 flex items-center gap-2"><UserPlus className="h-4 w-4" /> Invite a BD Rep</h2>
           <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3 sm:items-end">
@@ -233,12 +237,12 @@ export default function Members() {
           <div>
             <p className="font-medium">No team members yet</p>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-              {isFacilityAdmin
+              {profile?.organization_id
                 ? "Invite your BD reps so they can access the network and share facility links with referral partners."
                 : "Ask an organization admin to invite teammates with a work email."}
             </p>
           </div>
-          {isFacilityAdmin && (
+          {profile?.organization_id && (
             <p className="text-sm text-primary font-medium">
               Use the invite form above to add your first team member.
             </p>
