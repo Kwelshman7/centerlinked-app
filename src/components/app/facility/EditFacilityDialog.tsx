@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { FacilityCardForm } from "./FacilityCardForm";
 import { FacilityDraft, emptyFacility } from "./facility-types";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveFacilityWithContracts } from "@/lib/save-facility";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FacilityLike {
   id: string;
@@ -101,10 +102,49 @@ export function EditFacilityDialog({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FacilityDraft>(() => toDraft(facility, contracts));
   const [saving, setSaving] = useState(false);
+  const [contractsLoading, setContractsLoading] = useState(false);
+  const [contractsUnavailable, setContractsUnavailable] = useState(false);
+  const loadToken = useRef(0);
 
   const handleOpen = (next: boolean) => {
-    if (next) setDraft(toDraft(facility, contracts));
-    setOpen(next);
+    if (next) {
+      const token = ++loadToken.current;
+      setDraft(toDraft(facility, contracts));
+      setContractsUnavailable(false);
+      setContractsLoading(true);
+      setOpen(true);
+      void (async () => {
+        const { data, error } = await supabase
+          .from("insurance_contracts")
+          .select("id,payer_id,payer_name,in_network")
+          .eq("facility_id", facility.id);
+        if (token !== loadToken.current) return;
+        if (error) {
+          setContractsUnavailable(true);
+          setDraft(toDraft(facility, []));
+          toast.error("Could not load insurance contracts", {
+            description: "Facility details can still be saved. Insurance will be left unchanged.",
+          });
+        } else {
+          setContractsUnavailable(false);
+          setDraft(
+            toDraft(
+              facility,
+              ((data as ExistingContract[] | null) ?? []).map((c) => ({
+                id: c.id,
+                payer_id: c.payer_id,
+                payer_name: c.payer_name,
+                in_network: c.in_network,
+              })),
+            ),
+          );
+        }
+        setContractsLoading(false);
+      })();
+      return;
+    }
+    loadToken.current += 1;
+    setOpen(false);
   };
 
   const save = async () => {
@@ -112,6 +152,7 @@ export function EditFacilityDialog({
       toast.error("Organization is required");
       return;
     }
+    if (contractsLoading) return;
     setSaving(true);
     try {
       const result = await saveFacilityWithContracts({
@@ -119,13 +160,16 @@ export function EditFacilityDialog({
         facilityId: facility.id,
         draft,
         includeHidden: canManageVisibility,
-        contractsMode: "all",
+        // Never replace all contracts from an empty/failed load.
+        contractsMode: contractsUnavailable ? "none" : "all",
       });
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
-      toast.success("Facility updated");
+      toast.success(
+        contractsUnavailable ? "Facility updated. Insurance was left unchanged." : "Facility updated",
+      );
       setOpen(false);
       onSaved();
     } finally {
@@ -158,12 +202,13 @@ export function EditFacilityDialog({
           value={draft}
           onChange={setDraft}
           organizationId={organizationId}
+          contractsDisabled={contractsUnavailable || contractsLoading}
         />
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={save} disabled={saving}>
+          <Button onClick={save} disabled={saving || contractsLoading}>
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> Saving…

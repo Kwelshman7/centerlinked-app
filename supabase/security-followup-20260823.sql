@@ -13,25 +13,47 @@
 -- ---------------------------------------------------------------------------
 -- 1) Column privileges: billing fields are not client-readable
 -- ---------------------------------------------------------------------------
-REVOKE SELECT (
-  stripe_customer_id,
-  stripe_subscription_id,
-  subscription_status,
-  subscription_price_id,
-  subscription_current_period_end,
-  setup_package,
-  billing_email
-) ON public.organizations FROM PUBLIC, anon, authenticated;
+-- Column-level REVOKE is a no-op while table-level SELECT remains.
+REVOKE SELECT ON public.organizations FROM PUBLIC, anon, authenticated;
 
 GRANT SELECT (
-  stripe_customer_id,
-  stripe_subscription_id,
-  subscription_status,
-  subscription_price_id,
-  subscription_current_period_end,
-  setup_package,
-  billing_email
-) ON public.organizations TO service_role;
+  id,
+  name,
+  email_domain,
+  logo_url,
+  website,
+  description,
+  hq_city,
+  hq_state,
+  verified,
+  created_by,
+  created_at,
+  updated_at,
+  phone,
+  num_facilities,
+  bd_contact_name,
+  bd_contact_phone,
+  bd_contact_email,
+  slug,
+  tagline,
+  brand_color,
+  accent_color,
+  cover_image_url,
+  announcement,
+  program_badges,
+  cta_primary_label,
+  cta_secondary_label,
+  why_refer,
+  image_urls,
+  footer_image_url,
+  social_facebook_url,
+  social_instagram_url,
+  social_linkedin_url,
+  social_x_url,
+  favicon_url
+) ON public.organizations TO anon, authenticated;
+
+GRANT SELECT ON public.organizations TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 2) Org members and super_admin read their own billing snapshot

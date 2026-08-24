@@ -32,9 +32,11 @@ interface Props {
   index?: number;
   /** When set, BD assignment offers a team-member picker. */
   organizationId?: string | null;
+  /** Hide insurance edits when the current contract list could not be loaded. */
+  contractsDisabled?: boolean;
 }
 
-export function FacilityCardForm({ value, onChange, onRemove, index, organizationId }: Props) {
+export function FacilityCardForm({ value, onChange, onRemove, index, organizationId, contractsDisabled }: Props) {
   const { isFacilityAdmin, isSuperAdmin } = useAuth();
   const canManageVisibility = isFacilityAdmin || isSuperAdmin;
   const set = <K extends keyof FacilityDraft>(k: K, v: FacilityDraft[K]) =>
@@ -328,21 +330,28 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
           <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <Label className="text-sm">In-network insurance</Label>
-              {value.contracts.length > 0 && (
+              {!contractsDisabled && value.contracts.length > 0 && (
                 <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
                   {value.contracts.length} selected
                 </span>
               )}
             </div>
-            <PayerCombobox
-              payerId={null}
-              payerName=""
-              onSelect={addContract}
-              placeholder="Search and add payer"
-              keepOpenOnSelect
-              triggerClassName="w-full bg-background"
-            />
-            {value.contracts.length === 0 ? (
+            {contractsDisabled ? (
+              <p className="text-xs text-muted-foreground py-1">
+                Insurance is locked until the current contracts finish loading. A failed load leaves
+                existing payers unchanged.
+              </p>
+            ) : (
+              <PayerCombobox
+                payerId={null}
+                payerName=""
+                onSelect={addContract}
+                placeholder="Search and add payer"
+                keepOpenOnSelect
+                triggerClassName="w-full bg-background"
+              />
+            )}
+            {contractsDisabled ? null : value.contracts.length === 0 ? (
               <p className="text-xs text-muted-foreground py-1">No in-network payers selected yet.</p>
             ) : (
               <ul className="flex flex-wrap gap-2">

@@ -69,7 +69,16 @@ export default function Settings() {
       setJobTitle(profile.job_title || "");
       setAvatar(profile.avatar_url ? [profile.avatar_url] : []);
     }
-  }, [profile]);
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("phone").eq("user_id", user.id).maybeSingle();
+      if (!cancelled && data) setPhone(data.phone || "");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, user?.id]);
 
   useEffect(() => {
     if (!profile?.organization_id) return;
