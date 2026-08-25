@@ -424,7 +424,7 @@ export function AdminOrgBrandingForm({ organizationId, onSaved }: Props) {
               </Field>
               <Field
                 label="Favicon"
-                hint="Browser tab and share-link preview icon. Falls back to the logo if empty."
+                hint="Browser tab and share-link icon. Uses this file first, then the logo, then initials in the brand color."
                 className="pt-4"
               >
                 <ImageUploader

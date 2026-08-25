@@ -3,7 +3,7 @@
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
-/** Same default preview art as index.html — used when an org has no usable logo. */
+/** Fallback preview art when an org cannot be resolved. Public org URLs always use /api/og-image. */
 export const DEFAULT_OG_IMAGE = "https://www.centerlinked.com/og-image.png";
 
 const RESERVED_SLUGS = new Set([
@@ -14,6 +14,7 @@ const RESERVED_SLUGS = new Set([
   "privacy",
   "terms",
   "create-organization",
+  "setup-organization",
   "app",
   "p",
   "o",
@@ -28,7 +29,7 @@ const RESERVED_SLUGS = new Set([
 
 export function isSocialPreviewBot(userAgent) {
   if (!userAgent) return false;
-  return /bot|crawl|slurp|facebookexternalhit|twitterbot|linkedinbot|whatsapp|discord|telegram|preview|embed|applebot|imessage|slack/i.test(
+  return /bot|crawl|slurp|spider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|discord|telegram|preview|embed|applebot|imessage|slack|pinterest|reddit|skype|vkshare|embedly|iframely|opengraph|notion|google-inspectiontool|bingpreview|yandex|duckduckbot|baiduspider|outbrain|nuzzel|buffer|hootsuite|snapchat|line\/|kakaotalk|wechat/i.test(
     userAgent,
   );
 }
@@ -46,6 +47,7 @@ export function isPublicSharePath(pathname) {
     path.startsWith("/privacy") ||
     path.startsWith("/terms") ||
     path.startsWith("/create-organization") ||
+    path.startsWith("/setup-organization") ||
     path.startsWith("/assets")
   ) {
     return false;
@@ -86,19 +88,55 @@ export function siteOrigin() {
   return "https://www.centerlinked.com";
 }
 
+/** Bump when share-card generation changes so crawlers do not keep a cached 302 to og-image.png. */
+const SHARE_ASSET_VERSION = "3";
+
 export function orgOgImagePath(slug, opts = {}) {
-  const params = new URLSearchParams({ slug: String(slug) });
+  const params = new URLSearchParams({
+    slug: String(slug),
+    v: SHARE_ASSET_VERSION,
+  });
   // Cache-bust when the card is built from a favicon so CDN entries for the
   // older logo-only image are not reused.
   if (opts.icon) params.set("i", "1");
   return `/api/og-image?${params.toString()}`;
 }
 
+/** Same-origin org tab/share icon. Never /favicon.png. */
+export function orgOgIconPath(slug, opts = {}) {
+  const params = new URLSearchParams({
+    slug: String(slug),
+    v: SHARE_ASSET_VERSION,
+  });
+  if (opts.favicon) params.set("f", "1");
+  return `/api/og-icon?${params.toString()}`;
+}
+
+export function orgOgIconUrl(slug, opts = {}) {
+  return `${siteOrigin()}${orgOgIconPath(slug, opts)}`;
+}
+
 export function orgOgImageUrl(slug, opts = {}) {
   return `${siteOrigin()}${orgOgImagePath(slug, opts)}`;
 }
 
-/** Project storage host + CenterLinked site hosts only. No *.supabase.co wildcard. */
+function isBlockedIpLiteral(hostname) {
+  const h = String(hostname || "").toLowerCase();
+  if (h === "localhost" || h.endsWith(".localhost") || h === "metadata.google.internal") {
+    return true;
+  }
+  if (h === "::1" || h === "[::1]") return true;
+  const ipv4 = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!ipv4) return false;
+  const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+  if (a === 10 || a === 127 || a === 0) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  return false;
+}
+
+/** Project storage host + CenterLinked site hosts. */
 export function isAllowedLogoHost(hostname) {
   const host = String(hostname || "").toLowerCase();
   const allowed = new Set(["www.centerlinked.com", "centerlinked.com"]);
@@ -114,21 +152,35 @@ export function isAllowedLogoHost(hostname) {
 }
 
 /**
+ * HTTPS image URLs that are safe to fetch server-side (SSRF-hardened).
+ * Org logos are often hosted on the treatment center's own site, not Storage.
+ */
+export function isSafeHttpsImageUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "https:") return false;
+  if (parsed.username || parsed.password) return false;
+  const host = parsed.hostname.toLowerCase();
+  if (!host.includes(".")) return false;
+  if (isBlockedIpLiteral(host)) return false;
+  return true;
+}
+
+/**
  * Normalize stored logo values to a public HTTPS URL.
- * Uploads already store full public URLs; also accept bare storage paths.
+ * Uploads already store full public URLs; also accept bare storage paths
+ * and org-website logos (https only, private IPs rejected).
  */
 export function resolvePublicLogoUrl(logoUrl) {
   const raw = (logoUrl ?? "").trim();
   if (!raw) return null;
 
   if (/^https:\/\//i.test(raw)) {
-    try {
-      const host = new URL(raw).hostname.toLowerCase();
-      if (isAllowedLogoHost(host)) return raw;
-    } catch {
-      return null;
-    }
-    return null;
+    return isSafeHttpsImageUrl(raw) ? raw : null;
   }
   if (/^http:\/\//i.test(raw)) {
     return resolvePublicLogoUrl(`https://${raw.slice("http://".length)}`);
@@ -143,14 +195,15 @@ export function resolvePublicLogoUrl(logoUrl) {
   return `${base}/storage/v1/object/public/org-logos/${path}`;
 }
 
-/** Absolute share-image URL for an org, or the CenterLinked default. */
+/** Always a generated 1200×630 card for public orgs — never the marketing landing graphic. */
 export function resolveOrgShareImageUrl(org) {
   if (!org?.slug) return DEFAULT_OG_IMAGE;
-  if (resolvePublicLogoUrl(org.favicon_url)) {
-    return orgOgImageUrl(org.slug, { icon: true });
-  }
-  if (resolvePublicLogoUrl(org.logo_url)) {
-    return orgOgImageUrl(org.slug);
-  }
-  return DEFAULT_OG_IMAGE;
+  const usesIcon = !!(org.favicon_url && resolvePublicLogoUrl(org.favicon_url));
+  return orgOgImageUrl(org.slug, { icon: usesIcon });
+}
+
+/** Same-origin favicon PNG for crawlers. Favicon file first, then logo, never CenterLinked. */
+export function resolveOrgShareIconUrl(org) {
+  if (!org?.slug) return null;
+  return orgOgIconUrl(org.slug, { favicon: !!(org.favicon_url && resolvePublicLogoUrl(org.favicon_url)) });
 }

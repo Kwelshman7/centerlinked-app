@@ -5,7 +5,7 @@ import {
   isPublicSharePath,
   isSocialPreviewBot,
   resolveOrgShareImageUrl,
-  resolvePublicLogoUrl,
+  resolveOrgShareIconUrl,
   siteOrigin,
 } from "./og-share.mjs";
 
@@ -122,7 +122,7 @@ async function supabaseOrg(filter) {
 }
 
 function resolveShareIcon(org) {
-  return resolvePublicLogoUrl(org?.favicon_url) || resolvePublicLogoUrl(org?.logo_url);
+  return resolveOrgShareIconUrl(org);
 }
 
 export async function resolvePublicMeta(pathname) {
@@ -131,7 +131,10 @@ export async function resolvePublicMeta(pathname) {
   const orgProgram = path.match(/^\/o\/([^/]+)\/p\/([^/]+)$/);
   if (orgProgram) {
     const [, orgSlug, programSlug] = orgProgram;
-    const payload = await supabaseRpc("get_public_program_sheet", { _slug: programSlug });
+    const payload = await supabaseRpc("get_public_program_sheet", {
+      _slug: programSlug,
+      _org_slug: orgSlug,
+    });
     const facility = payload?.facility;
     const org = payload?.org;
     if (!facility || !org || org.slug !== orgSlug) return null;
@@ -252,14 +255,14 @@ export function injectSocialMeta(baseHtml, meta) {
   // Drop platform-default CenterLinked preview art for org-branded shares.
   html = html.replace(/\n?\s*<meta name="twitter:site"[^>]*>/i, "");
 
+  // Always replace the platform favicon on public share pages.
   if (icon) {
     html = html.replace(
       /<link rel="icon"[^>]*>/i,
-      `<link rel="icon" href="${icon}">\n    <link rel="apple-touch-icon" href="${icon}">`,
+      `<link rel="icon" type="image/png" href="${icon}">\n    <link rel="apple-touch-icon" href="${icon}">`,
     );
   }
 
-  // Always set share images so missing logos fall back to the CenterLinked default.
   html = html
     .replace(/<meta property="og:image"[^>]*>/i, `<meta property="og:image" content="${image}">`)
     .replace(/<meta name="twitter:image"[^>]*>/i, `<meta name="twitter:image" content="${image}">`);

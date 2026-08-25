@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { MapPin, Phone, Mail, Globe } from "lucide-react";
-import { LETTER_HEIGHT_PX, LETTER_WIDTH_PX } from "@/lib/export-one-pager-capture";
+import { LETTER_HEIGHT_PX, LETTER_WIDTH_PX, photoFillStyle } from "@/lib/export-one-pager-capture";
 import {
   brandRgba,
   type OrgOnePagerFacility,
@@ -11,8 +11,10 @@ import {
 export type OrgOnePagerProps = {
   model: OrgOnePagerModel;
   resolvedLogoUrl?: string | null;
+  resolvedCoverUrl?: string | null;
   resolvedPhotoUrls?: Record<string, string | null>;
   resolvedQrUrl?: string | null;
+  hidePlatformMark?: boolean;
 };
 
 function fontHeading(extra?: CSSProperties): CSSProperties {
@@ -107,11 +109,128 @@ function PayerLine({
 function Header({
   model,
   logoUrl,
+  coverUrl,
 }: {
   model: OrgOnePagerModel;
   logoUrl: string | null;
+  coverUrl: string | null;
 }) {
   const { theme } = model;
+  if (coverUrl) {
+    return (
+      <header
+        style={{
+          position: "relative",
+          flexShrink: 0,
+          height: 168,
+          overflow: "hidden",
+          background: theme.brand,
+          color: theme.onBrand,
+        }}
+      >
+        <div
+          aria-hidden
+          style={photoFillStyle(coverUrl, "cover", {
+            position: "absolute",
+            inset: 0,
+          })}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `linear-gradient(100deg, ${theme.brand}f0 0%, ${theme.brand}99 55%, ${theme.brand}55 100%)`,
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            gap: 18,
+            padding: "22px 32px",
+            height: "100%",
+          }}
+        >
+          {logoUrl ? (
+            <div
+              style={{
+                flexShrink: 0,
+                height: 64,
+                maxWidth: 180,
+                background: "#ffffff",
+                borderRadius: 12,
+                padding: "8px 10px",
+                display: "flex",
+                alignItems: "center",
+                boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
+              }}
+            >
+              <div
+                style={photoFillStyle(logoUrl, "contain", {
+                  height: 48,
+                  width: 160,
+                  maxWidth: 160,
+                })}
+              />
+            </div>
+          ) : null}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p
+              style={fontHeading({
+                margin: 0,
+                fontSize: 9.5,
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: theme.mutedOnBrand,
+              })}
+            >
+              Referral overview
+            </p>
+            <h1
+              style={fontHeading({
+                margin: "4px 0 0",
+                fontSize: model.orgName.length > 32 ? 20 : 26,
+                fontWeight: 800,
+                letterSpacing: "-0.03em",
+                lineHeight: 1.1,
+                color: theme.onBrand,
+              })}
+            >
+              {model.orgName}
+            </h1>
+            {model.tagline ? (
+              <p
+                style={fontBody({
+                  margin: "4px 0 0",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: theme.mutedOnBrand,
+                })}
+              >
+                {model.tagline}
+              </p>
+            ) : null}
+            {model.locationContext ? (
+              <p
+                style={fontBody({
+                  margin: "5px 0 0",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: theme.mutedOnBrand,
+                })}
+              >
+                {model.locationContext}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header
       style={{
@@ -134,19 +253,13 @@ function Header({
             alignItems: "center",
           }}
         >
-          <img
-            src={logoUrl}
-            alt=""
-            crossOrigin="anonymous"
-            style={{
-              height: 58,
-              width: "auto",
-              maxWidth: 200,
-              objectFit: "contain",
-              objectPosition: "left center",
-              display: "block",
-            }}
-          />
+              <div
+                style={photoFillStyle(logoUrl, "contain", {
+                  height: 58,
+                  width: 200,
+                  maxWidth: 200,
+                })}
+              />
         </div>
       ) : null}
       <div style={{ minWidth: 0, flex: 1 }}>
@@ -281,23 +394,14 @@ function FacilityCard({
       }}
     >
       {photoUrl ? (
-        <div
-          style={{
-            flexShrink: 0,
-            width: layout === "feature" ? 300 : "100%",
-            height: layout === "feature" ? "100%" : photoH,
-            minHeight: layout === "feature" ? 240 : photoH,
-            background: "#e8e6e1",
-            overflow: "hidden",
-          }}
-        >
-          <img
-            src={photoUrl}
-            alt=""
-            crossOrigin="anonymous"
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+          <div
+            style={photoFillStyle(photoUrl, "cover", {
+              flexShrink: 0,
+              width: layout === "feature" ? 300 : "100%",
+              height: layout === "feature" ? "100%" : photoH,
+              minHeight: layout === "feature" ? 240 : photoH,
+            })}
           />
-        </div>
       ) : null}
 
       <div
@@ -414,20 +518,23 @@ function FacilityCard({
 function Footer({
   model,
   qrUrl,
+  hidePlatformMark = false,
 }: {
   model: OrgOnePagerModel;
   qrUrl: string | null;
+  hidePlatformMark?: boolean;
 }) {
   const { theme, contact } = model;
   const hasContact = !!(contact.name || contact.phone || contact.email || contact.website);
   return (
     <footer
       style={{
+        position: "relative",
         flexShrink: 0,
         display: "flex",
         alignItems: "stretch",
         gap: 16,
-        padding: "14px 32px 16px",
+        padding: hidePlatformMark ? "14px 32px 16px" : "14px 32px 22px",
         background: theme.brand,
         color: theme.onBrand,
       }}
@@ -514,11 +621,11 @@ function Footer({
               boxSizing: "border-box",
             }}
           >
-            <img
-              src={qrUrl}
-              alt=""
-              crossOrigin="anonymous"
-              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+            <div
+              style={photoFillStyle(qrUrl, "contain", {
+                width: "100%",
+                height: "100%",
+              })}
             />
           </div>
           <div style={{ maxWidth: 110 }}>
@@ -536,6 +643,26 @@ function Footer({
           </div>
         </div>
       ) : null}
+      {!hidePlatformMark ? (
+        <p
+          style={fontHeading({
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 5,
+            margin: 0,
+            textAlign: "center",
+            fontSize: 7.5,
+            fontWeight: 600,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            opacity: 0.7,
+            color: theme.onBrand,
+          })}
+        >
+          Created on centerlinked.com
+        </p>
+      ) : null}
     </footer>
   );
 }
@@ -543,13 +670,14 @@ function Footer({
 export function OrgOnePager({
   model,
   resolvedLogoUrl,
+  resolvedCoverUrl,
   resolvedPhotoUrls = {},
   resolvedQrUrl,
+  hidePlatformMark = false,
 }: OrgOnePagerProps) {
   const { theme, layout, facilities } = model;
-  const logoUrl = resolvedLogoUrl ?? model.logoUrl;
-  const photoFor = (facility: OrgOnePagerFacility) =>
-    resolvedPhotoUrls[facility.id] ?? facility.photoUrl;
+  const logoUrl = resolvedLogoUrl ?? null;
+  const photoFor = (facility: OrgOnePagerFacility) => resolvedPhotoUrls[facility.id] ?? null;
 
   const columns =
     layout === "split" ? 2 : layout === "trio" ? 3 : layout === "grid" ? 2 : 1;
@@ -571,7 +699,7 @@ export function OrgOnePager({
         WebkitFontSmoothing: "antialiased",
       }}
     >
-      <Header model={model} logoUrl={logoUrl} />
+      <Header model={model} logoUrl={logoUrl} coverUrl={resolvedCoverUrl ?? null} />
 
       <div
         style={{
@@ -697,7 +825,7 @@ export function OrgOnePager({
         )}
       </div>
 
-      <Footer model={model} qrUrl={resolvedQrUrl ?? null} />
+      <Footer model={model} qrUrl={resolvedQrUrl ?? null} hidePlatformMark={hidePlatformMark} />
     </article>
   );
 }

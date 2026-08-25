@@ -3,12 +3,12 @@ import {
   DEFAULT_OG_IMAGE,
   OG_HEIGHT,
   OG_WIDTH,
-  isAllowedLogoHost,
   orgOgImagePath,
   orgOgImageUrl,
   resolveOrgShareImageUrl,
   resolvePublicLogoUrl,
 } from "./og-share.mjs";
+import { fetchSafeImageBuffer } from "./safe-image-fetch.mjs";
 
 export {
   DEFAULT_OG_IMAGE,
@@ -20,13 +20,8 @@ export {
   resolvePublicLogoUrl,
 };
 
-const LOGO_MAX_BYTES = 5 * 1024 * 1024;
-const LOGO_FETCH_MS = 8_000;
 const PAD_X = 96;
 const PAD_Y = 72;
-const NAME_BAND = 88;
-const LOGO_MAX_W = OG_WIDTH - PAD_X * 2;
-const LOGO_MAX_H = OG_HEIGHT - PAD_Y * 2 - NAME_BAND;
 
 function escapeXml(value) {
   return String(value ?? "")
@@ -64,6 +59,12 @@ async function supabaseOrgQuery(slug, select) {
 }
 
 async function supabaseOrgBySlug(slug) {
+  const withBrand = await supabaseOrgQuery(
+    slug,
+    "name,slug,logo_url,favicon_url,cover_image_url,brand_color",
+  );
+  if (withBrand.ok) return withBrand.row;
+
   const withFavicon = await supabaseOrgQuery(slug, "name,slug,logo_url,favicon_url");
   if (withFavicon.ok) return withFavicon.row;
 
@@ -74,94 +75,76 @@ async function supabaseOrgBySlug(slug) {
   return fallback.row;
 }
 
-function isBlockedIpLiteral(hostname) {
-  const h = String(hostname || "").toLowerCase();
-  if (h === "localhost" || h.endsWith(".localhost") || h === "metadata.google.internal") {
-    return true;
-  }
-  if (h === "::1" || h === "[::1]") return true;
-  const ipv4 = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (!ipv4) return false;
-  const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
-  if (a === 10 || a === 127 || a === 0) return true;
-  if (a === 169 && b === 254) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  return false;
-}
-
-function isAllowedLogoFetchUrl(url) {
-  let parsed;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return false;
-  }
-  if (parsed.protocol !== "https:") return false;
-  if (parsed.username || parsed.password) return false;
-  const host = parsed.hostname.toLowerCase();
-  if (isBlockedIpLiteral(host)) return false;
-  return isAllowedLogoHost(host);
-}
-
 async function fetchLogoBuffer(url) {
-  if (!isAllowedLogoFetchUrl(url)) return null;
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), LOGO_FETCH_MS);
+  const image = await fetchSafeImageBuffer(url);
+  if (!image) return null;
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { Accept: "image/*" },
-      redirect: "error",
-    });
-    if (!res.ok) return null;
-
-    const type = (res.headers.get("content-type") || "").toLowerCase();
-    if (type && !type.startsWith("image/") && !type.includes("octet-stream")) {
-      return null;
-    }
-
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (!buf.length || buf.length > LOGO_MAX_BYTES) return null;
-
-    // Validate / normalize via sharp (rejects unsupported formats).
-    await sharp(buf).metadata();
-    return buf;
+    await sharp(image.buffer).metadata();
+    return image.buffer;
   } catch (err) {
-    console.error("[og-image] logo fetch failed", err?.message || err);
+    console.error("[og-image] logo decode failed", err?.message || err);
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
-function backgroundSvg(name) {
+function brandBackgroundSvg(name, brand) {
   const label = escapeXml(name);
+  const fill = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(brand || "").trim())
+    ? String(brand).trim()
+    : "#1A73E8";
   return Buffer.from(`
 <svg width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#F7F8FA"/>
-      <stop offset="100%" stop-color="#EEF1F5"/>
-    </linearGradient>
-  </defs>
-  <rect width="${OG_WIDTH}" height="${OG_HEIGHT}" fill="url(#bg)"/>
-  <text
-    x="${OG_WIDTH / 2}"
-    y="${OG_HEIGHT - PAD_Y + 8}"
-    text-anchor="middle"
-    font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif"
-    font-size="34"
-    font-weight="600"
-    fill="#1F2937"
-  >${label}</text>
+  <rect width="${OG_WIDTH}" height="${OG_HEIGHT}" fill="${escapeXml(fill)}"/>
+  <rect x="0" y="${OG_HEIGHT - 140}" width="${OG_WIDTH}" height="140" fill="#000000" fill-opacity="0.28"/>
+  <text x="${PAD_X}" y="${OG_HEIGHT - 58}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">${label}</text>
+  <text x="${PAD_X}" y="${OG_HEIGHT - 28}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#ffffff" fill-opacity="0.8">Referral profile</text>
 </svg>`);
 }
 
+function nameBandSvg(name) {
+  return Buffer.from(`
+<svg width="${OG_WIDTH}" height="${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="${OG_HEIGHT - 160}" width="${OG_WIDTH}" height="160" fill="#081020" fill-opacity="0.62"/>
+  <text x="${PAD_X}" y="${OG_HEIGHT - 68}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">${escapeXml(name)}</text>
+  <text x="${PAD_X}" y="${OG_HEIGHT - 32}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#ffffff" fill-opacity="0.82">Referral profile</text>
+</svg>`);
+}
+
+async function coverBackground(coverBuf, name, brand) {
+  if (!coverBuf) {
+    return sharp(brandBackgroundSvg(name, brand)).png().toBuffer();
+  }
+  try {
+    const photo = await sharp(coverBuf)
+      .rotate()
+      .resize(OG_WIDTH, OG_HEIGHT, { fit: "cover", position: "centre" })
+      .modulate({ brightness: 0.62 })
+      .png()
+      .toBuffer();
+    return sharp(photo).composite([{ input: nameBandSvg(name), left: 0, top: 0 }]).png().toBuffer();
+  } catch {
+    return sharp(brandBackgroundSvg(name, brand)).png().toBuffer();
+  }
+}
+
+function initialsFor(name) {
+  return String(name || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function brandFill(brand) {
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(brand || "").trim())
+    ? String(brand).trim()
+    : "#1A73E8";
+}
+
 /**
- * Build a 1200×630 PNG with the org favicon (preferred) or logo, plus name.
- * Returns null when the org/mark cannot be used — caller should fall back.
+ * Build a 1200×630 PNG: cover photo when available, org favicon/logo, org name.
+ * Always returns a branded card when the org exists — never the marketing landing graphic.
  */
 export async function renderOrgOgImage(slug) {
   if (!slug || typeof slug !== "string") return null;
@@ -169,29 +152,42 @@ export async function renderOrgOgImage(slug) {
   const org = await supabaseOrgBySlug(slug.trim());
   if (!org?.name) return null;
 
-  let logoBuf = await fetchLogoBuffer(resolvePublicLogoUrl(org.favicon_url));
-  if (!logoBuf) {
-    logoBuf = await fetchLogoBuffer(resolvePublicLogoUrl(org.logo_url));
-  }
-  if (!logoBuf) return null;
+  const [faviconBuf, logoMarkBuf, coverBuf] = await Promise.all([
+    fetchLogoBuffer(resolvePublicLogoUrl(org.favicon_url)),
+    fetchLogoBuffer(resolvePublicLogoUrl(org.logo_url)),
+    fetchLogoBuffer(resolvePublicLogoUrl(org.cover_image_url)),
+  ]);
+  const logoBuf = logoMarkBuf || faviconBuf;
 
   try {
-    const logo = await sharp(logoBuf)
-      .rotate()
-      .resize(LOGO_MAX_W, LOGO_MAX_H, {
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .png()
-      .toBuffer({ resolveWithObject: true });
+    const base = await coverBackground(coverBuf, org.name, org.brand_color);
+    const layers = [];
 
-    const left = Math.round((OG_WIDTH - logo.info.width) / 2);
-    const top = Math.round(PAD_Y + (LOGO_MAX_H - logo.info.height) / 2);
+    if (logoBuf) {
+      try {
+        const logo = await sharp(logoBuf)
+          .rotate()
+          .resize(280, 280, { fit: "inside", withoutEnlargement: true })
+          .png()
+          .toBuffer({ resolveWithObject: true });
+        const tile = await sharp({
+          create: {
+            width: logo.info.width + 32,
+            height: logo.info.height + 32,
+            channels: 4,
+            background: { r: 255, g: 255, b: 255, alpha: 0.96 },
+          },
+        })
+          .png()
+          .composite([{ input: logo.data, left: 16, top: 16 }])
+          .toBuffer();
+        layers.push({ input: tile, left: PAD_X, top: PAD_Y });
+      } catch (err) {
+        console.error("[og-image] logo composite failed", err?.message || err);
+      }
+    }
 
-    const png = await sharp(backgroundSvg(org.name))
-      .composite([{ input: logo.data, left, top }])
-      .png()
-      .toBuffer();
+    const png = await sharp(base).composite(layers).png().toBuffer();
 
     return {
       buffer: png,
@@ -203,6 +199,101 @@ export async function renderOrgOgImage(slug) {
     };
   } catch (err) {
     console.error("[og-image] compose failed", err?.message || err);
+    try {
+      const png = await sharp(brandBackgroundSvg(org.name, org.brand_color)).png().toBuffer();
+      return {
+        buffer: png,
+        contentType: "image/png",
+        width: OG_WIDTH,
+        height: OG_HEIGHT,
+        alt: `${org.name} logo`,
+        slug: org.slug || slug,
+      };
+    } catch (fallbackErr) {
+      console.error("[og-image] brand fallback failed", fallbackErr?.message || fallbackErr);
+      return null;
+    }
+  }
+}
+
+const ICON_SIZE = 180;
+
+function initialsIconSvg(name, brand) {
+  const fill = escapeXml(brandFill(brand));
+  const label = escapeXml(initialsFor(name) || "•");
+  return Buffer.from(`
+<svg width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="${ICON_SIZE}" height="${ICON_SIZE}" rx="32" fill="${fill}"/>
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="72" font-weight="700" fill="#ffffff">${label}</text>
+</svg>`);
+}
+
+async function rasterUploadedFavicon(buffer) {
+  return sharp(buffer)
+    .rotate()
+    .resize(ICON_SIZE, ICON_SIZE, {
+      fit: "cover",
+      position: "centre",
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    })
+    .flatten({ background: "#ffffff" })
+    .png()
+    .toBuffer();
+}
+
+async function rasterLogoAsIcon(buffer) {
+  return sharp(buffer)
+    .rotate()
+    .resize(ICON_SIZE, ICON_SIZE, {
+      fit: "contain",
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    })
+    .flatten({ background: "#ffffff" })
+    .png()
+    .toBuffer();
+}
+
+/**
+ * Square PNG for tab icons and share-link previews.
+ * 1) organizations.favicon_url (Settings upload)
+ * 2) organizations.logo_url
+ * 3) org initials on brand_color
+ * Never CenterLinked art.
+ */
+export async function renderOrgOgIcon(slug) {
+  if (!slug || typeof slug !== "string") return null;
+
+  const org = await supabaseOrgBySlug(slug.trim());
+  if (!org?.name) return null;
+
+  const result = (buffer) => ({
+    buffer,
+    contentType: "image/png",
+    slug: org.slug || slug,
+  });
+
+  const faviconBuf = await fetchLogoBuffer(resolvePublicLogoUrl(org.favicon_url));
+  if (faviconBuf) {
+    try {
+      return result(await rasterUploadedFavicon(faviconBuf));
+    } catch (err) {
+      console.error("[og-icon] favicon raster failed", err?.message || err);
+    }
+  }
+
+  const logoBuf = await fetchLogoBuffer(resolvePublicLogoUrl(org.logo_url));
+  if (logoBuf) {
+    try {
+      return result(await rasterLogoAsIcon(logoBuf));
+    } catch (err) {
+      console.error("[og-icon] logo raster failed", err?.message || err);
+    }
+  }
+
+  try {
+    return result(await sharp(initialsIconSvg(org.name, org.brand_color)).png().toBuffer());
+  } catch (err) {
+    console.error("[og-icon] initials fallback failed", err?.message || err);
     return null;
   }
 }

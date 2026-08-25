@@ -93,7 +93,7 @@ export default function ProgramSheet() {
 
   const handleExportPdf = useCallback(async () => {
     if (!facility) return;
-    const toastId = toast.loading("Creating your referral one-pager…");
+    const toastId = toast.loading("Preparing photos and copy…");
     try {
       await exportFacilityOnePagerPdf({
         facility,
@@ -111,7 +111,7 @@ export default function ProgramSheet() {
 
   const loadAll = async () => {
     if (!facilitySlug) return;
-    const payload = await fetchPublicProgramSheet(facilitySlug);
+    const payload = await fetchPublicProgramSheet(facilitySlug, orgSlug);
     if (!payload) {
       setNotFound(true);
       return;

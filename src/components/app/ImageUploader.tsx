@@ -60,18 +60,23 @@ export function ImageUploader({
           toast.error(`${file.name} is over 5MB`);
           continue;
         }
-        if (!file.type.startsWith("image/") || file.type === "image/svg+xml") {
-          toast.error(`${file.name} must be a JPG, PNG, GIF, or WebP image`);
+        const ext = (file.name.split(".").pop() || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const acceptIco = /\.ico|image\/x-icon|image\/vnd\.microsoft\.icon/i.test(accept);
+        const isIco =
+          ext === "ico" || file.type === "image/x-icon" || file.type === "image/vnd.microsoft.icon";
+        const isRaster =
+          (file.type.startsWith("image/") && file.type !== "image/svg+xml") || (acceptIco && isIco);
+        if (!isRaster) {
+          toast.error(`${file.name} must be a JPG, PNG, GIF, WebP${acceptIco ? ", or ICO" : ""} image`);
           continue;
         }
-        const ext = (file.name.split(".").pop() || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        if (!["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-          toast.error(`${file.name} must be a JPG, PNG, GIF, or WebP image`);
+        if (!["jpg", "jpeg", "png", "gif", "webp", ...(acceptIco ? ["ico"] : [])].includes(ext)) {
+          toast.error(`${file.name} must be a JPG, PNG, GIF, WebP${acceptIco ? ", or ICO" : ""} image`);
           continue;
         }
         const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { error } = await supabase.storage.from(bucket).upload(path, file, {
-          contentType: file.type,
+          contentType: isIco ? file.type || "image/x-icon" : file.type,
         });
         if (error) {
           toast.error(error.message);

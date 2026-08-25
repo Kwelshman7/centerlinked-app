@@ -132,12 +132,17 @@ export function applySocialMeta({
 /** Absolute URL for the generated 1200×630 org share card. */
 export function orgOgImageUrl(slug: string, usesFavicon = false): string {
   const extra = usesFavicon ? "&i=1" : "";
-  return `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}${extra}`;
+  return `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}&v=3${extra}`;
+}
+
+export function orgOgIconUrl(slug: string, hasFavicon = false): string {
+  const extra = hasFavicon ? "&f=1" : "";
+  return `/api/og-icon?slug=${encodeURIComponent(slug)}&v=3${extra}`;
 }
 
 /**
- * Prefer a generated 1200×630 card when the org has a favicon or logo;
- * otherwise the CenterLinked default social image. Never returns a relative path.
+ * Always a generated 1200×630 org card for public share URLs.
+ * Never the CenterLinked marketing/login graphic.
  */
 export function orgShareImage(org: {
   slug?: string | null;
@@ -146,20 +151,20 @@ export function orgShareImage(org: {
   cover_image_url?: string | null;
 }): string {
   if (!org.slug) return DEFAULT_OG_IMAGE;
-  if (org.favicon_url?.trim()) return orgOgImageUrl(org.slug, true);
-  if (org.logo_url?.trim()) return orgOgImageUrl(org.slug);
-  return DEFAULT_OG_IMAGE;
+  return orgOgImageUrl(org.slug, !!org.favicon_url?.trim());
 }
 
 export function orgShareCardType(_org?: { logo_url?: string | null }): "summary_large_image" {
   return "summary_large_image";
 }
 
-/** Tab / share-preview icon. Dedicated favicon first, then the square logo. */
+/** Tab / share-preview icon from the org favicon (then logo), served same-origin. */
 export function orgShareIcon(org?: {
+  slug?: string | null;
   favicon_url?: string | null;
   logo_url?: string | null;
 } | null): string | null {
+  if (org?.slug) return orgOgIconUrl(org.slug, !!org.favicon_url?.trim());
   const favicon = org?.favicon_url?.trim();
   if (favicon) return favicon;
   const logo = org?.logo_url?.trim();

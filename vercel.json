@@ -5,6 +5,15 @@
     },
     "api/og-image.js": {
       "maxDuration": 15
+    },
+    "api/og-icon.js": {
+      "maxDuration": 10
+    },
+    "api/public-image.js": {
+      "maxDuration": 10
+    },
+    "api/one-pager-copy.js": {
+      "maxDuration": 15
     }
   },
   "headers": [

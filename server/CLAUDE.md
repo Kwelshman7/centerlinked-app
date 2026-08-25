@@ -10,6 +10,9 @@ This directory is the source of truth for Stripe, email, auth-hook, OG, and ops 
 | `email/` | Resend send + templates + notify/welcome handlers |
 | `auth/handlers/` | Before-user-created hook |
 | `og-meta.mjs` | Social-preview HTML for crawlers |
+| `og-image.mjs` / `og-share.mjs` | Generated 1200×630 org share cards + same-origin favicon |
+| `public-image.mjs` / `safe-image-fetch.mjs` | SSRF-hardened image proxy for PDF capture |
+| `one-pager-copy.mjs` | Factual OpenAI polish for referral one-pagers |
 | `lib/` | Shared helpers (e.g. payer matching) |
 | `facility-images/` | Offline batch pipeline (not request-path) |
 | `*.mjs` | Ops CLIs (payers, approve facilities, reconcile) |

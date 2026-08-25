@@ -330,7 +330,7 @@ export default function Settings() {
             <div className="space-y-2">
               <Label>Favicon</Label>
               <p className="text-xs text-muted-foreground">
-                Browser tab icon and share-link preview icon. Falls back to your logo if empty.
+                Browser tab and share-link icon. Uses this file first; then your logo; then initials in your brand color.
               </p>
               <ImageUploader
                 bucket="org-logos"

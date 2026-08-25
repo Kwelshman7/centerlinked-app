@@ -1,0 +1,130 @@
+import { isSafeHttpsImageUrl } from "./og-share.mjs";
+
+const MAX_BYTES = 5 * 1024 * 1024;
+const FETCH_MS = 8_000;
+const MAX_REDIRECTS = 4;
+
+const IMAGE_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+  "image/bmp",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
+  "image/x-png",
+]);
+
+function sniffContentType(buf) {
+  if (!buf || buf.length < 12) return null;
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    return "image/png";
+  }
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return "image/gif";
+  if (
+    buf[0] === 0x52 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x46 &&
+    buf[8] === 0x57 &&
+    buf[9] === 0x45 &&
+    buf[10] === 0x42 &&
+    buf[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  if (buf[0] === 0x00 && buf[1] === 0x00 && buf[2] === 0x01 && buf[3] === 0x00) {
+    return "image/x-icon";
+  }
+  if (buf[0] === 0x42 && buf[1] === 0x4d) return "image/bmp";
+  return null;
+}
+
+function normalizeType(type, buf) {
+  const raw = String(type || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (raw === "image/svg+xml" || raw === "text/html" || raw === "application/xml") {
+    return null;
+  }
+  if (ALLOWED_TYPES.has(raw)) return raw === "image/jpg" ? "image/jpeg" : raw;
+  if (raw === "application/octet-stream" || raw === "binary/octet-stream" || !raw) {
+    return sniffContentType(buf);
+  }
+  return sniffContentType(buf);
+}
+
+function isSelfProxyLoop(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname === "/api/public-image" || parsed.pathname.startsWith("/api/public-image/");
+  } catch {
+    return true;
+  }
+}
+
+function resolveRedirect(current, location) {
+  if (!location) return null;
+  try {
+    return new URL(location, current).href;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch a public HTTPS raster image with SSRF guards.
+ * Follows a small number of HTTPS redirects; rejects SVG and HTML.
+ */
+export async function fetchSafeImageBuffer(rawUrl, opts = {}) {
+  const maxBytes = opts.maxBytes ?? MAX_BYTES;
+  const timeoutMs = opts.timeoutMs ?? FETCH_MS;
+  if (!rawUrl || typeof rawUrl !== "string") return null;
+
+  let current = rawUrl.trim();
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (!isSafeHttpsImageUrl(current) || isSelfProxyLoop(current)) return null;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(current, {
+        signal: controller.signal,
+        redirect: "manual",
+        headers: {
+          Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+          "User-Agent": IMAGE_UA,
+          Referer: `${new URL(current).origin}/`,
+        },
+      });
+
+      if (res.status >= 300 && res.status < 400) {
+        current = resolveRedirect(current, res.headers.get("location"));
+        if (!current) return null;
+        continue;
+      }
+      if (!res.ok) return null;
+
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (!buf.length || buf.length > maxBytes) return null;
+
+      const contentType = normalizeType(res.headers.get("content-type"), buf);
+      if (!contentType) return null;
+
+      return { buffer: buf, contentType };
+    } catch (err) {
+      console.error("[safe-image-fetch] failed", err?.message || err);
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return null;
+}

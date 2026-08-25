@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => {
   process.env.STRIPE_PRICE_SETUP_NETWORK = env.STRIPE_PRICE_SETUP_NETWORK;
   process.env.STRIPE_PRICE_SETUP_GROUP = env.STRIPE_PRICE_SETUP_GROUP;
   process.env.BEFORE_USER_CREATED_HOOK_SECRET = env.BEFORE_USER_CREATED_HOOK_SECRET;
+  process.env.OPENAI_API_KEY = env.OPENAI_API_KEY;
 
   return {
     server: {

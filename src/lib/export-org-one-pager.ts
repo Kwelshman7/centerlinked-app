@@ -2,9 +2,10 @@ import {
   LETTER_HEIGHT_PX,
   LETTER_WIDTH_PX,
   htmlToImageSafeOptions,
+  orgHidesPlatformMark,
+  preloadDataUrls,
   renderOffscreenElement,
   resolveImageUrl,
-  revokeIfBlob,
   sleep,
   waitForFonts,
   waitForImages,
@@ -28,7 +29,7 @@ async function resolveQrUrl(profileUrl: string | null | undefined): Promise<stri
   const endpoint =
     "https://api.qrserver.com/v1/create-qr-code/?size=256x256&ecc=M&margin=0&color=1a2332&bgcolor=ffffff&data=" +
     encodeURIComponent(data);
-  return resolveImageUrl(endpoint);
+  return resolveImageUrl(endpoint, "icon");
 }
 
 export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promise<void> {
@@ -40,17 +41,30 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
     profileUrl: input.profileUrl,
   });
 
-  const photoIds = model.facilities.filter((f) => f.photoUrl).map((f) => f.id);
-  const [resolvedLogoUrl, resolvedQrUrl, ...resolvedPhotos] = await Promise.all([
-    resolveImageUrl(model.logoUrl),
-    resolveQrUrl(model.profileUrl),
-    ...model.facilities.map((f) => (f.photoUrl ? resolveImageUrl(f.photoUrl) : Promise.resolve(null))),
-  ]);
+  const [resolvedLogoUrl, resolvedCoverUrl, resolvedQrUrl, hidePlatformMark, ...resolvedPhotos] =
+    await Promise.all([
+      resolveImageUrl(model.logoUrl, "logo").then(
+        async (logo) => logo ?? resolveImageUrl(input.org.favicon_url, "logo"),
+      ),
+      resolveImageUrl(input.org.cover_image_url ?? input.org.image_urls?.[0] ?? null, "photo"),
+      resolveQrUrl(model.profileUrl),
+      orgHidesPlatformMark(input.org.id),
+      ...model.facilities.map((f) =>
+        f.photoUrl ? resolveImageUrl(f.photoUrl, "photo") : Promise.resolve(null),
+      ),
+    ]);
 
   const resolvedPhotoUrls: Record<string, string | null> = {};
   model.facilities.forEach((facility, i) => {
     resolvedPhotoUrls[facility.id] = resolvedPhotos[i] ?? null;
   });
+
+  await preloadDataUrls([
+    resolvedLogoUrl,
+    resolvedCoverUrl,
+    resolvedQrUrl,
+    ...Object.values(resolvedPhotoUrls),
+  ]);
 
   const { OrgOnePager } = await import("@/components/public/OrgOnePager");
   const [{ toPng }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]);
@@ -58,21 +72,22 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
   const rendered = await renderOffscreenElement("org-one-pager", OrgOnePager, {
     model,
     resolvedLogoUrl,
+    resolvedCoverUrl,
     resolvedPhotoUrls,
     resolvedQrUrl,
+    hidePlatformMark,
   });
 
   try {
     await waitForFonts();
     await waitForImages(rendered.node);
-    await sleep(80);
+    await sleep(400);
 
     const dataUrl = await Promise.race([
       toPng(rendered.node, {
         pixelRatio: 2.5,
         width: LETTER_WIDTH_PX,
         height: LETTER_HEIGHT_PX,
-        cacheBust: true,
         backgroundColor: model.theme.paper,
         ...htmlToImageSafeOptions,
         style: {
@@ -82,7 +97,7 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
         },
       }),
       new Promise<string>((_, reject) => {
-        window.setTimeout(() => reject(new Error("PDF capture timed out")), 20000);
+        window.setTimeout(() => reject(new Error("PDF capture timed out")), 40000);
       }),
     ]);
 
@@ -99,12 +114,9 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
       creator: "CenterLinked",
       keywords: "referral, behavioral health, facilities, insurance",
     });
-    pdf.addImage(dataUrl, "PNG", 0, 0, 8.5, 11, undefined, "MEDIUM");
+    pdf.addImage(dataUrl, "PNG", 0, 0, 8.5, 11, undefined, "FAST");
     pdf.save(input.filename ?? model.filename);
   } finally {
     rendered.cleanup();
-    revokeIfBlob(resolvedLogoUrl);
-    revokeIfBlob(resolvedQrUrl);
-    for (const id of photoIds) revokeIfBlob(resolvedPhotoUrls[id]);
   }
 }

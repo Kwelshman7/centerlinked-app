@@ -78,6 +78,7 @@ export interface SheetOrg {
   brand_color?: string | null;
   accent_color?: string | null;
   cover_image_url?: string | null;
+  favicon_url?: string | null;
   verified?: boolean | null;
   updated_at?: string | null;
 }
