@@ -1,6 +1,7 @@
-import fs from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import opentype from "opentype.js";
 import sharp from "sharp";
 import {
   DEFAULT_OG_IMAGE,
@@ -28,40 +29,56 @@ const PAD_Y = 72;
 
 const BUNDLED_OG_FONT = path.join(path.dirname(fileURLToPath(import.meta.url)), "fonts", "Inter-Bold.ttf");
 
-const OG_FONT_FILES = [
-  BUNDLED_OG_FONT,
-  "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
-  "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-  "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",
-  "/usr/share/fonts/liberation/LiberationSans-Bold.ttf",
-  "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-  "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
-  "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  "/Library/Fonts/Arial Bold.ttf",
-];
+let cachedFont = null;
 
-let cachedFontCss = undefined;
-
-function ogFontCss() {
-  if (cachedFontCss !== undefined) return cachedFontCss;
-  for (const file of OG_FONT_FILES) {
-    try {
-      if (!fs.existsSync(file)) continue;
-      const b64 = fs.readFileSync(file).toString("base64");
-      cachedFontCss = `@font-face{font-family:OgSans;src:url('data:font/ttf;base64,${b64}') format('truetype');font-weight:700;font-style:normal;}`;
-      return cachedFontCss;
-    } catch {
-      /* next candidate */
-    }
+function ogFont() {
+  if (cachedFont !== null) return cachedFont || null;
+  try {
+    cachedFont = opentype.parse(readFileSync(BUNDLED_OG_FONT));
+  } catch (err) {
+    console.error("[og-image] font load failed", err?.message || err);
+    cachedFont = false;
   }
-  cachedFontCss = "";
-  return cachedFontCss;
+  return cachedFont || null;
 }
 
-function svgText(x, y, size, opacity, content) {
-  const css = ogFontCss();
-  if (!css) return "";
-  return `<text x="${x}" y="${y}" font-family="OgSans" font-size="${size}" font-weight="700" fill="#ffffff" fill-opacity="${opacity}">${content}</text>`;
+function svgGlyphs(x, y, size, opacity, content, maxWidth) {
+  const font = ogFont();
+  const raw = String(content || "");
+  if (!font || !raw) return "";
+
+  const scale = (1 / font.unitsPerEm) * size;
+  const widthOf = (value) => {
+    let w = 0;
+    for (const ch of value) {
+      const glyph = font.charToGlyph(ch);
+      w += (glyph.advanceWidth || 0) * scale;
+    }
+    return w;
+  };
+
+  let fontSize = size;
+  let text = raw;
+  let localScale = scale;
+  while (fontSize > 22 && maxWidth && widthOf(text) > maxWidth) {
+    fontSize -= 2;
+    localScale = (1 / font.unitsPerEm) * fontSize;
+  }
+  if (maxWidth) {
+    while (text.length > 4 && widthOf(text) > maxWidth) text = text.slice(0, -1);
+    if (text !== raw) text = `${text}…`;
+  }
+
+  let cursor = x;
+  let d = "";
+  const drawScale = (1 / font.unitsPerEm) * fontSize;
+  for (const ch of text) {
+    const glyph = font.charToGlyph(ch);
+    d += `${glyph.getPath(cursor, y, fontSize).toPathData(2)} `;
+    cursor += (glyph.advanceWidth || 0) * drawScale;
+  }
+  const fill = opacity >= 1 ? "#ffffff" : `rgba(255,255,255,${opacity})`;
+  return `<path d="${d.trim()}" fill="${fill}"/>`;
 }
 
 function escapeXml(value) {
@@ -129,29 +146,24 @@ async function fetchLogoBuffer(url) {
 }
 
 function brandBackgroundSvg(name, brand) {
-  const label = escapeXml(name);
   const fill = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(brand || "").trim())
     ? String(brand).trim()
     : "#1A73E8";
-  const css = ogFontCss();
   return Buffer.from(`
 <svg width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-  ${css ? `<defs><style>${css}</style></defs>` : ""}
   <rect width="${OG_WIDTH}" height="${OG_HEIGHT}" fill="${escapeXml(fill)}"/>
   <rect x="0" y="${OG_HEIGHT - 140}" width="${OG_WIDTH}" height="140" fill="#000000" fill-opacity="0.28"/>
-  ${svgText(PAD_X, OG_HEIGHT - 58, 42, 1, label)}
-  ${svgText(PAD_X, OG_HEIGHT - 28, 20, 0.8, "Referral profile")}
+  ${svgGlyphs(PAD_X, OG_HEIGHT - 58, 42, 1, name, OG_WIDTH - PAD_X * 2)}
+  ${svgGlyphs(PAD_X, OG_HEIGHT - 28, 20, 0.8, "Referral profile", OG_WIDTH - PAD_X * 2)}
 </svg>`);
 }
 
 function nameBandSvg(name) {
-  const css = ogFontCss();
   return Buffer.from(`
 <svg width="${OG_WIDTH}" height="${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-  ${css ? `<defs><style>${css}</style></defs>` : ""}
   <rect x="0" y="${OG_HEIGHT - 160}" width="${OG_WIDTH}" height="160" fill="#081020" fill-opacity="0.62"/>
-  ${svgText(PAD_X, OG_HEIGHT - 68, 42, 1, escapeXml(name))}
-  ${svgText(PAD_X, OG_HEIGHT - 32, 20, 0.82, "Referral profile")}
+  ${svgGlyphs(PAD_X, OG_HEIGHT - 68, 42, 1, name, OG_WIDTH - PAD_X * 2)}
+  ${svgGlyphs(PAD_X, OG_HEIGHT - 32, 20, 0.82, "Referral profile", OG_WIDTH - PAD_X * 2)}
 </svg>`);
 }
 
@@ -265,16 +277,30 @@ const ICON_SIZE = 180;
 
 function initialsIconSvg(name, brand) {
   const fill = escapeXml(brandFill(brand));
-  const label = escapeXml(initialsFor(name) || "•");
-  const css = ogFontCss();
-  const text = css
-    ? `<text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="OgSans" font-size="72" font-weight="700" fill="#ffffff">${label}</text>`
-    : "";
+  const label = initialsFor(name) || "";
+  const font = ogFont();
+  let glyphs = "";
+  if (font && label) {
+    const size = 72;
+    const scale = (1 / font.unitsPerEm) * size;
+    let width = 0;
+    for (const ch of label) {
+      width += (font.charToGlyph(ch).advanceWidth || 0) * scale;
+    }
+    let cursor = (ICON_SIZE - width) / 2;
+    const y = ICON_SIZE / 2 + size * 0.35;
+    let d = "";
+    for (const ch of label) {
+      const glyph = font.charToGlyph(ch);
+      d += `${glyph.getPath(cursor, y, size).toPathData(2)} `;
+      cursor += (glyph.advanceWidth || 0) * scale;
+    }
+    glyphs = `<path d="${d.trim()}" fill="#ffffff"/>`;
+  }
   return Buffer.from(`
 <svg width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" xmlns="http://www.w3.org/2000/svg">
-  ${css ? `<defs><style>${css}</style></defs>` : ""}
   <rect width="${ICON_SIZE}" height="${ICON_SIZE}" rx="32" fill="${fill}"/>
-  ${text}
+  ${glyphs}
 </svg>`);
 }
 

@@ -132,12 +132,12 @@ export function applySocialMeta({
 /** Absolute URL for the generated 1200×630 org share card. */
 export function orgOgImageUrl(slug: string, usesFavicon = false): string {
   const extra = usesFavicon ? "&i=1" : "";
-  return `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}&v=4${extra}`;
+  return `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}&v=5${extra}`;
 }
 
 export function orgOgIconUrl(slug: string, hasFavicon = false): string {
   const extra = hasFavicon ? "&f=1" : "";
-  return `/api/og-icon?slug=${encodeURIComponent(slug)}&v=4${extra}`;
+  return `/api/og-icon?slug=${encodeURIComponent(slug)}&v=5${extra}`;
 }
 
 /**
