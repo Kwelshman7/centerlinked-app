@@ -1,4 +1,6 @@
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import {
   DEFAULT_OG_IMAGE,
@@ -24,7 +26,10 @@ export {
 const PAD_X = 96;
 const PAD_Y = 72;
 
+const BUNDLED_OG_FONT = path.join(path.dirname(fileURLToPath(import.meta.url)), "fonts", "Inter-Bold.ttf");
+
 const OG_FONT_FILES = [
+  BUNDLED_OG_FONT,
   "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
   "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
   "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",
