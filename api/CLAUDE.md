@@ -14,7 +14,7 @@ Thin HTTP wrappers. **Do not put business logic here.** Import from `server/**` 
 | `notify-access-request.js` | `server/email/handlers/notify-access-request.mjs` |
 | `notify-auth-event.js` | `server/email/handlers/notify-auth-event.mjs` |
 | `send-welcome.js` | `server/email/handlers/send-welcome.mjs` |
-| `og.js` / `og-image.js` / `og-icon.js` | OG HTML / share card / org favicon for crawlers |
+| `og.js` / `og-image.js` | OG HTML / share card; `/api/og-icon` rewrites onto `og-image.js` (`variant=icon`) so Hobby stays at 12 functions |
 | `public-image.js` | Same-origin raster proxy for PDF capture (`server/public-image.mjs`) |
 | `one-pager-copy.js` | Factual one-pager description polish (`server/one-pager-copy.mjs`) |
 

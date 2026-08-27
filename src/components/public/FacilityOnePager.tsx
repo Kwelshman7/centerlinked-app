@@ -1,16 +1,13 @@
-import type { ReactNode } from "react";
-import { Globe, Mail, MapPin, Phone } from "lucide-react";
-import type { FacilitySheetData, SheetContract, SheetOrg } from "@/components/public/FacilitySheetView";
-import { contrastingTextColor } from "@/lib/color-contrast";
-import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { uniqueAccreditations } from "@/lib/accreditations";
+import { contrastingTextColor } from "@/lib/color-contrast";
 import { categorizeFacilityTags } from "@/lib/facility-program-tags";
+import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { parseBrandColor } from "@/lib/public-urls";
-import { photoFillStyle } from "@/lib/export-one-pager-capture";
 import { WIRE } from "@/lib/one-pager-wire";
+import type { FacilitySheetData, SheetContract, SheetOrg } from "@/components/public/FacilitySheetView";
 import {
-  FactLine,
   LogoMark,
+  PhotoSlot,
   WireBlock,
   WireColumn,
   WireFooter,
@@ -34,32 +31,6 @@ export type FacilityOnePagerProps = {
   createdAt?: Date;
 };
 
-function ContactLine({
-  icon: Icon,
-  children,
-}: {
-  icon: typeof Phone;
-  children: ReactNode;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0, justifyContent: "flex-end" }}>
-      <Icon style={{ width: 11, height: 11, color: WIRE.muted, flexShrink: 0 }} aria-hidden />
-      <span
-        style={wireBody({
-          fontSize: 11,
-          fontWeight: 600,
-          color: WIRE.ink,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        })}
-      >
-        {children}
-      </span>
-    </div>
-  );
-}
-
 export function FacilityOnePager({
   facility,
   org,
@@ -76,7 +47,7 @@ export function FacilityOnePager({
 
   const logoUrl = resolvedLogoUrl ?? null;
   const heroUrl = resolvedHeroUrl ?? null;
-  const gallery = resolvedGalleryUrls.filter(Boolean).slice(0, 3);
+  const gallery = [0, 1, 2].map((i) => resolvedGalleryUrls[i] ?? null);
 
   const cityStateZip = [[facility.city, facility.state].filter(Boolean).join(", "), facility.zip]
     .filter(Boolean)
@@ -94,6 +65,7 @@ export function FacilityOnePager({
   const inNetwork = contracts.filter((c) => c.in_network);
   const payers = inNetwork.slice(0, 10).map((c) => c.payer_name).filter(Boolean);
   const payerOverflow = Math.max(0, inNetwork.length - 10);
+  const payerItems = payerOverflow > 0 ? [...payers, `+${payerOverflow} more`] : payers;
 
   const programTags = categorizeFacilityTags(facility);
   const conditions = programTags.conditions.slice(0, 8);
@@ -120,64 +92,7 @@ export function FacilityOnePager({
       : "Referral contact";
 
   const displayName = org?.name || facility.name;
-
-  const careBlocks: ReactNode[] = [];
-  if (levels.length) {
-    careBlocks.push(
-      <WireBlock key="levels" title="Levels of care" brand={brand}>
-        <FactLine items={levels} />
-      </WireBlock>,
-    );
-  }
-  if (whoWeTreat.length) {
-    careBlocks.push(
-      <WireBlock key="who" title="Who we treat" brand={brand}>
-        <FactLine items={whoWeTreat} />
-      </WireBlock>,
-    );
-  }
-  if (conditions.length) {
-    careBlocks.push(
-      <WireBlock key="conditions" title="Conditions we treat" brand={brand}>
-        <FactLine items={conditions} />
-      </WireBlock>,
-    );
-  }
-
-  const programBlocks: ReactNode[] = [];
-  if (therapies.length) {
-    programBlocks.push(
-      <WireBlock key="therapies" title="Therapies" brand={brand}>
-        <FactLine items={therapies} />
-      </WireBlock>,
-    );
-  }
-  if (amenities.length) {
-    programBlocks.push(
-      <WireBlock key="amenities" title="Amenities" brand={brand}>
-        <FactLine items={amenities} />
-      </WireBlock>,
-    );
-  }
-
-  const networkBlocks: ReactNode[] = [];
-  if (payers.length) {
-    const names = payerOverflow > 0 ? [...payers, `+${payerOverflow} more`] : payers;
-    networkBlocks.push(
-      <WireBlock key="insurance" title="In-network insurance" brand={brand}>
-        <FactLine items={names} />
-      </WireBlock>,
-    );
-  }
-  if (accreditations.length) {
-    networkBlocks.push(
-      <WireBlock key="accreditations" title="Accreditations" brand={brand}>
-        <FactLine items={accreditations} />
-      </WireBlock>,
-    );
-  }
-
-  const columns = [careBlocks, programBlocks, networkBlocks].filter((blocks) => blocks.length > 0);
+  const webHost = website ? website.replace(/^https?:\/\//i, "").replace(/\/$/, "") : null;
 
   return (
     <article
@@ -200,10 +115,10 @@ export function FacilityOnePager({
           flexShrink: 0,
           height: WIRE.mastheadH,
           boxSizing: "border-box",
-          padding: `16px ${WIRE.padX}px 14px`,
+          padding: `14px ${WIRE.padX}px`,
           display: "flex",
           alignItems: "center",
-          gap: 20,
+          gap: 18,
           borderBottom: `1px solid ${WIRE.rule}`,
         }}
       >
@@ -220,52 +135,73 @@ export function FacilityOnePager({
           >
             {facility.name}
           </h1>
-          <div
+          <p
             style={wireBody({
               marginTop: 4,
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: "4px 10px",
               fontSize: 11.5,
               color: WIRE.muted,
               fontWeight: 500,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             })}
           >
             {org?.name ? <span style={{ fontWeight: 700, color: brand }}>{org.name}</span> : null}
-            {locationLine ? (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                <MapPin style={{ width: 11, height: 11 }} aria-hidden />
-                {locationLine}
-              </span>
-            ) : null}
-          </div>
+            {org?.name && locationLine ? "  ·  " : null}
+            {locationLine || null}
+          </p>
         </div>
-        {hasBd ? (
-          <div
-            style={{
-              flexShrink: 0,
-              width: 220,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              gap: 4,
-              textAlign: "right",
-            }}
-          >
-            <p style={wireHeading({ fontSize: 13.5, fontWeight: 800, letterSpacing: "-0.02em", color: WIRE.ink })}>
-              {repName?.trim() || displayName}
-            </p>
-            <p style={wireBody({ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: brand })}>
-              {repTitle}
-            </p>
-            {displayPhone ? <ContactLine icon={Phone}>{displayPhone}</ContactLine> : null}
-            {repEmail?.trim() ? <ContactLine icon={Mail}>{repEmail.trim()}</ContactLine> : null}
-            {website ? (
-              <ContactLine icon={Globe}>{website.replace(/^https?:\/\//i, "").replace(/\/$/, "")}</ContactLine>
-            ) : null}
-          </div>
-        ) : null}
+        <div
+          style={{
+            flexShrink: 0,
+            width: 220,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 3,
+            textAlign: "right",
+          }}
+        >
+          {hasBd ? (
+            <>
+              <p style={wireHeading({ fontSize: 13.5, fontWeight: 800, letterSpacing: "-0.02em", color: WIRE.ink })}>
+                {repName?.trim() || displayName}
+              </p>
+              <p
+                style={wireBody({
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: brand,
+                })}
+              >
+                {repTitle}
+              </p>
+              {displayPhone ? (
+                <p style={wireBody({ fontSize: 11, fontWeight: 600, color: WIRE.ink })}>{displayPhone}</p>
+              ) : null}
+              {repEmail?.trim() ? (
+                <p
+                  style={wireBody({
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: WIRE.ink,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: "100%",
+                  })}
+                >
+                  {repEmail.trim()}
+                </p>
+              ) : null}
+              {webHost ? (
+                <p style={wireBody({ fontSize: 11, fontWeight: 600, color: WIRE.ink })}>{webHost}</p>
+              ) : null}
+            </>
+          ) : null}
+        </div>
       </header>
 
       <div
@@ -277,17 +213,15 @@ export function FacilityOnePager({
           background: brand,
         }}
       >
-        {heroUrl ? (
-          <div aria-hidden style={photoFillStyle(heroUrl, "cover", { position: "absolute", inset: 0 })} />
-        ) : null}
+        <PhotoSlot src={heroUrl} brand={brand} height="100%" />
         <div
           aria-hidden
           style={{
             position: "absolute",
             inset: 0,
             background: heroUrl
-              ? "linear-gradient(180deg, rgba(8,16,32,0.05) 40%, rgba(8,16,32,0.62) 100%)"
-              : `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
+              ? "linear-gradient(180deg, rgba(8,16,32,0.04) 42%, rgba(8,16,32,0.58) 100%)"
+              : "transparent",
           }}
         />
         {tagline ? (
@@ -296,7 +230,7 @@ export function FacilityOnePager({
               position: "absolute",
               left: WIRE.padX,
               right: WIRE.padX,
-              bottom: 18,
+              bottom: 16,
               fontSize: 16,
               fontWeight: 600,
               fontStyle: "italic",
@@ -315,62 +249,66 @@ export function FacilityOnePager({
           minHeight: 0,
           display: "flex",
           flexDirection: "column",
-          gap: 16,
-          padding: `16px ${WIRE.padX}px 12px`,
+          gap: 14,
+          padding: `14px ${WIRE.padX}px 10px`,
         }}
       >
-        {gallery.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${gallery.length}, minmax(0, 1fr))`,
-              gap: 8,
-              flexShrink: 0,
-              height: WIRE.galleryH,
-            }}
-          >
-            {gallery.map((src, i) => (
-              <div
-                key={`${i}`}
-                style={photoFillStyle(src, "cover", {
-                  height: WIRE.galleryH,
-                })}
-              />
-            ))}
-          </div>
-        ) : null}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: 8,
+            flexShrink: 0,
+            height: WIRE.galleryH,
+          }}
+        >
+          {gallery.map((src, i) => (
+            <PhotoSlot key={i} src={src} brand={brand} height={WIRE.galleryH} />
+          ))}
+        </div>
 
-        {summary ? (
+        <div
+          style={{
+            flexShrink: 0,
+            height: WIRE.copyH,
+            overflow: "hidden",
+          }}
+        >
           <p
             style={wireBody({
               fontSize: 13,
-              lineHeight: 1.55,
-              color: WIRE.ink,
-              maxWidth: "100%",
+              lineHeight: 1.5,
+              color: summary ? WIRE.ink : WIRE.empty,
             })}
           >
-            {summary}
+            {summary || "—"}
           </p>
-        ) : null}
+        </div>
 
-        {columns.length > 0 ? (
-          <section
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: "grid",
-              gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`,
-              gap: WIRE.gutter,
-              paddingTop: 4,
-            }}
-          >
-            {columns.map((blocks, index) => (
-              <WireColumn key={index} brand={brand}>
-                {blocks}
-              </WireColumn>
-            ))}
-          </section>
-        ) : null}
+        <section
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: WIRE.gutter,
+            paddingTop: 2,
+          }}
+        >
+          <WireColumn brand={brand}>
+            <WireBlock title="Levels of care" brand={brand} items={levels} />
+            <WireBlock title="Who we treat" brand={brand} items={whoWeTreat} />
+            <WireBlock title="Conditions we treat" brand={brand} items={conditions} />
+          </WireColumn>
+          <WireColumn brand={brand}>
+            <WireBlock title="Therapies" brand={brand} items={therapies} />
+            <WireBlock title="Amenities" brand={brand} items={amenities} />
+          </WireColumn>
+          <WireColumn brand={brand}>
+            <WireBlock title="In-network insurance" brand={brand} items={payerItems} />
+            <WireBlock title="Accreditations" brand={brand} items={accreditations} />
+          </WireColumn>
+        </section>
       </div>
 
       <WireFooter hidePlatformMark={hidePlatformMark} />

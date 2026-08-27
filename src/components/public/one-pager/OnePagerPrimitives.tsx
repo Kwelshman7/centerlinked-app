@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { photoFillStyle } from "@/lib/export-one-pager-capture";
-import { WIRE, orgInitials } from "@/lib/one-pager-wire";
+import { WIRE, brandRgba, orgInitials } from "@/lib/one-pager-wire";
 
 export function wireHeading(extra?: CSSProperties): CSSProperties {
   return { fontFamily: WIRE.fontDisplay, margin: 0, ...extra };
@@ -27,16 +27,17 @@ export function SectionLabel({ children, color }: { children: ReactNode; color: 
 }
 
 export function FactLine({ items }: { items: string[] }) {
+  const filled = items.filter(Boolean);
   return (
     <p
       style={wireBody({
         fontSize: 12,
-        lineHeight: 1.55,
-        fontWeight: 500,
-        color: WIRE.ink,
+        lineHeight: 1.5,
+        fontWeight: filled.length ? 500 : 500,
+        color: filled.length ? WIRE.ink : WIRE.empty,
       })}
     >
-      {items.join("  ·  ")}
+      {filled.length ? filled.join("  ·  ") : "—"}
     </p>
   );
 }
@@ -86,6 +87,32 @@ export function LogoMark({
   );
 }
 
+/** Always occupies the same rectangle. Missing photos stay a brand wash, never a broken-image tile. */
+export function PhotoSlot({
+  src,
+  brand,
+  height,
+  fit = "cover",
+}: {
+  src: string | null;
+  brand: string;
+  height: number | string;
+  fit?: "cover" | "contain";
+}) {
+  if (src) {
+    return <div style={photoFillStyle(src, fit, { width: "100%", height })} />;
+  }
+  return (
+    <div
+      style={{
+        width: "100%",
+        height,
+        background: `linear-gradient(135deg, ${brandRgba(brand, 0.16)} 0%, ${brandRgba(brand, 0.06)} 100%)`,
+      }}
+    />
+  );
+}
+
 export function WireColumn({
   brand,
   children,
@@ -101,8 +128,8 @@ export function WireColumn({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        gap: 18,
-        paddingLeft: 16,
+        gap: 16,
+        paddingLeft: 14,
         borderLeft: `2px solid ${brand}`,
         boxSizing: "border-box",
       }}
@@ -115,30 +142,22 @@ export function WireColumn({
 export function WireBlock({
   title,
   brand,
-  children,
+  items,
 }: {
   title: string;
   brand: string;
-  children: ReactNode;
+  items: string[];
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
       <SectionLabel color={brand}>{title}</SectionLabel>
-      {children}
+      <FactLine items={items} />
     </div>
   );
 }
 
-/** Paying orgs: no platform mark. Unpaid: tiny centered attribution on white. */
-export function WireFooter({
-  hidePlatformMark,
-}: {
-  brand?: string;
-  onBrand?: string;
-  hidePlatformMark: boolean;
-}) {
-  if (hidePlatformMark) return null;
-
+/** Always reserve the footer band so paying vs unpaid pages share the same wire. */
+export function WireFooter({ hidePlatformMark }: { hidePlatformMark: boolean }) {
   return (
     <footer
       style={{
@@ -150,17 +169,19 @@ export function WireFooter({
         borderTop: `1px solid ${WIRE.rule}`,
       }}
     >
-      <p
-        style={wireHeading({
-          fontSize: 7,
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "#8b949e",
-        })}
-      >
-        Created on centerlinked.com
-      </p>
+      {hidePlatformMark ? null : (
+        <p
+          style={wireHeading({
+            fontSize: 7,
+            fontWeight: 600,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "#8b949e",
+          })}
+        >
+          Created on centerlinked.com
+        </p>
+      )}
     </footer>
   );
 }

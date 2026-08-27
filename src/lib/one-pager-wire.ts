@@ -1,20 +1,20 @@
-/** Shared Letter one-pager wire. Print measures, not UI-card measures. */
+/** Locked Letter one-pager. Every slot keeps its height whether filled or empty. */
 
 export const WIRE = {
   pageW: 816,
   pageH: 1056,
-  padX: 40,
-  padY: 22,
+  padX: 36,
   gutter: 22,
-  radius: 4,
-  mastheadH: 78,
-  heroH: 248,
-  galleryH: 112,
-  footerH: 22,
+  mastheadH: 76,
+  heroH: 196,
+  galleryH: 100,
+  copyH: 78,
+  footerH: 24,
   ink: "#152033",
   muted: "#5a6573",
   rule: "#d8dde3",
   paper: "#ffffff",
+  empty: "#9aa3ad",
   fontDisplay: "Montserrat, Inter, system-ui, sans-serif",
   fontBody: "Inter, system-ui, sans-serif",
 } as const;
