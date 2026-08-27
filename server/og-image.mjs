@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import sharp from "sharp";
 import {
   DEFAULT_OG_IMAGE,
@@ -22,6 +23,41 @@ export {
 
 const PAD_X = 96;
 const PAD_Y = 72;
+
+const OG_FONT_FILES = [
+  "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+  "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+  "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",
+  "/usr/share/fonts/liberation/LiberationSans-Bold.ttf",
+  "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+  "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
+  "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+  "/Library/Fonts/Arial Bold.ttf",
+];
+
+let cachedFontCss = undefined;
+
+function ogFontCss() {
+  if (cachedFontCss !== undefined) return cachedFontCss;
+  for (const file of OG_FONT_FILES) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const b64 = fs.readFileSync(file).toString("base64");
+      cachedFontCss = `@font-face{font-family:OgSans;src:url('data:font/ttf;base64,${b64}') format('truetype');font-weight:700;font-style:normal;}`;
+      return cachedFontCss;
+    } catch {
+      /* next candidate */
+    }
+  }
+  cachedFontCss = "";
+  return cachedFontCss;
+}
+
+function svgText(x, y, size, opacity, content) {
+  const css = ogFontCss();
+  if (!css) return "";
+  return `<text x="${x}" y="${y}" font-family="OgSans" font-size="${size}" font-weight="700" fill="#ffffff" fill-opacity="${opacity}">${content}</text>`;
+}
 
 function escapeXml(value) {
   return String(value ?? "")
@@ -92,21 +128,25 @@ function brandBackgroundSvg(name, brand) {
   const fill = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(brand || "").trim())
     ? String(brand).trim()
     : "#1A73E8";
+  const css = ogFontCss();
   return Buffer.from(`
 <svg width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  ${css ? `<defs><style>${css}</style></defs>` : ""}
   <rect width="${OG_WIDTH}" height="${OG_HEIGHT}" fill="${escapeXml(fill)}"/>
   <rect x="0" y="${OG_HEIGHT - 140}" width="${OG_WIDTH}" height="140" fill="#000000" fill-opacity="0.28"/>
-  <text x="${PAD_X}" y="${OG_HEIGHT - 58}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">${label}</text>
-  <text x="${PAD_X}" y="${OG_HEIGHT - 28}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#ffffff" fill-opacity="0.8">Referral profile</text>
+  ${svgText(PAD_X, OG_HEIGHT - 58, 42, 1, label)}
+  ${svgText(PAD_X, OG_HEIGHT - 28, 20, 0.8, "Referral profile")}
 </svg>`);
 }
 
 function nameBandSvg(name) {
+  const css = ogFontCss();
   return Buffer.from(`
 <svg width="${OG_WIDTH}" height="${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  ${css ? `<defs><style>${css}</style></defs>` : ""}
   <rect x="0" y="${OG_HEIGHT - 160}" width="${OG_WIDTH}" height="160" fill="#081020" fill-opacity="0.62"/>
-  <text x="${PAD_X}" y="${OG_HEIGHT - 68}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">${escapeXml(name)}</text>
-  <text x="${PAD_X}" y="${OG_HEIGHT - 32}" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#ffffff" fill-opacity="0.82">Referral profile</text>
+  ${svgText(PAD_X, OG_HEIGHT - 68, 42, 1, escapeXml(name))}
+  ${svgText(PAD_X, OG_HEIGHT - 32, 20, 0.82, "Referral profile")}
 </svg>`);
 }
 
@@ -221,10 +261,15 @@ const ICON_SIZE = 180;
 function initialsIconSvg(name, brand) {
   const fill = escapeXml(brandFill(brand));
   const label = escapeXml(initialsFor(name) || "•");
+  const css = ogFontCss();
+  const text = css
+    ? `<text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="OgSans" font-size="72" font-weight="700" fill="#ffffff">${label}</text>`
+    : "";
   return Buffer.from(`
 <svg width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" xmlns="http://www.w3.org/2000/svg">
+  ${css ? `<defs><style>${css}</style></defs>` : ""}
   <rect width="${ICON_SIZE}" height="${ICON_SIZE}" rx="32" fill="${fill}"/>
-  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui, Helvetica, Arial, sans-serif" font-size="72" font-weight="700" fill="#ffffff">${label}</text>
+  ${text}
 </svg>`);
 }
 

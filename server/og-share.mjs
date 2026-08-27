@@ -89,7 +89,7 @@ export function siteOrigin() {
 }
 
 /** Bump when share-card generation changes so crawlers do not keep a cached 302 to og-image.png. */
-const SHARE_ASSET_VERSION = "3";
+const SHARE_ASSET_VERSION = "4";
 
 export function orgOgImagePath(slug, opts = {}) {
   const params = new URLSearchParams({
