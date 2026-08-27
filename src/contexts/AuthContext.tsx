@@ -43,23 +43,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [orgFacilityAdmin, setOrgFacilityAdmin] = useState(false);
   const [isBootstrapAdmin, setIsBootstrapAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const loadRef = useRef<Promise<void> | null>(null);
+  const loadGen = useRef(0);
+  const inFlight = useRef<{ userId: string; promise: Promise<void> } | null>(null);
+
+  const invalidateLoads = () => {
+    loadGen.current += 1;
+    inFlight.current = null;
+  };
 
   const loadProfileAndRoles = async (authUser: User) => {
-    if (loadRef.current) return loadRef.current;
+    if (inFlight.current?.userId === authUser.id) return inFlight.current.promise;
 
-    loadRef.current = (async () => {
+    const gen = ++loadGen.current;
+    const stillCurrent = () => loadGen.current === gen;
+
+    const promise = (async () => {
       const email = authUser.email?.trim().toLowerCase() || "";
       const [bootstrapCandidate, emailAllowed] = await Promise.all([
         checkBootstrapAdminCandidate(),
         email ? isEmailAuthAllowed(email) : Promise.resolve(false),
       ]);
+      if (!stillCurrent()) return;
 
       if (email && !bootstrapCandidate && !emailAllowed) {
         toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
           description: PERSONAL_EMAIL_BLOCKED_MESSAGE.description,
         });
         await supabase.auth.signOut();
+        if (!stillCurrent()) return;
         setProfile(null);
         setRoles([]);
         setOrgFacilityAdmin(false);
@@ -68,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const profileReady = await ensureProfile(authUser);
+      if (!stillCurrent()) return;
       if (!profileReady.ok) {
         toast.error("Account setup incomplete", {
           description: profileReady.error,
@@ -75,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const bootstrapped = await bootstrapSuperAdmin(authUser);
+      if (!stillCurrent()) return;
       setIsBootstrapAdmin(bootstrapCandidate);
 
       try {
@@ -85,12 +98,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           inviteError instanceof Error ? inviteError.message : inviteError,
         );
       }
+      if (!stillCurrent()) return;
 
       const [{ data: prof, error: profError }, { data: rolesData, error: rolesError }] =
         await Promise.all([
           supabase.from("profiles").select("*").eq("user_id", authUser.id).maybeSingle(),
           supabase.from("user_roles").select("role").eq("user_id", authUser.id),
         ]);
+      if (!stillCurrent()) return;
 
       if (profError || rolesError) {
         console.warn("profile/roles load failed:", profError?.message || rolesError?.message);
@@ -102,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let nextRoles = ((rolesData as { role: AppRole }[]) ?? []).map((r) => r.role);
       if (bootstrapped && !nextRoles.includes("super_admin")) {
         const { data: retryRoles } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id);
+        if (!stillCurrent()) return;
         nextRoles = ((retryRoles as { role: AppRole }[]) ?? []).map((r) => r.role);
       }
       const loadedProfile = (prof as Profile) ?? null;
@@ -111,16 +127,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           _org_id: loadedProfile.organization_id,
           _user_id: authUser.id,
         });
+        if (!stillCurrent()) return;
         nextOrgAdmin = Boolean(isAdmin);
       }
+      if (!stillCurrent()) return;
       setProfile(loadedProfile);
       setRoles(nextRoles);
       setOrgFacilityAdmin(nextOrgAdmin);
     })().finally(() => {
-      loadRef.current = null;
+      if (inFlight.current?.userId === authUser.id && loadGen.current === gen) {
+        inFlight.current = null;
+      }
     });
 
-    return loadRef.current;
+    inFlight.current = { userId: authUser.id, promise };
+    return promise;
   };
 
   useEffect(() => {
@@ -133,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (sess?.user) {
         loadProfileAndRoles(sess.user).finally(() => mounted && setLoading(false));
       } else {
+        invalidateLoads();
         setProfile(null);
         setRoles([]);
         setOrgFacilityAdmin(false);
