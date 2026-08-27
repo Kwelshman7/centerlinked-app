@@ -18,6 +18,17 @@ export type OnePagerCopyResult = {
   usedAi: boolean;
 };
 
+export type OrgOnePagerCopyFacts = {
+  name: string;
+  tagline?: string | null;
+  description?: string | null;
+  locationContext?: string | null;
+  facilityCount: number;
+  levels: string[];
+  states: string[];
+  facilityNames: string[];
+};
+
 /** Optional polish. Export still succeeds if this fails or OpenAI is unset. */
 export async function polishOnePagerCopy(facts: OnePagerCopyFacts): Promise<OnePagerCopyResult | null> {
   try {
@@ -25,6 +36,25 @@ export async function polishOnePagerCopy(facts: OnePagerCopyFacts): Promise<OneP
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(facts),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { description?: string; usedAi?: boolean };
+    return {
+      description: typeof json.description === "string" && json.description.trim() ? json.description.trim() : null,
+      usedAi: json.usedAi === true,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Org overview only. Does not invent facilities, insurance, or layout. */
+export async function polishOrgOnePagerCopy(facts: OrgOnePagerCopyFacts): Promise<OnePagerCopyResult | null> {
+  try {
+    const res = await fetch("/api/one-pager-copy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "org", ...facts }),
     });
     if (!res.ok) return null;
     const json = (await res.json()) as { description?: string; usedAi?: boolean };

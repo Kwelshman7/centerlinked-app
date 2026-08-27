@@ -1,4 +1,11 @@
-export type OrgOnePagerLayout = "feature" | "split" | "trio" | "grid" | "rows";
+export type OrgPrintDensity = "generous" | "standard" | "directory";
+export type OrgPrintPageKind = "cover" | "directory";
+
+export type OrgPrintPageSlice = {
+  kind: OrgPrintPageKind;
+  start: number;
+  end: number;
+};
 
 const LOC_SHORT: Record<string, string> = {
   "medical detox": "Detox",
@@ -15,12 +22,45 @@ const LOC_SHORT: Record<string, string> = {
   "holistic treatment": "Holistic",
 };
 
-export function layoutForFacilityCount(count: number): OrgOnePagerLayout {
-  if (count <= 1) return "feature";
-  if (count === 2) return "split";
-  if (count === 3) return "trio";
-  if (count <= 6) return "grid";
-  return "rows";
+/** 1–3 roomy cards, 4–8 compact pages, 9+ cover then a dense insurance directory. */
+export function densityForFacilityCount(count: number): OrgPrintDensity {
+  if (count <= 3) return "generous";
+  if (count <= 8) return "standard";
+  return "directory";
+}
+
+export function rowsPerDirectoryPage(density: OrgPrintDensity): number {
+  if (density === "generous") return 3;
+  if (density === "standard") return 4;
+  return 9;
+}
+
+export function payerCapForDensity(density: OrgPrintDensity): number {
+  if (density === "generous") return 24;
+  if (density === "standard") return 18;
+  return 14;
+}
+
+export function paginateOrgFacilities(count: number): OrgPrintPageSlice[] {
+  const n = Math.max(0, count);
+  const density = densityForFacilityCount(n);
+  if (n === 0) return [{ kind: "cover", start: 0, end: 0 }];
+
+  if (density === "directory") {
+    const per = rowsPerDirectoryPage(density);
+    const pages: OrgPrintPageSlice[] = [{ kind: "cover", start: 0, end: 0 }];
+    for (let i = 0; i < n; i += per) {
+      pages.push({ kind: "directory", start: i, end: Math.min(n, i + per) });
+    }
+    return pages;
+  }
+
+  const per = rowsPerDirectoryPage(density);
+  const pages: OrgPrintPageSlice[] = [];
+  for (let i = 0; i < n; i += per) {
+    pages.push({ kind: "directory", start: i, end: Math.min(n, i + per) });
+  }
+  return pages;
 }
 
 export function shortenLevelOfCare(level: string): string {
