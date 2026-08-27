@@ -76,6 +76,12 @@ interface ExtractedImage {
 
 type Stage = "upload" | "parsing" | "review" | "committing" | "done";
 
+function facilityCommitKey(f: ParsedFacility) {
+  return [f.name, f.city, f.address_line1]
+    .map((part) => (part ?? "").trim().toLowerCase())
+    .join("|");
+}
+
 export default function PdfFacilityUpload() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -91,6 +97,7 @@ export default function PdfFacilityUpload() {
   const [extracting, setExtracting] = useState(false);
   // imageId -> facility index it will attach to ("none" = skip)
   const [imageAssignments, setImageAssignments] = useState<Record<string, number | "none">>({});
+  const [committedKeys, setCommittedKeys] = useState<string[]>([]);
 
   // Gate: must be logged in AND belong to an organization
   if (!user) {
@@ -124,6 +131,8 @@ export default function PdfFacilityUpload() {
       return;
     }
     setFileName(file.name);
+    setCommittedKeys([]);
+    setResultUrls([]);
     setStage("parsing");
     const orgId = profile!.organization_id!;
     try {
@@ -200,6 +209,7 @@ export default function PdfFacilityUpload() {
     setFileName("");
     setParsed(null);
     setResultUrls([]);
+    setCommittedKeys([]);
     setExtractedImages([]);
     setImageAssignments({});
     setUploadId(null);
@@ -327,10 +337,13 @@ export default function PdfFacilityUpload() {
       const orgSlug = orgRow?.slug ?? null;
 
       const payers = await loadApprovedPayers();
-      const urls: string[] = [];
+      const urls = [...resultUrls];
+      const nextCommitted = new Set(committedKeys);
       const failed: { name: string; error: string }[] = [];
       for (let fIdx = 0; fIdx < parsed.facilities.length; fIdx++) {
         const f = parsed.facilities[fIdx];
+        const key = facilityCommitKey(f);
+        if (nextCommitted.has(key)) continue;
         const imageUrls = approvedByFacility[fIdx] ?? [];
         const draft = {
           ...emptyFacility(),
@@ -364,8 +377,11 @@ export default function PdfFacilityUpload() {
           failed.push({ name: f.name, error: result.error });
           continue;
         }
+        nextCommitted.add(key);
         if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
       }
+      setCommittedKeys([...nextCommitted]);
+      setResultUrls(urls);
 
       if (failed.length) {
         toast.error(
@@ -563,7 +579,9 @@ export default function PdfFacilityUpload() {
           </Card>
 
           {/* Facilities */}
-          {parsed.facilities.map((f, idx) => (
+          {parsed.facilities.map((f, idx) => {
+            const alreadyCreated = committedKeys.includes(facilityCommitKey(f));
+            return (
             <Card key={idx} className="p-5 space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -572,8 +590,12 @@ export default function PdfFacilityUpload() {
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Facility {idx + 1} of {parsed.facilities.length}
+                    {alreadyCreated ? " · already created" : ""}
                   </p>
                 </div>
+                {alreadyCreated ? (
+                  <Badge variant="secondary">Created</Badge>
+                ) : (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -582,6 +604,7 @@ export default function PdfFacilityUpload() {
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+                )}
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3">
@@ -589,6 +612,7 @@ export default function PdfFacilityUpload() {
                   <Label>Name</Label>
                   <Input
                     value={f.name}
+                    disabled={alreadyCreated}
                     onChange={(e) => updateFacility(idx, { name: e.target.value })}
                   />
                 </div>
@@ -603,6 +627,7 @@ export default function PdfFacilityUpload() {
                   <Label>Address</Label>
                   <Input
                     value={f.address_line1 ?? ""}
+                    disabled={alreadyCreated}
                     onChange={(e) => updateFacility(idx, { address_line1: e.target.value })}
                   />
                 </div>
@@ -610,6 +635,7 @@ export default function PdfFacilityUpload() {
                   <Label>City</Label>
                   <Input
                     value={f.city ?? ""}
+                    disabled={alreadyCreated}
                     onChange={(e) => updateFacility(idx, { city: e.target.value })}
                   />
                 </div>
@@ -713,7 +739,8 @@ export default function PdfFacilityUpload() {
                 </div>
               </div>
             </Card>
-          ))}
+            );
+          })}
 
           {/* Photos from PDF — user approves each */}
           {(extracting || extractedImages.length > 0) && (
@@ -828,10 +855,11 @@ export default function PdfFacilityUpload() {
               <p className="text-sm">
                 Looks right? We'll create{" "}
                 <span className="font-semibold">
-                  {parsed.facilities.length} live page
-                  {parsed.facilities.length === 1 ? "" : "s"}
+                  {parsed.facilities.filter((f) => !committedKeys.includes(facilityCommitKey(f))).length} live page
+                  {parsed.facilities.filter((f) => !committedKeys.includes(facilityCommitKey(f))).length === 1 ? "" : "s"}
                 </span>{" "}
-                with shareable links.
+                with shareable links
+                {committedKeys.length > 0 ? ` (${committedKeys.length} already created).` : "."}
               </p>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={reset}>
@@ -840,7 +868,11 @@ export default function PdfFacilityUpload() {
                 <Button
                   size="sm"
                   onClick={commit}
-                  disabled={!parsed.facilities.length || stage !== "review" || extracting}
+                  disabled={
+                    !parsed.facilities.some((f) => !committedKeys.includes(facilityCommitKey(f))) ||
+                    stage !== "review" ||
+                    extracting
+                  }
                 >
                   {extracting ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Finding photos…</>
