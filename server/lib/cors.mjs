@@ -17,8 +17,21 @@ function siteOrigin() {
   }
 }
 
+function isProductionRuntime() {
+  if (process.env.VERCEL_ENV === "production") return true;
+  if (process.env.NODE_ENV === "production") {
+    const site = siteOrigin();
+    return !/localhost|127\.0\.0\.1/i.test(site);
+  }
+  return false;
+}
+
 export function allowedBillingOrigin(req) {
-  const allowed = new Set([...PRODUCTION_ORIGINS, ...LOCAL_ORIGINS, siteOrigin()]);
+  const allowed = new Set([...PRODUCTION_ORIGINS, siteOrigin()]);
+  // Localhost only for local/preview — never advertise it on production CORS.
+  if (!isProductionRuntime()) {
+    for (const origin of LOCAL_ORIGINS) allowed.add(origin);
+  }
   const origin = req?.headers?.origin;
   if (origin && allowed.has(origin)) return origin;
   return siteOrigin();

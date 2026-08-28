@@ -36,14 +36,14 @@ export function socialPreviewPlugin(): Plugin {
             return;
           }
           try {
-            const { readJsonBody, sendJson } = await import("./server/email/http.mjs");
+            const { readJsonBody, sendJson, getBearerToken } = await import("./server/email/http.mjs");
             const { handleOnePagerCopy } = await import("./server/one-pager-copy.mjs");
             const body = await readJsonBody(req);
             if (body === null) {
               sendJson(res, 400, { error: "Invalid JSON body" });
               return;
             }
-            const result = await handleOnePagerCopy(body);
+            const result = await handleOnePagerCopy(body, getBearerToken(req));
             sendJson(res, result.status, result.json);
           } catch (err) {
             console.error("[one-pager-copy]", err);

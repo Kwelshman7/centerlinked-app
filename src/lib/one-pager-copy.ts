@@ -29,12 +29,25 @@ export type OrgOnePagerCopyFacts = {
   facilityNames: string[];
 };
 
-/** Optional polish. Export still succeeds if this fails or OpenAI is unset. */
+async function copyRequestHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token) headers.Authorization = `Bearer ${token}`;
+  } catch {
+    /* anonymous export — server returns 401; caller uses fallback copy */
+  }
+  return headers;
+}
+
+/** Optional polish. Export still succeeds if this fails, is unauthorized, or OpenAI is unset. */
 export async function polishOnePagerCopy(facts: OnePagerCopyFacts): Promise<OnePagerCopyResult | null> {
   try {
     const res = await fetch("/api/one-pager-copy", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await copyRequestHeaders(),
       body: JSON.stringify(facts),
     });
     if (!res.ok) return null;
@@ -53,7 +66,7 @@ export async function polishOrgOnePagerCopy(facts: OrgOnePagerCopyFacts): Promis
   try {
     const res = await fetch("/api/one-pager-copy", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await copyRequestHeaders(),
       body: JSON.stringify({ mode: "org", ...facts }),
     });
     if (!res.ok) return null;

@@ -23,4 +23,4 @@ supabase/.temp/
 # Facility image pipeline artifacts
 server/facility-images/.work/
 server/facility-images/reports/
-.env*
+# Do not use .env* here — it also ignores .env.example (documented env template)

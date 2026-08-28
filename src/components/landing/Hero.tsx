@@ -136,41 +136,42 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden bg-hero-gradient">
       <div className="pointer-events-none absolute inset-0 landing-glow" aria-hidden />
-      <div className="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" aria-hidden />
-      <div className="pointer-events-none absolute -left-16 bottom-32 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden />
+      <div className="pointer-events-none absolute -right-24 top-16 h-72 w-72 rounded-full bg-primary/10 blur-3xl" aria-hidden />
+      <div className="pointer-events-none absolute -left-16 bottom-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden />
 
       {/*
-        Hero spacing: content-sized (no forced viewport stretch), generous section
-        padding, clear copy rhythm, and a stable gutter beside the mockup.
+        Desktop: modest top inset (not viewport-centered) so copy + phone read as one
+        composition above the fold. Phone scale is capped so a laptop viewport fits both.
+        Mobile: content-sized stack with even beats.
       */}
-      <div className="relative z-10 px-0 pt-8 pb-12 sm:pt-10 sm:pb-16 lg:pt-16 lg:pb-20 xl:pt-[4.5rem] xl:pb-24">
-        <div className="container">
-          <div className="mx-auto flex w-full max-w-6xl flex-col items-center lg:flex-row lg:items-center lg:justify-between gap-10 sm:gap-12 lg:gap-12 xl:gap-16">
+      <div className="relative z-10 px-0 pt-6 pb-10 sm:pt-8 sm:pb-12 lg:pt-8 lg:pb-12 xl:pt-10 xl:pb-14">
+        <div className="container w-full">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center lg:flex-row lg:items-start lg:justify-between gap-8 sm:gap-10 lg:gap-12 xl:gap-16">
             {/* Copy column */}
-            <div className="flex w-full max-w-xl flex-col items-center text-center lg:items-start lg:text-left lg:max-w-[32rem] xl:max-w-[34rem]">
-              <div className="animate-fade-up w-full space-y-4 sm:space-y-5">
+            <div className="flex w-full max-w-xl flex-col items-center text-center lg:items-start lg:text-left lg:max-w-[30rem] xl:max-w-[32rem] lg:pt-3 xl:pt-4">
+              <div className="animate-fade-up w-full space-y-3 sm:space-y-3.5 lg:space-y-4">
                 <p className="font-sans text-[11px] sm:text-xs font-semibold tracking-[0.14em] uppercase text-primary">
                   Built for behavioral health business development
                 </p>
                 <DisplayHeading
                   as="h1"
-                  className="text-center lg:text-left text-[1.9rem] leading-[1.12] sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem] xl:text-[3.5rem]"
+                  className="text-center lg:text-left text-[1.9rem] leading-[1.12] sm:text-[2.6rem] sm:leading-[1.08] lg:text-[2.85rem] xl:text-[3.15rem] lg:leading-[1.06]"
                 >
                   Your Treatment Center Needs a{" "}
                   <DisplayAccent>Referral Link.</DisplayAccent>
                 </DisplayHeading>
-                <p className="text-[15px] sm:text-lg text-muted-foreground leading-relaxed max-w-md sm:max-w-lg mx-auto lg:mx-0">
+                <p className="text-[15px] sm:text-base lg:text-[1.05rem] text-muted-foreground leading-relaxed max-w-md sm:max-w-lg mx-auto lg:mx-0">
                   {heroSubheader}
                 </p>
               </div>
 
               {/* Mobile-only replace graphic — spaced as its own beat */}
-              <div className="lg:hidden w-full mt-8 sm:mt-10">
+              <div className="lg:hidden w-full mt-7 sm:mt-8">
                 <ReplaceIntoLogo />
               </div>
 
               <div
-                className="animate-fade-up w-full mt-8 sm:mt-10 flex flex-col items-center lg:items-start gap-5 sm:gap-6"
+                className="animate-fade-up w-full mt-6 sm:mt-7 lg:mt-8 flex flex-col items-center lg:items-start gap-4 sm:gap-5"
                 style={{ animationDelay: "100ms" }}
               >
                 <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto min-h-12 px-7">
@@ -180,7 +181,7 @@ export function Hero() {
                   </Link>
                 </Button>
 
-                <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 sm:gap-x-5 sm:gap-y-3 max-w-sm sm:max-w-md w-full text-left">
+                <ul className="grid grid-cols-2 gap-x-4 gap-y-2 sm:gap-x-5 sm:gap-y-2.5 max-w-sm sm:max-w-md w-full text-left">
                   {helperItems.map((item) => (
                     <li
                       key={item}
@@ -194,15 +195,15 @@ export function Hero() {
               </div>
             </div>
 
-            {/* Desktop mockup */}
-            <div className="animate-slide-in-right relative hidden lg:flex shrink-0 justify-center">
+            {/* Desktop mockup — top-aligned with copy so both sit above the fold */}
+            <div className="animate-slide-in-right relative hidden lg:flex shrink-0 justify-center lg:pr-2 xl:pr-4">
               <HeroPhone />
             </div>
           </div>
 
           {/* Mobile mockup — clear separation from copy, never cramped under CTA */}
-          <div className="lg:hidden mt-10 sm:mt-12 flex justify-center">
-            <HeroPhone className="w-[220px] sm:w-[260px]" />
+          <div className="lg:hidden mt-9 sm:mt-10 flex justify-center">
+            <HeroPhone className="w-[220px] sm:w-[250px]" />
           </div>
         </div>
       </div>
@@ -217,12 +218,13 @@ export function Hero() {
 function HeroPhone({ className }: { className?: string }) {
   return (
     <div className="relative">
-      <div className="absolute -inset-12 sm:-inset-16 bg-primary/8 blur-[80px] rounded-full opacity-70" />
-      <div className="absolute -inset-6 sm:-inset-8 bg-primary/10 blur-3xl rounded-full opacity-60" />
-      <div className="absolute -bottom-12 sm:-bottom-16 left-1/2 -translate-x-1/2 w-[70%] h-16 sm:h-20 bg-foreground/5 blur-2xl rounded-full" />
+      <div className="absolute -inset-8 sm:-inset-10 lg:-inset-12 bg-primary/8 blur-[64px] rounded-full opacity-70" />
+      <div className="absolute -inset-4 sm:-inset-6 bg-primary/10 blur-3xl rounded-full opacity-60" />
+      <div className="absolute -bottom-8 sm:-bottom-10 left-1/2 -translate-x-1/2 w-[70%] h-12 sm:h-14 bg-foreground/5 blur-2xl rounded-full" />
       <PhoneFrame
         className={cn(
-          "w-[260px] sm:w-[280px] lg:w-[300px] xl:w-[320px] animate-float",
+          // Desktop width keeps phone height (~540–585px) inside a laptop viewport with copy.
+          "w-[240px] sm:w-[260px] lg:w-[250px] xl:w-[270px] animate-float",
           className,
         )}
       >

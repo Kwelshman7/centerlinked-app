@@ -1,4 +1,5 @@
 import { handleOnePagerCopy } from "../server/one-pager-copy.mjs";
+import { getBearerToken } from "../server/email/http.mjs";
 
 export const config = {
   api: {
@@ -14,7 +15,7 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-    const result = await handleOnePagerCopy(body);
+    const result = await handleOnePagerCopy(body, getBearerToken(req));
     res.status(result.status).json(result.json);
   } catch (err) {
     console.error("[api/one-pager-copy]", err?.message || err);

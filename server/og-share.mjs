@@ -136,6 +136,24 @@ function isBlockedIpLiteral(hostname) {
   return false;
 }
 
+/** True for RFC1918 / loopback / link-local / ULA addresses (after DNS resolve). */
+export function isBlockedIpAddress(address) {
+  const ip = String(address || "").toLowerCase().replace(/^\[|\]$/g, "");
+  if (!ip) return true;
+  if (isBlockedIpLiteral(ip)) return true;
+  // IPv4-mapped IPv6 (::ffff:a.b.c.d)
+  if (ip.startsWith("::ffff:")) {
+    return isBlockedIpLiteral(ip.slice("::ffff:".length));
+  }
+  // Unique local fc00::/7
+  if (/^f[cd][0-9a-f]{2}:/i.test(ip)) return true;
+  // Link-local fe80::/10
+  if (/^fe[89ab][0-9a-f]:/i.test(ip)) return true;
+  return ip === "::1";
+}
+
+export { isBlockedIpLiteral };
+
 /** Project storage host + CenterLinked site hosts. */
 export function isAllowedLogoHost(hostname) {
   const host = String(hostname || "").toLowerCase();

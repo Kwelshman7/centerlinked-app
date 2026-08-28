@@ -75,6 +75,17 @@ async function notifyDoneForYouPurchase({ orgName, orgId, email, membershipTier 
 }
 
 async function handleCheckoutCompleted(admin, session) {
+  const paymentStatus = session.payment_status;
+  // Unpaid async methods finish later via checkout.session.async_payment_succeeded.
+  if (paymentStatus && paymentStatus !== "paid" && paymentStatus !== "no_payment_required") {
+    console.warn(
+      "[stripe-webhook] skipping checkout entitlements until paid",
+      session.id,
+      paymentStatus,
+    );
+    return;
+  }
+
   const organizationId =
     session.client_reference_id || session.metadata?.organization_id || null;
   const customerId =
@@ -92,6 +103,23 @@ async function handleCheckoutCompleted(admin, session) {
   });
   if (!orgId) {
     throw new Error(`checkout.session.completed: organization not found (${session.id})`);
+  }
+
+  // Fail closed on customer↔org mismatch (ops / metadata drift).
+  if (customerId) {
+    const { data: orgRow } = await admin
+      .from("organizations")
+      .select("stripe_customer_id")
+      .eq("id", orgId)
+      .maybeSingle();
+    if (
+      orgRow?.stripe_customer_id &&
+      orgRow.stripe_customer_id !== customerId
+    ) {
+      throw new Error(
+        `checkout.session.completed: customer mismatch for org ${orgId} (${session.id})`,
+      );
+    }
   }
 
   const setupPackage =
@@ -178,6 +206,31 @@ async function handleInvoicePaymentFailed(admin, invoice) {
   });
   if (!orgId) return;
 
+  // Prefer Stripe's live subscription status over blindly forcing past_due
+  // (stale/out-of-order invoice events must not overwrite canceled/active incorrectly).
+  if (subscriptionId) {
+    const stripe = getStripe();
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const { data: orgRow } = await admin
+      .from("organizations")
+      .select("stripe_subscription_id")
+      .eq("id", orgId)
+      .maybeSingle();
+    if (
+      orgRow?.stripe_subscription_id &&
+      orgRow.stripe_subscription_id !== subscription.id
+    ) {
+      console.warn(
+        "[stripe-webhook] invoice.payment_failed for non-current subscription",
+        orgId,
+        subscription.id,
+      );
+      return;
+    }
+    await applySubscription(admin, orgId, subscription);
+    return;
+  }
+
   const { error } = await admin
     .from("organizations")
     .update({ subscription_status: "past_due" })
@@ -256,8 +309,10 @@ export async function handleStripeWebhook(rawBody, signatureHeader) {
       return { status: 200, json: { received: true, duplicate: true } };
     }
 
+    let handled = true;
     switch (event.type) {
       case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded":
         await handleCheckoutCompleted(admin, event.data.object);
         break;
       case "customer.subscription.created":
@@ -269,7 +324,14 @@ export async function handleStripeWebhook(rawBody, signatureHeader) {
         await handleInvoicePaymentFailed(admin, event.data.object);
         break;
       default:
+        // Do not permanently claim unknown types — release so a future handler can process.
+        handled = false;
         break;
+    }
+
+    if (!handled && claimed) {
+      await releaseWebhookEvent(admin, event.id);
+      return { status: 200, json: { received: true, ignored: true } };
     }
   } catch (err) {
     console.error("[stripe-webhook] handler error", event.type, err?.message || err);

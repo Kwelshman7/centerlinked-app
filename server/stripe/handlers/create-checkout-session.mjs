@@ -6,6 +6,10 @@ import {
   checkoutMetadata,
   parseCheckoutRequest,
 } from "../checkout-request.mjs";
+import {
+  assertTierMatchesFacilityCount,
+  STRIPE_BLOCKING_SUB_STATUSES,
+} from "../pricing.mjs";
 
 /**
  * Create a Stripe Checkout Session for org membership.
@@ -59,6 +63,22 @@ export async function handleCreateCheckoutSession(body, accessToken) {
 
   if (orgError || !org) {
     return { status: 404, json: { error: "Organization not found" } };
+  }
+
+  // Count live facilities so clients cannot underpay vs catalog bands.
+  const { count: facilityCount, error: countError } = await admin
+    .from("facilities")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", org.id);
+
+  if (countError) {
+    console.error("[create-checkout-session] facility count failed", countError.message);
+    return { status: 500, json: { error: "Could not start checkout" } };
+  }
+
+  const tierCheck = assertTierMatchesFacilityCount(request.membershipTier, facilityCount ?? 0);
+  if (!tierCheck.ok) {
+    return { status: tierCheck.status, json: { error: tierCheck.error } };
   }
 
   const decision = membershipCheckoutDecision(org);
@@ -136,14 +156,64 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     }
   }
 
+  // Stripe is source of truth for duplicate memberships (DB can lag webhooks).
+  if (wantsMembership) {
+    const existing = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 20,
+    });
+    const blocking = (existing.data || []).filter((sub) =>
+      STRIPE_BLOCKING_SUB_STATUSES.has(sub.status),
+    );
+    if (blocking.length > 0) {
+      return {
+        status: 409,
+        json: {
+          error: "This organization already has a membership in Stripe. Manage it in Billing.",
+          code: "use_portal",
+        },
+      };
+    }
+  }
+
+  // Reuse an open Checkout session for the same plan instead of creating another charge path.
+  try {
+    const openSessions = await stripe.checkout.sessions.list({
+      customer: customerId,
+      limit: 10,
+    });
+    const match = (openSessions.data || []).find((session) => {
+      if (session.status !== "open" || !session.url) return false;
+      if (session.metadata?.organization_id && session.metadata.organization_id !== org.id) {
+        return false;
+      }
+      const sameTier = session.metadata?.membership_tier === request.membershipTier;
+      const sameInterval = (session.metadata?.billing_interval || "month") === request.interval;
+      const sessionDfy = session.metadata?.setup_package === "done_for_you";
+      const sessionSetupOnly = session.metadata?.setup_only === "true";
+      if (wantsDfyOnly) {
+        return session.mode === "payment" && sessionSetupOnly && sameTier;
+      }
+      const wantDfy = Boolean(request.doneForYou);
+      return session.mode === "subscription" && sameTier && sameInterval && sessionDfy === wantDfy;
+    });
+    if (match?.url) {
+      return { status: 200, json: { url: match.url, id: match.id, reused: true } };
+    }
+  } catch (err) {
+    console.warn("[create-checkout-session] open session lookup failed", err?.message || err);
+  }
+
   const site = appSiteUrl();
   const integrationId = request.doneForYou
     ? `centerlinked_dfy_${randomSuffix()}`
     : `centerlinked_membership_${randomSuffix()}`;
 
+  // Stable within a short window to absorb double-clicks; tier/interval still vary the key.
   const checkoutIdempotencyKey = `cl_cs_${org.id}_${request.membershipTier}_${request.interval}_${
     request.doneForYou ? "dfy" : "mem"
-  }_${alreadySubscribed ? "add" : "new"}_${Math.floor(Date.now() / 30_000)}`;
+  }_${alreadySubscribed ? "add" : "new"}_${Math.floor(Date.now() / 60_000)}`;
 
   async function createSession(sessionParams) {
     try {

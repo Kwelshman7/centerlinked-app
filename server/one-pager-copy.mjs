@@ -1,8 +1,18 @@
+import { assertAuthenticated } from "./lib/assert-user.mjs";
+
 /**
  * Factual one-pager copy. Rewrites the program description using only
  * the selected facility facts. Never invents amenities, therapies, or payers.
+ *
+ * Requires a valid Bearer session. Anonymous public PDF export still works
+ * via client fallback when this returns 401 (no OpenAI spend).
  */
-export async function handleOnePagerCopy(body) {
+export async function handleOnePagerCopy(body, accessToken) {
+  const auth = await assertAuthenticated(accessToken);
+  if (!auth.ok) {
+    return { status: auth.status, json: { error: auth.error } };
+  }
+
   if (body?.mode === "org") {
     return handleOrgCopy(body);
   }
