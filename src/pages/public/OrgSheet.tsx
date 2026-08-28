@@ -253,7 +253,7 @@ export default function OrgSheet() {
         />
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:pt-3 lg:pb-8 space-y-4 sm:space-y-5">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 lg:pt-3 pb-0 space-y-4 sm:space-y-5">
         <OrganizationSheetView
           org={org}
           facilities={facilities}

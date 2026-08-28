@@ -144,34 +144,60 @@ export function OrganizationSheetView({
   const showFilters = facilities.length >= 8;
 
   return (
-    <div className={cn("space-y-4 sm:space-y-5", hasContact ? mobileContactBarPadding(0, footerVisible) : "")}>
-      {/* Mobile intro under logo hero — matches PublicOrgSheetPreview */}
-      <header className="space-y-1.5 lg:hidden">
-        <h1 className="sr-only">{org.name}</h1>
-        {showMobileIntro ? (
-          <ExpandableText text={description!} brand={brand} clampLines={3} className="max-w-3xl" />
-        ) : null}
-      </header>
+    <div className="space-y-4 sm:space-y-5">
+      {/* Sticky-bar padding stays above the footer so collapsing/expanding it
+          never creates empty scroll space past the page end. */}
+      <div
+        className={cn(
+          "space-y-4 sm:space-y-5",
+          hasContact ? mobileContactBarPadding(0, footerVisible) : "",
+        )}
+      >
+        {/* Mobile intro under logo hero — matches PublicOrgSheetPreview */}
+        <header className="space-y-1.5 lg:hidden">
+          <h1 className="sr-only">{org.name}</h1>
+          {showMobileIntro ? (
+            <ExpandableText text={description!} brand={brand} clampLines={3} className="max-w-3xl" />
+          ) : null}
+        </header>
 
-      <section>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:flex-1 gap-0.5 sm:gap-1.5">
-              <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight">
-                Our Facilities
-              </h2>
-              {filteredFacilities.length > 0 && (
-                <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
-                  {filteredFacilities.length}{" "}
-                  {filteredFacilities.length === 1 ? "location" : "locations"}
-                  {showFilters && filterActive ? " matching filters" : ""}
-                </span>
+        <section>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:flex-1 gap-0.5 sm:gap-1.5">
+                <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight">
+                  Our Facilities
+                </h2>
+                {filteredFacilities.length > 0 && (
+                  <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
+                    {filteredFacilities.length}{" "}
+                    {filteredFacilities.length === 1 ? "location" : "locations"}
+                    {showFilters && filterActive ? " matching filters" : ""}
+                  </span>
+                )}
+              </div>
+
+              {showFilters && (
+                <OrgFacilityFilters
+                  mode="button"
+                  states={facilityStates}
+                  selectedState={selectedState}
+                  onStateChange={onStateChange}
+                  levels={visibleLevels}
+                  selectedLevel={activeLevel}
+                  onLevelChange={onLevelChange}
+                  insurers={visibleInsurers}
+                  selectedInsurance={activeInsurance}
+                  onInsuranceChange={onInsuranceChange}
+                  brand={brand}
+                  className="sm:hidden shrink-0 print:hidden"
+                />
               )}
             </div>
 
             {showFilters && (
               <OrgFacilityFilters
-                mode="button"
+                mode="dropdowns"
                 states={facilityStates}
                 selectedState={selectedState}
                 onStateChange={onStateChange}
@@ -182,41 +208,24 @@ export function OrganizationSheetView({
                 selectedInsurance={activeInsurance}
                 onInsuranceChange={onInsuranceChange}
                 brand={brand}
-                className="sm:hidden shrink-0 print:hidden"
+                className="hidden sm:grid print:hidden"
               />
             )}
           </div>
 
-          {showFilters && (
-            <OrgFacilityFilters
-              mode="dropdowns"
-              states={facilityStates}
-              selectedState={selectedState}
-              onStateChange={onStateChange}
-              levels={visibleLevels}
-              selectedLevel={activeLevel}
-              onLevelChange={onLevelChange}
-              insurers={visibleInsurers}
-              selectedInsurance={activeInsurance}
-              onInsuranceChange={onInsuranceChange}
-              brand={brand}
-              className="hidden sm:grid print:hidden"
-            />
-          )}
-        </div>
-
-        <div className={cn(showFilters ? "mt-4 sm:mt-5" : "mt-3 sm:mt-4")}>
-          {filteredFacilities.length === 0 ? (
-            <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
-              {facilities.length === 0
-                ? "No facilities published yet."
-                : "No facilities match these filters."}
-            </div>
-          ) : (
-            <OrgFacilityRail facilities={filteredFacilities} orgSlug={org.slug} />
-          )}
-        </div>
-      </section>
+          <div className={cn(showFilters ? "mt-4 sm:mt-5" : "mt-3 sm:mt-4")}>
+            {filteredFacilities.length === 0 ? (
+              <div className="rounded-xl border border-border/60 bg-card p-8 text-center text-sm text-muted-foreground">
+                {facilities.length === 0
+                  ? "No facilities published yet."
+                  : "No facilities match these filters."}
+              </div>
+            ) : (
+              <OrgFacilityRail facilities={filteredFacilities} orgSlug={org.slug} />
+            )}
+          </div>
+        </section>
+      </div>
 
       <OrgFooter
         orgId={org.id}

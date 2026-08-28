@@ -73,20 +73,20 @@ export function MobileContactBar({
     const footer = document.getElementById(ORG_SHARED_FOOTER_ID);
     if (!footer || !hasContact) return;
 
+    /**
+     * Collapse sticky-bar spacing once the footer reaches the viewport —
+     * and keep it collapsed after the footer scrolls away above. Requiring
+     * `rect.bottom > 0` re-expanded bottom padding into empty white space
+     * past the page end.
+     */
     const updateVisibility = () => {
       const rect = footer.getBoundingClientRect();
-      setFooterVisible(rect.top < window.innerHeight && rect.bottom > 0);
+      setFooterVisible(rect.top < window.innerHeight);
     };
-    const observer = new IntersectionObserver(
-      ([entry]) => setFooterVisible(entry.isIntersecting),
-      { threshold: 0.01 },
-    );
-    observer.observe(footer);
     window.addEventListener("scroll", updateVisibility, { passive: true });
     window.addEventListener("resize", updateVisibility);
     updateVisibility();
     return () => {
-      observer.disconnect();
       window.removeEventListener("scroll", updateVisibility);
       window.removeEventListener("resize", updateVisibility);
     };
