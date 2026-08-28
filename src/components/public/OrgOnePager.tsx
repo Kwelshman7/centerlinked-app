@@ -1,7 +1,8 @@
 import { LETTER_HEIGHT_PX, LETTER_WIDTH_PX } from "@/lib/export-one-pager-capture";
-import { WIRE } from "@/lib/one-pager-wire";
+import { WIRE, brandRgba } from "@/lib/one-pager-wire";
 import {
   FactLine,
+  LevelPills,
   LogoMark,
   PhotoSlot,
   SectionLabel,
@@ -43,25 +44,39 @@ function Letterhead({
   logoUrl: string | null;
 }) {
   const { theme, contact } = model;
-  const contactBits = [contact.name, contact.phone, contact.email].filter(Boolean);
+  const contactBits = [contact.name, contact.phone].filter(Boolean);
   return (
     <header
       style={{
         flexShrink: 0,
-        height: 76,
+        height: 84,
         boxSizing: "border-box",
-        padding: "12px 36px",
+        padding: "14px 40px",
         display: "flex",
         alignItems: "center",
-        gap: 16,
-        borderBottom: `3px solid ${theme.brand}`,
+        gap: 18,
+        background: theme.paper,
+        borderBottom: `1px solid ${theme.rule}`,
+        boxShadow: `inset 0 -3px 0 ${theme.brand}`,
       }}
     >
       <LogoMark logoUrl={logoUrl} name={model.orgName} brand={theme.brand} />
       <div style={{ flex: 1, minWidth: 0 }}>
+        <p
+          style={wireHeading({
+            fontSize: 8,
+            fontWeight: 700,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: theme.brand,
+          })}
+        >
+          Referral overview
+        </p>
         <h1
           style={wireHeading({
-            fontSize: model.orgName.length > 34 ? 18 : 22,
+            marginTop: 3,
+            fontSize: model.orgName.length > 34 ? 17 : 21,
             fontWeight: 800,
             letterSpacing: "-0.03em",
             color: WIRE.ink,
@@ -78,13 +93,13 @@ function Letterhead({
           In-network by location
         </p>
       </div>
-      <div style={{ flexShrink: 0, textAlign: "right", maxWidth: 240 }}>
+      <div style={{ flexShrink: 0, textAlign: "right", maxWidth: 220 }}>
         {contactBits.length ? (
           <p style={wireBody({ fontSize: 11, fontWeight: 600, color: WIRE.ink })}>
             {contactBits.join("  ·  ")}
           </p>
         ) : null}
-        <p style={wireHeading({ marginTop: 3, fontSize: 10, fontWeight: 700, color: theme.brand })}>
+        <p style={wireHeading({ marginTop: 4, fontSize: 10, fontWeight: 700, color: theme.brand })}>
           {page.pageNumber} / {page.pageCount}
         </p>
       </div>
@@ -92,19 +107,154 @@ function Letterhead({
   );
 }
 
-function ContactBlock({ contact, theme }: { contact: OrgOnePagerContact; theme: OrgOnePagerTheme }) {
-  const lines = [contact.name, contact.title, contact.phone, contact.email, contact.website].filter(Boolean);
-  if (!lines.length) return null;
+function ContactBand({
+  contact,
+  theme,
+  qrUrl,
+  profileLabel,
+}: {
+  contact: OrgOnePagerContact;
+  theme: OrgOnePagerTheme;
+  qrUrl: string | null;
+  profileLabel: string | null;
+}) {
+  const detail = [contact.title, contact.phone, contact.email, contact.website].filter(Boolean);
   return (
-    <div>
-      <SectionLabel color={theme.brand}>Referrals</SectionLabel>
-      <p style={wireHeading({ marginTop: 6, fontSize: 16, fontWeight: 800, color: WIRE.ink })}>
-        {contact.name || "Business development"}
-      </p>
-      <p style={wireBody({ marginTop: 4, fontSize: 12, lineHeight: 1.5, color: WIRE.ink })}>
-        {lines.filter((line) => line !== contact.name).join("  ·  ")}
-      </p>
+    <div
+      style={{
+        flexShrink: 0,
+        marginTop: "auto",
+        display: "grid",
+        gridTemplateColumns: qrUrl ? "1fr 92px" : "1fr",
+        gap: 16,
+        alignItems: "center",
+        padding: "14px 16px",
+        borderRadius: 10,
+        background: brandRgba(theme.brand, 0.06),
+        border: `1px solid ${brandRgba(theme.brand, 0.14)}`,
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <SectionLabel color={theme.brand}>Referrals</SectionLabel>
+        <p style={wireHeading({ marginTop: 5, fontSize: 15, fontWeight: 800, color: WIRE.ink })}>
+          {contact.name || "Business development"}
+        </p>
+        {detail.length ? (
+          <p style={wireBody({ marginTop: 4, fontSize: 11.5, lineHeight: 1.45, color: WIRE.ink })}>
+            {detail.join("  ·  ")}
+          </p>
+        ) : null}
+        {profileLabel ? (
+          <p style={wireBody({ marginTop: 4, fontSize: 10.5, fontWeight: 600, color: theme.brand })}>
+            Live profile · {profileLabel}
+          </p>
+        ) : null}
+      </div>
+      {qrUrl ? (
+        <div
+          style={{
+            width: 84,
+            height: 84,
+            padding: 6,
+            borderRadius: 8,
+            background: "#fff",
+            border: `1px solid ${theme.rule}`,
+            boxSizing: "border-box",
+          }}
+        >
+          <PhotoSlot src={qrUrl} brand={theme.brand} height={70} fit="contain" />
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function ShowcaseFacilityCard({
+  facility,
+  theme,
+  photoUrl,
+}: {
+  facility: OrgOnePagerFacility;
+  theme: OrgOnePagerTheme;
+  photoUrl: string | null;
+}) {
+  const payers = payerLine(facility);
+  return (
+    <article
+      style={{
+        display: "grid",
+        gridTemplateColumns: "148px minmax(0, 1fr)",
+        gap: 16,
+        minHeight: 0,
+        padding: "12px 0",
+        borderBottom: `1px solid ${theme.rule}`,
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          borderRadius: 10,
+          overflow: "hidden",
+          border: `1px solid ${theme.rule}`,
+        }}
+      >
+        <PhotoSlot src={photoUrl} brand={theme.brand} height={118} />
+      </div>
+      <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 5, justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "baseline", justifyContent: "space-between" }}>
+          <h2
+            style={wireHeading({
+              fontSize: 15,
+              fontWeight: 800,
+              letterSpacing: "-0.02em",
+              color: WIRE.ink,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              flex: 1,
+              minWidth: 0,
+            })}
+          >
+            {facility.name}
+          </h2>
+          <p
+            style={wireBody({
+              flexShrink: 0,
+              fontSize: 11,
+              fontWeight: 600,
+              color: WIRE.muted,
+            })}
+          >
+            {facility.cityState || facility.address || "—"}
+          </p>
+        </div>
+        {facility.tagline ? (
+          <p style={wireBody({ fontSize: 11.5, fontStyle: "italic", color: theme.brand })}>
+            {facility.tagline}
+          </p>
+        ) : null}
+        <LevelPills items={facility.levels} brand={theme.brand} />
+        {facility.summary ? (
+          <p
+            style={wireBody({
+              fontSize: 11,
+              lineHeight: 1.4,
+              color: WIRE.muted,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            })}
+          >
+            {facility.summary}
+          </p>
+        ) : null}
+        <div style={{ marginTop: 2 }}>
+          <SectionLabel color={theme.brand}>In-network</SectionLabel>
+          <FactLine items={payers} />
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -119,25 +269,24 @@ function FacilityRow({
   density: OrgOnePagerModel["density"];
   photoUrl: string | null;
 }) {
+  if (density === "generous") {
+    return <ShowcaseFacilityCard facility={facility} theme={theme} photoUrl={photoUrl} />;
+  }
+
   const payers = payerLine(facility);
-  const generous = density === "generous";
-  const photoH = generous ? 112 : 0;
 
   return (
     <article
       style={{
         display: "grid",
-        gridTemplateColumns: generous ? "112px minmax(0, 1fr)" : "minmax(0, 1fr)",
-        gap: generous ? 14 : 6,
+        gridTemplateColumns: "minmax(0, 1fr)",
+        gap: 6,
         minHeight: 0,
-        padding: generous ? "10px 0" : "8px 0",
+        padding: "8px 0",
         borderBottom: `1px solid ${theme.rule}`,
         boxSizing: "border-box",
       }}
     >
-      {generous ? (
-        <PhotoSlot src={photoUrl} brand={theme.brand} height={photoH} />
-      ) : null}
       <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 4, justifyContent: "center" }}>
         <div
           style={{
@@ -149,7 +298,7 @@ function FacilityRow({
         >
           <h2
             style={wireHeading({
-              fontSize: generous ? 16 : 13,
+              fontSize: 13,
               fontWeight: 800,
               letterSpacing: "-0.02em",
               color: WIRE.ink,
@@ -188,28 +337,11 @@ function FacilityRow({
             </p>
           ) : null}
         </div>
-        {generous && facility.levels.length ? (
-          <p style={wireBody({ fontSize: 11, fontWeight: 600, color: theme.brand })}>
-            {facility.levels.join("  ·  ")}
-          </p>
-        ) : null}
         {density === "standard" && facility.levels.length ? (
-          <p style={wireBody({ fontSize: 11, fontWeight: 600, color: theme.brand })}>
-            {facility.levels.join("  ·  ")}
-          </p>
+          <LevelPills items={facility.levels} brand={theme.brand} />
         ) : null}
         <div>
-          <p
-            style={wireHeading({
-              fontSize: 8,
-              fontWeight: 700,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: theme.brand,
-            })}
-          >
-            In-network
-          </p>
+          <SectionLabel color={theme.brand}>In-network</SectionLabel>
           <FactLine items={payers} />
         </div>
       </div>
@@ -228,7 +360,7 @@ function PageFooter({
     <footer
       style={{
         flexShrink: 0,
-        height: 24,
+        height: 26,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -264,7 +396,9 @@ export function OrgOnePager({
   const { theme, density, contact } = model;
   const logoUrl = resolvedLogoUrl ?? null;
   const isFirst = page.pageNumber === 1;
-  const showOverview = isFirst && page.kind !== "cover" && !!model.overview;
+  const showOverview = isFirst && !!model.overview;
+  const showCoverHero = isFirst && !!resolvedCoverUrl;
+  const showContactBand = isFirst && (page.kind === "cover" || density === "generous");
   const photoFor = (facility: OrgOnePagerFacility) => resolvedPhotoUrls[facility.id] ?? null;
 
   return (
@@ -291,14 +425,22 @@ export function OrgOnePager({
           minHeight: 0,
           display: "flex",
           flexDirection: "column",
-          gap: 12,
-          padding: "14px 36px 10px",
+          gap: density === "generous" ? 10 : 12,
+          padding: "14px 40px 12px",
         }}
       >
         {page.kind === "cover" ? (
           <>
             {resolvedCoverUrl ? (
-              <div style={{ flexShrink: 0, height: 188, overflow: "hidden" }}>
+              <div
+                style={{
+                  flexShrink: 0,
+                  height: 188,
+                  overflow: "hidden",
+                  borderRadius: 12,
+                  border: `1px solid ${theme.rule}`,
+                }}
+              >
                 <PhotoSlot src={resolvedCoverUrl} brand={theme.brand} height={188} />
               </div>
             ) : null}
@@ -328,33 +470,48 @@ export function OrgOnePager({
                 />
               </div>
             ) : null}
-            <div style={{ display: "grid", gridTemplateColumns: resolvedQrUrl ? "1fr 88px" : "1fr", gap: 16 }}>
-              <ContactBlock contact={contact} theme={theme} />
-              {resolvedQrUrl ? (
-                <div style={{ width: 72, height: 72 }}>
-                  <PhotoSlot src={resolvedQrUrl} brand={theme.brand} height={72} fit="contain" />
-                </div>
-              ) : null}
-            </div>
-            {page.facilities.length === 0 && page.kind === "cover" && model.facilityCount === 0 ? (
-              <p style={wireBody({ marginTop: "auto", fontSize: 12, fontWeight: 600, color: theme.brand })}>
-                Facility details are published on the live profile.
-              </p>
-            ) : model.facilityCount > 0 ? (
-              <p style={wireBody({ marginTop: "auto", fontSize: 12, fontWeight: 600, color: theme.brand })}>
+            <ContactBand
+              contact={contact}
+              theme={theme}
+              qrUrl={resolvedQrUrl ?? null}
+              profileLabel={model.profileLabel}
+            />
+            {model.facilityCount > 0 ? (
+              <p style={wireBody({ marginTop: 4, fontSize: 12, fontWeight: 600, color: theme.brand })}>
                 {model.facilityCount} {model.facilityCount === 1 ? "location" : "locations"} with in-network
                 contracts continue on the following pages.
               </p>
-            ) : null}
+            ) : (
+              <p style={wireBody({ marginTop: 4, fontSize: 12, fontWeight: 600, color: theme.brand })}>
+                Facility details are published on the live profile.
+              </p>
+            )}
           </>
         ) : (
           <>
+            {showCoverHero ? (
+              <div
+                style={{
+                  flexShrink: 0,
+                  height: density === "generous" ? 132 : 160,
+                  overflow: "hidden",
+                  borderRadius: 12,
+                  border: `1px solid ${theme.rule}`,
+                }}
+              >
+                <PhotoSlot
+                  src={resolvedCoverUrl ?? null}
+                  brand={theme.brand}
+                  height={density === "generous" ? 132 : 160}
+                />
+              </div>
+            ) : null}
             {isFirst && model.tagline ? (
               <p style={wireHeading({ fontSize: 13, fontWeight: 600, fontStyle: "italic", color: theme.brand })}>
                 {model.tagline}
               </p>
             ) : null}
-            {isFirst && showOverview && model.overview ? (
+            {showOverview ? (
               <p style={wireBody({ fontSize: 12.5, lineHeight: 1.45, color: WIRE.ink })}>{model.overview}</p>
             ) : null}
             {isFirst && model.sharedPayers?.length ? (
@@ -362,7 +519,11 @@ export function OrgOnePager({
                 Same in-network panel at every location
               </p>
             ) : null}
-            {density === "directory" ? (
+            {density !== "directory" ? (
+              <SectionLabel color={theme.brand}>
+                {density === "generous" ? "Locations" : "Facilities"}
+              </SectionLabel>
+            ) : (
               <div
                 style={{
                   display: "grid",
@@ -376,7 +537,7 @@ export function OrgOnePager({
                 <SectionLabel color={theme.brand}>Location</SectionLabel>
                 <SectionLabel color={theme.brand}>Levels of care</SectionLabel>
               </div>
-            ) : null}
+            )}
             <div
               style={{
                 flex: 1,
@@ -396,6 +557,14 @@ export function OrgOnePager({
                 </div>
               ))}
             </div>
+            {showContactBand ? (
+              <ContactBand
+                contact={contact}
+                theme={theme}
+                qrUrl={resolvedQrUrl ?? null}
+                profileLabel={model.profileLabel}
+              />
+            ) : null}
           </>
         )}
       </div>

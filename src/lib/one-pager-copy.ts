@@ -1,3 +1,5 @@
+import { templateForFacilityCount, type OrgPrintTemplateId } from "@/lib/org-one-pager-layout";
+
 export type OnePagerCopyFacts = {
   name: string;
   orgName?: string | null;
@@ -15,6 +17,8 @@ export type OnePagerCopyFacts = {
 
 export type OnePagerCopyResult = {
   description: string | null;
+  tagline?: string | null;
+  template?: OrgPrintTemplateId;
   usedAi: boolean;
 };
 
@@ -37,7 +41,7 @@ async function copyRequestHeaders(): Promise<Record<string, string>> {
     const token = data.session?.access_token;
     if (token) headers.Authorization = `Bearer ${token}`;
   } catch {
-    /* anonymous export — server returns 401; caller uses fallback copy */
+    /* anonymous export — org mode still works; facility mode may 401 */
   }
   return headers;
 }
@@ -61,18 +65,34 @@ export async function polishOnePagerCopy(facts: OnePagerCopyFacts): Promise<OneP
   }
 }
 
-/** Org overview only. Does not invent facilities, insurance, or layout. */
+/**
+ * Org overview + optional tagline for Export PDF.
+ * Sends facilityCount so the server selects the stored prompt for
+ * showcase (1–3) | portfolio (4–8) | network (9+).
+ */
 export async function polishOrgOnePagerCopy(facts: OrgOnePagerCopyFacts): Promise<OnePagerCopyResult | null> {
+  const template = templateForFacilityCount(facts.facilityCount);
   try {
     const res = await fetch("/api/one-pager-copy", {
       method: "POST",
       headers: await copyRequestHeaders(),
-      body: JSON.stringify({ mode: "org", ...facts }),
+      body: JSON.stringify({
+        mode: "org",
+        template,
+        ...facts,
+      }),
     });
     if (!res.ok) return null;
-    const json = (await res.json()) as { description?: string; usedAi?: boolean };
+    const json = (await res.json()) as {
+      description?: string;
+      tagline?: string | null;
+      template?: OrgPrintTemplateId;
+      usedAi?: boolean;
+    };
     return {
       description: typeof json.description === "string" && json.description.trim() ? json.description.trim() : null,
+      tagline: typeof json.tagline === "string" && json.tagline.trim() ? json.tagline.trim() : null,
+      template: json.template || template,
       usedAi: json.usedAi === true,
     };
   } catch {

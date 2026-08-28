@@ -1,6 +1,44 @@
 export type OrgPrintDensity = "generous" | "standard" | "directory";
 export type OrgPrintPageKind = "cover" | "directory";
 
+/**
+ * Facility-count templates for the org referral PDF.
+ * - showcase (1–3): hero + large facility photo cards
+ * - portfolio (4–8): compact multi-page facility rows
+ * - network (9+): cover letter + dense insurance directory
+ */
+export type OrgPrintTemplateId = "showcase" | "portfolio" | "network";
+
+export const ORG_PRINT_TEMPLATES: Record<
+  OrgPrintTemplateId,
+  { density: OrgPrintDensity; minFacilities: number; maxFacilities: number; label: string }
+> = {
+  showcase: {
+    density: "generous",
+    minFacilities: 1,
+    maxFacilities: 3,
+    label: "Showcase — photo cards",
+  },
+  portfolio: {
+    density: "standard",
+    minFacilities: 4,
+    maxFacilities: 8,
+    label: "Portfolio — compact multi-page",
+  },
+  network: {
+    density: "directory",
+    minFacilities: 9,
+    maxFacilities: Number.POSITIVE_INFINITY,
+    label: "Network — cover + directory",
+  },
+};
+
+export function templateForFacilityCount(count: number): OrgPrintTemplateId {
+  if (count <= 3) return "showcase";
+  if (count <= 8) return "portfolio";
+  return "network";
+}
+
 export type OrgPrintPageSlice = {
   kind: OrgPrintPageKind;
   start: number;
@@ -24,9 +62,7 @@ const LOC_SHORT: Record<string, string> = {
 
 /** 1–3 roomy cards, 4–8 compact pages, 9+ cover then a dense insurance directory. */
 export function densityForFacilityCount(count: number): OrgPrintDensity {
-  if (count <= 3) return "generous";
-  if (count <= 8) return "standard";
-  return "directory";
+  return ORG_PRINT_TEMPLATES[templateForFacilityCount(count)].density;
 }
 
 export function rowsPerDirectoryPage(density: OrgPrintDensity): number {

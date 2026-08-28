@@ -13,16 +13,17 @@ import {
   UserPlus,
   Eye,
   EyeOff,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { shareOrCopyUrl } from "@/lib/share";
 import { orgPublicPath } from "@/lib/public-urls";
 import { resolveStateCode } from "@/lib/us-states";
 import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
-import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { FacilityGridCard } from "@/components/FacilityGridCard";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -325,10 +326,10 @@ export function OrgDashboard({
         </div>
       </section>
 
-      {/* Quick actions */}
+      {/* Quick actions — one row on desktop; compact menu on mobile */}
       <Card className="p-3 sm:p-4">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <div>
+          <div className="min-w-0">
             <h2 className="font-heading text-sm font-bold">Quick actions</h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {org && !publicLive
@@ -336,34 +337,104 @@ export function OrgDashboard({
                 : "Manage your profile, team, and facilities."}
             </p>
           </div>
+
+          {/* Mobile: single menu */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="md:hidden shrink-0 gap-1.5"
+                aria-label="Open quick actions"
+              >
+                Actions
+                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-2" sideOffset={8}>
+              <div className="flex flex-col gap-1">
+                <AddFacilityDialog
+                  organizationId={organizationId}
+                  onCreated={reloadFacilities}
+                  triggerLabel="Add facility"
+                  triggerClassName="w-full justify-start h-10"
+                  triggerVariant="ghost"
+                />
+                <Button asChild variant="ghost" className="h-10 justify-start font-normal">
+                  <Link to={facilitiesHref}>
+                    <Pencil className="h-4 w-4" /> Edit facilities
+                  </Link>
+                </Button>
+                {membersHref ? (
+                  <Button asChild variant="ghost" className="h-10 justify-start font-normal">
+                    <Link to={membersHref}>
+                      <UserPlus className="h-4 w-4" /> Manage team
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="ghost" className="h-10 justify-start font-normal">
+                    <Link to={brandingHref}>
+                      <Users className="h-4 w-4" /> Org profile
+                    </Link>
+                  </Button>
+                )}
+                <Button asChild variant="ghost" className="h-10 justify-start font-normal">
+                  <Link to={brandingHref}>
+                    <Palette className="h-4 w-4" /> Full branding
+                  </Link>
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-10 justify-start font-normal"
+                  onClick={handleShare}
+                  disabled={!org?.slug}
+                >
+                  <Share2 className="h-4 w-4" /> Share link
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-10 justify-start font-normal"
+                  onClick={handleViewPublic}
+                  disabled={!org?.slug}
+                >
+                  <ExternalLink className="h-4 w-4" /> Public page
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+
+        {/* Desktop / tablet: single row */}
+        <div className="hidden md:grid md:grid-cols-6 gap-2">
           <AddFacilityDialog
             organizationId={organizationId}
             onCreated={reloadFacilities}
             triggerLabel="Add facility"
-            triggerClassName="w-full justify-start h-11 sm:h-10"
+            triggerClassName="w-full justify-center lg:justify-start h-10 px-2 lg:px-3 text-xs lg:text-sm"
             triggerVariant="outline"
           />
-          <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
+          <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
             <Link to={facilitiesHref}>
               <Pencil className="h-4 w-4" /> Edit facilities
             </Link>
           </Button>
           {membersHref ? (
-            <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
+            <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
               <Link to={membersHref}>
                 <UserPlus className="h-4 w-4" /> Manage team
               </Link>
             </Button>
           ) : (
-            <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
+            <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
               <Link to={brandingHref}>
                 <Users className="h-4 w-4" /> Org profile
               </Link>
             </Button>
           )}
-          <Button asChild variant="outline" className="h-11 justify-start sm:h-10">
+          <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
             <Link to={brandingHref}>
               <Palette className="h-4 w-4" /> Full branding
             </Link>
@@ -371,7 +442,7 @@ export function OrgDashboard({
           <Button
             type="button"
             variant="outline"
-            className="h-11 justify-start sm:h-10"
+            className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm"
             onClick={handleShare}
             disabled={!org?.slug}
           >
@@ -380,7 +451,7 @@ export function OrgDashboard({
           <Button
             type="button"
             variant="outline"
-            className="h-11 justify-start sm:h-10"
+            className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm"
             onClick={handleViewPublic}
             disabled={!org?.slug}
           >
@@ -439,22 +510,22 @@ export function OrgDashboard({
                     facility={f}
                     href={facilityDetailHref(f.id)}
                   />
-                  <div className="flex items-center justify-between gap-2 px-0.5">
-                    <p className="text-[11px] text-muted-foreground truncate min-w-0">
+                  <div className="flex items-start justify-between gap-2 px-0.5">
+                    <div className="min-w-0 text-xs leading-snug text-muted-foreground">
                       {f.hidden_from_org_page ? (
                         <span className="inline-flex items-center gap-1 text-amber-700/90">
-                          <EyeOff className="h-3 w-3" /> Hidden from public organization profile
+                          <EyeOff className="h-3 w-3 shrink-0" /> Hidden from public organization profile
                         </span>
                       ) : f.bd_contact_name?.trim() ? (
-                        <>
+                        <p>
                           <span className="font-medium text-foreground/80">BD:</span>{" "}
-                          {f.bd_contact_name}
-                        </>
+                          <span className="text-foreground/90">{f.bd_contact_name.trim()}</span>
+                        </p>
                       ) : (
-                        <span className="text-amber-700/80">No BD assigned</span>
+                        <p className="text-amber-700/80">No BD assigned</p>
                       )}
-                    </p>
-                    <div className="flex items-center shrink-0">
+                    </div>
+                    <div className="flex items-center shrink-0 gap-0.5">
                       <Button asChild type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]">
                         <Link to={facilityDetailHref(f.id)}>
                           <Pencil className="h-3.5 w-3.5" /> Edit
@@ -474,17 +545,6 @@ export function OrgDashboard({
                           {f.hidden_from_org_page ? "Show" : "Hide"}
                         </Button>
                       )}
-                      <AssignFacilityBdDialog
-                        facilityId={f.id}
-                        facilityName={f.name}
-                        organizationId={organizationId}
-                        bd_contact_name={f.bd_contact_name}
-                        bd_contact_phone={f.bd_contact_phone}
-                        bd_contact_email={f.bd_contact_email}
-                        onSaved={reloadFacilities}
-                        triggerVariant="ghost"
-                        triggerClassName="h-7 px-2 text-[11px]"
-                      />
                     </div>
                   </div>
                 </div>

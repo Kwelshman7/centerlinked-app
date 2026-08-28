@@ -41,6 +41,7 @@ import OrgSheet from "./pages/public/OrgSheet";
 import AuthCallback from "./pages/AuthCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import OrgOnePagerPreview from "./pages/dev/OrgOnePagerPreview";
 
 const App = () => (
   <AppErrorBoundary>
@@ -57,6 +58,9 @@ const App = () => (
             <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            {import.meta.env.DEV ? (
+              <Route path="/dev/org-one-pager-preview" element={<OrgOnePagerPreview />} />
+            ) : null}
             <Route path="/o/:orgSlug/p/:programSlug" element={<ProgramSheet />} />
             <Route path="/p/:slug" element={<ProgramSheet />} />
             <Route path="/o/:slug" element={<OrgSheet />} />

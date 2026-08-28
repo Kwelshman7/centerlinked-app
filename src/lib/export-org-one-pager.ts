@@ -53,7 +53,10 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
   });
 
   const model = buildOrgOnePagerModel({
-    org: input.org,
+    org: {
+      ...input.org,
+      tagline: polished?.tagline || input.org.tagline,
+    },
     facilities: input.facilities,
     facilityPayersById: input.facilityPayersById,
     brandColor: input.brandColor,
@@ -62,12 +65,17 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
   });
 
   const photoIds = model.density === "generous" ? model.facilities : [];
+  const coverSource =
+    input.org.cover_image_url ??
+    input.org.image_urls?.[0] ??
+    visible.find((f) => f.image_urls?.[0])?.image_urls?.[0] ??
+    null;
   const [resolvedLogoUrl, resolvedCoverUrl, resolvedQrUrl, hidePlatformMark, ...resolvedPhotos] =
     await Promise.all([
       resolveImageUrl(model.logoUrl, "logo").then(
         async (logo) => logo ?? resolveImageUrl(input.org.favicon_url, "logo"),
       ),
-      resolveImageUrl(input.org.cover_image_url ?? input.org.image_urls?.[0] ?? null, "photo"),
+      resolveImageUrl(coverSource, "photo"),
       resolveQrUrl(model.profileUrl),
       orgHidesPlatformMark(input.org.id),
       ...photoIds.map((f) => (f.photoUrl ? resolveImageUrl(f.photoUrl, "photo") : Promise.resolve(null))),
@@ -105,19 +113,20 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
   const pages = model.pages.length ? model.pages : [];
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
+    const isFirst = page.pageNumber === 1;
     const rendered = await renderOffscreenElement("org-one-pager", OrgOnePager, {
       model,
       page,
       resolvedLogoUrl,
-      resolvedCoverUrl: page.kind === "cover" ? resolvedCoverUrl : null,
+      resolvedCoverUrl: isFirst ? resolvedCoverUrl : null,
       resolvedPhotoUrls,
-      resolvedQrUrl: page.kind === "cover" ? resolvedQrUrl : null,
+      resolvedQrUrl: isFirst ? resolvedQrUrl : null,
       hidePlatformMark,
     });
     try {
       await waitForFonts();
       await waitForImages(rendered.node);
-      await sleep(page.kind === "cover" ? 300 : 180);
+      await sleep(isFirst ? 350 : 180);
       const dataUrl = await Promise.race([
         toPng(rendered.node, {
           pixelRatio: 2,

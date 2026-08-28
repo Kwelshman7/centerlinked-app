@@ -1,20 +1,25 @@
 import { assertAuthenticated } from "./lib/assert-user.mjs";
+import {
+  ORG_PDF_COPY_PROMPTS,
+  orgPdfTemplateForFacilityCount,
+} from "./one-pager-org-prompts.mjs";
 
 /**
- * Factual one-pager copy. Rewrites the program description using only
- * the selected facility facts. Never invents amenities, therapies, or payers.
+ * Factual one-pager copy. Rewrites descriptions using only provided facts.
+ * Never invents amenities, therapies, payers, or outcomes.
  *
- * Requires a valid Bearer session. Anonymous public PDF export still works
- * via client fallback when this returns 401 (no OpenAI spend).
+ * Facility mode requires a Bearer session.
+ * Org mode is allowed for public PDF export (rewrites already-public sheet facts only).
+ * Org prompts are selected by facility count → showcase | portfolio | network.
  */
 export async function handleOnePagerCopy(body, accessToken) {
+  if (body?.mode === "org") {
+    return handleOrgCopy(body);
+  }
+
   const auth = await assertAuthenticated(accessToken);
   if (!auth.ok) {
     return { status: auth.status, json: { error: auth.error } };
-  }
-
-  if (body?.mode === "org") {
-    return handleOrgCopy(body);
   }
 
   const facts = sanitizeFacts(body);
@@ -42,14 +47,30 @@ async function handleOrgCopy(body) {
     return { status: 400, json: { error: "Invalid facts" } };
   }
 
-  const fallback = { description: facts.fallbackDescription, usedAi: false };
+  const template = orgPdfTemplateForFacilityCount(facts.facilityCount);
+  const prompt = ORG_PDF_COPY_PROMPTS[template];
+
+  const fallback = {
+    description: facts.fallbackDescription,
+    tagline: facts.tagline || null,
+    template,
+    usedAi: false,
+  };
   const key = process.env.OPENAI_API_KEY;
   if (!key) return { status: 200, json: fallback };
 
   try {
-    const polished = await requestOrgCopy(key, facts);
+    const polished = await requestOrgCopy(key, facts, template, prompt);
     if (!polished) return { status: 200, json: fallback };
-    return { status: 200, json: { description: polished, usedAi: true } };
+    return {
+      status: 200,
+      json: {
+        description: polished.description,
+        tagline: polished.tagline || facts.tagline || null,
+        template,
+        usedAi: true,
+      },
+    };
   } catch (err) {
     console.error("[one-pager-copy] org", err?.message || err);
     return { status: 200, json: fallback };
@@ -164,7 +185,13 @@ function sanitizeOrgFacts(body) {
   };
 }
 
-async function requestOrgCopy(apiKey, facts) {
+/**
+ * @param {string} apiKey
+ * @param {ReturnType<typeof sanitizeOrgFacts>} facts
+ * @param {import("./one-pager-org-prompts.mjs").OrgPdfTemplateId} template
+ * @param {(typeof ORG_PDF_COPY_PROMPTS)[keyof typeof ORG_PDF_COPY_PROMPTS]} prompt
+ */
+async function requestOrgCopy(apiKey, facts, template, prompt) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12_000);
   try {
@@ -177,21 +204,22 @@ async function requestOrgCopy(apiKey, facts) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        temperature: 0.2,
-        max_tokens: 200,
+        temperature: 0.25,
+        max_tokens: 220,
         response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
-            content:
-              "You write a two-sentence organization referral overview for treatment-center business-development teams. Use ONLY the provided facts: organization name, location, facility count, listed facility names, and listed levels of care. If existing_description is present, polish it; if it is empty, compose from those facts. Do not invent facilities, insurance, amenities, credentials, or outcomes. Do not mention CenterLinked, AI, page count, or that this is a template. Return JSON {\"description\": string} with at most 320 characters.",
+            content: prompt.system,
           },
           {
             role: "user",
             content: JSON.stringify({
+              template,
+              template_label: prompt.label,
               name: facts.name,
               location: facts.locationContext,
-              tagline: facts.tagline,
+              existing_tagline: facts.tagline,
               existing_description: facts.fallbackDescription,
               facility_count: facts.facilityCount,
               facility_names: facts.facilityNames,
@@ -207,9 +235,13 @@ async function requestOrgCopy(apiKey, facts) {
     const raw = json?.choices?.[0]?.message?.content;
     if (typeof raw !== "string") return null;
     const parsed = JSON.parse(raw);
-    const description = asString(parsed?.description, 360);
+    const description = asString(parsed?.description, prompt.maxDescription + 40);
     if (description.length < 40) return null;
-    return description;
+    const tagline = asString(parsed?.tagline, prompt.maxTagline + 8) || null;
+    return {
+      description: description.slice(0, prompt.maxDescription),
+      tagline: tagline ? tagline.slice(0, prompt.maxTagline) : null,
+    };
   } finally {
     clearTimeout(timer);
   }

@@ -42,6 +42,35 @@ export function FactLine({ items }: { items: string[] }) {
   );
 }
 
+/** Compact level-of-care chips for showcase / portfolio PDF templates. */
+export function LevelPills({ items, brand }: { items: string[]; brand: string }) {
+  const filled = items.filter(Boolean).slice(0, 6);
+  if (!filled.length) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+      {filled.map((item) => (
+        <span
+          key={item}
+          style={wireHeading({
+            display: "inline-block",
+            padding: "3px 8px",
+            borderRadius: 999,
+            fontSize: 9.5,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            color: brand,
+            background: brandRgba(brand, 0.1),
+            border: `1px solid ${brandRgba(brand, 0.18)}`,
+          })}
+        >
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function LogoMark({
   logoUrl,
   name,
@@ -58,14 +87,17 @@ export function LogoMark({
       <div
         style={wireHeading({
           flexShrink: 0,
-          width: 44,
-          height: 44,
+          width: 52,
+          height: 52,
           display: "grid",
           placeItems: "center",
+          borderRadius: 10,
           fontSize: 16,
           fontWeight: 800,
           letterSpacing: "-0.04em",
           color: brand,
+          background: brandRgba(brand, 0.08),
+          border: `1px solid ${brandRgba(brand, 0.16)}`,
         })}
       >
         {initials}
@@ -77,9 +109,14 @@ export function LogoMark({
     <div
       style={{
         flexShrink: 0,
-        height: 44,
+        height: 52,
         width: 168,
+        padding: "6px 8px",
+        boxSizing: "border-box",
+        borderRadius: 10,
         overflow: "hidden",
+        background: "#fff",
+        border: `1px solid ${WIRE.rule}`,
       }}
     >
       <div style={photoFillStyle(logoUrl, "contain", { width: "100%", height: "100%" })} />
@@ -107,7 +144,7 @@ export function PhotoSlot({
       style={{
         width: "100%",
         height,
-        background: `linear-gradient(135deg, ${brandRgba(brand, 0.16)} 0%, ${brandRgba(brand, 0.06)} 100%)`,
+        background: `linear-gradient(145deg, ${brandRgba(brand, 0.2)} 0%, ${brandRgba(brand, 0.05)} 100%)`,
       }}
     />
   );
