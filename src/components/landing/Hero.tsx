@@ -3,6 +3,7 @@ import {
   ArrowRight,
   FileText,
   IdCard,
+  CheckCircle2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -42,8 +43,15 @@ const replaceItems: { icon: LucideIcon | typeof TriFoldBrochureIcon; label: stri
   { icon: IdCard, label: "Business cards" },
 ];
 
+const helperItems = [
+  "Levels of care",
+  "In-network insurance",
+  "Locations",
+  "Who to contact",
+];
+
 const heroSubheader =
-  "One live profile for your organization — who you are, where you treat, what you offer, and which insurance you’re in network with.";
+  "Create a profile for your organization that tells referral partners exactly who you are, where you're located, what you treat, and what insurance you're currently in network with.";
 
 /** Three items across → animated lines converge into the CenterLinked logo. */
 function ReplaceIntoLogo() {
@@ -145,74 +153,76 @@ export function Hero() {
           <div
             className={cn(
               "mx-auto grid w-full max-w-6xl",
-              "grid-cols-1 items-center gap-10",
+              "grid-cols-1 items-center gap-8 sm:gap-10",
               "pt-8 pb-12 sm:pt-10 sm:pb-14",
-              /* Top-weighted split — denser than vertical centering, still above the fold */
-              "lg:grid-cols-[minmax(0,1.05fr)_auto] lg:items-start lg:gap-10 xl:gap-14",
-              "lg:pt-14 lg:pb-16 xl:pt-16 xl:pb-20",
+              "lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12 xl:gap-16",
+              "lg:pt-12 lg:pb-16 xl:pt-14 xl:pb-20",
             )}
           >
-            <div className="flex w-full max-w-xl flex-col items-center text-center lg:max-w-none lg:items-start lg:text-left lg:pt-6 xl:pt-10">
-              <div className="animate-fade-up w-full space-y-5 sm:space-y-6 lg:max-w-[34rem] xl:max-w-[36rem]">
-                <p className="font-display text-sm font-semibold tracking-tight text-foreground">
-                  CenterLinked
-                  <span className="mx-2.5 text-border" aria-hidden>
-                    ·
-                  </span>
-                  <span className="font-sans text-[11px] sm:text-xs font-semibold tracking-[0.14em] uppercase text-primary align-middle">
-                    Behavioral health BD
-                  </span>
+            <div className="flex w-full max-w-xl flex-col items-center text-center lg:max-w-none lg:items-start lg:text-left">
+              <div className="animate-fade-up w-full space-y-4 sm:space-y-5 lg:max-w-[34rem] xl:max-w-[36rem]">
+                <p className="font-sans text-[11px] sm:text-xs font-semibold tracking-[0.14em] uppercase text-primary">
+                  Built for behavioral health business development
                 </p>
 
                 <DisplayHeading
                   as="h1"
-                  className="text-center lg:text-left text-[2rem] leading-[1.1] sm:text-[2.65rem] sm:leading-[1.06] lg:text-[3.15rem] xl:text-[3.45rem] lg:leading-[1.04]"
+                  className="text-center lg:text-left text-[1.9rem] leading-[1.12] sm:text-[2.6rem] sm:leading-[1.08] lg:text-[2.85rem] xl:text-[3.15rem] lg:leading-[1.06]"
                 >
                   Your Treatment Center Needs a{" "}
                   <DisplayAccent>Referral Link.</DisplayAccent>
                 </DisplayHeading>
 
-                <p className="text-[15px] sm:text-base lg:text-[1.0625rem] text-muted-foreground leading-relaxed max-w-md sm:max-w-lg mx-auto lg:mx-0">
+                <p className="text-[15px] sm:text-base lg:text-[1.05rem] text-muted-foreground leading-relaxed max-w-md sm:max-w-lg mx-auto lg:mx-0">
                   {heroSubheader}
                 </p>
 
                 {/* Mobile-only replace graphic */}
-                <div className="lg:hidden w-full pt-2">
+                <div className="lg:hidden w-full pt-1">
                   <ReplaceIntoLogo />
                 </div>
 
                 <div
-                  className="animate-fade-up flex flex-col items-center lg:items-start gap-3.5 pt-1 sm:pt-2"
+                  className="animate-fade-up flex flex-col items-center lg:items-start gap-4 sm:gap-5 pt-1"
                   style={{ animationDelay: "120ms" }}
                 >
                   <Button
                     asChild
                     variant="hero"
                     size="xl"
-                    className="group w-full sm:w-auto min-h-12 px-8 shadow-glow"
+                    className="group w-full sm:w-auto min-h-12 px-7"
                   >
                     <Link to="/request-access">
                       Create Your Organization Profile
-                      <ArrowRight className="ml-1.5 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+                      <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                   </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Levels of care · Locations · In-network insurance · Who to contact
-                  </p>
+
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-2 sm:gap-x-5 sm:gap-y-2.5 max-w-sm sm:max-w-md w-full text-left">
+                    {helperItems.map((item) => (
+                      <li
+                        key={item}
+                        className="flex items-center gap-2 text-sm sm:text-[15px] text-foreground font-medium"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>
 
             <div
-              className="animate-slide-in-right relative hidden lg:flex lg:pt-2 xl:pt-0"
+              className="animate-slide-in-right relative hidden lg:flex"
               style={{ animationDelay: "80ms" }}
             >
-              <HeroPhone className="w-[300px] xl:w-[330px]" />
+              <HeroPhone className="w-[270px] xl:w-[290px]" />
             </div>
           </div>
 
-          <div className="lg:hidden pb-4 flex justify-center">
-            <HeroPhone className="w-[230px] sm:w-[255px]" />
+          <div className="lg:hidden mt-8 sm:mt-10 flex justify-center">
+            <HeroPhone className="w-[220px] sm:w-[250px]" />
           </div>
         </div>
       </div>
@@ -241,7 +251,7 @@ function HeroPhone({ className }: { className?: string }) {
       />
       <PhoneFrame
         className={cn(
-          "w-[240px] sm:w-[260px] lg:w-[300px] xl:w-[330px]",
+          "w-[240px] sm:w-[260px] lg:w-[270px] xl:w-[290px] animate-float",
           className,
         )}
       >

@@ -170,9 +170,9 @@ export function WhoFor() {
             />
           </div>
 
-          <div className="relative z-10 container py-14 sm:py-16 lg:pt-20 lg:pb-24 xl:pb-28">
-            <div className="lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] lg:gap-6 xl:gap-8 lg:items-center">
-              <div className="max-w-xl space-y-7 sm:space-y-8 lg:max-w-[40rem] xl:max-w-[44rem] lg:justify-self-start lg:w-full lg:-translate-x-2 xl:-translate-x-5 lg:pb-4">
+          <div className="relative z-10 container py-16 sm:py-20 lg:py-24">
+            <div className="lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-10 xl:gap-14 lg:items-center">
+              <div className="max-w-xl space-y-7 sm:space-y-8 lg:max-w-none lg:w-full">
                 <div className="space-y-4">
                   <SectionBadge
                     icon={Send}
@@ -248,42 +248,17 @@ export function WhoFor() {
 
         <section
           id="what-link-answers"
-          className="relative scroll-mt-20 py-16 sm:py-20 lg:py-8 xl:py-10 lg:mt-4 xl:mt-6"
+          className="relative scroll-mt-20 py-16 sm:py-20 lg:py-24"
         >
-          {/* Mobile / tablet — stacked copy + cards only */}
-          <div className="container lg:hidden">
-            <div className="mx-auto max-w-3xl space-y-7 sm:space-y-8">
-              <div className="space-y-3.5 sm:space-y-4">
-                <SectionBadge
-                  icon={ListChecks}
-                  className="border-primary/25 bg-primary/[0.06] text-primary"
-                >
-                  What your link answers
-                </SectionBadge>
-                <DisplayHeading
-                  as="h2"
-                  className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
-                >
-                  Everything your referral partners need
-                </DisplayHeading>
-                <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Case managers refer to the centers that make their jobs
-                  easier. That all starts with having access to the most up to
-                  date information about your program.
-                </p>
+          <div className="container">
+            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+              {/* Product first on desktop; copy first on mobile */}
+              <div className="order-2 lg:order-1 min-w-0">
+                <LinkAnswersDesktopVisual />
               </div>
 
-              <LinkAnswersReveal />
-            </div>
-          </div>
-
-          {/* Desktop — product visual left, copy right (tight gap; copy not pushed far right) */}
-          <div className="hidden lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center lg:min-h-[34rem] xl:min-h-[38rem] lg:gap-0">
-            <LinkAnswersDesktopVisual />
-
-            <div className="relative z-10 flex items-center">
-              <div className="w-full max-w-[34rem] xl:max-w-[36rem] pl-3 pr-8 xl:pl-4 xl:pr-12 2xl:pr-16 py-10 xl:py-12 space-y-5 xl:space-y-6">
-                <div className="space-y-3 sm:space-y-3.5">
+              <div className="order-1 lg:order-2 mx-auto w-full max-w-xl space-y-6 sm:space-y-7 lg:mx-0 lg:max-w-none">
+                <div className="space-y-3.5 sm:space-y-4">
                   <SectionBadge
                     icon={ListChecks}
                     className="border-primary/25 bg-primary/[0.06] text-primary"
@@ -292,18 +267,18 @@ export function WhoFor() {
                   </SectionBadge>
                   <DisplayHeading
                     as="h2"
-                    className="text-2xl sm:text-3xl lg:text-[2.05rem] lg:leading-[1.15]"
+                    className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
                   >
                     Everything your referral partners need
                   </DisplayHeading>
-                  <p className="max-w-md text-sm sm:text-[15px] text-muted-foreground leading-relaxed">
+                  <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
                     Case managers refer to the centers that make their jobs
                     easier. That all starts with having access to the most up to
                     date information about your program.
                   </p>
                 </div>
 
-                <LinkAnswersReveal showTagline={false} />
+                <LinkAnswersReveal />
               </div>
             </div>
           </div>
