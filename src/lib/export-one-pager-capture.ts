@@ -193,7 +193,7 @@ export async function resolveUniqueImages(
     unique.push(url);
     if (unique.length >= Math.max(limit, 1) + 3) break;
   }
-  const resolved = await Promise.all(unique.map((url) => resolveImageUrl(url, kind)));
+  const resolved = await Promise.all(unique.map((url) => resolveImageUrlReliable(url, kind)));
   return resolved.filter((item): item is string => !!item).slice(0, limit);
 }
 
@@ -229,6 +229,62 @@ export async function waitForImages(node: HTMLElement): Promise<void> {
         }),
     ),
   );
+}
+
+/**
+ * Resolve a remote image to a data URL with retries.
+ * PDF capture must not proceed on empty slots when the org has real photos.
+ */
+export async function resolveImageUrlReliable(
+  src: string | null | undefined,
+  kind: ResolveImageKind = "photo",
+  attempts = 3,
+): Promise<string | null> {
+  const url = src?.trim();
+  if (!url) return null;
+  for (let i = 0; i < attempts; i++) {
+    const resolved = await resolveImageUrl(url, kind);
+    if (resolved?.startsWith("data:") && resolved.length > 64) return resolved;
+    await sleep(180 * (i + 1));
+  }
+  return null;
+}
+
+/** Try candidates in order until one resolves to a capture-ready data URL. */
+export async function resolveFirstImageUrl(
+  urls: Array<string | null | undefined>,
+  kind: ResolveImageKind = "photo",
+): Promise<string | null> {
+  for (const url of urls) {
+    const resolved = await resolveImageUrlReliable(url, kind);
+    if (resolved) return resolved;
+  }
+  return null;
+}
+
+/**
+ * After off-screen render: fonts + every <img> must have decoded pixels.
+ * Retries once if any image is still empty (common when data: decode races).
+ */
+export async function waitForCaptureReady(node: HTMLElement): Promise<void> {
+  await waitForFonts();
+  await preloadDataUrls(
+    Array.from(node.querySelectorAll("img"))
+      .map((img) => img.currentSrc || img.src)
+      .filter(Boolean),
+  );
+  await waitForImages(node);
+  const empty = () =>
+    Array.from(node.querySelectorAll("img")).filter(
+      (img) => !(img.complete && img.naturalWidth > 0),
+    );
+  if (empty().length === 0) {
+    await sleep(120);
+    return;
+  }
+  await sleep(400);
+  await waitForImages(node);
+  await sleep(200);
 }
 
 export function slugifyFilename(name: string, fallback = "document"): string {

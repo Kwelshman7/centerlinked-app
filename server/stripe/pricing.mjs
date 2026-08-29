@@ -6,7 +6,7 @@
 export const MEMBERSHIP_TIERS = {
   profile: {
     id: "profile",
-    productName: "CenterLinked Profile",
+    productName: "CenterLinked Small",
     facilityLabel: "1 live facility",
     facilityMin: 1,
     facilityMax: 1,
@@ -15,7 +15,7 @@ export const MEMBERSHIP_TIERS = {
   },
   network: {
     id: "network",
-    productName: "CenterLinked Network",
+    productName: "CenterLinked Medium",
     facilityLabel: "2–5 live facilities",
     facilityMin: 2,
     facilityMax: 5,
@@ -24,7 +24,7 @@ export const MEMBERSHIP_TIERS = {
   },
   group: {
     id: "group",
-    productName: "CenterLinked Group",
+    productName: "CenterLinked Large",
     facilityLabel: "6–15 live facilities",
     facilityMin: 6,
     facilityMax: 15,

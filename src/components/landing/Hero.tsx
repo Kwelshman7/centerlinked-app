@@ -3,7 +3,6 @@ import {
   ArrowRight,
   FileText,
   IdCard,
-  CheckCircle2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -43,15 +42,8 @@ const replaceItems: { icon: LucideIcon | typeof TriFoldBrochureIcon; label: stri
   { icon: IdCard, label: "Business cards" },
 ];
 
-const helperItems = [
-  "Levels of care",
-  "In-network insurance",
-  "Locations",
-  "Who to contact",
-];
-
 const heroSubheader =
-  "Create a profile for your organization that tells referral partners exactly who you are, where you're located, what you treat, and what insurance you're currently in network with.";
+  "One live profile for your organization — who you are, where you treat, what you offer, and which insurance you’re in network with.";
 
 /** Three items across → animated lines converge into the CenterLinked logo. */
 function ReplaceIntoLogo() {
@@ -79,7 +71,6 @@ function ReplaceIntoLogo() {
           ))}
         </ul>
 
-        {/* Converging lines → logo */}
         <div className="relative h-[72px] mt-1" aria-hidden>
           <svg
             className="absolute inset-0 h-full w-full overflow-visible"
@@ -136,74 +127,92 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden bg-hero-gradient">
       <div className="pointer-events-none absolute inset-0 landing-glow" aria-hidden />
-      <div className="pointer-events-none absolute -right-24 top-16 h-72 w-72 rounded-full bg-primary/10 blur-3xl" aria-hidden />
-      <div className="pointer-events-none absolute -left-16 bottom-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden />
+      {/* Desktop stage wash — phone side is the visual plane */}
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] lg:block"
+        aria-hidden
+      >
+        <div className="absolute inset-0 bg-gradient-to-l from-primary/[0.09] via-primary/[0.035] to-transparent" />
+        <div className="absolute right-[6%] top-[42%] h-[min(640px,72%)] w-[min(640px,78%)] -translate-y-1/2 rounded-full bg-primary/[0.14] blur-[100px]" />
+      </div>
+      <div
+        className="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-primary/10 blur-3xl lg:hidden"
+        aria-hidden
+      />
 
-      {/*
-        Desktop: modest top inset (not viewport-centered) so copy + phone read as one
-        composition above the fold. Phone scale is capped so a laptop viewport fits both.
-        Mobile: content-sized stack with even beats.
-      */}
-      <div className="relative z-10 px-0 pt-6 pb-10 sm:pt-8 sm:pb-12 lg:pt-8 lg:pb-12 xl:pt-10 xl:pb-14">
-        <div className="container w-full">
-          <div className="mx-auto flex w-full max-w-6xl flex-col items-center lg:flex-row lg:items-start lg:justify-between gap-8 sm:gap-10 lg:gap-12 xl:gap-16">
-            {/* Copy column */}
-            <div className="flex w-full max-w-xl flex-col items-center text-center lg:items-start lg:text-left lg:max-w-[30rem] xl:max-w-[32rem] lg:pt-3 xl:pt-4">
-              <div className="animate-fade-up w-full space-y-3 sm:space-y-3.5 lg:space-y-4">
-                <p className="font-sans text-[11px] sm:text-xs font-semibold tracking-[0.14em] uppercase text-primary">
-                  Built for behavioral health business development
+      <div className="relative z-10">
+        <div className="container">
+          <div
+            className={cn(
+              "mx-auto grid w-full max-w-6xl",
+              "grid-cols-1 items-center gap-10",
+              "pt-8 pb-12 sm:pt-10 sm:pb-14",
+              /* Top-weighted split — denser than vertical centering, still above the fold */
+              "lg:grid-cols-[minmax(0,1.05fr)_auto] lg:items-start lg:gap-10 xl:gap-14",
+              "lg:pt-14 lg:pb-16 xl:pt-16 xl:pb-20",
+            )}
+          >
+            <div className="flex w-full max-w-xl flex-col items-center text-center lg:max-w-none lg:items-start lg:text-left lg:pt-6 xl:pt-10">
+              <div className="animate-fade-up w-full space-y-5 sm:space-y-6 lg:max-w-[34rem] xl:max-w-[36rem]">
+                <p className="font-display text-sm font-semibold tracking-tight text-foreground">
+                  CenterLinked
+                  <span className="mx-2.5 text-border" aria-hidden>
+                    ·
+                  </span>
+                  <span className="font-sans text-[11px] sm:text-xs font-semibold tracking-[0.14em] uppercase text-primary align-middle">
+                    Behavioral health BD
+                  </span>
                 </p>
+
                 <DisplayHeading
                   as="h1"
-                  className="text-center lg:text-left text-[1.9rem] leading-[1.12] sm:text-[2.6rem] sm:leading-[1.08] lg:text-[2.85rem] xl:text-[3.15rem] lg:leading-[1.06]"
+                  className="text-center lg:text-left text-[2rem] leading-[1.1] sm:text-[2.65rem] sm:leading-[1.06] lg:text-[3.15rem] xl:text-[3.45rem] lg:leading-[1.04]"
                 >
                   Your Treatment Center Needs a{" "}
                   <DisplayAccent>Referral Link.</DisplayAccent>
                 </DisplayHeading>
-                <p className="text-[15px] sm:text-base lg:text-[1.05rem] text-muted-foreground leading-relaxed max-w-md sm:max-w-lg mx-auto lg:mx-0">
+
+                <p className="text-[15px] sm:text-base lg:text-[1.0625rem] text-muted-foreground leading-relaxed max-w-md sm:max-w-lg mx-auto lg:mx-0">
                   {heroSubheader}
                 </p>
-              </div>
 
-              {/* Mobile-only replace graphic — spaced as its own beat */}
-              <div className="lg:hidden w-full mt-7 sm:mt-8">
-                <ReplaceIntoLogo />
-              </div>
+                {/* Mobile-only replace graphic */}
+                <div className="lg:hidden w-full pt-2">
+                  <ReplaceIntoLogo />
+                </div>
 
-              <div
-                className="animate-fade-up w-full mt-6 sm:mt-7 lg:mt-8 flex flex-col items-center lg:items-start gap-4 sm:gap-5"
-                style={{ animationDelay: "100ms" }}
-              >
-                <Button asChild variant="hero" size="xl" className="group w-full sm:w-auto min-h-12 px-7">
-                  <Link to="/request-access">
-                    Create Your Organization Profile
-                    <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </Button>
-
-                <ul className="grid grid-cols-2 gap-x-4 gap-y-2 sm:gap-x-5 sm:gap-y-2.5 max-w-sm sm:max-w-md w-full text-left">
-                  {helperItems.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center gap-2 text-sm sm:text-[15px] text-foreground font-medium"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                <div
+                  className="animate-fade-up flex flex-col items-center lg:items-start gap-3.5 pt-1 sm:pt-2"
+                  style={{ animationDelay: "120ms" }}
+                >
+                  <Button
+                    asChild
+                    variant="hero"
+                    size="xl"
+                    className="group w-full sm:w-auto min-h-12 px-8 shadow-glow"
+                  >
+                    <Link to="/request-access">
+                      Create Your Organization Profile
+                      <ArrowRight className="ml-1.5 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Levels of care · Locations · In-network insurance · Who to contact
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Desktop mockup — top-aligned with copy so both sit above the fold */}
-            <div className="animate-slide-in-right relative hidden lg:flex shrink-0 justify-center lg:pr-2 xl:pr-4">
-              <HeroPhone />
+            <div
+              className="animate-slide-in-right relative hidden lg:flex lg:pt-2 xl:pt-0"
+              style={{ animationDelay: "80ms" }}
+            >
+              <HeroPhone className="w-[300px] xl:w-[330px]" />
             </div>
           </div>
 
-          {/* Mobile mockup — clear separation from copy, never cramped under CTA */}
-          <div className="lg:hidden mt-9 sm:mt-10 flex justify-center">
-            <HeroPhone className="w-[220px] sm:w-[250px]" />
+          <div className="lg:hidden pb-4 flex justify-center">
+            <HeroPhone className="w-[230px] sm:w-[255px]" />
           </div>
         </div>
       </div>
@@ -218,13 +227,21 @@ export function Hero() {
 function HeroPhone({ className }: { className?: string }) {
   return (
     <div className="relative">
-      <div className="absolute -inset-8 sm:-inset-10 lg:-inset-12 bg-primary/8 blur-[64px] rounded-full opacity-70" />
-      <div className="absolute -inset-4 sm:-inset-6 bg-primary/10 blur-3xl rounded-full opacity-60" />
-      <div className="absolute -bottom-8 sm:-bottom-10 left-1/2 -translate-x-1/2 w-[70%] h-12 sm:h-14 bg-foreground/5 blur-2xl rounded-full" />
+      <div
+        className="pointer-events-none absolute left-1/2 top-[46%] h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[80px]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -inset-8 rounded-[3.25rem] bg-gradient-to-b from-white/50 via-transparent to-primary/5"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-11 left-1/2 h-[4.5rem] w-[82%] -translate-x-1/2 rounded-full bg-foreground/[0.12] blur-2xl"
+        aria-hidden
+      />
       <PhoneFrame
         className={cn(
-          // Desktop width keeps phone height (~540–585px) inside a laptop viewport with copy.
-          "w-[240px] sm:w-[260px] lg:w-[250px] xl:w-[270px] animate-float",
+          "w-[240px] sm:w-[260px] lg:w-[300px] xl:w-[330px]",
           className,
         )}
       >

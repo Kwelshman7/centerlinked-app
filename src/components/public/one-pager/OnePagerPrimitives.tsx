@@ -1,5 +1,4 @@
 import type { CSSProperties, ReactNode } from "react";
-import { photoFillStyle } from "@/lib/export-one-pager-capture";
 import { WIRE, brandRgba, orgInitials } from "@/lib/one-pager-wire";
 
 export function wireHeading(extra?: CSSProperties): CSSProperties {
@@ -119,7 +118,13 @@ export function LogoMark({
         border: `1px solid ${WIRE.rule}`,
       }}
     >
-      <div style={photoFillStyle(logoUrl, "contain", { width: "100%", height: "100%" })} />
+      {/* <img> (not CSS background) so html-to-image + waitForImages capture real pixels */}
+      <img
+        src={logoUrl}
+        alt=""
+        decoding="sync"
+        style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", display: "block" }}
+      />
     </div>
   );
 }
@@ -137,7 +142,23 @@ export function PhotoSlot({
   fit?: "cover" | "contain";
 }) {
   if (src) {
-    return <div style={photoFillStyle(src, fit, { width: "100%", height })} />;
+    return (
+      <div style={{ width: "100%", height, overflow: "hidden" }}>
+        {/* Prefer <img> over background-image — CSS backgrounds often capture blank in PDF export */}
+        <img
+          src={src}
+          alt=""
+          decoding="sync"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: fit,
+            objectPosition: "center",
+            display: "block",
+          }}
+        />
+      </div>
+    );
   }
   return (
     <div

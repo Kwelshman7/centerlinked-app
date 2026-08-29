@@ -5,10 +5,10 @@ import {
   orgHidesPlatformMark,
   preloadDataUrls,
   renderOffscreenElement,
-  resolveImageUrl,
+  resolveFirstImageUrl,
+  resolveImageUrlReliable,
   sleep,
-  waitForFonts,
-  waitForImages,
+  waitForCaptureReady,
 } from "@/lib/export-one-pager-capture";
 import { shortenLevelOfCare, uniquePreserve } from "@/lib/org-one-pager-layout";
 import { buildOrgOnePagerModel } from "@/lib/org-one-pager-model";
@@ -31,7 +31,16 @@ async function resolveQrUrl(profileUrl: string | null | undefined): Promise<stri
   const endpoint =
     "https://api.qrserver.com/v1/create-qr-code/?size=256x256&ecc=M&margin=0&color=1a2332&bgcolor=ffffff&data=" +
     encodeURIComponent(data);
-  return resolveImageUrl(endpoint, "icon");
+  return resolveImageUrlReliable(endpoint, "icon");
+}
+
+async function resolveFacilityPhoto(
+  facility: { id: string; photoUrl: string | null },
+  sourceFacilities: ShowcaseFacility[],
+): Promise<string | null> {
+  const live = sourceFacilities.find((f) => f.id === facility.id);
+  const candidates = [facility.photoUrl, ...(live?.image_urls ?? [])];
+  return resolveFirstImageUrl(candidates, "photo");
 }
 
 export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promise<void> {
@@ -64,27 +73,38 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
     overviewOverride: polished?.description ?? null,
   });
 
-  const photoIds = model.density === "generous" ? model.facilities : [];
-  const coverSource =
-    input.org.cover_image_url ??
-    input.org.image_urls?.[0] ??
-    visible.find((f) => f.image_urls?.[0])?.image_urls?.[0] ??
-    null;
+  const photoFacilities = model.density === "generous" ? model.facilities : [];
+  const coverCandidates = [
+    input.org.cover_image_url,
+    ...(input.org.image_urls ?? []),
+    ...visible.flatMap((f) => f.image_urls ?? []),
+  ];
+
   const [resolvedLogoUrl, resolvedCoverUrl, resolvedQrUrl, hidePlatformMark, ...resolvedPhotos] =
     await Promise.all([
-      resolveImageUrl(model.logoUrl, "logo").then(
-        async (logo) => logo ?? resolveImageUrl(input.org.favicon_url, "logo"),
-      ),
-      resolveImageUrl(coverSource, "photo"),
+      resolveFirstImageUrl([model.logoUrl, input.org.favicon_url], "logo"),
+      resolveFirstImageUrl(coverCandidates, "photo"),
       resolveQrUrl(model.profileUrl),
       orgHidesPlatformMark(input.org.id),
-      ...photoIds.map((f) => (f.photoUrl ? resolveImageUrl(f.photoUrl, "photo") : Promise.resolve(null))),
+      ...photoFacilities.map((f) => resolveFacilityPhoto(f, visible)),
     ]);
 
   const resolvedPhotoUrls: Record<string, string | null> = {};
-  photoIds.forEach((facility, i) => {
+  photoFacilities.forEach((facility, i) => {
     resolvedPhotoUrls[facility.id] = resolvedPhotos[i] ?? null;
   });
+
+  // Gate: every showcase photo that had a source URL must land as data: before capture.
+  const missingPhotos = photoFacilities.filter((f) => {
+    const hadSource = !!(f.photoUrl || visible.find((v) => v.id === f.id)?.image_urls?.[0]);
+    return hadSource && !resolvedPhotoUrls[f.id];
+  });
+  if (missingPhotos.length) {
+    // One more sequential pass — parallel fetches sometimes race the proxy.
+    for (const facility of missingPhotos) {
+      resolvedPhotoUrls[facility.id] = await resolveFacilityPhoto(facility, visible);
+    }
+  }
 
   await preloadDataUrls([
     resolvedLogoUrl,
@@ -124,9 +144,8 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
       hidePlatformMark,
     });
     try {
-      await waitForFonts();
-      await waitForImages(rendered.node);
-      await sleep(isFirst ? 350 : 180);
+      await waitForCaptureReady(rendered.node);
+      await sleep(isFirst ? 280 : 160);
       const dataUrl = await Promise.race([
         toPng(rendered.node, {
           pixelRatio: 2,

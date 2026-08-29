@@ -1,11 +1,10 @@
 import {
   renderOffscreenElement,
-  resolveImageUrl,
+  resolveFirstImageUrl,
   resolveUniqueImages,
   preloadDataUrls,
   sleep,
-  waitForFonts,
-  waitForImages,
+  waitForCaptureReady,
   slugifyFilename,
   orgHidesPlatformMark,
   LETTER_WIDTH_PX,
@@ -27,17 +26,6 @@ export type ExportFacilityOnePagerInput = Omit<
   filename?: string;
 };
 
-async function firstResolved(
-  urls: Array<string | null | undefined>,
-  kind: "logo" | "photo",
-): Promise<string | null> {
-  for (const url of urls) {
-    const resolved = await resolveImageUrl(url, kind);
-    if (resolved) return resolved;
-  }
-  return null;
-}
-
 /**
  * Collects the live sheet's brand, copy, logo, and photos, then renders a
  * Letter one-pager off-screen and downloads a single-page PDF.
@@ -53,7 +41,7 @@ export async function exportFacilityOnePagerPdf(
 
   const tags = categorizeFacilityTags(input.facility);
   const [resolvedLogoUrl, resolvedPhotos, hidePlatformMark, polished] = await Promise.all([
-    firstResolved([input.org?.logo_url, input.org?.favicon_url], "logo"),
+    resolveFirstImageUrl([input.org?.logo_url, input.org?.favicon_url], "logo"),
     resolveUniqueImages(photoCandidates, 4, "photo"),
     orgHidesPlatformMark(input.org?.id),
     polishOnePagerCopy({
@@ -92,9 +80,8 @@ export async function exportFacilityOnePagerPdf(
   });
 
   try {
-    await waitForFonts();
-    await waitForImages(rendered.node);
-    await sleep(400);
+    await waitForCaptureReady(rendered.node);
+    await sleep(280);
 
     const dataUrl = await toPng(rendered.node, {
       pixelRatio: 2.5,

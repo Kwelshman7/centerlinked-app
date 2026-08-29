@@ -277,13 +277,13 @@ export function WhoFor() {
             </div>
           </div>
 
-          {/* Desktop — product visual left, copy right */}
-          <div className="hidden lg:grid lg:grid-cols-2 lg:items-stretch lg:min-h-[40rem] xl:min-h-[44rem]">
+          {/* Desktop — product visual left, copy right (tight gap; copy not pushed far right) */}
+          <div className="hidden lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center lg:min-h-[34rem] xl:min-h-[38rem] lg:gap-0">
             <LinkAnswersDesktopVisual />
 
-            <div className="relative z-10 flex items-center justify-end">
-              <div className="w-full max-w-xl xl:max-w-[36rem] px-8 xl:px-10 py-16 xl:py-20 space-y-7 xl:space-y-8 ml-10 xl:ml-20 2xl:ml-28 mr-2 xl:mr-6">
-                <div className="space-y-3.5 sm:space-y-4">
+            <div className="relative z-10 flex items-center">
+              <div className="w-full max-w-[34rem] xl:max-w-[36rem] pl-3 pr-8 xl:pl-4 xl:pr-12 2xl:pr-16 py-10 xl:py-12 space-y-5 xl:space-y-6">
+                <div className="space-y-3 sm:space-y-3.5">
                   <SectionBadge
                     icon={ListChecks}
                     className="border-primary/25 bg-primary/[0.06] text-primary"
@@ -292,11 +292,11 @@ export function WhoFor() {
                   </SectionBadge>
                   <DisplayHeading
                     as="h2"
-                    className="text-2xl sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]"
+                    className="text-2xl sm:text-3xl lg:text-[2.05rem] lg:leading-[1.15]"
                   >
                     Everything your referral partners need
                   </DisplayHeading>
-                  <p className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  <p className="max-w-md text-sm sm:text-[15px] text-muted-foreground leading-relaxed">
                     Case managers refer to the centers that make their jobs
                     easier. That all starts with having access to the most up to
                     date information about your program.

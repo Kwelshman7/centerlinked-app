@@ -99,13 +99,25 @@ async function maybeRename(product, name, description) {
   return updated;
 }
 
-const membership = await findProduct("CenterLinked Membership") || await findProduct("CenterLinked Profile");
+const membership =
+  (await findProduct("CenterLinked Membership")) ||
+  (await findProduct("CenterLinked Profile")) ||
+  (await findProduct("CenterLinked Small"));
 const profile = membership
-  ? await maybeRename(membership, "CenterLinked Profile", "1 live facility. One live org link.")
-  : await ensureProduct("CenterLinked Profile", "1 live facility. One live org link.");
+  ? await maybeRename(membership, "CenterLinked Small", "1 live facility. One live org link.")
+  : await ensureProduct("CenterLinked Small", "1 live facility. One live org link.");
 
-const network = await ensureProduct("CenterLinked Network", "2–5 live facilities under one org link.");
-const group = await ensureProduct("CenterLinked Group", "6–15 live facilities under one org link.");
+const networkExisting =
+  (await findProduct("CenterLinked Network")) || (await findProduct("CenterLinked Medium"));
+const network = networkExisting
+  ? await maybeRename(networkExisting, "CenterLinked Medium", "2–5 live facilities under one org link.")
+  : await ensureProduct("CenterLinked Medium", "2–5 live facilities under one org link.");
+
+const groupExisting =
+  (await findProduct("CenterLinked Group")) || (await findProduct("CenterLinked Large"));
+const group = groupExisting
+  ? await maybeRename(groupExisting, "CenterLinked Large", "6–15 live facilities under one org link.")
+  : await ensureProduct("CenterLinked Large", "6–15 live facilities under one org link.");
 
 const dfy1Existing = await findProduct("Done For You Setup") || await findProduct("CenterLinked Done For You · 1 facility");
 const dfy1 = dfy1Existing
@@ -115,12 +127,12 @@ const dfy5 = await ensureProduct("CenterLinked Done For You · 2–5 facilities"
 const dfy15 = await ensureProduct("CenterLinked Done For You · 6–15 facilities", "One-time setup for 6–15 locations.");
 
 const prices = {
-  STRIPE_PRICE_MEMBERSHIP: (await ensureRecurringPrice(profile.id, 9900, "month", "Profile monthly")).id,
-  STRIPE_PRICE_PROFILE_YEAR: (await ensureRecurringPrice(profile.id, 99_000, "year", "Profile annual")).id,
-  STRIPE_PRICE_NETWORK: (await ensureRecurringPrice(network.id, 24_900, "month", "Network monthly")).id,
-  STRIPE_PRICE_NETWORK_YEAR: (await ensureRecurringPrice(network.id, 249_000, "year", "Network annual")).id,
-  STRIPE_PRICE_GROUP: (await ensureRecurringPrice(group.id, 49_900, "month", "Group monthly")).id,
-  STRIPE_PRICE_GROUP_YEAR: (await ensureRecurringPrice(group.id, 499_000, "year", "Group annual")).id,
+  STRIPE_PRICE_MEMBERSHIP: (await ensureRecurringPrice(profile.id, 9900, "month", "Small monthly")).id,
+  STRIPE_PRICE_PROFILE_YEAR: (await ensureRecurringPrice(profile.id, 99_000, "year", "Small annual")).id,
+  STRIPE_PRICE_NETWORK: (await ensureRecurringPrice(network.id, 24_900, "month", "Medium monthly")).id,
+  STRIPE_PRICE_NETWORK_YEAR: (await ensureRecurringPrice(network.id, 249_000, "year", "Medium annual")).id,
+  STRIPE_PRICE_GROUP: (await ensureRecurringPrice(group.id, 49_900, "month", "Large monthly")).id,
+  STRIPE_PRICE_GROUP_YEAR: (await ensureRecurringPrice(group.id, 499_000, "year", "Large annual")).id,
   STRIPE_PRICE_SETUP: (await ensureOneTimePrice(dfy1.id, 49_900, "DFY 1 facility")).id,
   STRIPE_PRICE_SETUP_NETWORK: (await ensureOneTimePrice(dfy5.id, 120_000, "DFY 2–5 facilities")).id,
   STRIPE_PRICE_SETUP_GROUP: (await ensureOneTimePrice(dfy15.id, 250_000, "DFY 6–15 facilities")).id,

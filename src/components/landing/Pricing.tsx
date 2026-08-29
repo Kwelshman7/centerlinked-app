@@ -11,7 +11,7 @@ import {
   ENTERPRISE,
   MEMBERSHIP_INCLUDED,
   MEMBERSHIP_TIERS,
-  PRICING_SUMMARY,
+  PRICING_HEADING,
   dfyPriceLabel,
   formatUsdFromCents,
   membershipPriceLabel,
@@ -72,11 +72,11 @@ export function Pricing() {
         <div className="mx-auto max-w-2xl text-center space-y-5">
           <SectionBadge>Pricing</SectionBadge>
           <DisplayHeading as="h2" align="center">
-            Simple{" "}
-            <DisplayAccent>Pricing</DisplayAccent>
+            {PRICING_HEADING.titleBefore}{" "}
+            <DisplayAccent>{PRICING_HEADING.titleAccent}</DisplayAccent>
           </DisplayHeading>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            {PRICING_SUMMARY}
+            {PRICING_HEADING.summary}
           </p>
         </div>
 

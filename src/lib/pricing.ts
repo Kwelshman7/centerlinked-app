@@ -30,7 +30,7 @@ export type MembershipTier = {
 export const MEMBERSHIP_TIERS: MembershipTier[] = [
   {
     id: "profile",
-    name: "Profile",
+    name: "Small",
     facilityLabel: "1 live facility",
     facilityMin: 1,
     facilityMax: 1,
@@ -42,19 +42,19 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   },
   {
     id: "network",
-    name: "Network",
+    name: "Medium",
     facilityLabel: "2–5 live facilities",
     facilityMin: 2,
     facilityMax: 5,
     monthlyCents: 24_900,
     annualCents: 249_000,
-    description: "Regional groups that maintain several programs under one org link.",
+    description: "A few sites under one org link — still easy to keep current.",
     featured: true,
-    badge: "Most groups",
+    badge: "Most orgs",
   },
   {
     id: "group",
-    name: "Group",
+    name: "Large",
     facilityLabel: "6–15 live facilities",
     facilityMin: 6,
     facilityMax: 15,
@@ -83,11 +83,18 @@ export const ENTERPRISE = {
   name: "Enterprise",
   facilityLabel: "16+ live facilities",
   monthlyFromCents: 79_900,
-  description: "National platforms. Custom membership and Done For You — request access.",
+  description: "Nationwide platforms. Custom membership and Done For You — request access.",
+} as const;
+
+export const PRICING_HEADING = {
+  titleBefore: "One live link,",
+  titleAccent: "any size",
+  summary:
+    "Whether you operate one facility or a nationwide organization, CenterLinked makes it easy to keep every location, contract, and referral contact current — no matter how big or small you are.",
 } as const;
 
 export const PRICING_SUMMARY =
-  "One live org link. $99/month for one location. Network $249. Group $499. Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
+  "Small $99/month (1 facility). Medium $249 (2–5). Large $499 (6–15). Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
 
 export function getMembershipTier(id: string | null | undefined) {
   return MEMBERSHIP_TIERS.find((tier) => tier.id === id) ?? null;
