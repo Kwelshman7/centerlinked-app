@@ -8,13 +8,13 @@ import {
   suggestedTierForFacilityCount,
 } from "./pricing.ts";
 
-test("Small / Medium / Large amounts match the published catalog", () => {
+test("facility-count amounts match the published catalog", () => {
   const profile = getMembershipTier("profile");
   const network = getMembershipTier("network");
   const group = getMembershipTier("group");
-  assert.equal(profile?.name, "Small");
-  assert.equal(network?.name, "Medium");
-  assert.equal(group?.name, "Large");
+  assert.equal(profile?.name, "1 facility");
+  assert.equal(network?.name, "2–5 facilities");
+  assert.equal(group?.name, "6–15 facilities");
   assert.equal(membershipAmountCents(profile, "month"), 9900);
   assert.equal(membershipAmountCents(profile, "year"), 99_000);
   assert.equal(membershipAmountCents(network, "month"), 24_900);

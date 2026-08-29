@@ -41,7 +41,7 @@ export function Header() {
             className="shadow-sm whitespace-nowrap h-9 px-5 text-sm"
             asChild
           >
-            <Link to="/request-access">Create Your Profile</Link>
+            <Link to="/signup">Create Your Profile</Link>
           </Button>
         </div>
 
@@ -76,7 +76,7 @@ export function Header() {
                 </Link>
               </Button>
               <Button variant="hero" size="sm" className="w-full justify-center" asChild>
-                <Link to="/request-access" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
                   Create Your Profile
                 </Link>
               </Button>

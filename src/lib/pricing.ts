@@ -30,8 +30,8 @@ export type MembershipTier = {
 export const MEMBERSHIP_TIERS: MembershipTier[] = [
   {
     id: "profile",
-    name: "Small",
-    facilityLabel: "1 live facility",
+    name: "1 facility",
+    facilityLabel: "1 facility",
     facilityMin: 1,
     facilityMax: 1,
     monthlyCents: 9900,
@@ -42,8 +42,8 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   },
   {
     id: "network",
-    name: "Medium",
-    facilityLabel: "2–5 live facilities",
+    name: "2–5 facilities",
+    facilityLabel: "2–5 facilities",
     facilityMin: 2,
     facilityMax: 5,
     monthlyCents: 24_900,
@@ -54,8 +54,8 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   },
   {
     id: "group",
-    name: "Large",
-    facilityLabel: "6–15 live facilities",
+    name: "6–15 facilities",
+    facilityLabel: "6–15 facilities",
     facilityMin: 6,
     facilityMax: 15,
     monthlyCents: 49_900,
@@ -80,10 +80,10 @@ export const DFY_PACKAGES: DfyPackage[] = [
 ];
 
 export const ENTERPRISE = {
-  name: "Enterprise",
-  facilityLabel: "16+ live facilities",
+  name: "16+ facilities",
+  facilityLabel: "16+ facilities",
   monthlyFromCents: 79_900,
-  description: "Nationwide platforms. Custom membership and Done For You — request access.",
+  description: "Custom membership and Done For You.",
 } as const;
 
 export const PRICING_HEADING = {
@@ -94,7 +94,7 @@ export const PRICING_HEADING = {
 } as const;
 
 export const PRICING_SUMMARY =
-  "Small $99/month (1 facility). Medium $249 (2–5). Large $499 (6–15). Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
+  "1 facility $99/month. 2–5 facilities $249. 6–15 facilities $499. 16+ is quoted. Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
 
 export function getMembershipTier(id: string | null | undefined) {
   return MEMBERSHIP_TIERS.find((tier) => tier.id === id) ?? null;

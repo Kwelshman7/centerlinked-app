@@ -80,6 +80,20 @@ export function Pricing() {
           </p>
         </div>
 
+        <div className="mt-10 max-w-3xl mx-auto">
+          <p className="text-center text-sm font-semibold text-foreground">Every organization gets</p>
+          <ul className="mt-4 grid sm:grid-cols-2 gap-x-6 gap-y-2.5">
+            {MEMBERSHIP_INCLUDED.map((feature) => (
+              <li key={feature} className="flex items-start gap-2.5">
+                <div className="flex h-5 w-5 mt-0.5 shrink-0 items-center justify-center rounded-full bg-success/20">
+                  <Check className="h-3 w-3 text-success" />
+                </div>
+                <span className="text-sm text-foreground leading-snug">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="mt-8 flex justify-center">
           <div className="inline-flex rounded-full border border-border bg-card p-1 shadow-sm">
             {(["month", "year"] as const).map((value) => (
@@ -120,9 +134,8 @@ export function Pricing() {
                     {tier.badge}
                   </div>
                 )}
-                <div>
+                <div className="flex-1">
                   <h3 className="font-display text-xl text-foreground">{tier.name}</h3>
-                  <p className="mt-1 text-sm font-medium text-primary">{tier.facilityLabel}</p>
                   <div className="mt-5 flex items-baseline gap-1 flex-wrap">
                     <span className="text-4xl font-bold text-foreground">
                       {membershipPriceLabel(tier, interval)}
@@ -136,19 +149,7 @@ export function Pricing() {
                       {formatUsdFromCents(tier.monthlyCents)}/month billed annually
                     </p>
                   )}
-                  <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{tier.description}</p>
                 </div>
-
-                <ul className="mt-6 space-y-2.5 flex-1">
-                  {MEMBERSHIP_INCLUDED.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5">
-                      <div className="flex h-5 w-5 mt-0.5 shrink-0 items-center justify-center rounded-full bg-success/20">
-                        <Check className="h-3 w-3 text-success" />
-                      </div>
-                      <span className="text-sm text-foreground leading-snug">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
 
                 <Button
                   type="button"
@@ -182,13 +183,12 @@ export function Pricing() {
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-lg text-foreground">{ENTERPRISE.name}</h3>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {ENTERPRISE.facilityLabel}. Custom membership from {formatUsdFromCents(ENTERPRISE.monthlyFromCents)}/month.
-              {" "}{ENTERPRISE.description}
+              Custom membership from {formatUsdFromCents(ENTERPRISE.monthlyFromCents)}/month.
             </p>
           </div>
           <Button asChild variant="hero-outline" className="rounded-full shrink-0">
-            <Link to="/request-access">
-              Request access
+            <Link to="/signup">
+              Create your account
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
@@ -196,8 +196,8 @@ export function Pricing() {
 
         <p className="mt-5 text-center text-xs text-muted-foreground">
           Prefer to talk first?{" "}
-          <Link to="/request-access" className="underline underline-offset-2 hover:text-foreground">
-            Request access
+          <Link to="/signup" className="underline underline-offset-2 hover:text-foreground">
+            Create your account
           </Link>
           . Team seats are unlimited on every plan. Referral partners who only open your public profile are not billed.
         </p>

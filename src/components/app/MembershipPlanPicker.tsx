@@ -51,6 +51,18 @@ export function MembershipPlanPicker({
         </div>
       </div>
 
+      <div>
+        <p className="text-sm font-semibold text-foreground">Every organization gets</p>
+        <ul className="mt-2 grid sm:grid-cols-2 gap-x-4 gap-y-1.5">
+          {MEMBERSHIP_INCLUDED.map((feature) => (
+            <li key={feature} className="flex items-start gap-2 text-xs text-foreground/90">
+              <Check className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+              {feature}
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-3">
         {MEMBERSHIP_TIERS.map((tier) => {
           const dfy = DFY_PACKAGES.find((pkg) => pkg.id === tier.id)!;
@@ -71,7 +83,6 @@ export function MembershipPlanPicker({
                 </span>
               ) : null}
               <h3 className="font-heading text-lg font-semibold">{tier.name}</h3>
-              <p className="text-xs font-medium text-primary mt-0.5">{tier.facilityLabel}</p>
               <p className="font-heading text-2xl font-bold mt-3">
                 {membershipPriceLabel(tier, interval)}
                 <span className="text-sm font-medium text-muted-foreground">
@@ -83,15 +94,6 @@ export function MembershipPlanPicker({
                   {formatUsdFromCents(tier.monthlyCents)}/mo billed annually
                 </p>
               ) : null}
-              <ul className="mt-3 space-y-1.5 flex-1">
-                {MEMBERSHIP_INCLUDED.slice(0, 4).map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-xs text-foreground/90">
-                    <Check className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-                <li className="text-xs text-muted-foreground">Unlimited seats · Search · verification</li>
-              </ul>
               <Button
                 type="button"
                 className="mt-4 w-full"

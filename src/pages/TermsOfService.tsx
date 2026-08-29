@@ -120,14 +120,14 @@ export default function TermsOfService() {
         <h2>8. Fees</h2>
         <p>
           Organization membership is billed through Stripe to the subscribing organization, not to referral partners who
-          only view a public profile. Membership is priced by how many live facilities the organization lists: Small is
-          $99 per month (1 facility), Medium is $249 per month (2–5 facilities), and Large is $499 per month (6–15
-          facilities). Annual billing is two months free ($990, $2,490, and $4,990 respectively). Organizations with 16
-          or more facilities are quoted as Enterprise. An optional one-time Done For You setup is $499 (1 facility),
-          $1,200 (2–5 facilities), or $2,500 (6–15 facilities); Enterprise setup is quoted. Team seats are unlimited on
-          every paid plan. During early access, organizations may continue to use the Service if membership is not yet
-          active; we may change that at any time. Paid checkouts are subject to Stripe’s terms. If we change prices, we
-          will provide notice before charging a new amount.
+          only view a public profile. Membership is priced by how many live facilities the organization lists: 1 facility
+          is $99 per month, 2–5 facilities is $249 per month, and 6–15 facilities is $499 per month. Annual billing is
+          two months free ($990, $2,490, and $4,990 respectively). Organizations with 16 or more facilities are quoted.
+          An optional one-time Done For You setup is $499 (1 facility), $1,200 (2–5 facilities), or $2,500 (6–15
+          facilities); 16+ setup is quoted. Team seats are unlimited on every paid plan. During early access,
+          organizations may continue to use the Service if membership is not yet active; we may change that at any time.
+          Paid checkouts are subject to Stripe’s terms. If we change prices, we will provide notice before charging a
+          new amount.
         </p>
       </section>
 

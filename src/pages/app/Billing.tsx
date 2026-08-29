@@ -304,9 +304,9 @@ export default function Billing() {
 
             <p className="text-xs text-muted-foreground leading-relaxed">
               Payment method changes, cancellations, and full invoice downloads open in the secure
-              Stripe customer portal. Small is {formatUsdFromCents(9900)}/month for one facility;
-              Medium {formatUsdFromCents(24900)}; Large {formatUsdFromCents(49900)}. Done For You
-              setup is {formatUsdFromCents(49900)} for one facility, {formatUsdFromCents(120000)} for
+              Stripe customer portal. 1 facility is {formatUsdFromCents(9900)}/month; 2–5 facilities{" "}
+              {formatUsdFromCents(24900)}; 6–15 facilities {formatUsdFromCents(49900)}. Done For You
+              setup is {formatUsdFromCents(49900)} for 1 facility, {formatUsdFromCents(120000)} for
               2–5, and {formatUsdFromCents(250000)} for 6–15. 16+ locations are quoted. During early
               access the app stays usable if membership is not active yet.
             </p>

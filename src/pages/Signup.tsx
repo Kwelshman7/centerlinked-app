@@ -88,7 +88,7 @@ export default function Signup() {
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold text-foreground mt-4">Create your account</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Use your work email to join your organization or create a new one. Personal emails need approval first.
+              Sign up with your facility&apos;s work domain.
             </p>
           </div>
 
