@@ -108,7 +108,10 @@ export default function Login() {
             </p>
           </div>
 
-          <GoogleSignInButton className="w-full mb-4" />
+          <GoogleSignInButton className="w-full mb-2" />
+          <p className="text-xs text-muted-foreground text-center mb-4">
+            Approved with a personal email? Skip Google and sign in with that exact address.
+          </p>
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>

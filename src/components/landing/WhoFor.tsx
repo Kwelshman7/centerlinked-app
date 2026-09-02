@@ -251,13 +251,13 @@ export function WhoFor() {
           className="relative scroll-mt-20 py-16 sm:py-20 lg:py-24"
         >
           <div className="container">
-            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
-              {/* Product first on desktop; copy first on mobile */}
-              <div className="order-2 lg:order-1 min-w-0">
+            <div className="grid items-center gap-8 sm:gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-14">
+              {/* Photo first on desktop; copy first on mobile */}
+              <div className="order-2 hidden min-w-0 lg:order-1 lg:block">
                 <LinkAnswersDesktopVisual />
               </div>
 
-              <div className="order-1 lg:order-2 mx-auto w-full max-w-xl space-y-6 sm:space-y-7 lg:mx-0 lg:max-w-none">
+              <div className="order-1 mx-auto w-full max-w-xl space-y-6 sm:space-y-7 lg:order-2 lg:mx-0 lg:max-w-none">
                 <div className="space-y-3.5 sm:space-y-4">
                   <SectionBadge
                     icon={ListChecks}

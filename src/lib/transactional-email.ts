@@ -36,6 +36,18 @@ export async function notifyAccessRequest(payload: AccessRequestNotifyPayload) {
   return postJson("/api/notify-access-request", payload);
 }
 
+export type PricingInquiryPayload = {
+  name: string;
+  email: string;
+  phone: string;
+  question: string;
+};
+
+/** Notify admin@centerlinked.com of a pricing-page question. */
+export async function notifyPricingInquiry(payload: PricingInquiryPayload) {
+  return postJson("/api/notify-pricing-inquiry", payload);
+}
+
 /** Send Welcome to CenterLinked after an org is verified. Super-admin only. */
 export async function sendOrgWelcomeEmail(input: {
   organization_id: string;
@@ -45,6 +57,15 @@ export async function sendOrgWelcomeEmail(input: {
   already_linked?: boolean;
 }) {
   return postJson("/api/send-welcome", input, true);
+}
+
+/**
+ * Email a pending org invite. Caller must be a facility admin of the org and a
+ * matching `pending` row must already exist in `org_invites` — create the invite
+ * via `create_org_invite` first.
+ */
+export async function sendOrgInvite(input: { organization_id: string; email: string }) {
+  return postJson("/api/send-org-invite", input, true);
 }
 
 export type AuthEmailEvent = "signup" | "login";

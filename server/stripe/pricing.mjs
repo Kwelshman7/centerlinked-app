@@ -53,6 +53,35 @@ export const DFY_PACKAGES = {
 
 export const MEMBERSHIP_TIER_IDS = new Set(Object.keys(MEMBERSHIP_TIERS));
 
+/** Must stay in sync with `MEMBERSHIP_MONTHLY_CENTS_BY_COUNT` in `src/lib/pricing.ts`. */
+export const MEMBERSHIP_MONTHLY_CENTS_BY_COUNT = [
+  0, 9900, 14_900, 18_900, 21_900, 24_900, 27_900, 30_900, 33_900, 36_900, 39_900, 42_900, 44_900,
+  46_900, 48_900, 49_900,
+];
+
+/** Must stay in sync with `DFY_CENTS_BY_COUNT` in `src/lib/pricing.ts`. */
+export const DFY_CENTS_BY_COUNT = [
+  0, 49_900, 67_500, 85_000, 102_500, 120_000, 133_000, 146_000, 159_000, 172_000, 185_000, 198_000,
+  211_000, 224_000, 237_000, 250_000,
+];
+
+export function membershipMonthlyCentsForCount(count) {
+  const n = Math.floor(Number(count) || 0);
+  if (n < 1 || n > 15) return null;
+  return MEMBERSHIP_MONTHLY_CENTS_BY_COUNT[n] ?? null;
+}
+
+export function membershipAnnualCentsForCount(count) {
+  const monthly = membershipMonthlyCentsForCount(count);
+  return monthly == null ? null : monthly * 10;
+}
+
+export function dfyCentsForCount(count) {
+  const n = Math.floor(Number(count) || 0);
+  if (n < 1 || n > 15) return null;
+  return DFY_CENTS_BY_COUNT[n] ?? null;
+}
+
 const TIER_RANK = { profile: 1, network: 2, group: 3 };
 
 /** Minimum self-serve tier for a live facility count. 0–1 → profile. */

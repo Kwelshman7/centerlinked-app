@@ -13,6 +13,7 @@ import { Check, Loader2, Mail, Trash2, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { isEmailAuthAllowed, isPersonalEmail, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { reviewJoinRequest } from "@/lib/org-setup";
+import { sendOrgInvite } from "@/lib/transactional-email";
 
 interface MemberRow { id: string; user_id: string; role_at_org: string; created_at: string; }
 interface ProfileLite { user_id: string; full_name: string | null; avatar_url: string | null; job_title: string | null; email: string | null; }
@@ -38,6 +39,7 @@ export default function Members() {
   const [orgDomain, setOrgDomain] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [removeTarget, setRemoveTarget] = useState<MemberRow | null>(null);
   const [removing, setRemoving] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -115,14 +117,46 @@ export default function Members() {
       _email: email,
       _role_at_org: "bd_rep",
     });
-    setInviting(false);
     if (error) {
+      setInviting(false);
       toast.error(error.message.includes("duplicate") ? "Already invited" : error.message);
       return;
     }
-    toast.success("Invite added", { description: "They'll be added automatically when they sign up with this email." });
+
+    // The invite row is what grants access — a failed email must never undo it.
+    let emailed = true;
+    try {
+      await sendOrgInvite({ organization_id: profile.organization_id, email });
+    } catch (err) {
+      emailed = false;
+      console.warn("[send-org-invite]", err);
+    }
+    setInviting(false);
+
+    if (emailed) {
+      toast.success("Invite sent", { description: `We emailed ${email} with a link to join.` });
+    } else {
+      toast.warning("Invite added, but the email didn't send", {
+        description: "They'll still be added automatically when they sign up with this email.",
+      });
+    }
     setInviteEmail("");
     load();
+  };
+
+  const resendInvite = async (id: string, email: string) => {
+    if (!profile?.organization_id) return;
+    setResendingId(id);
+    try {
+      await sendOrgInvite({ organization_id: profile.organization_id, email });
+      toast.success("Invite resent", { description: `We emailed ${email} again.` });
+    } catch (err) {
+      toast.error("Could not resend the invite", {
+        description: err instanceof Error ? err.message : "Try again in a moment.",
+      });
+    } finally {
+      setResendingId(null);
+    }
   };
 
   const cancelInvite = async (id: string) => {
@@ -222,6 +256,15 @@ export default function Members() {
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="flex-1 text-sm truncate">{i.email}</span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">BD rep</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={resendingId === i.id}
+                      onClick={() => resendInvite(i.id, i.email)}
+                    >
+                      {resendingId === i.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Resend"}
+                    </Button>
                     <Button type="button" variant="ghost" size="sm" onClick={() => cancelInvite(i.id)}>Cancel</Button>
                   </div>
                 ))}

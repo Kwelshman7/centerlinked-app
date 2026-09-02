@@ -79,6 +79,33 @@ test("Group annual falls back to price_data at $4990 without a price id", () => 
   assert.equal(items[0].price_data.recurring.interval, "year");
 });
 
+test("facility-count checkout uses per-facility price_data, not band price ids", () => {
+  const parsed = parseCheckoutRequest({
+    membershipTier: "profile",
+    interval: "month",
+    facilityCount: 3,
+  });
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.facilityCount, 3);
+  assert.equal(parsed.membershipTier, "network");
+  const items = checkoutLineItems(
+    { membership: "price_profile", network: "price_network" },
+    parsed,
+  );
+  assert.equal(items[0].price_data.unit_amount, 18900);
+  assert.equal(items[0].price_data.recurring.interval, "month");
+});
+
+test("facility-count annual is ten months", () => {
+  const parsed = parseCheckoutRequest({
+    membershipTier: "group",
+    interval: "year",
+    facilityCount: 15,
+  });
+  const items = checkoutLineItems({}, parsed);
+  assert.equal(items[0].price_data.unit_amount, 499_000);
+});
+
 test("setup-only Network DFY uses configured Network setup price id", () => {
   const parsed = parseCheckoutRequest({ membershipTier: "network", doneForYou: true });
   const items = checkoutLineItems(

@@ -52,5 +52,5 @@ export async function isEmailAuthAllowed(email: string): Promise<boolean> {
 export const PERSONAL_EMAIL_BLOCKED_MESSAGE = {
   title: "Please use your work email",
   description:
-    "Personal email addresses (Gmail, Yahoo, Outlook, etc.) aren't accepted unless CenterLinked has approved an exception. Request access if you need one.",
+    "Personal addresses (Gmail, Yahoo, Outlook, iCloud) are blocked unless CenterLinked approved that exact email. Use the approved address with a password — Google signs in a different email.",
 } as const;

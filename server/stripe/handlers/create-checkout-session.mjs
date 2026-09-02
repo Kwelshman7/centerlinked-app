@@ -34,11 +34,17 @@ export async function handleCreateCheckoutSession(body, accessToken) {
   }
 
   const prices = stripePrices();
-  if (request.membershipTier === "profile" && request.interval === "month" && !prices.membership) {
+  if (
+    !request.facilityCount &&
+    request.membershipTier === "profile" &&
+    request.interval === "month" &&
+    !prices.membership
+  ) {
     console.error("[create-checkout-session] STRIPE_PRICE_MEMBERSHIP is not configured");
     return { status: 500, json: { error: "Billing is temporarily unavailable" } };
   }
   if (
+    !request.facilityCount &&
     request.doneForYou &&
     request.membershipTier === "profile" &&
     !prices.setup
@@ -76,9 +82,30 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     return { status: 500, json: { error: "Could not start checkout" } };
   }
 
-  const tierCheck = assertTierMatchesFacilityCount(request.membershipTier, facilityCount ?? 0);
-  if (!tierCheck.ok) {
-    return { status: tierCheck.status, json: { error: tierCheck.error } };
+  const liveCount = facilityCount ?? 0;
+  if (request.facilityCount) {
+    if (liveCount >= 16) {
+      return {
+        status: 400,
+        json: {
+          error:
+            "Organizations with 16+ facilities need Enterprise pricing. Request access and we’ll follow up.",
+        },
+      };
+    }
+    if (request.facilityCount < liveCount) {
+      return {
+        status: 400,
+        json: {
+          error: `This organization has ${liveCount} live facilities. Choose ${liveCount} or more.`,
+        },
+      };
+    }
+  } else {
+    const tierCheck = assertTierMatchesFacilityCount(request.membershipTier, liveCount);
+    if (!tierCheck.ok) {
+      return { status: tierCheck.status, json: { error: tierCheck.error } };
+    }
   }
 
   const decision = membershipCheckoutDecision(org);
@@ -189,14 +216,22 @@ export async function handleCreateCheckoutSession(body, accessToken) {
         return false;
       }
       const sameTier = session.metadata?.membership_tier === request.membershipTier;
+      const sameCount =
+        String(session.metadata?.facility_count || "") === String(request.facilityCount || "");
       const sameInterval = (session.metadata?.billing_interval || "month") === request.interval;
       const sessionDfy = session.metadata?.setup_package === "done_for_you";
       const sessionSetupOnly = session.metadata?.setup_only === "true";
       if (wantsDfyOnly) {
-        return session.mode === "payment" && sessionSetupOnly && sameTier;
+        return session.mode === "payment" && sessionSetupOnly && sameTier && sameCount;
       }
       const wantDfy = Boolean(request.doneForYou);
-      return session.mode === "subscription" && sameTier && sameInterval && sessionDfy === wantDfy;
+      return (
+        session.mode === "subscription" &&
+        sameTier &&
+        sameCount &&
+        sameInterval &&
+        sessionDfy === wantDfy
+      );
     });
     if (match?.url) {
       return { status: 200, json: { url: match.url, id: match.id, reused: true } };
@@ -211,7 +246,7 @@ export async function handleCreateCheckoutSession(body, accessToken) {
     : `centerlinked_membership_${randomSuffix()}`;
 
   // Stable within a short window to absorb double-clicks; tier/interval still vary the key.
-  const checkoutIdempotencyKey = `cl_cs_${org.id}_${request.membershipTier}_${request.interval}_${
+  const checkoutIdempotencyKey = `cl_cs_${org.id}_${request.membershipTier}_${request.facilityCount || "band"}_${request.interval}_${
     request.doneForYou ? "dfy" : "mem"
   }_${alreadySubscribed ? "add" : "new"}_${Math.floor(Date.now() / 60_000)}`;
 
@@ -273,6 +308,7 @@ export async function handleCreateCheckoutSession(body, accessToken) {
         membership_tier: request.membershipTier,
         billing_interval: request.interval,
         setup_package: meta.setup_package,
+        ...(request.facilityCount ? { facility_count: String(request.facilityCount) } : {}),
       },
     },
     integration_identifier: integrationId,

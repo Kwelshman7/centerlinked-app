@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,9 @@ import { notifyAuthEvent } from "@/lib/transactional-email";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => (searchParams.get("email") || "").trim());
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -88,11 +89,14 @@ export default function Signup() {
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold text-foreground mt-4">Create your account</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Sign up with your facility&apos;s work domain.
+              Use your work email, or the personal email CenterLinked approved.
             </p>
           </div>
 
-          <GoogleSignInButton label="Sign up with Google" className="w-full mb-4" />
+          <GoogleSignInButton label="Sign up with Google" className="w-full mb-2" />
+          <p className="text-xs text-muted-foreground text-center mb-4">
+            Approved with iCloud, Outlook, or another personal address? Skip Google and use that exact email below.
+          </p>
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
@@ -105,8 +109,8 @@ export default function Signup() {
               <Input id="name" autoFocus value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Work Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@company.com" />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

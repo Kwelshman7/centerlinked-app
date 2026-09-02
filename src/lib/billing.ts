@@ -8,6 +8,7 @@ export type CheckoutOptions = {
   membershipTier: MembershipTierId;
   interval?: BillingInterval;
   doneForYou?: boolean;
+  facilityCount?: number;
 };
 
 export type OrgBilling = {
@@ -134,6 +135,7 @@ function checkoutBody(plan: CheckoutOptions | BillingPlan) {
     membershipTier: plan.membershipTier,
     interval: plan.interval || "month",
     doneForYou: !!plan.doneForYou,
+    facilityCount: plan.facilityCount,
   };
 }
 

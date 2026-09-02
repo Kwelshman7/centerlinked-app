@@ -228,6 +228,45 @@ export function accessRequestAdminEmail(payload) {
 }
 
 /**
+ * Admin notification when someone submits the pricing “send us a message” form.
+ */
+export function pricingInquiryAdminEmail(payload) {
+  const { name, email, phone, question } = payload;
+
+  const bodyHtml = `
+    ${label("Pricing page")}
+    ${heading("New message")}
+    ${mutedPara("Someone asked a question from the pricing section.")}
+    ${detailTable(`
+      ${detailRow("Name", name)}
+      ${detailRow("Email", email)}
+      ${detailRow("Phone", phone)}
+      ${detailRow("Question", question)}
+    `)}
+    ${mutedPara("Reply directly to this email to reach them.")}
+  `;
+
+  return {
+    subject: `Pricing question — ${safeSubjectPart(name)}`,
+    html: layout({
+      preheader: `${name} sent a question from the pricing page`,
+      title: "New pricing message",
+      bodyHtml,
+    }),
+    text: [
+      "New CenterLinked pricing message",
+      "",
+      `Name: ${name}`,
+      `Email: ${email}`,
+      `Phone: ${phone}`,
+      "",
+      "Question:",
+      question,
+    ].join("\n"),
+  };
+}
+
+/**
  * User email after they create an account (password or Google signup).
  */
 export function accountCreatedEmail({ recipientName }) {
@@ -393,6 +432,144 @@ export function loginNoticeEmail({ recipientName, signedInAt }) {
       `If you did not sign in, contact ${SUPPORT} right away.`,
       "",
       `Open the app: ${login}`,
+    ].join("\n"),
+  };
+}
+
+/**
+ * Monthly nudge to re-confirm insurance contracts before a facility goes stale.
+ * `facilities` is [{ name, daysSince, verifyUrl }] for one recipient.
+ */
+export function verificationReminderEmail({ recipientName, organizationName, facilities }) {
+  const name = recipientName?.trim() || "there";
+  const org = organizationName?.trim() || "your organization";
+  const list = Array.isArray(facilities) ? facilities : [];
+  const count = list.length;
+  const plural = count === 1 ? "facility" : "facilities";
+  const primaryCta = count === 1 && list[0]?.verifyUrl ? list[0].verifyUrl : `${siteUrl()}/app/facilities`;
+
+  const rows = list.map((f) => {
+    const days = Number.isFinite(f?.daysSince) ? f.daysSince : null;
+    const age =
+      days === null
+        ? "not yet confirmed"
+        : days >= 90
+          ? `${days} days — frozen`
+          : `last confirmed ${days} days ago`;
+    return `<strong style="color:${BRAND.navy};">${escapeHtml(f?.name || "Facility")}</strong> — ${escapeHtml(age)}`;
+  });
+
+  const bodyHtml = `
+    ${label("Monthly verification")}
+    ${heading(`Confirm insurance for ${count} ${plural}`)}
+    ${para(`Hi ${escapeHtml(name)},`)}
+    ${para(
+      `Referral partners trust ${escapeHtml(org)}'s profile because it shows when the insurance contracts were last confirmed. ${count === 1 ? "One facility is" : `${count} facilities are`} due for a check.`,
+    )}
+    ${listItems(rows)}
+    ${ctaButton(primaryCta, count === 1 ? "Confirm this facility" : "Review facilities")}
+    ${mutedPara(
+      "If nothing has changed, confirming takes one click. Facilities that go 90 days without confirmation are frozen and stop appearing in partner search until they are checked.",
+    )}
+    ${supportLine()}
+  `;
+
+  return {
+    subject:
+      count === 1
+        ? `Confirm insurance for ${safeSubjectPart(list[0]?.name || org)}`
+        : `${count} ${plural} at ${safeSubjectPart(org)} need an insurance check`,
+    html: layout({
+      preheader: `A quick confirmation keeps ${org} visible to referral partners.`,
+      title: `Confirm insurance for ${count} ${plural}`,
+      bodyHtml,
+    }),
+    text: [
+      `Confirm insurance for ${count} ${plural}`,
+      "",
+      `Hi ${name},`,
+      "",
+      `Referral partners trust ${org}'s profile because it shows when the insurance contracts were last confirmed. The following ${plural} are due for a check:`,
+      "",
+      ...list.map((f) => {
+        const days = Number.isFinite(f?.daysSince) ? f.daysSince : null;
+        const age =
+          days === null
+            ? "not yet confirmed"
+            : days >= 90
+              ? `${days} days — frozen`
+              : `last confirmed ${days} days ago`;
+        return `- ${f?.name || "Facility"} (${age})`;
+      }),
+      "",
+      `Review: ${primaryCta}`,
+      "",
+      "If nothing has changed, confirming takes one click. Facilities that go 90 days without confirmation are frozen and stop appearing in partner search until they are checked.",
+      "",
+      `Questions? ${SUPPORT}`,
+    ].join("\n"),
+  };
+}
+
+/**
+ * Teammate invite to join an existing organization workspace.
+ * The invite is claimed on first login via `claim_pending_org_invite`,
+ * so the recipient must sign up with the exact invited address.
+ */
+export function orgInviteEmail({ organizationName, inviterName, roleAtOrg }) {
+  const org = organizationName?.trim() || "an organization";
+  const inviter = inviterName?.trim() || "A teammate";
+  const login = appLoginUrl();
+  const signupUrl = `${siteUrl()}/signup`;
+  const roleLabel = roleAtOrg === "facility_admin" ? "an organization admin" : "a team member";
+
+  const bodyHtml = `
+    ${label("Team invite")}
+    ${heading(`Join ${escapeHtml(org)} on CenterLinked`)}
+    ${para(
+      `${escapeHtml(inviter)} invited you to join <strong style="color:${BRAND.navy};">${escapeHtml(org)}</strong> on CenterLinked as ${roleLabel}.`,
+    )}
+    ${para(
+      "CenterLinked is where your organization keeps one live referral profile — locations, levels of care, insurance contracts, and who to contact — so partners always see current information instead of a stale one-pager.",
+    )}
+    ${label("Once you are in you can")}
+    ${listItems([
+      "Keep facilities, insurance, and referral contacts current",
+      "Share your organization's live link with referral partners",
+      "Search partner facilities by insurance, location, and level of care",
+    ])}
+    ${ctaButton(signupUrl, "Create your account")}
+    ${mutedPara(
+      "Use this same email address when you sign up — that is how we connect you to the right organization.",
+    )}
+    <p style="margin:20px 0 0;font-family:${FONT};font-size:13px;line-height:1.55;color:${BRAND.muted};">
+      Already have an account? <a href="${login}" style="color:${BRAND.primary};text-decoration:none;">Sign in</a> and you will be added automatically.
+      Not expecting this? You can ignore this email — no account is created until you sign up.
+    </p>
+    ${supportLine()}
+  `;
+
+  return {
+    subject: `${safeSubjectPart(inviter)} invited you to ${safeSubjectPart(org)} on CenterLinked`,
+    html: layout({
+      preheader: `Join ${org} on CenterLinked.`,
+      title: `Join ${org} on CenterLinked`,
+      bodyHtml,
+    }),
+    text: [
+      `Join ${org} on CenterLinked`,
+      "",
+      `${inviter} invited you to join ${org} on CenterLinked as ${roleLabel}.`,
+      "",
+      "CenterLinked is where your organization keeps one live referral profile — locations, levels of care, insurance contracts, and who to contact.",
+      "",
+      `Create your account: ${signupUrl}`,
+      `Already have an account? Sign in: ${login}`,
+      "",
+      "Use this same email address when you sign up — that is how we connect you to the right organization.",
+      "Not expecting this? You can ignore this email.",
+      "",
+      `Questions? ${SUPPORT}`,
     ].join("\n"),
   };
 }

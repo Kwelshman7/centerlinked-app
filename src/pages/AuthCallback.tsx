@@ -91,9 +91,9 @@ export default function AuthCallback() {
         await supabase.auth.signOut();
         toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
           description:
-            "Personal Google accounts aren't allowed unless approved. Sign in with your organization Google Workspace account, or request access.",
+            "Google signed in a personal address that is not approved. If CenterLinked approved a different email, create an account with that exact address and a password.",
         });
-        navigate("/request-access", { replace: true });
+        navigate("/signup", { replace: true });
         return;
       }
 

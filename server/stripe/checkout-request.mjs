@@ -1,4 +1,12 @@
-import { DFY_PACKAGES, MEMBERSHIP_TIER_IDS, MEMBERSHIP_TIERS } from "./pricing.mjs";
+import {
+  DFY_PACKAGES,
+  MEMBERSHIP_TIER_IDS,
+  MEMBERSHIP_TIERS,
+  dfyCentsForCount,
+  membershipAnnualCentsForCount,
+  membershipMonthlyCentsForCount,
+  requiredTierForFacilityCount,
+} from "./pricing.mjs";
 
 /**
  * Parse Checkout body. Accepts the current { membershipTier, interval, doneForYou }
@@ -32,11 +40,34 @@ export function parseCheckoutRequest(body) {
     return { ok: false, status: 400, error: "Choose Profile, Network, or Group." };
   }
 
+  const rawCount = body?.facilityCount ?? body?.facility_count;
+  let facilityCount = null;
+  if (rawCount !== undefined && rawCount !== null && rawCount !== "") {
+    const n = Math.floor(Number(rawCount));
+    if (!Number.isFinite(n) || n < 1 || n > 15) {
+      return {
+        ok: false,
+        status: 400,
+        error: "Choose between 1 and 15 facilities, or request a quote for 16+.",
+      };
+    }
+    facilityCount = n;
+    membershipTier = requiredTierForFacilityCount(n);
+    if (membershipTier === "enterprise") {
+      return {
+        ok: false,
+        status: 400,
+        error: "Organizations with 16+ facilities need Enterprise pricing.",
+      };
+    }
+  }
+
   return {
     ok: true,
     membershipTier,
     interval,
     doneForYou,
+    facilityCount,
   };
 }
 
@@ -60,7 +91,27 @@ function dfyPriceId(prices, membershipTier) {
   return "";
 }
 
-function membershipLineItem(prices, membershipTier, interval) {
+function membershipLineItem(prices, membershipTier, interval, facilityCount) {
+  if (facilityCount) {
+    const unit_amount =
+      interval === "year"
+        ? membershipAnnualCentsForCount(facilityCount)
+        : membershipMonthlyCentsForCount(facilityCount);
+    const label = facilityCount === 1 ? "1 live facility" : `${facilityCount} live facilities`;
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: "CenterLinked Membership",
+          description: label,
+        },
+        unit_amount,
+        recurring: { interval: interval === "year" ? "year" : "month" },
+      },
+      quantity: 1,
+    };
+  }
+
   const priceId = membershipPriceId(prices, membershipTier, interval);
   if (priceId) {
     return { price: priceId, quantity: 1 };
@@ -82,7 +133,23 @@ function membershipLineItem(prices, membershipTier, interval) {
   };
 }
 
-function dfyLineItem(prices, membershipTier) {
+function dfyLineItem(prices, membershipTier, facilityCount) {
+  if (facilityCount) {
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name:
+            facilityCount === 1
+              ? "CenterLinked Done For You · 1 facility"
+              : `CenterLinked Done For You · ${facilityCount} facilities`,
+        },
+        unit_amount: dfyCentsForCount(facilityCount),
+      },
+      quantity: 1,
+    };
+  }
+
   const priceId = dfyPriceId(prices, membershipTier);
   if (priceId) {
     return { price: priceId, quantity: 1 };
@@ -102,23 +169,28 @@ function dfyLineItem(prices, membershipTier) {
 }
 
 export function checkoutLineItems(prices, request, { setupOnly = false } = {}) {
+  const count = request.facilityCount || null;
   if (setupOnly) {
-    return [dfyLineItem(prices, request.membershipTier)];
+    return [dfyLineItem(prices, request.membershipTier, count)];
   }
-  const items = [membershipLineItem(prices, request.membershipTier, request.interval)];
+  const items = [membershipLineItem(prices, request.membershipTier, request.interval, count)];
   if (request.doneForYou) {
-    items.push(dfyLineItem(prices, request.membershipTier));
+    items.push(dfyLineItem(prices, request.membershipTier, count));
   }
   return items;
 }
 
 export function checkoutMetadata(request, { setupOnly = false } = {}) {
   const setupPackage = request.doneForYou || setupOnly ? "done_for_you" : "self_serve";
-  return {
+  const meta = {
     plan: request.doneForYou || setupOnly ? "done_for_you" : request.membershipTier,
     membership_tier: request.membershipTier,
     billing_interval: request.interval,
     setup_package: setupPackage,
     setup_only: setupOnly ? "true" : "false",
   };
+  if (request.facilityCount) {
+    meta.facility_count = String(request.facilityCount);
+  }
+  return meta;
 }

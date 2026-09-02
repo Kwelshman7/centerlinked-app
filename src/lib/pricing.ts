@@ -94,7 +94,23 @@ export const PRICING_HEADING = {
 } as const;
 
 export const PRICING_SUMMARY =
-  "1 facility $99/month. 2–5 facilities $249. 6–15 facilities $499. 16+ is quoted. Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
+  "1 facility $99/month, then the monthly rate rises with each added facility up to $499 for 15. 16+ is quoted. Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
+
+/**
+ * Monthly membership (cents) by live facility count.
+ * Bookends stay published: 1 = $99, 5 = $249, 15 = $499. Each step up costs more.
+ * Index 0 unused. 16+ is quoted (ENTERPRISE).
+ */
+export const MEMBERSHIP_MONTHLY_CENTS_BY_COUNT = [
+  0, 9900, 14_900, 18_900, 21_900, 24_900, 27_900, 30_900, 33_900, 36_900, 39_900, 42_900, 44_900,
+  46_900, 48_900, 49_900,
+] as const;
+
+/** One-time Done For You (cents). 1 = $499, 5 = $1,200, 15 = $2,500. */
+export const DFY_CENTS_BY_COUNT = [
+  0, 49_900, 67_500, 85_000, 102_500, 120_000, 133_000, 146_000, 159_000, 172_000, 185_000, 198_000,
+  211_000, 224_000, 237_000, 250_000,
+] as const;
 
 export function getMembershipTier(id: string | null | undefined) {
   return MEMBERSHIP_TIERS.find((tier) => tier.id === id) ?? null;
@@ -138,4 +154,85 @@ export function suggestedTierForFacilityCount(count: number): MembershipTierId |
   if (n <= 5) return "network";
   if (n <= 15) return "group";
   return "enterprise";
+}
+
+/** Landing slider: 1–15 self-serve, 16 means 16+ (quoted). */
+export const PRICING_SLIDER_MAX = 16;
+
+export type MembershipQuote =
+  | {
+      facilityCount: number;
+      facilityLabel: string;
+      isEnterprise: false;
+      tier: MembershipTier;
+      monthlyCents: number;
+      annualCents: number;
+      dfyCents: number;
+    }
+  | {
+      facilityCount: number;
+      facilityLabel: string;
+      isEnterprise: true;
+      tier: null;
+      monthlyCents: null;
+      annualCents: null;
+      dfyCents: null;
+    };
+
+export function membershipMonthlyCentsForCount(count: number) {
+  const n = Math.floor(Number(count) || 0);
+  if (n < 1 || n > 15) return null;
+  return MEMBERSHIP_MONTHLY_CENTS_BY_COUNT[n] ?? null;
+}
+
+export function membershipAnnualCentsForCount(count: number) {
+  const monthly = membershipMonthlyCentsForCount(count);
+  return monthly == null ? null : monthly * 10;
+}
+
+export function dfyCentsForCount(count: number) {
+  const n = Math.floor(Number(count) || 0);
+  if (n < 1 || n > 15) return null;
+  return DFY_CENTS_BY_COUNT[n] ?? null;
+}
+
+/** Published membership quote for a live facility count (slider / checkout). */
+export function membershipQuoteForFacilityCount(count: number): MembershipQuote {
+  const n = Math.min(PRICING_SLIDER_MAX, Math.max(1, Math.floor(Number(count) || 1)));
+  const tierId = suggestedTierForFacilityCount(n);
+  if (tierId === "enterprise") {
+    return {
+      facilityCount: n,
+      facilityLabel: ENTERPRISE.facilityLabel,
+      isEnterprise: true,
+      tier: null,
+      monthlyCents: null,
+      annualCents: null,
+      dfyCents: null,
+    };
+  }
+  const tier = getMembershipTier(tierId);
+  const monthlyCents = membershipMonthlyCentsForCount(n);
+  const annualCents = membershipAnnualCentsForCount(n);
+  const dfyCents = dfyCentsForCount(n);
+  if (!tier || monthlyCents == null || annualCents == null || dfyCents == null) {
+    return {
+      facilityCount: n,
+      facilityLabel: ENTERPRISE.facilityLabel,
+      isEnterprise: true,
+      tier: null,
+      monthlyCents: null,
+      annualCents: null,
+      dfyCents: null,
+    };
+  }
+  return {
+    facilityCount: n,
+    facilityLabel: n === 1 ? "1 facility" : `${n} facilities`,
+    isEnterprise: false,
+    tier,
+    monthlyCents,
+    annualCents,
+    dfyCents,
+  };
 }

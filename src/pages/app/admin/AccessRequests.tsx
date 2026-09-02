@@ -7,8 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
-import { Clock, Check, X, Mail, Plus, Trash2, UserPlus } from "lucide-react";
+import { Clock, Check, X, Plus, Trash2, UserPlus } from "lucide-react";
 import { isPersonalEmail } from "@/lib/email-domains";
 import { adminAssignUserToOrganization } from "@/lib/org-setup";
 import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
@@ -36,6 +44,17 @@ interface OrgOption {
   name: string;
 }
 
+function StatusBadge({ status }: { status: string }) {
+  const variant =
+    status === "pending" ? "secondary" : status === "approved" ? "default" : "destructive";
+  return (
+    <Badge variant={variant} className="capitalize whitespace-nowrap">
+      {status === "pending" && <Clock className="h-3 w-3 mr-1" />}
+      {status}
+    </Badge>
+  );
+}
+
 export default function AccessRequests() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const [requests, setRequests] = useState<Request[]>([]);
@@ -50,14 +69,15 @@ export default function AccessRequests() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data, error }, { data: allowData, error: allowError }, { data: orgData }] = await Promise.all([
-      supabase.from("early_access_leads").select("*").order("created_at", { ascending: false }),
-      supabase
-        .from("approved_personal_emails")
-        .select("email,notes,created_at")
-        .order("created_at", { ascending: false }),
-      supabase.from("organizations").select("id,name").order("name"),
-    ]);
+    const [{ data, error }, { data: allowData, error: allowError }, { data: orgData }] =
+      await Promise.all([
+        supabase.from("early_access_leads").select("*").order("created_at", { ascending: false }),
+        supabase
+          .from("approved_personal_emails")
+          .select("email,notes,created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("organizations").select("id,name").order("name"),
+      ]);
     setOrgs((orgData as OrgOption[]) ?? []);
 
     if (error) {
@@ -73,7 +93,6 @@ export default function AccessRequests() {
     }
 
     if (allowError) {
-      // Table may not be applied yet in older environments.
       console.warn("approved_personal_emails:", allowError.message);
       setApproved([]);
     } else {
@@ -111,7 +130,6 @@ export default function AccessRequests() {
       .update({ status, reviewed_at: reviewedAt })
       .eq("id", req.id);
 
-    // Older DBs may not have reviewed_at yet — still allow approve/deny.
     if (error?.message?.includes("reviewed_at")) {
       ({ error } = await supabase
         .from("early_access_leads")
@@ -163,7 +181,9 @@ export default function AccessRequests() {
           already_linked: result.linked,
         });
       } catch (emailErr) {
-        toast.error(emailErr instanceof Error ? emailErr.message : "Assigned, but the email did not send");
+        toast.error(
+          emailErr instanceof Error ? emailErr.message : "Assigned, but the email did not send",
+        );
         setAssigningId(null);
         return;
       }
@@ -221,105 +241,140 @@ export default function AccessRequests() {
         <h1 className="font-heading text-2xl font-bold">Access requests</h1>
         <p className="text-sm text-muted-foreground">
           Approve unlocks login. Then assign them as org admin — if they already have an account they
-          are linked immediately; otherwise they land on that organization the first time they sign in.
+          are linked immediately; otherwise they land on that organization the first time they sign
+          in.
         </p>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      ) : requests.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted-foreground">No requests yet.</Card>
-      ) : (
-        <div className="space-y-3">
-          {requests.map((r) => (
-            <Card key={r.id} className="p-4 sm:p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold">{r.full_name}</h3>
-                    <Badge
-                      variant={
-                        r.status === "pending" ? "secondary" : r.status === "approved" ? "default" : "destructive"
-                      }
-                    >
-                      {r.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
-                      {r.status}
-                    </Badge>
-                    {isPersonalEmail(r.email) ? (
-                      <Badge variant="outline" className="text-amber-700 border-amber-500/40">
-                        Personal email
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {r.organization}
-                    {r.role && <> · {r.role}</>}
-                    {r.facilities && <> · {r.facilities} facilities</>}
-                  </p>
-                  <a
-                    href={`mailto:${r.email}`}
-                    className="text-sm text-primary inline-flex items-center gap-1 mt-1 hover:underline"
-                  >
-                    <Mail className="h-3.5 w-3.5" /> {r.email}
-                  </a>
-                  {r.notes && <p className="text-sm mt-2 p-3 bg-muted rounded-lg">{r.notes}</p>}
-                </div>
-                {r.status === "pending" && (
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => void setStatus(r, "denied")}>
-                      <X className="h-4 w-4" /> Deny
-                    </Button>
-                    <Button size="sm" onClick={() => void setStatus(r, "approved")}>
-                      <Check className="h-4 w-4" /> Approve login
-                    </Button>
-                  </div>
-                )}
-              </div>
-              {r.status === "approved" && (
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-end gap-2 border-t border-border/50 pt-3">
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <Label htmlFor={`assign-org-${r.id}`}>Assign as organization admin</Label>
-                    <select
-                      id={`assign-org-${r.id}`}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={assignOrgByRequest[r.id] ?? suggestedOrgId(r.organization)}
-                      onChange={(e) =>
-                        setAssignOrgByRequest((prev) => ({ ...prev, [r.id]: e.target.value }))
-                      }
-                    >
-                      <option value="">Select organization…</option>
-                      {orgs.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={assigningId === r.id}
-                    onClick={() => void assignToOrg(r)}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    {assigningId === r.id ? "Assigning…" : "Assign & email"}
-                  </Button>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+      <Card className="overflow-hidden">
+        {loading ? (
+          <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+        ) : requests.length === 0 ? (
+          <p className="p-8 text-center text-sm text-muted-foreground">No requests yet.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="min-w-[140px]">Name</TableHead>
+                <TableHead className="min-w-[180px]">Email</TableHead>
+                <TableHead className="min-w-[160px]">Organization</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Facilities</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Submitted</TableHead>
+                <TableHead className="min-w-[220px] text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {requests.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="align-top">
+                    <div className="space-y-1">
+                      <p className="font-medium leading-snug">{r.full_name}</p>
+                      {isPersonalEmail(r.email) ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] text-amber-700 border-amber-500/40"
+                        >
+                          Personal email
+                        </Badge>
+                      ) : null}
+                      {r.notes ? (
+                        <p
+                          className="text-xs text-muted-foreground line-clamp-2 max-w-[220px]"
+                          title={r.notes}
+                        >
+                          {r.notes}
+                        </p>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                  <TableCell className="align-top">
+                    <a href={`mailto:${r.email}`} className="text-primary hover:underline break-all">
+                      {r.email}
+                    </a>
+                  </TableCell>
+                  <TableCell className="align-top font-medium">{r.organization}</TableCell>
+                  <TableCell className="align-top text-muted-foreground whitespace-nowrap">
+                    {r.role || "—"}
+                  </TableCell>
+                  <TableCell className="align-top text-muted-foreground whitespace-nowrap">
+                    {r.facilities || "—"}
+                  </TableCell>
+                  <TableCell className="align-top">
+                    <StatusBadge status={r.status} />
+                  </TableCell>
+                  <TableCell className="align-top text-muted-foreground whitespace-nowrap">
+                    {new Date(r.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="align-top text-right">
+                    {r.status === "pending" ? (
+                      <div className="inline-flex flex-wrap justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void setStatus(r, "denied")}
+                        >
+                          <X className="h-4 w-4" /> Deny
+                        </Button>
+                        <Button size="sm" onClick={() => void setStatus(r, "approved")}>
+                          <Check className="h-4 w-4" /> Approve
+                        </Button>
+                      </div>
+                    ) : r.status === "approved" ? (
+                      <div className="inline-flex flex-col items-stretch gap-1.5 min-w-[200px] ml-auto">
+                        <select
+                          aria-label={`Assign organization for ${r.full_name}`}
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-2.5 py-1 text-xs"
+                          value={assignOrgByRequest[r.id] ?? suggestedOrgId(r.organization)}
+                          onChange={(e) =>
+                            setAssignOrgByRequest((prev) => ({
+                              ...prev,
+                              [r.id]: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Select organization…</option>
+                          {orgs.map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={assigningId === r.id}
+                          onClick={() => void assignToOrg(r)}
+                        >
+                          <UserPlus className="h-4 w-4" />
+                          {assigningId === r.id ? "Assigning…" : "Assign & email"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
 
       <Card className="p-5 sm:p-6 space-y-4">
         <div>
           <h2 className="font-heading text-lg font-semibold">Approved personal emails</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Exceptions that may sign in despite using Gmail/Yahoo/Outlook/etc. Company domains never need this list.
+            Exceptions that may sign in despite using Gmail/Yahoo/Outlook/etc. Company domains never
+            need this list.
           </p>
         </div>
 
-        <form onSubmit={addApprovedEmail} className="grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+        <form
+          onSubmit={addApprovedEmail}
+          className="grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-end"
+        >
           <div className="space-y-1.5">
             <Label htmlFor="allow-email">Email</Label>
             <Input
@@ -348,35 +403,45 @@ export default function AccessRequests() {
         {approved.length === 0 ? (
           <p className="text-sm text-muted-foreground">No personal-email exceptions yet.</p>
         ) : (
-          <ul className="space-y-2">
-            {approved.map((row) => (
-              <li
-                key={row.email}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2.5"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{row.email}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {row.notes || "No notes"} · {new Date(row.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => void removeApprovedEmail(row.email)}
-                  aria-label={`Remove ${row.email}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </li>
-            ))}
-          </ul>
+          <div className="rounded-lg border border-border/60 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Email</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead>Added</TableHead>
+                  <TableHead className="w-[72px] text-right"> </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {approved.map((row) => (
+                  <TableRow key={row.email}>
+                    <TableCell className="font-medium">{row.email}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.notes || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {new Date(row.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => void removeApprovedEmail(row.email)}
+                        aria-label={`Remove ${row.email}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </Card>
 
       <p className="text-xs text-muted-foreground">
-        After Approve login, use Assign & email. Create the organization first if it is not in the list.
+        After Approve, use Assign & email. Create the organization first if it is not in the list.
       </p>
     </div>
   );

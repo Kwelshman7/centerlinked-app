@@ -2,12 +2,16 @@ import type { Plugin } from "vite";
 import { getBearerToken, readJsonBody, sendJson } from "./server/email/http.mjs";
 import { handleNotifyAccessRequest } from "./server/email/handlers/notify-access-request.mjs";
 import { handleNotifyAuthEvent } from "./server/email/handlers/notify-auth-event.mjs";
+import { handleNotifyPricingInquiry } from "./server/email/handlers/notify-pricing-inquiry.mjs";
 import { handleSendWelcome } from "./server/email/handlers/send-welcome.mjs";
+import { handleSendOrgInvite } from "./server/email/handlers/send-org-invite.mjs";
 
 const EMAIL_API_PATHS = new Set([
   "/api/notify-access-request",
+  "/api/notify-pricing-inquiry",
   "/api/send-welcome",
   "/api/notify-auth-event",
+  "/api/send-org-invite",
 ]);
 
 /**
@@ -42,8 +46,20 @@ export function emailApiPlugin(): Plugin {
             return;
           }
 
+          if (pathname === "/api/notify-pricing-inquiry") {
+            const result = await handleNotifyPricingInquiry(body, req.headers);
+            sendJson(res, result.status, result.json);
+            return;
+          }
+
           if (pathname === "/api/notify-auth-event") {
             const result = await handleNotifyAuthEvent(body, getBearerToken(req));
+            sendJson(res, result.status, result.json);
+            return;
+          }
+
+          if (pathname === "/api/send-org-invite") {
+            const result = await handleSendOrgInvite(body, getBearerToken(req));
             sendJson(res, result.status, result.json);
             return;
           }
