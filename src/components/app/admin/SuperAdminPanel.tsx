@@ -1,10 +1,11 @@
 import { Link, NavLink } from "react-router-dom";
-import { Building2, Inbox, Shield, ShieldCheck, CheckSquare, Database, Plus, UserPlus } from "lucide-react";
+import { Building2, Inbox, LayoutDashboard, Shield, ShieldCheck, CheckSquare, Database, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const adminLinks = [
+  { to: "/app/admin", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/app/admin/organizations", label: "Manage organizations", icon: Building2, end: true },
   { to: "/app/admin/organizations/new", label: "Add organization", icon: Plus },
   { to: "/app/admin/join-requests", label: "Join requests", icon: UserPlus },
@@ -23,13 +24,13 @@ export function SuperAdminBanner() {
           <div className="min-w-0">
             <p className="font-semibold text-sm">Super admin</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Open any organization to edit branding, facilities, and shared links.
+              Review signups, pending requests, problems, and recent completed work.
             </p>
           </div>
         </div>
         <Button asChild size="sm" className="shrink-0 w-full sm:w-auto">
-          <Link to="/app/admin/organizations">
-            <Building2 className="h-4 w-4" /> Manage organizations
+          <Link to="/app/admin">
+            <Shield className="h-4 w-4" /> Admin overview
           </Link>
         </Button>
       </div>
@@ -45,7 +46,7 @@ export function SuperAdminSettingsCard() {
         <h2 className="font-heading text-lg font-semibold">Super admin</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        Edit any organization in the platform — profile, branding, facilities, and shared links.
+        Review signups and pending work, then open any organization to edit profile, branding, facilities, and shared links.
       </p>
       <ul className="grid gap-2 sm:grid-cols-2">
         {adminLinks.map(({ to, label, icon: Icon, end }) => (

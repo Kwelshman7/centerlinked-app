@@ -86,17 +86,15 @@ export function LogoMark({
       <div
         style={wireHeading({
           flexShrink: 0,
-          width: 52,
+          minWidth: 52,
           height: 52,
           display: "grid",
           placeItems: "center",
-          borderRadius: 10,
-          fontSize: 16,
+          padding: "0 10px",
+          fontSize: 18,
           fontWeight: 800,
           letterSpacing: "-0.04em",
           color: brand,
-          background: brandRgba(brand, 0.08),
-          border: `1px solid ${brandRgba(brand, 0.16)}`,
         })}
       >
         {initials}
@@ -108,14 +106,10 @@ export function LogoMark({
     <div
       style={{
         flexShrink: 0,
-        height: 52,
+        height: 56,
         width: 168,
-        padding: "6px 8px",
-        boxSizing: "border-box",
-        borderRadius: 10,
         overflow: "hidden",
         background: "#fff",
-        border: `1px solid ${WIRE.rule}`,
       }}
     >
       {/* <img> (not CSS background) so html-to-image + waitForImages capture real pixels */}
@@ -123,8 +117,156 @@ export function LogoMark({
         src={logoUrl}
         alt=""
         decoding="sync"
-        style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", display: "block" }}
+        style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center", display: "block" }}
       />
+    </div>
+  );
+}
+
+export function PayerColumns({
+  items,
+  overflow,
+  ink = WIRE.ink,
+}: {
+  items: string[];
+  overflow?: number;
+  ink?: string;
+}) {
+  const filled = items.filter(Boolean);
+  if (!filled.length) {
+    return (
+      <p style={wireBody({ fontSize: 12, color: WIRE.empty })}>In-network contracts are listed on the live profile.</p>
+    );
+  }
+  const mid = Math.ceil(filled.length / 2);
+  const cols = [filled.slice(0, mid), filled.slice(mid)];
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 16px" }}>
+        {cols.map((col, i) => (
+          <div key={i}>
+            {col.map((payer) => (
+              <p key={payer} style={wireBody({ fontSize: 11.5, lineHeight: 1.55, fontWeight: 600, color: ink })}>
+                {payer}
+              </p>
+            ))}
+          </div>
+        ))}
+      </div>
+      {overflow && overflow > 0 ? (
+        <p style={wireBody({ marginTop: 6, fontSize: 10.5, fontWeight: 600, color: WIRE.muted })}>
+          +{overflow} additional contracted plans
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function InsurancePanel({
+  title,
+  items,
+  overflow,
+  headerBg,
+  headerFg,
+  rule,
+}: {
+  title: string;
+  items: string[];
+  overflow?: number;
+  headerBg: string;
+  headerFg: string;
+  rule: string;
+}) {
+  return (
+    <div
+      style={{
+        minWidth: 0,
+        minHeight: 0,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        border: `1px solid ${rule}`,
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ flexShrink: 0, background: headerBg, padding: "8px 12px" }}>
+        <p
+          style={wireHeading({
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: headerFg,
+          })}
+        >
+          {title}
+        </p>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, padding: "10px 12px 12px" }}>
+        <PayerColumns items={items} overflow={overflow} />
+      </div>
+    </div>
+  );
+}
+
+export function PhotoCaption({
+  src,
+  brand,
+  onBrand,
+  height,
+  title,
+  subtitle,
+}: {
+  src: string | null;
+  brand: string;
+  onBrand: string;
+  height: number;
+  title: string;
+  subtitle?: string | null;
+}) {
+  return (
+    <div style={{ position: "relative", width: "100%", height, overflow: "hidden", background: brand }}>
+      <PhotoSlot src={src} brand={brand} height={height} />
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          padding: "10px 12px",
+          background: brand,
+        }}
+      >
+        <p
+          style={wireHeading({
+            fontSize: 13,
+            fontWeight: 800,
+            letterSpacing: "-0.02em",
+            color: onBrand,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          })}
+        >
+          {title}
+        </p>
+        {subtitle ? (
+          <p
+            style={wireBody({
+              marginTop: 2,
+              fontSize: 11,
+              fontWeight: 600,
+              color: onBrand,
+              opacity: 0.88,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            })}
+          >
+            {subtitle}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

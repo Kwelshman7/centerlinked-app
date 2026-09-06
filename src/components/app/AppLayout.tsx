@@ -38,8 +38,8 @@ export function AppLayout() {
     ];
     if (isSuperAdmin) {
       items.push({
-        to: "/app/admin/organizations",
-        label: "Manage orgs",
+        to: "/app/admin",
+        label: "Admin",
         icon: Shield,
         end: true,
       });

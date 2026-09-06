@@ -1,5 +1,5 @@
 -- Run once in Supabase Dashboard → SQL Editor.
--- Replace YOUR_EMAIL@COMPANY.COM with the Google/work email you sign in with.
+-- Allowlists admin@centerlinked.com and grants super_admin when that user exists.
 
 -- 1) Emails allowed to self-grant super_admin on login (via bootstrap_super_admin RPC)
 CREATE TABLE IF NOT EXISTS public.bootstrap_admin_emails (
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.bootstrap_admin_emails (
 ALTER TABLE public.bootstrap_admin_emails ENABLE ROW LEVEL SECURITY;
 
 INSERT INTO public.bootstrap_admin_emails (email)
-VALUES (lower('YOUR_EMAIL@COMPANY.COM'))
+VALUES (lower('admin@centerlinked.com'))
 ON CONFLICT (email) DO NOTHING;
 
 -- 2) RPC called by the app after Google/email sign-in
@@ -64,7 +64,7 @@ GRANT EXECUTE ON FUNCTION public.bootstrap_super_admin() TO authenticated;
 INSERT INTO public.user_roles (user_id, role)
 SELECT u.id, 'super_admin'::public.app_role
 FROM auth.users u
-WHERE lower(u.email) = lower('YOUR_EMAIL@COMPANY.COM')
+WHERE lower(u.email) = lower('admin@centerlinked.com')
   AND NOT EXISTS (
     SELECT 1 FROM public.user_roles ur
     WHERE ur.user_id = u.id AND ur.role = 'super_admin'::public.app_role
@@ -74,6 +74,6 @@ UPDATE public.organizations o
 SET verified = true, updated_at = now()
 FROM auth.users u
 JOIN public.profiles p ON p.user_id = u.id
-WHERE lower(u.email) = lower('YOUR_EMAIL@COMPANY.COM')
+WHERE lower(u.email) = lower('admin@centerlinked.com')
   AND p.organization_id = o.id
   AND o.verified = false;

@@ -35,6 +35,7 @@ import OrganizationClaims from "./pages/app/admin/OrganizationClaims";
 import AdminCreateOrganization from "./pages/app/admin/AdminCreateOrganization";
 import AdminOrganizations from "./pages/app/admin/AdminOrganizations";
 import AdminOrgWorkspace from "./pages/app/admin/AdminOrgWorkspace";
+import AdminOverview from "./pages/app/admin/AdminOverview";
 import VerifyContracts from "./pages/app/VerifyContracts";
 import ProgramSheet from "./pages/public/ProgramSheet";
 import OrgSheet from "./pages/public/OrgSheet";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="search" element={<Search />} />
               <Route path="search/results" element={<SearchResults />} />
               <Route path="network" element={<Navigate to="/app/organizations" replace />} />
+              <Route path="admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
               <Route path="admin/insurance" element={<AdminRoute><InsuranceDatabase /></AdminRoute>} />
               <Route path="admin/requests" element={<AdminRoute><AccessRequests /></AdminRoute>} />
               <Route path="admin/join-requests" element={<AdminRoute><JoinRequests /></AdminRoute>} />

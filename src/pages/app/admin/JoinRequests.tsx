@@ -23,17 +23,39 @@ type JoinRequestRow = {
   org_has_admin: boolean;
 };
 
+type ReviewedJoin = {
+  id: string;
+  email: string;
+  status: string;
+  role_at_org: string;
+  reviewed_at: string | null;
+  created_at: string;
+  organization_id: string;
+  organizations: { name: string } | null;
+};
+
 export default function JoinRequests() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<JoinRequestRow[]>([]);
+  const [history, setHistory] = useState<ReviewedJoin[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("list_superadmin_join_requests");
+    const [{ data, error }, { data: reviewed, error: reviewedError }] = await Promise.all([
+      supabase.rpc("list_superadmin_join_requests"),
+      supabase
+        .from("organization_join_requests")
+        .select("id,email,status,role_at_org,reviewed_at,created_at,organization_id,organizations(name)")
+        .neq("status", "pending")
+        .order("reviewed_at", { ascending: false })
+        .limit(20),
+    ]);
     if (error) toast.error(error.message);
+    if (reviewedError) console.warn("join request history:", reviewedError.message);
     setRows((data as JoinRequestRow[]) ?? []);
+    setHistory((reviewed as unknown as ReviewedJoin[]) ?? []);
     setLoading(false);
   };
 
@@ -124,6 +146,34 @@ export default function JoinRequests() {
                     )}{" "}
                     Approve
                   </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {!loading && history.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <h2 className="font-heading text-lg font-semibold">Recently reviewed</h2>
+          {history.map((r) => (
+            <Card key={r.id} className="p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold">{r.organizations?.name ?? "Organization"}</h3>
+                    <Badge variant={r.status === "approved" ? "default" : "destructive"} className="capitalize">
+                      {r.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm mt-2">
+                    {r.email}
+                    <span className="text-muted-foreground"> · {r.role_at_org.replace("_", " ")}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Reviewed {r.reviewed_at ? new Date(r.reviewed_at).toLocaleString() : "—"}
+                  </p>
                 </div>
               </div>
             </Card>

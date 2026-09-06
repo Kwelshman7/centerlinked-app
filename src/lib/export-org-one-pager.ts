@@ -73,7 +73,7 @@ export async function exportOrgOnePagerPdf(input: ExportOrgOnePagerInput): Promi
     overviewOverride: polished?.description ?? null,
   });
 
-  const photoFacilities = model.density === "generous" ? model.facilities : [];
+  const photoFacilities = model.density === "directory" ? [] : model.facilities;
   const coverCandidates = [
     input.org.cover_image_url,
     ...(input.org.image_urls ?? []),

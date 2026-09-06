@@ -24,6 +24,7 @@ export type OrgOnePagerTheme = {
   brand: string;
   accent: string;
   onBrand: string;
+  onAccent: string;
   mutedOnBrand: string;
   paper: string;
   ink: string;
@@ -137,20 +138,41 @@ export function brandRgba(hex: string, alpha: number, fallback = "rgba(26,115,23
   return `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
 }
 
+function hexLuminance(hex: string): number {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return 1;
+  const toLinear = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * toLinear(rgb.r) + 0.7152 * toLinear(rgb.g) + 0.0722 * toLinear(rgb.b);
+}
+
+/** Pale default accents read as a washed template. Use a real brand pair instead. */
+function printAccent(brand: string, accentColor?: string | null): string {
+  if (!accentColor?.trim()) return brand;
+  const accent = parseAccentColor(accentColor);
+  if (accent.toLowerCase() === DEFAULT_ACCENT.toLowerCase()) return brand;
+  if (hexLuminance(accent) > 0.72) return brand;
+  return accent;
+}
+
 export function resolveOrgOnePagerTheme(brandColor?: string | null, accentColor?: string | null): OrgOnePagerTheme {
   const brand = parseBrandColor(brandColor);
-  const accent = parseAccentColor(accentColor) || DEFAULT_ACCENT;
+  const accent = printAccent(brand, accentColor);
   const onBrand = contrastingTextColor(brand);
+  const onAccent = contrastingTextColor(accent);
   return {
     brand,
     accent,
     onBrand,
+    onAccent,
     mutedOnBrand: onBrand === "#ffffff" ? "rgba(255,255,255,0.78)" : "rgba(15,23,42,0.7)",
     paper: "#ffffff",
     ink: "#152033",
     muted: "#5a6573",
-    rule: brandRgba(brand, 0.2),
-    tint: brandRgba(brand, 0.08),
+    rule: brandRgba(brand, 0.22),
+    tint: brandRgba(brand, 0.07),
   };
 }
 
@@ -247,7 +269,7 @@ export function buildOrgOnePagerModel(input: BuildInput): OrgOnePagerModel {
         facility.short_description || facility.description,
         density === "generous" ? 160 : 0,
       ),
-      photoUrl: density === "generous" ? facility.image_urls?.[0] ?? null : null,
+      photoUrl: density === "directory" ? null : facility.image_urls?.[0] ?? null,
       levels: uniquePreserve((facility.levels_of_care ?? []).map(shortenLevelOfCare)).slice(
         0,
         density === "directory" ? 4 : 6,

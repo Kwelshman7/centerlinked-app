@@ -65,7 +65,7 @@ const ORG: OrgSheetData = {
   hq_city: "Pompano Beach",
   hq_state: "FL",
   brand_color: "#0f6b6b",
-  accent_color: "#1a9a9a",
+  accent_color: "#c4a35a",
   cover_image_url: COVER,
   image_urls: [COVER],
   verified: true,
@@ -109,7 +109,10 @@ const QR_URL =
   encodeURIComponent(PROFILE_URL);
 
 export default function OrgOnePagerPreview() {
-  const facilities = useMemo(() => buildFacilities(), []);
+  const allFacilities = useMemo(() => buildFacilities(), []);
+  const [count, setCount] = useState(3);
+  const [pageIndex, setPageIndex] = useState(0);
+  const facilities = useMemo(() => allFacilities.slice(0, count), [allFacilities, count]);
   const payersById = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const f of facilities) map[f.id] = SHARED_PAYERS;
@@ -129,8 +132,14 @@ export default function OrgOnePagerPreview() {
     [facilities, payersById],
   );
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const page = model.pages[pageIndex] ?? model.pages[0];
+  const page = model.pages[Math.min(pageIndex, model.pages.length - 1)] ?? model.pages[0];
+  const photoUrls = useMemo(() => {
+    const map: Record<string, string | null> = {};
+    for (const facility of facilities) {
+      map[facility.id] = facility.image_urls?.[0] ?? null;
+    }
+    return map;
+  }, [facilities]);
 
   return (
     <main
@@ -175,9 +184,34 @@ export default function OrgOnePagerPreview() {
             lineHeight: 1.45,
           }}
         >
-          Letter-size export as partners receive it — cover + insurance directory for a
-          multi-state network ({model.facilityCount} locations · {model.pages.length} pages).
+          Letter-size export as partners receive it — {model.density} template
+          ({model.facilityCount} locations · {model.pages.length} {model.pages.length === 1 ? "page" : "pages"}).
         </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+          {[3, 8, 12].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => {
+                setCount(n);
+                setPageIndex(0);
+              }}
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                fontSize: 13,
+                fontWeight: 600,
+                padding: "8px 14px",
+                borderRadius: 8,
+                border: count === n ? "2px solid #0f6b6b" : "1px solid #c5ccd6",
+                background: count === n ? "#0f6b6b" : "#fff",
+                color: count === n ? "#fff" : "#152033",
+                cursor: "pointer",
+              }}
+            >
+              {n} locations
+            </button>
+          ))}
+        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           {model.pages.map((p, i) => (
             <button
@@ -196,7 +230,7 @@ export default function OrgOnePagerPreview() {
                 cursor: "pointer",
               }}
             >
-              {p.kind === "cover" ? "Cover" : `Directory ${p.pageNumber - 1}`}
+              {p.kind === "cover" ? "Cover" : `Page ${p.pageNumber}`}
             </button>
           ))}
         </div>
@@ -217,7 +251,7 @@ export default function OrgOnePagerPreview() {
           page={page}
           resolvedLogoUrl={null}
           resolvedCoverUrl={page.kind === "cover" ? COVER : null}
-          resolvedPhotoUrls={{}}
+          resolvedPhotoUrls={photoUrls}
           resolvedQrUrl={page.kind === "cover" ? QR_URL : null}
           hidePlatformMark={false}
         />

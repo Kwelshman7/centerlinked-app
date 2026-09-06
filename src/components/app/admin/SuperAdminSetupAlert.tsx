@@ -18,9 +18,9 @@ export function SuperAdminSetupAlert() {
           </p>
           <p className="text-sm text-muted-foreground">
             You signed in as <strong className="text-foreground">{user?.email}</strong>, but your account does not
-            have the <code className="text-xs">super_admin</code> role yet. Run{" "}
-            <code className="text-xs">supabase/bootstrap-super-admin.sql</code> in the Supabase SQL editor with your
-            email, then refresh.
+            have the <code className="text-xs">super_admin</code> role yet. The allowlist and grant script is{" "}
+            <code className="text-xs">supabase/bootstrap-super-admin.sql</code> (admin@centerlinked.com). After it
+            runs, refresh this page.
           </p>
           <div className="flex flex-wrap gap-2 pt-1">
             <Button size="sm" variant="outline" onClick={() => refresh()}>
