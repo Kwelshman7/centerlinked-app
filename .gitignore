@@ -13,6 +13,7 @@ dist/
 .cursor/
 .DS_Store
 *.log
+vite.config.ts.timestamp-*.mjs
 
 # Local scratch / mocks / agent reports (not product source)
 tmp/

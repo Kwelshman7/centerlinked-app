@@ -37,6 +37,7 @@
   ],
   "rewrites": [
     { "source": "/api/og-icon", "destination": "/api/og-image?variant=icon" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
