@@ -214,13 +214,13 @@ export default function SearchResults() {
       </div>
 
       {editing && (
-        <Card className="p-4 sm:p-5 max-w-2xl">
-          <SearchForm />
+        <Card className="p-4 sm:p-5 max-w-3xl">
+          <SearchForm variant="inline" />
         </Card>
       )}
 
       <div>
-        <h1 className="text-lg sm:text-xl font-semibold">{summary}</h1>
+        <h1 className="font-heading text-lg sm:text-xl font-semibold tracking-tight">{summary}</h1>
         <p className="text-xs text-muted-foreground mt-1">
           {loading
             ? "Searching…"
