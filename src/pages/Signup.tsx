@@ -89,18 +89,8 @@ export default function Signup() {
             <div className="flex justify-center"><Logo to="/" size="lg" /></div>
             <h1 className="font-heading text-2xl font-bold text-foreground mt-4">Create your account</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Use your work email, or the personal email CenterLinked approved.
+              Sign up for free today using your work email.
             </p>
-          </div>
-
-          <GoogleSignInButton label="Sign up with Google" className="w-full mb-2" />
-          <p className="text-xs text-muted-foreground text-center mb-4">
-            Approved with iCloud, Outlook, or another personal address? Skip Google and use that exact email below.
-          </p>
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -120,6 +110,13 @@ export default function Signup() {
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account...</> : "Create Account"}
             </Button>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
+          </div>
+
+          <GoogleSignInButton label="Sign up with Google" className="w-full" />
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{" "}

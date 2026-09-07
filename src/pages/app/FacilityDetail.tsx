@@ -164,12 +164,13 @@ export default function FacilityDetail() {
     .filter((c) => c.in_network && (c.payer_status !== "pending" || canSeePending))
     .map((c) => ({ id: c.id, payer_name: c.payer_name, in_network: c.in_network }));
 
+  const actionClass = "w-full justify-center min-w-0 sm:w-auto";
+
   return (
-    <div className="max-w-[1400px] mx-auto pb-8 space-y-6">
-      {/* Top action bar */}
-      <div className="flex items-center justify-end gap-2 flex-wrap">
+    <div className="max-w-[1400px] mx-auto pb-8 space-y-5 sm:space-y-6 min-w-0">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
         {org?.slug && orgPublicLive ? (
-          <Button asChild type="button" variant="outline" size="sm">
+          <Button asChild type="button" variant="outline" size="sm" className={actionClass}>
             <Link to={`/o/${org.slug}`}>
               <ExternalLink className="h-4 w-4" /> View Organization
             </Link>
@@ -179,6 +180,7 @@ export default function FacilityDetail() {
             type="button"
             variant="outline"
             size="sm"
+            className={actionClass}
             onClick={() =>
               toast.message("Public page isn’t live yet", {
                 description: "It goes live after CenterLinked approves the organization.",
@@ -198,6 +200,7 @@ export default function FacilityDetail() {
               bd_contact_phone={facility.bd_contact_phone}
               bd_contact_email={facility.bd_contact_email}
               onSaved={loadFacility}
+              triggerClassName={actionClass}
             />
             {canManage && (
               <EditFacilityDialog
@@ -210,6 +213,7 @@ export default function FacilityDetail() {
                 }))}
                 organizationId={facility.organization_id}
                 onSaved={loadFacility}
+                triggerClassName={actionClass}
               />
             )}
             {facility.slug && facilityPublicLive ? (
@@ -221,11 +225,13 @@ export default function FacilityDetail() {
                 size="sm"
                 label="Share Facility"
                 hideCopy
+                className={actionClass}
               />
             ) : facility.slug ? (
               <Button
                 type="button"
                 size="sm"
+                className={actionClass}
                 onClick={() =>
                   toast.message("Facility isn’t public yet", {
                     description: "Share becomes available after this facility is approved.",

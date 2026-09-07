@@ -26,10 +26,10 @@ import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { uniqueAccreditations } from "@/lib/accreditations";
 import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
 
-/** Fixed hero gallery dimensions — identical for every facility/org. */
-const HERO_IMAGE_HEIGHT = "h-[280px]";
-const HERO_THUMB_SIZE = "h-14 w-14";
-const HERO_THUMB_STRIP = "h-[68px]";
+/** Hero gallery — shorter on phones so the name and facts stay on the first screen. */
+const HERO_IMAGE_HEIGHT = "h-[200px] sm:h-[240px] xl:h-[280px]";
+const HERO_THUMB_SIZE = "h-12 w-12 sm:h-14 sm:w-14";
+const HERO_THUMB_STRIP = "h-[60px] sm:h-[68px]";
 
 export interface FacilitySheetData {
   id: string;
@@ -128,7 +128,7 @@ function SectionHeading({
   brand?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 mb-3.5">
+    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-3.5">
       <div className="flex items-center gap-2.5 min-w-0">
         {brand ? (
           <span className="h-5 w-[3px] rounded-full shrink-0" style={{ background: brand }} aria-hidden />
@@ -137,7 +137,7 @@ function SectionHeading({
           {title}
         </h2>
       </div>
-      {headerExtra ? <div className="print:hidden">{headerExtra}</div> : null}
+      {headerExtra ? <div className="print:hidden w-full sm:w-auto min-w-0">{headerExtra}</div> : null}
     </div>
   );
 }
@@ -255,7 +255,7 @@ export function FacilitySheetView({
     <div className={`space-y-5 lg:space-y-6 min-w-0 ${showMobileActionBar ? mobileContactBarPadding(tabBarOffset, footerVisible) : ""}`}>
       {/* Hero */}
       <section className="print-keep-together rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-        <div className="grid lg:grid-cols-2 print:grid-cols-1">
+        <div className="grid xl:grid-cols-2 print:grid-cols-1">
           <HeroGallery
             images={facility.image_urls ?? []}
             fallbackImage={coverImageUrl}
@@ -264,15 +264,15 @@ export function FacilitySheetView({
             canEdit={canEditPhotos}
             facilityId={facilityId ?? facility.id}
             onPhotosUpdated={onPhotosUpdated}
-            className="order-1 lg:order-2 print:hidden"
+            className="order-1 xl:order-2 print:hidden"
           />
 
-          <div className="p-5 sm:p-6 lg:p-7 flex flex-col min-w-0 order-2 lg:order-1">
-            <div className="flex items-start justify-between gap-3">
+          <div className="p-4 sm:p-6 lg:p-7 flex flex-col min-w-0 order-2 xl:order-1">
+            <div className="flex items-start justify-between gap-3 min-w-0">
               <div className="min-w-0 flex-1">
                 {mode === "public" && org?.slug && (
-                  <nav className="flex items-center gap-1.5 text-xs text-muted-foreground print:hidden">
-                    <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline truncate">
+                  <nav className="flex items-center gap-1.5 text-xs text-muted-foreground print:hidden min-w-0">
+                    <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline truncate min-w-0">
                       {org.name}
                     </Link>
                     <ChevronRight className="h-3.5 w-3.5 shrink-0" />
@@ -284,13 +284,13 @@ export function FacilitySheetView({
                     {org.name}
                   </p>
                 ) : null}
-                <h1 className="font-heading text-2xl sm:text-[1.75rem] font-bold tracking-tight leading-tight mt-1">
+                <h1 className="font-heading text-[1.375rem] sm:text-2xl xl:text-[1.75rem] font-bold tracking-tight leading-snug mt-1 break-words">
                   {facility.name}
                 </h1>
                 {cityStateZip && (
-                  <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
-                    <a href={directionsHref} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  <p className="mt-2 flex items-start gap-1.5 text-sm text-muted-foreground min-w-0">
+                    <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
+                    <a href={directionsHref} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors break-words">
                       {cityStateZip}
                     </a>
                   </p>
@@ -384,28 +384,27 @@ export function FacilitySheetView({
       {/* Unified details */}
       {(hasFactsStrip || hasProgramDetails || hasServiceArea || repName || repEmail || repPhone) && (
         <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:overflow-visible">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px] print:grid-cols-1">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] xl:grid-cols-[minmax(0,1fr)_340px] print:grid-cols-1">
             <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50 print:border-0 print:rounded-none">
               {hasFactsStrip && (
-                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5 grid gap-4 sm:grid-cols-2 sm:gap-x-10">
+                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5 grid gap-6">
                   <div className="min-w-0">
                     <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} brand={brand} />
                     {inNetworkPayers.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <ul className="grid grid-cols-1 2xl:grid-cols-2 gap-1.5">
                         {inNetworkPayers.map((c) => (
-                          <span
-                            key={c.id}
-                            className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 sm:px-2 py-1 text-[11px] sm:text-xs font-semibold max-w-full"
-                          >
-                            {c.payer_logo_url ? (
-                              <img src={c.payer_logo_url} alt={c.payer_name} className="h-3.5 w-3.5 object-contain shrink-0" />
-                            ) : (
-                              <ShieldCheck className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
-                            )}
-                            <span className="truncate">{c.payer_name}</span>
-                          </span>
+                          <li key={c.id} className="min-w-0">
+                            <span className="flex items-center gap-2 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-[12px] sm:text-xs font-semibold min-w-0">
+                              {c.payer_logo_url ? (
+                                <img src={c.payer_logo_url} alt={c.payer_name} className="h-3.5 w-3.5 object-contain shrink-0" />
+                              ) : (
+                                <ShieldCheck className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
+                              )}
+                              <span className="truncate">{c.payer_name}</span>
+                            </span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     ) : (
                       <p className="text-sm text-muted-foreground">None listed</p>
                     )}
@@ -414,16 +413,15 @@ export function FacilitySheetView({
                   {facility.levels_of_care?.length > 0 && (
                     <div className="min-w-0">
                       <SectionHeading title="Care Levels" brand={brand} />
-                      <div className="flex flex-wrap gap-1.5">
+                      <ul className="flex flex-wrap gap-1.5">
                         {facility.levels_of_care.map((level) => (
-                          <span
-                            key={level}
-                            className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-2 py-1 text-[11px] sm:text-xs font-medium text-foreground leading-snug"
-                          >
-                            {level}
-                          </span>
+                          <li key={level} className="min-w-0">
+                            <span className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-2.5 py-1 text-[12px] sm:text-xs font-medium text-foreground leading-snug break-words">
+                              {level}
+                            </span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
                   )}
                 </div>
@@ -464,7 +462,7 @@ export function FacilitySheetView({
               {hasServiceArea && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
                   <SectionHeading title="Service Area" brand={brand} />
-                  <div className="grid md:grid-cols-[160px_1fr] gap-4 print:grid-cols-1">
+                  <div className="grid grid-cols-1 xl:grid-cols-[160px_1fr] gap-4 print:grid-cols-1">
                     <a
                       href={directionsHref}
                       target="_blank"
@@ -532,11 +530,11 @@ export function FacilitySheetView({
                   heading="For Referrals"
                   website={org?.website ?? null}
                   size="lg"
-                  className="shadow-2xl -ml-2 ring-1"
+                  className="shadow-lg ring-1"
                 />
               ) : (
                 <div
-                  className="rounded-xl border bg-card p-6 space-y-3 shadow-2xl -ml-2 ring-1 ring-black/5"
+                  className="rounded-xl border bg-card p-5 sm:p-6 space-y-3 shadow-lg ring-1 ring-black/5 min-w-0"
                   style={{ borderColor: `${brand}38` }}
                 >
                   <p
@@ -617,7 +615,7 @@ function HeroGallery({
   const goNext = () => setActiveIndex((i) => (i + 1) % displayImages.length);
 
   return (
-    <div className={`relative bg-muted shrink-0 self-start w-full border-b lg:border-b-0 lg:border-l border-border/60 ${className ?? ""}`}>
+    <div className={`relative bg-muted shrink-0 self-start w-full min-w-0 border-b xl:border-b-0 xl:border-l border-border/60 ${className ?? ""}`}>
       {canEdit && (
         <Button
           type="button"
