@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Building2 } from "lucide-react";
 import { ExpandableText } from "@/components/public/ExpandableText";
-import { VerifiedMark } from "@/components/public/VerifiedMark";
+import { UnclaimedMark, VerifiedMark } from "@/components/public/VerifiedMark";
+import { ClaimOrganizationDialog } from "@/components/ClaimOrganizationDialog";
 import { orgHeroImage, orgHeroIsLogoFallback } from "@/lib/org-hero";
 import { cn } from "@/lib/utils";
 
@@ -167,7 +168,19 @@ function IdentityHero({
                   verifiedAt={verifiedAt ?? org.updated_at}
                   size="md"
                 />
-              ) : null}
+              ) : (
+                // Unclaimed profile: say so, and always offer a way to take it
+                // over. Some unclaimed sheets carry a compiled BD contact and
+                // therefore never render OrgClaimCard, so this is the only
+                // claim route on those pages.
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <UnclaimedMark size="md" />
+                  <ClaimOrganizationDialog
+                    organizationId={org.id}
+                    organizationName={org.name}
+                  />
+                </div>
+              )}
 
               {description ? (
                 <ExpandableText

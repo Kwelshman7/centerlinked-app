@@ -51,7 +51,7 @@ function urlEntry({ loc, lastmod, changefreq, priority }) {
  * organization and program sheet.
  *
  * Inclusion mirrors the public read path exactly: `get_public_org_sheet` only
- * returns verified organizations, and partner-visible facilities are approved,
+ * returns published organizations, and partner-visible facilities are approved,
  * not frozen, and not hidden from the org page. Listing anything else would
  * publish URLs that resolve to a not-found page.
  */
@@ -67,10 +67,12 @@ export async function buildSitemapXml() {
     return { xml: wrap(entries), orgs: 0, programs: 0, degraded: true };
   }
 
+  // is_published, not verified: an unclaimed profile is publicly reachable but
+  // carries no verification claim, and it still belongs in the sitemap.
   const { data: orgs, error: orgError } = await admin
     .from("organizations")
     .select("id, slug, updated_at")
-    .eq("verified", true)
+    .eq("is_published", true)
     .not("slug", "is", null);
 
   if (orgError) {

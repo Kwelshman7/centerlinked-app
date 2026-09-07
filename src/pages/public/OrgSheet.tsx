@@ -66,14 +66,16 @@ export default function OrgSheet() {
     (async () => {
       const payload = await fetchPublicOrgSheet(slug);
       if (!payload) {
+        // Visibility is is_published, not verified — an unclaimed profile can be
+        // publicly live while still carrying no verification claim.
         const { data: own } = await supabase
           .from("organizations")
-          .select("id,verified")
+          .select("id,is_published")
           .eq("slug", slug)
           .maybeSingle();
         const isOwnPending =
           !!own &&
-          own.verified !== true &&
+          own.is_published !== true &&
           (isSuperAdmin || profile?.organization_id === own.id);
         setOwnPending(isOwnPending);
         setNotFound(!isOwnPending);

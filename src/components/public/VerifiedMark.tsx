@@ -78,3 +78,47 @@ export function VerifiedMark({
     </div>
   );
 }
+
+/**
+ * Counterpart to VerifiedMark for profiles the organization has not claimed.
+ *
+ * These pages are built from public sources, so they must never carry the
+ * verified mark — that would assert the organization confirmed details it has
+ * never seen. Says plainly where the information came from instead.
+ */
+export function UnclaimedMark({
+  className,
+  size = "md",
+  tone = "default",
+}: Omit<Props, "verifiedAt">) {
+  const sm = size === "sm";
+  const onBrand = tone === "onBrand";
+
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center",
+        sm ? "gap-1.5" : "gap-2",
+        className,
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "inline-block rounded-full border-2 border-dashed",
+          sm ? "h-3.5 w-3.5" : "h-4 w-4",
+          onBrand ? "border-white/50" : "border-muted-foreground/50",
+        )}
+      />
+      <span
+        className={cn(
+          "font-medium tracking-wide",
+          sm ? "text-[11px]" : "text-xs sm:text-[13px]",
+          onBrand ? "text-white/80" : "text-muted-foreground",
+        )}
+      >
+        Unclaimed — information compiled from public sources
+      </span>
+    </div>
+  );
+}
