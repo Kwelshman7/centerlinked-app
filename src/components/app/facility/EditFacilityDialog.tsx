@@ -45,6 +45,7 @@ interface ExistingContract {
   payer_id: string | null;
   payer_name: string;
   in_network: boolean;
+  plan_types?: string[] | null;
 }
 
 interface Props {
@@ -83,6 +84,7 @@ function toDraft(f: FacilityLike, contracts: ExistingContract[]): FacilityDraft 
       payer_id: c.payer_id,
       payer_name: c.payer_name,
       in_network: c.in_network,
+      plan_types: c.plan_types ?? [],
     })),
   };
 }
@@ -116,7 +118,7 @@ export function EditFacilityDialog({
       void (async () => {
         const { data, error } = await supabase
           .from("insurance_contracts")
-          .select("id,payer_id,payer_name,in_network")
+          .select("id,payer_id,payer_name,in_network,plan_types")
           .eq("facility_id", facility.id);
         if (token !== loadToken.current) return;
         if (error) {
@@ -135,6 +137,7 @@ export function EditFacilityDialog({
                 payer_id: c.payer_id,
                 payer_name: c.payer_name,
                 in_network: c.in_network,
+                plan_types: c.plan_types ?? [],
               })),
             ),
           );

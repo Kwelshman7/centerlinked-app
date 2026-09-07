@@ -98,6 +98,8 @@ export interface FacilityContractDraft {
   payer_name: string;
   in_network: boolean;
   pending?: boolean;
+  /** Known slugs from `@/lib/plan-types`. Empty = not specified. */
+  plan_types: string[];
 }
 
 export interface FacilityDraft {

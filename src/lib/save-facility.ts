@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { FacilityContractDraft, FacilityDraft } from "@/components/app/facility/facility-types";
 import { uniqueAccreditations } from "@/lib/accreditations";
+import { sanitizePlanTypes } from "@/lib/plan-types";
 import { resolveStateCode } from "@/lib/us-states";
 
 export type ContractsMode = "all" | "in_network" | "none";
@@ -67,6 +68,7 @@ function contractsPayload(contracts: FacilityContractDraft[]) {
       payer_id: c.payer_id,
       payer_name: c.payer_name.trim(),
       in_network: !!c.in_network,
+      plan_types: sanitizePlanTypes(c.plan_types),
     }));
 }
 

@@ -45,6 +45,7 @@ DECLARE
   payer_id_val uuid;
   payer_name_val text;
   in_network_val boolean;
+  plan_types_val text[];
 BEGIN
   IF uid IS NULL THEN
     RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '42501';
@@ -334,16 +335,39 @@ BEGIN
         ELSE COALESCE((rec->>'in_network')::boolean, true)
       END;
 
+      plan_types_val := ARRAY[]::text[];
+      IF jsonb_typeof(rec->'plan_types') = 'array' THEN
+        plan_types_val := ARRAY(
+          SELECT DISTINCT lower(trim(elem))
+          FROM jsonb_array_elements_text(rec->'plan_types') AS elem
+          WHERE lower(trim(elem)) IN (
+            'ppo',
+            'hmo',
+            'epo',
+            'pos',
+            'marketplace',
+            'medicare_advantage',
+            'medicare_traditional',
+            'medicaid_mco',
+            'medicaid_ffs',
+            'tricare_prime',
+            'tricare_select'
+          )
+        );
+      END IF;
+
       INSERT INTO public.insurance_contracts (
         facility_id,
         payer_id,
         payer_name,
-        in_network
+        in_network,
+        plan_types
       ) VALUES (
         fac_id,
         payer_id_val,
         payer_name_val,
-        in_network_val
+        in_network_val,
+        COALESCE(plan_types_val, ARRAY[]::text[])
       );
     END LOOP;
   END IF;

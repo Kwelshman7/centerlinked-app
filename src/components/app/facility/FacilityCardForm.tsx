@@ -22,8 +22,10 @@ import {
   type ProgramTagKind,
 } from "@/lib/facility-program-tags";
 import { PayerCombobox } from "./PayerCombobox";
+import { PlanTypeChecklist } from "./PlanTypeChecklist";
 import { FacilityBdRepFields } from "./FacilityBdRepFields";
 import { useAuth } from "@/contexts/AuthContext";
+import { sanitizePlanTypes } from "@/lib/plan-types";
 
 interface Props {
   value: FacilityDraft;
@@ -99,12 +101,23 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
     if (!exists) {
       set("contracts", [
         ...value.contracts,
-        { payer_id: payer.id, payer_name: payerName, in_network: true, pending: payer.pending },
+        {
+          payer_id: payer.id,
+          payer_name: payerName,
+          in_network: true,
+          pending: payer.pending,
+          plan_types: [],
+        },
       ]);
     }
   };
   const removeContract = (i: number) =>
     set("contracts", value.contracts.filter((_, idx) => idx !== i));
+  const setContractPlanTypes = (i: number, plan_types: string[]) =>
+    set(
+      "contracts",
+      value.contracts.map((c, idx) => (idx === i ? { ...c, plan_types } : c)),
+    );
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden animate-fade-up">
@@ -324,10 +337,9 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
           </div>
         </div>
 
-        {/* Two matching panels for visual symmetry */}
         <div className="grid lg:grid-cols-2 gap-4">
-          {/* Insurance contracts */}
-          <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+          {/* Insurance contracts — full width so plan-type checklists stay readable */}
+          <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3 lg:col-span-2">
             <div className="flex items-center justify-between gap-3">
               <Label className="text-sm">In-network insurance</Label>
               {!contractsDisabled && value.contracts.length > 0 && (
@@ -354,45 +366,54 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
             {contractsDisabled ? null : value.contracts.length === 0 ? (
               <p className="text-xs text-muted-foreground py-1">No in-network payers selected yet.</p>
             ) : (
-              <ul className="flex flex-wrap gap-2">
+              <ul className="space-y-2">
                 {value.contracts.map((c, i) => (
                   <li
                     key={`${c.payer_id ?? c.payer_name}-${i}`}
-                    className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1.5 text-xs font-medium text-success"
+                    className="rounded-lg border border-success/20 bg-background px-3 py-2.5 space-y-2"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{c.payer_name}</span>
-                    {c.pending && <span className="text-warning">pending</span>}
-                    <button
-                      type="button"
-                      onClick={() => removeContract(i)}
-                      className="ml-0.5 rounded-full p-0.5 text-success/80 transition-colors hover:bg-success/15 hover:text-success"
-                      aria-label={`Remove ${c.payer_name}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-success">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate flex-1 min-w-0">{c.payer_name}</span>
+                      {c.pending && <span className="text-warning">pending</span>}
+                      <button
+                        type="button"
+                        onClick={() => removeContract(i)}
+                        className="rounded-full p-0.5 text-success/80 transition-colors hover:bg-success/15 hover:text-success"
+                        aria-label={`Remove ${c.payer_name}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <PlanTypeChecklist
+                      value={sanitizePlanTypes(c.plan_types)}
+                      onChange={(plan_types) => setContractPlanTypes(i, plan_types)}
+                      showHelper={i === 0}
+                    />
                   </li>
                 ))}
               </ul>
             )}
           </div>
 
-          <FacilityBdRepFields
-            organizationId={organizationId}
-            value={{
-              bd_contact_name: value.bd_contact_name,
-              bd_contact_phone: value.bd_contact_phone,
-              bd_contact_email: value.bd_contact_email,
-            }}
-            onChange={(next) =>
-              onChange({
-                ...value,
-                bd_contact_name: next.bd_contact_name,
-                bd_contact_phone: next.bd_contact_phone,
-                bd_contact_email: next.bd_contact_email,
-              })
-            }
-          />
+          <div className="lg:col-span-2">
+            <FacilityBdRepFields
+              organizationId={organizationId}
+              value={{
+                bd_contact_name: value.bd_contact_name,
+                bd_contact_phone: value.bd_contact_phone,
+                bd_contact_email: value.bd_contact_email,
+              }}
+              onChange={(next) =>
+                onChange({
+                  ...value,
+                  bd_contact_name: next.bd_contact_name,
+                  bd_contact_phone: next.bd_contact_phone,
+                  bd_contact_email: next.bd_contact_email,
+                })
+              }
+            />
+          </div>
         </div>
       </div>
     </div>

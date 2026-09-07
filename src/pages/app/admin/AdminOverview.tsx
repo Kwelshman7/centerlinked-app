@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,9 @@ import {
   Snowflake,
   UserPlus,
   Users,
+  Copy,
+  Check,
+  Link2,
 } from "lucide-react";
 
 type QueueItem = {
@@ -557,6 +561,8 @@ function QueueList({
 export function AdminOverview({ compact = false }: { compact?: boolean }) {
   const [data, setData] = useState<OpsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copiedJoin, setCopiedJoin] = useState(false);
+  const joinUrl = `${typeof window !== "undefined" ? window.location.origin : "https://www.centerlinked.com"}/join`;
 
   const refresh = async () => {
     setLoading(true);
@@ -616,6 +622,39 @@ export function AdminOverview({ compact = false }: { compact?: boolean }) {
           )}
         </div>
       </div>
+
+      <Card className="p-4 sm:p-5 border-primary/20 bg-primary/5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+          <div className="min-w-0">
+            <p className="font-heading font-semibold text-sm flex items-center gap-2">
+              <Link2 className="h-4 w-4 text-primary shrink-0" />
+              Organization join link
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Send this anywhere. They create an account, add their organization, locations, and in-network contracts.
+            </p>
+            <p className="text-sm font-medium mt-2 break-all">{joinUrl}</p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="shrink-0 w-full sm:w-auto"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(joinUrl);
+                setCopiedJoin(true);
+                toast.success("Join link copied");
+                window.setTimeout(() => setCopiedJoin(false), 1800);
+              } catch {
+                toast.error("Could not copy link");
+              }
+            }}
+          >
+            {copiedJoin ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copiedJoin ? "Copied" : "Copy link"}
+          </Button>
+        </div>
+      </Card>
 
       {loading && !data ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-10 justify-center">

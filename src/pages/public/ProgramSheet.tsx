@@ -53,6 +53,7 @@ interface FullContract {
   payer_id: string | null;
   payer_name: string;
   in_network: boolean;
+  plan_types?: string[] | null;
 }
 
 export default function ProgramSheet() {
@@ -82,6 +83,7 @@ export default function ProgramSheet() {
           id: row.id,
           payer_name: row.payer_name,
           in_network: row.in_network,
+          plan_types: row.plan_types ?? [],
           payer_logo_url: null,
         })),
     [fullContracts],
@@ -258,6 +260,7 @@ export default function ProgramSheet() {
                   payer_id: c.payer_id,
                   payer_name: c.payer_name,
                   in_network: c.in_network,
+                  plan_types: c.plan_types ?? [],
                 }))}
                 organizationId={facility.organization_id}
                 onSaved={loadAll}

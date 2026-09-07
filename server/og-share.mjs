@@ -9,6 +9,7 @@ export const DEFAULT_OG_IMAGE = "https://www.centerlinked.com/og-image.png";
 const RESERVED_SLUGS = new Set([
   "login",
   "signup",
+  "join",
   "auth",
   "request-access",
   "privacy",

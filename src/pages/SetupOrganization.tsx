@@ -34,6 +34,10 @@ export default function SetupOrganization() {
     }
     if (profile?.organization_id || isSuperAdmin) {
       navigate("/app", { replace: true });
+      return;
+    }
+    if (typeof sessionStorage !== "undefined" && sessionStorage.getItem("cl_join_draft")) {
+      navigate("/join", { replace: true });
     }
   }, [loading, user, profile?.organization_id, isSuperAdmin, navigate]);
 

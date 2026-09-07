@@ -232,6 +232,7 @@ export async function fetchPublicProgramSheet(
         payer_id: row.payer_id == null ? null : String(row.payer_id),
         payer_name: asString(row.payer_name) ?? "",
         in_network: row.in_network !== false,
+        plan_types: asStringArray(row.plan_types),
         payer_logo_url: null,
       })),
   };
@@ -305,7 +306,7 @@ async function fetchPublicProgramSheetLegacy(slug: string): Promise<PublicProgra
 
   const { data: c } = await supabase
     .from("insurance_contracts")
-    .select("id,payer_id,payer_name,in_network")
+    .select("id,payer_id,payer_name,in_network,plan_types")
     .eq("facility_id", f.id)
     .eq("in_network", true)
     .order("payer_name");

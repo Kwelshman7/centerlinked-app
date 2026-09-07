@@ -62,6 +62,7 @@ interface Contract {
   in_network: boolean;
   payer_id: string | null;
   payer_status: "approved" | "pending" | "rejected" | null;
+  plan_types: string[];
 }
 
 export default function FacilityDetail() {
@@ -104,14 +105,15 @@ export default function FacilityDetail() {
     }
     const { data: c } = await supabase
       .from("insurance_contracts")
-      .select("id,payer_name,in_network,payer_id,payers(status)")
+      .select("id,payer_name,in_network,payer_id,plan_types,payers(status)")
       .eq("facility_id", id);
-    const list: Contract[] = ((c as Array<{ id: string; payer_name: string; in_network: boolean; payer_id: string | null; payers: { status: "approved" | "pending" | "rejected" } | null }>) ?? []).map((row) => ({
+    const list: Contract[] = ((c as Array<{ id: string; payer_name: string; in_network: boolean; payer_id: string | null; plan_types?: string[] | null; payers: { status: "approved" | "pending" | "rejected" } | null }>) ?? []).map((row) => ({
       id: row.id,
       payer_name: row.payer_name,
       in_network: row.in_network,
       payer_id: row.payer_id,
       payer_status: row.payers?.status ?? null,
+      plan_types: row.plan_types ?? [],
     }));
     setContracts(list);
     setLoading(false);
@@ -162,7 +164,12 @@ export default function FacilityDetail() {
 
   const sheetContracts: SheetContract[] = contracts
     .filter((c) => c.in_network && (c.payer_status !== "pending" || canSeePending))
-    .map((c) => ({ id: c.id, payer_name: c.payer_name, in_network: c.in_network }));
+    .map((c) => ({
+      id: c.id,
+      payer_name: c.payer_name,
+      in_network: c.in_network,
+      plan_types: c.plan_types ?? [],
+    }));
 
   const actionClass = "w-full justify-center min-w-0 sm:w-auto";
 
@@ -210,6 +217,7 @@ export default function FacilityDetail() {
                   payer_id: c.payer_id,
                   payer_name: c.payer_name,
                   in_network: c.in_network,
+                  plan_types: c.plan_types ?? [],
                 }))}
                 organizationId={facility.organization_id}
                 onSaved={loadFacility}

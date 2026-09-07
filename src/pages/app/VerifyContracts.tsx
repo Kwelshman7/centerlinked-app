@@ -12,6 +12,8 @@ import { VerificationBadge } from "@/components/app/search/VerificationBadge";
 import { stampVerified, verificationState } from "@/lib/verification";
 import { replaceInNetworkContracts } from "@/lib/save-facility";
 import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
+import { PlanTypeChecklist } from "@/components/app/facility/PlanTypeChecklist";
+import { formatPlanTypeList, sanitizePlanTypes } from "@/lib/plan-types";
 
 
 interface Facility {
@@ -29,6 +31,7 @@ interface Contract {
   payer_name: string;
   payer_id: string | null;
   in_network: boolean;
+  plan_types: string[];
 }
 
 export default function VerifyContracts() {
@@ -54,11 +57,16 @@ export default function VerifyContracts() {
       setFacility(f as Facility | null);
       const { data: c } = await supabase
         .from("insurance_contracts")
-        .select("id,payer_name,payer_id,in_network")
+        .select("id,payer_name,payer_id,in_network,plan_types")
         .eq("facility_id", id)
         .eq("in_network", true)
         .order("payer_name");
-      setContracts((c as Contract[]) ?? []);
+      setContracts(
+        ((c as Array<Contract & { plan_types?: string[] | null }>) ?? []).map((row) => ({
+          ...row,
+          plan_types: sanitizePlanTypes(row.plan_types),
+        })),
+      );
       setLoading(false);
     })();
   }, [id]);
@@ -113,6 +121,7 @@ export default function VerifyContracts() {
         payer_name: payer.name,
         payer_id: payer.id,
         in_network: true,
+        plan_types: [],
       }].sort((a, b) => a.payer_name.localeCompare(b.payer_name)),
     );
   };
@@ -128,6 +137,7 @@ export default function VerifyContracts() {
         payer_id: c.payer_id,
         payer_name: c.payer_name,
         in_network: true,
+        plan_types: sanitizePlanTypes(c.plan_types),
       })),
     });
     if (!replaced.ok) {
@@ -187,22 +197,46 @@ export default function VerifyContracts() {
         {contracts.length === 0 ? (
           <p className="text-sm text-muted-foreground">No in-network contracts on file yet. Add some below.</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {contracts.map((c) => (
-              <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm">
-                {c.payer_name}
-                {editing && (
-                  <button
-                    onClick={() => removeContract(c.id)}
-                    className="text-muted-foreground hover:text-destructive"
-                    aria-label={`Remove ${c.payer_name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
+          <ul className="space-y-2">
+            {contracts.map((c, i) => {
+              const types = formatPlanTypeList(c.plan_types);
+              return (
+                <li
+                  key={c.id}
+                  className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 space-y-2"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium truncate flex-1 min-w-0">{c.payer_name}</span>
+                    {editing && (
+                      <button
+                        type="button"
+                        onClick={() => removeContract(c.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label={`Remove ${c.payer_name}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  {editing ? (
+                    <PlanTypeChecklist
+                      value={c.plan_types}
+                      onChange={(plan_types) =>
+                        setContracts((cs) =>
+                          cs.map((row) => (row.id === c.id ? { ...row, plan_types } : row)),
+                        )
+                      }
+                      showHelper={i === 0}
+                    />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {types || "Plan type not specified."}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         )}
 
         {editing && (

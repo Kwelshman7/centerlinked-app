@@ -25,6 +25,7 @@ import { useNearbyCities } from "@/hooks/useNearbyCities";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { uniqueAccreditations } from "@/lib/accreditations";
 import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
+import { formatPlanTypeList, sanitizePlanTypes } from "@/lib/plan-types";
 
 /** Hero gallery — shorter on phones so the name and facts stay on the first screen. */
 const HERO_IMAGE_HEIGHT = "h-[200px] sm:h-[240px] xl:h-[280px]";
@@ -88,6 +89,7 @@ export interface SheetContract {
   payer_name: string;
   in_network: boolean;
   payer_logo_url?: string | null;
+  plan_types?: string[] | null;
 }
 
 interface Props {
@@ -392,18 +394,30 @@ export function FacilitySheetView({
                     <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} brand={brand} />
                     {inNetworkPayers.length > 0 ? (
                       <ul className="grid grid-cols-1 2xl:grid-cols-2 gap-1.5">
-                        {inNetworkPayers.map((c) => (
-                          <li key={c.id} className="min-w-0">
-                            <span className="flex items-center gap-2 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-[12px] sm:text-xs font-semibold min-w-0">
-                              {c.payer_logo_url ? (
-                                <img src={c.payer_logo_url} alt={c.payer_name} className="h-3.5 w-3.5 object-contain shrink-0" />
-                              ) : (
-                                <ShieldCheck className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
-                              )}
-                              <span className="truncate">{c.payer_name}</span>
-                            </span>
-                          </li>
-                        ))}
+                        {inNetworkPayers.map((c) => {
+                          const types = formatPlanTypeList(sanitizePlanTypes(c.plan_types));
+                          return (
+                            <li key={c.id} className="min-w-0">
+                              <span className="flex items-start gap-2 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-[12px] sm:text-xs min-w-0">
+                                {c.payer_logo_url ? (
+                                  <img src={c.payer_logo_url} alt={c.payer_name} className="h-3.5 w-3.5 object-contain shrink-0 mt-0.5" />
+                                ) : (
+                                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
+                                )}
+                                <span className="min-w-0">
+                                  <span className="font-semibold block truncate">
+                                    {types ? `${c.payer_name} — ${types}` : c.payer_name}
+                                  </span>
+                                  {!types ? (
+                                    <span className="block text-[11px] font-normal text-muted-foreground">
+                                      Plan type not specified.
+                                    </span>
+                                  ) : null}
+                                </span>
+                              </span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     ) : (
                       <p className="text-sm text-muted-foreground">None listed</p>

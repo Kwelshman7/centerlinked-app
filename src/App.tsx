@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RequestAccess from "./pages/RequestAccess";
+import Join from "./pages/Join";
 import CreateOrganization from "./pages/CreateOrganization";
 import SetupOrganization from "./pages/SetupOrganization";
 import NotFound from "./pages/NotFound";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/join" element={<Join />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />

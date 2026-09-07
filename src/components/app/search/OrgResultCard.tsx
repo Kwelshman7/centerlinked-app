@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Building2, ChevronDown, MapPin, ShieldCheck, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { programPublicPath } from "@/lib/public-urls";
+import { formatPlanTypeList } from "@/lib/plan-types";
 
 export interface OrgSearchFacility {
   id: string;
@@ -11,6 +12,7 @@ export interface OrgSearchFacility {
   city: string | null;
   state: string | null;
   matched_payer?: string;
+  matched_plan_types?: string[];
   levels_of_care?: string[];
 }
 
@@ -152,7 +154,9 @@ export function OrgResultCard({
                     </p>
                     {f.matched_payer ? (
                       <span className="self-start text-[9px] font-bold bg-success/10 text-success border border-success/20 px-1.5 py-px rounded-full truncate max-w-full">
-                        {f.matched_payer}
+                        {f.matched_plan_types?.length
+                          ? `${f.matched_payer} — ${formatPlanTypeList(f.matched_plan_types)}`
+                          : f.matched_payer}
                       </span>
                     ) : null}
                   </Link>

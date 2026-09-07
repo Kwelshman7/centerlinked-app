@@ -348,8 +348,13 @@ export function buildFacilityContractDrafts(
   payerNames: string[],
   inNetwork: boolean,
   payers: PayerMatchInput[],
-): { payer_id: string | null; payer_name: string; in_network: boolean }[] {
+): { payer_id: string | null; payer_name: string; in_network: boolean; plan_types: string[] }[] {
   return buildInsuranceContractRows("pending", payerNames, inNetwork, payers).map(
-    ({ payer_id, payer_name, in_network }) => ({ payer_id, payer_name, in_network }),
+    ({ payer_id, payer_name, in_network }) => ({
+      payer_id,
+      payer_name,
+      in_network,
+      plan_types: [],
+    }),
   );
 }

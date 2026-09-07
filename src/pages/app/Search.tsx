@@ -1,51 +1,41 @@
+import { Logo } from "@/components/Logo";
 import { SearchForm } from "@/components/app/search/SearchForm";
-
-const TRUST = [
-  "Approved programs only",
-  "Leave any filter on Any",
-  "Monthly verification",
-] as const;
 
 export default function Search() {
   return (
-    <div className="relative mx-auto w-full max-w-5xl">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-10 inset-x-0 h-64 rounded-[2.5rem] bg-hero-gradient opacity-80"
-      />
+    <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-5 lg:-mt-8">
+      <section className="relative overflow-hidden bg-hero-gradient">
+        <div className="pointer-events-none absolute inset-0 landing-glow" aria-hidden />
+        <div
+          className="pointer-events-none absolute -right-24 top-8 h-72 w-72 rounded-full bg-primary/[0.12] blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-[hsl(var(--primary-glow)/0.22)] blur-3xl"
+          aria-hidden
+        />
 
-      <div className="relative space-y-5 sm:space-y-7">
-        <header className="space-y-2 sm:space-y-3">
-          <p className="text-[11px] sm:text-xs font-heading font-semibold uppercase tracking-[0.18em] text-primary">
-            Referral search
-          </p>
-          <h1 className="font-heading text-[1.7rem] leading-[1.12] sm:text-4xl lg:text-[2.55rem] font-extrabold tracking-tight">
-            Find who is in-network
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl leading-relaxed">
-            Set the insurance, place, and level of care. Every result is an approved,
-            non-frozen program with a current contract.
-          </p>
-        </header>
-
-        <section className="relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xl shadow-primary/[0.07]">
-          <div aria-hidden className="h-1.5 w-full bg-bar-gradient" />
-          <div className="p-4 sm:p-6 lg:p-8">
-            <SearchForm variant="page" />
+        <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8 lg:pb-16 lg:pt-14">
+          <div className="animate-fade-up flex w-full flex-col items-center text-center">
+            <Logo to="" size="lg" className="mb-5 sm:mb-6" />
+            <h1 className="font-heading text-[1.65rem] font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-4xl sm:leading-[1.1]">
+              Find in-network programs
+            </h1>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground sm:mt-3 sm:text-base">
+              Search approved facilities by insurance, location, and level of care.
+            </p>
           </div>
-        </section>
 
-        <ul className="flex flex-wrap gap-2 justify-center sm:justify-start">
-          {TRUST.map((item) => (
-            <li
-              key={item}
-              className="rounded-full border border-border/70 bg-card/80 px-3 py-1 text-[11px] sm:text-xs font-medium text-muted-foreground"
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
+          <div
+            className="animate-fade-up mt-6 w-full sm:mt-8"
+            style={{ animationDelay: "90ms" }}
+          >
+            <div className="rounded-2xl border border-border/70 bg-card/95 p-3 shadow-xl shadow-primary/[0.08] ring-1 ring-primary/5 backdrop-blur-sm sm:p-4 md:p-5">
+              <SearchForm variant="hero" />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

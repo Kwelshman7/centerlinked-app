@@ -19,10 +19,17 @@ import {
   type PayerMatchInput,
 } from "@/lib/match-payer";
 import { resolveStateCode, stateMatchesFilter, US_STATES } from "@/lib/us-states";
+import {
+  contractMatchesPlanType,
+  parsePlanTypeParam,
+  planTypeShortLabel,
+  sanitizePlanTypes,
+} from "@/lib/plan-types";
 
 type ContractRow = {
   payer_id: string | null;
   payer_name: string;
+  plan_types: string[] | null;
   facilities: {
     id: string;
     name: string;
@@ -59,6 +66,7 @@ export default function SearchResults() {
 
   const payerId = params.get("payerId");
   const payerName = params.get("payerName") ?? "";
+  const planType = parsePlanTypeParam(params.get("planType"));
   const state = params.get("state") ?? "";
   const city = params.get("city") ?? "";
   const loc = params.get("loc") ?? "";
@@ -66,11 +74,12 @@ export default function SearchResults() {
   const summary = useMemo(() => {
     const parts: string[] = [];
     if (payerName) parts.push(payerName);
+    if (planType) parts.push(planTypeShortLabel(planType));
     if (loc) parts.push(loc);
     const place = [city, state].filter(Boolean).join(", ");
     if (place) parts.push(`in ${place}`);
     return parts.length ? parts.join(" · ") : "All verified organizations";
-  }, [payerName, loc, city, state]);
+  }, [payerName, planType, loc, city, state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,7 +102,7 @@ export default function SearchResults() {
       let q = supabase
         .from("insurance_contracts")
         .select(
-          "payer_id,payer_name, facilities!inner(id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state))",
+          "payer_id,payer_name,plan_types, facilities!inner(id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state))",
         )
         .eq("in_network", true);
 
@@ -132,6 +141,9 @@ export default function SearchResults() {
       if (payer) {
         rows = rows.filter((row) => contractMatchesPayer(row, payer!));
       }
+      if (planType) {
+        rows = rows.filter((row) => contractMatchesPlanType(row.plan_types, planType));
+      }
       if (state) {
         rows = rows.filter((row) => stateMatchesFilter(row.facilities?.state, state));
       }
@@ -166,6 +178,7 @@ export default function SearchResults() {
             city: f.city,
             state: f.state,
             matched_payer: payer?.name ?? row.payer_name,
+            matched_plan_types: sanitizePlanTypes(row.plan_types),
             levels_of_care: f.levels_of_care ?? [],
           });
           if (f.contracts_verified_at) {
@@ -182,7 +195,7 @@ export default function SearchResults() {
     return () => {
       cancelled = true;
     };
-  }, [payerId, state, city, loc]);
+  }, [payerId, planType, state, city, loc]);
 
   const results = useMemo(
     () =>
