@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -12,10 +12,24 @@ import { toast } from "sonner";
 import { fileToBase64 } from "@/lib/files";
 import { assertPdfFile } from "@/lib/upload-guards";
 import { programPublicPath } from "@/lib/public-urls";
-import { buildFacilityContractDrafts } from "@/lib/match-payer";
-import { emptyFacility } from "@/components/app/facility/facility-types";
 import { saveFacilityWithContracts } from "@/lib/save-facility";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
+import type { PayerMatchInput } from "@/lib/match-payer";
+import {
+  type ExistingContractRow,
+  type ExistingFacilityRow,
+  type FacilityImportTarget,
+  type ParsedFacility,
+  type ParsedPdfPayload,
+  contractRowToDraft,
+  countNewContracts,
+  existingFacilityToDraft,
+  facilityCommitKey,
+  mergeContractDrafts,
+  parsedFacilityContractDrafts,
+  parsedFacilityToDraft,
+  suggestedImportTargets,
+} from "@/lib/pdf-import";
 import {
   Upload,
   FileText,
@@ -30,39 +44,6 @@ import {
   Building2,
   Lock,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-
-interface ParsedFacility {
-  name: string;
-  tagline?: string | null;
-  address_line1?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zip?: string | null;
-  phone?: string | null;
-  website?: string | null;
-  description?: string | null;
-  capacity?: number | null;
-  levels_of_care?: string[];
-  highlights?: string[];
-  bd_contact_name?: string | null;
-  bd_contact_phone?: string | null;
-  bd_contact_email?: string | null;
-  payers_in_network?: string[];
-  payers_out_of_network?: string[];
-}
-
-interface ParsedPayload {
-  organization: {
-    name: string;
-    website?: string | null;
-    description?: string | null;
-    phone?: string | null;
-    hq_city?: string | null;
-    hq_state?: string | null;
-  };
-  facilities: ParsedFacility[];
-}
 
 interface ExtractedImage {
   id: string;
@@ -73,56 +54,187 @@ interface ExtractedImage {
   data_base64: string;
 }
 
-
 type Stage = "upload" | "parsing" | "review" | "committing" | "done";
 
-function facilityCommitKey(f: ParsedFacility) {
-  return [f.name, f.city, f.address_line1]
-    .map((part) => (part ?? "").trim().toLowerCase())
-    .join("|");
-}
+const EXISTING_FACILITY_SELECT =
+  "id,name,tagline,address_line1,city,state,zip,phone,website,description,capacity,levels_of_care,highlights,population_served,specializations,accreditations,image_urls,bd_contact_name,bd_contact_phone,bd_contact_email,hidden_from_org_page";
 
 export default function PdfFacilityUpload() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, profile, isFacilityAdmin, isSuperAdmin, loading: authLoading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const queryOrgId = (searchParams.get("orgId") || "").trim() || null;
+  const targetOrgId = isSuperAdmin
+    ? queryOrgId || profile?.organization_id || null
+    : profile?.organization_id || null;
+
   const [stage, setStage] = useState<Stage>("upload");
-  const [fileName, setFileName] = useState<string>("");
-  const [parsed, setParsed] = useState<ParsedPayload | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [parsed, setParsed] = useState<ParsedPdfPayload | null>(null);
   const [resultUrls, setResultUrls] = useState<string[]>([]);
+  const [createdCount, setCreatedCount] = useState(0);
+  const [mergedCount, setMergedCount] = useState(0);
   const [uploadId, setUploadId] = useState<string | null>(null);
-  const [storagePath, setStoragePath] = useState<string | null>(null);
   const [extractedImages, setExtractedImages] = useState<ExtractedImage[]>([]);
   const [extracting, setExtracting] = useState(false);
-  // imageId -> facility index it will attach to ("none" = skip)
   const [imageAssignments, setImageAssignments] = useState<Record<string, number | "none">>({});
   const [committedKeys, setCommittedKeys] = useState<string[]>([]);
+  const [importTargets, setImportTargets] = useState<FacilityImportTarget[]>([]);
 
-  // Gate: must be logged in AND belong to an organization
+  const [orgName, setOrgName] = useState<string | null>(null);
+  const [orgSlug, setOrgSlug] = useState<string | null>(null);
+  const [orgReady, setOrgReady] = useState(false);
+  const [orgMissing, setOrgMissing] = useState(false);
+  const [existingFacilities, setExistingFacilities] = useState<ExistingFacilityRow[]>([]);
+  const [existingContracts, setExistingContracts] = useState<ExistingContractRow[]>([]);
+  const [approvedPayers, setApprovedPayers] = useState<PayerMatchInput[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (authLoading) return;
+      if (!targetOrgId) {
+        setOrgReady(true);
+        setOrgMissing(false);
+        setOrgName(null);
+        setOrgSlug(null);
+        setExistingFacilities([]);
+        setExistingContracts([]);
+        return;
+      }
+      setOrgReady(false);
+      const [{ data: org, error: orgErr }, { data: facs }] = await Promise.all([
+        supabase.from("organizations").select("id,name,slug").eq("id", targetOrgId).maybeSingle(),
+        supabase.from("facilities").select(EXISTING_FACILITY_SELECT).eq("organization_id", targetOrgId).order("name"),
+      ]);
+      if (cancelled) return;
+      if (orgErr || !org) {
+        setOrgMissing(true);
+        setOrgName(null);
+        setOrgSlug(null);
+        setExistingFacilities([]);
+        setExistingContracts([]);
+        setOrgReady(true);
+        return;
+      }
+      const rows = (facs as ExistingFacilityRow[]) ?? [];
+      setOrgMissing(false);
+      setOrgName(org.name);
+      setOrgSlug(org.slug ?? null);
+      setExistingFacilities(rows);
+      if (rows.length) {
+        const { data: contracts } = await supabase
+          .from("insurance_contracts")
+          .select("facility_id,payer_id,payer_name,in_network,plan_types")
+          .in("facility_id", rows.map((row) => row.id));
+        if (!cancelled) setExistingContracts((contracts as ExistingContractRow[]) ?? []);
+      } else {
+        setExistingContracts([]);
+      }
+      setOrgReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, targetOrgId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadApprovedPayers()
+      .then((payers) => {
+        if (!cancelled) setApprovedPayers(payers);
+      })
+      .catch(() => {
+        if (!cancelled) setApprovedPayers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const contractsByFacility = useMemo(() => {
+    const map = new Map<string, ExistingContractRow[]>();
+    for (const row of existingContracts) {
+      const list = map.get(row.facility_id) ?? [];
+      list.push(row);
+      map.set(row.facility_id, list);
+    }
+    return map;
+  }, [existingContracts]);
+
+  const existingById = useMemo(() => {
+    const map = new Map<string, ExistingFacilityRow>();
+    for (const row of existingFacilities) map.set(row.id, row);
+    return map;
+  }, [existingFacilities]);
+
+  if (authLoading || !orgReady) {
+    return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
+  }
+
   if (!user) {
     return (
       <Card className="max-w-xl mx-auto p-8 text-center space-y-3">
         <Lock className="h-8 w-8 mx-auto text-muted-foreground" />
         <h2 className="font-heading text-xl font-semibold">Sign in to upload</h2>
-        <p className="text-sm text-muted-foreground">PDF uploads are for verified platform users only.</p>
+        <p className="text-sm text-muted-foreground">PDF uploads are for organization admins only.</p>
         <Button asChild><Link to="/login">Sign in</Link></Button>
       </Card>
     );
   }
-  if (!profile?.organization_id) {
+
+  if (!isFacilityAdmin) {
     return (
       <Card className="max-w-xl mx-auto p-8 text-center space-y-3">
-        <Building2 className="h-8 w-8 mx-auto text-primary" />
-        <h2 className="font-heading text-xl font-semibold">Create your organization first</h2>
+        <Lock className="h-8 w-8 mx-auto text-muted-foreground" />
+        <h2 className="font-heading text-xl font-semibold">Admin access required</h2>
         <p className="text-sm text-muted-foreground">
-          PDF uploads are linked to your organization. Set yours up — it takes a minute — then come back.
+          Only organization admins can import facilities and insurance from a PDF.
         </p>
-        <Button asChild><Link to="/setup-organization">Join or create organization</Link></Button>
+        <Button asChild variant="outline"><Link to="/app">Back to app</Link></Button>
       </Card>
     );
   }
 
+  if (!targetOrgId) {
+    return (
+      <Card className="max-w-xl mx-auto p-8 text-center space-y-3">
+        <Building2 className="h-8 w-8 mx-auto text-primary" />
+        <h2 className="font-heading text-xl font-semibold">
+          {isSuperAdmin ? "Choose an organization first" : "Create your organization first"}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {isSuperAdmin
+            ? "Open an organization from Admin and use Upload PDF, or create a new organization first."
+            : "PDF uploads are linked to your organization. Set yours up, then come back."}
+        </p>
+        <Button asChild>
+          <Link to={isSuperAdmin ? "/app/admin/organizations" : "/setup-organization"}>
+            {isSuperAdmin ? "Browse organizations" : "Join or create organization"}
+          </Link>
+        </Button>
+      </Card>
+    );
+  }
+
+  if (orgMissing) {
+    return (
+      <Card className="max-w-xl mx-auto p-8 text-center space-y-3">
+        <Building2 className="h-8 w-8 mx-auto text-muted-foreground" />
+        <h2 className="font-heading text-xl font-semibold">Organization not found</h2>
+        <p className="text-sm text-muted-foreground">That organization id is missing or you cannot access it.</p>
+        <Button asChild variant="outline">
+          <Link to={isSuperAdmin ? "/app/admin/organizations" : "/app"}>Back</Link>
+        </Button>
+      </Card>
+    );
+  }
+
+  const applySuggestedTargets = (facilities: ParsedFacility[]) => {
+    setImportTargets(suggestedImportTargets(facilities, existingFacilities));
+  };
 
   const handleFile = async (file: File) => {
     const pdfCheck = await assertPdfFile(file);
@@ -133,23 +245,23 @@ export default function PdfFacilityUpload() {
     setFileName(file.name);
     setCommittedKeys([]);
     setResultUrls([]);
+    setCreatedCount(0);
+    setMergedCount(0);
+    setImportTargets([]);
     setStage("parsing");
-    const orgId = profile!.organization_id!;
     try {
-      // 1. Upload PDF to private, org-scoped storage (path: <org_id>/<uuid>.pdf)
-      const path = `${orgId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const path = `${targetOrgId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
       const { error: upErr } = await supabase.storage
         .from("facility-pdfs")
         .upload(path, file, { contentType: "application/pdf", upsert: false });
       if (upErr) throw upErr;
-      setStoragePath(path);
 
-      // 2. Record the upload (RLS enforces it must be tied to the user's org)
+      let recId: string | null = null;
       const { data: rec, error: recErr } = await supabase
         .from("facility_pdf_uploads")
         .insert({
-          organization_id: orgId,
-          uploaded_by: user!.id,
+          organization_id: targetOrgId,
+          uploaded_by: user.id,
           filename: file.name,
           storage_path: path,
           size_bytes: file.size,
@@ -157,26 +269,32 @@ export default function PdfFacilityUpload() {
         })
         .select("id")
         .single();
-      if (recErr) throw recErr;
-      setUploadId(rec.id);
+      if (recErr) {
+        console.warn("facility_pdf_uploads insert failed", recErr);
+      } else {
+        recId = rec.id;
+        setUploadId(rec.id);
+      }
 
-      // 3. Parse with AI vision
       const pdf_base64 = await fileToBase64(file);
       const { data, error } = await supabase.functions.invoke("parse-facility-pdf", {
-        body: { pdf_base64, filename: file.name, upload_id: rec.id },
+        body: { pdf_base64, filename: file.name, upload_id: recId },
       });
       if (error) throw error;
-      const parseResult = data as ParsedPayload & { error?: string; images?: ExtractedImage[] };
+      const parseResult = data as ParsedPdfPayload & { error?: string };
       if (parseResult?.error) throw new Error(parseResult.error);
-      const parsedData = parseResult as ParsedPayload;
+      const parsedData = parseResult as ParsedPdfPayload;
+      if (!parsedData.facilities?.length) throw new Error("No facilities detected in the PDF");
       setParsed(parsedData);
-      await supabase
-        .from("facility_pdf_uploads")
-        .update({ status: "parsed", parsed_payload: parsedData as unknown as Record<string, unknown> })
-        .eq("id", rec.id);
+      applySuggestedTargets(parsedData.facilities);
+      if (recId) {
+        await supabase
+          .from("facility_pdf_uploads")
+          .update({ status: "parsed", parsed_payload: parsedData as unknown as Record<string, unknown> })
+          .eq("id", recId);
+      }
       setStage("review");
 
-      // 4. Kick off image extraction in the background — non-fatal if it fails
       setExtracting(true);
       supabase.functions
         .invoke("extract-pdf-images", { body: { storage_path: path } })
@@ -188,7 +306,6 @@ export default function PdfFacilityUpload() {
           }
           const imgs = imageResult?.images ?? [];
           setExtractedImages(imgs);
-          // Default every image to facility 0 (user can change or skip per image)
           const init: Record<string, number | "none"> = {};
           for (const img of imgs) init[img.id] = parsedData.facilities.length ? 0 : "none";
           setImageAssignments(init);
@@ -203,17 +320,18 @@ export default function PdfFacilityUpload() {
     }
   };
 
-
   const reset = () => {
     setStage("upload");
     setFileName("");
     setParsed(null);
     setResultUrls([]);
+    setCreatedCount(0);
+    setMergedCount(0);
     setCommittedKeys([]);
     setExtractedImages([]);
     setImageAssignments({});
     setUploadId(null);
-    setStoragePath(null);
+    setImportTargets([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -221,7 +339,6 @@ export default function PdfFacilityUpload() {
     setImageAssignments((prev) => ({ ...prev, [imageId]: value }));
   };
 
-  // Upload approved images to facility-images bucket and return URLs grouped by facility index
   const uploadApprovedImages = async (orgId: string): Promise<Record<number, string[]>> => {
     const byFacility: Record<number, string[]> = {};
     for (const img of extractedImages) {
@@ -229,7 +346,6 @@ export default function PdfFacilityUpload() {
       if (assignment === "none" || assignment === undefined) continue;
       const facilityIdx = assignment as number;
       try {
-        // base64 -> Blob
         const bin = atob(img.data_base64);
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -253,16 +369,19 @@ export default function PdfFacilityUpload() {
     return byFacility;
   };
 
-  const updateOrg = (patch: Partial<ParsedPayload["organization"]>) => {
-    if (!parsed) return;
-    setParsed({ ...parsed, organization: { ...parsed.organization, ...patch } });
-  };
-
   const updateFacility = (idx: number, patch: Partial<ParsedFacility>) => {
     if (!parsed) return;
     const next = [...parsed.facilities];
     next[idx] = { ...next[idx], ...patch };
     setParsed({ ...parsed, facilities: next });
+  };
+
+  const setTarget = (idx: number, value: FacilityImportTarget) => {
+    setImportTargets((prev) => {
+      const next = [...prev];
+      next[idx] = value;
+      return next;
+    });
   };
 
   const removeFacility = (idx: number) => {
@@ -271,117 +390,133 @@ export default function PdfFacilityUpload() {
       ...parsed,
       facilities: parsed.facilities.filter((_, i) => i !== idx),
     });
+    setImportTargets((prev) => prev.filter((_, i) => i !== idx));
+    setImageAssignments((prev) => {
+      const next: Record<string, number | "none"> = {};
+      for (const [id, assignment] of Object.entries(prev)) {
+        if (assignment === "none") {
+          next[id] = "none";
+          continue;
+        }
+        if (assignment === idx) next[id] = "none";
+        else if (typeof assignment === "number" && assignment > idx) next[id] = assignment - 1;
+        else next[id] = assignment;
+      }
+      return next;
+    });
   };
 
+  const pendingFacilities = parsed
+    ? parsed.facilities.filter((f) => !committedKeys.includes(facilityCommitKey(f)))
+    : [];
+  const pendingCreates = parsed
+    ? parsed.facilities.filter((f, i) => {
+        if (committedKeys.includes(facilityCommitKey(f))) return false;
+        return !importTargets[i];
+      }).length
+    : 0;
+  const pendingMerges = parsed
+    ? parsed.facilities.filter((f, i) => {
+        if (committedKeys.includes(facilityCommitKey(f))) return false;
+        return !!importTargets[i];
+      }).length
+    : 0;
+
   const commit = async () => {
-    if (!parsed || !user) return;
+    if (!parsed || !user || !targetOrgId) return;
     setStage("committing");
     try {
-      // 1. Resolve organization id
-      let orgId = profile?.organization_id ?? null;
-
-      if (!orgId) {
-        // Try to find an existing org owned by user with the same name
-        const { data: existing } = await supabase
-          .from("organizations")
-          .select("id")
-          .eq("created_by", user.id)
-          .eq("name", parsed.organization.name)
-          .maybeSingle();
-
-        if (existing?.id) {
-          orgId = existing.id;
-        } else {
-          // Create a new org via RPC (this links the user as facility_admin too)
-          const emailDomain = (user.email ?? "").split("@")[1] ?? "";
-          const { data: newOrgId, error: rpcErr } = await supabase.rpc(
-            "create_organization_with_owner",
-            {
-              _name: parsed.organization.name,
-              _email_domain: emailDomain,
-              _website: parsed.organization.website ?? null,
-              _hq_city: parsed.organization.hq_city ?? null,
-              _hq_state: parsed.organization.hq_state ?? null,
-              _description: parsed.organization.description ?? null,
-              _phone: parsed.organization.phone ?? null,
-              _num_facilities: parsed.facilities.length,
-              _logo_url: null,
-            },
-          );
-          if (rpcErr) throw rpcErr;
-          orgId = newOrgId as string;
-        }
-      } else {
-        // Update existing org with any extracted org-level info that's missing
-        await supabase
-          .from("organizations")
-          .update({
-            website: parsed.organization.website ?? undefined,
-            phone: parsed.organization.phone ?? undefined,
-            hq_city: parsed.organization.hq_city ?? undefined,
-            hq_state: parsed.organization.hq_state ?? undefined,
-            description: parsed.organization.description ?? undefined,
-          })
-          .eq("id", orgId);
-      }
-
-      // 2. Upload only the user-approved extracted images
-      const approvedByFacility = await uploadApprovedImages(orgId!);
-
-      // 3. Insert facilities + contracts
-      const { data: orgRow } = await supabase
-        .from("organizations")
-        .select("slug")
-        .eq("id", orgId!)
-        .maybeSingle();
-      const orgSlug = orgRow?.slug ?? null;
-
-      const payers = await loadApprovedPayers();
+      const approvedByFacility = await uploadApprovedImages(targetOrgId);
+      const payers = approvedPayers.length ? approvedPayers : await loadApprovedPayers();
       const urls = [...resultUrls];
       const nextCommitted = new Set(committedKeys);
       const failed: { name: string; error: string }[] = [];
+      let created = createdCount;
+      let merged = mergedCount;
+
+      const liveContracts = new Map<string, ExistingContractRow[]>();
+      for (const [id, rows] of contractsByFacility) liveContracts.set(id, [...rows]);
+
+      const mergeBuckets = new Map<
+        string,
+        { name: string; extracted: ReturnType<typeof parsedFacilityContractDrafts>; imageUrls: string[]; keys: string[] }
+      >();
+
       for (let fIdx = 0; fIdx < parsed.facilities.length; fIdx++) {
         const f = parsed.facilities[fIdx];
         const key = facilityCommitKey(f);
         if (nextCommitted.has(key)) continue;
+        const targetId = importTargets[fIdx] ?? null;
+        const extracted = parsedFacilityContractDrafts(f, payers);
         const imageUrls = approvedByFacility[fIdx] ?? [];
-        const draft = {
-          ...emptyFacility(),
+
+        if (!targetId) {
+          const draft = parsedFacilityToDraft(f, extracted, imageUrls);
+          const result = await saveFacilityWithContracts({
+            organizationId: targetOrgId,
+            draft,
+            contractsMode: "all",
+          });
+          if (!result.ok) {
+            failed.push({ name: f.name, error: result.error });
+            continue;
+          }
+          nextCommitted.add(key);
+          created += 1;
+          if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
+          continue;
+        }
+
+        const bucket = mergeBuckets.get(targetId) ?? {
           name: f.name,
-          tagline: f.tagline ?? "",
-          address_line1: f.address_line1 ?? "",
-          city: f.city ?? "",
-          state: f.state ?? "",
-          zip: f.zip ?? "",
-          phone: f.phone ?? "",
-          website: f.website ?? "",
-          description: f.description ?? "",
-          capacity: f.capacity != null ? String(f.capacity) : "",
-          levels_of_care: f.levels_of_care ?? [],
-          highlights: f.highlights ?? [],
-          bd_contact_name: f.bd_contact_name ?? "",
-          bd_contact_phone: f.bd_contact_phone ?? "",
-          bd_contact_email: f.bd_contact_email ?? "",
-          image_urls: imageUrls,
-          contracts: [
-            ...buildFacilityContractDrafts(f.payers_in_network ?? [], true, payers),
-            ...buildFacilityContractDrafts(f.payers_out_of_network ?? [], false, payers),
-          ],
+          extracted: [],
+          imageUrls: [],
+          keys: [],
         };
+        bucket.extracted = mergeContractDrafts(bucket.extracted, extracted);
+        bucket.imageUrls = [...bucket.imageUrls, ...imageUrls];
+        bucket.keys.push(key);
+        mergeBuckets.set(targetId, bucket);
+      }
+
+      for (const [facilityId, bucket] of mergeBuckets) {
+        const existing = existingById.get(facilityId);
+        if (!existing) {
+          failed.push({ name: bucket.name, error: "Matched facility is no longer available" });
+          continue;
+        }
+        const current = (liveContracts.get(facilityId) ?? []).map(contractRowToDraft);
+        const contracts = mergeContractDrafts(current, bucket.extracted);
+        const draft = existingFacilityToDraft(existing, contracts, bucket.imageUrls);
         const result = await saveFacilityWithContracts({
-          organizationId: orgId!,
+          organizationId: targetOrgId,
+          facilityId,
           draft,
           contractsMode: "all",
         });
         if (!result.ok) {
-          failed.push({ name: f.name, error: result.error });
+          failed.push({ name: existing.name, error: result.error });
           continue;
         }
-        nextCommitted.add(key);
+        for (const key of bucket.keys) nextCommitted.add(key);
+        merged += 1;
+        liveContracts.set(
+          facilityId,
+          contracts.map((c) => ({
+            facility_id: facilityId,
+            payer_id: c.payer_id,
+            payer_name: c.payer_name,
+            in_network: c.in_network,
+            plan_types: c.plan_types,
+          })),
+        );
         if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
       }
+
       setCommittedKeys([...nextCommitted]);
       setResultUrls(urls);
+      setCreatedCount(created);
+      setMergedCount(merged);
 
       if (failed.length) {
         toast.error(
@@ -392,15 +527,18 @@ export default function PdfFacilityUpload() {
         return;
       }
 
-      setResultUrls(urls);
       if (uploadId) {
         await supabase
           .from("facility_pdf_uploads")
-          .update({ status: "committed", facilities_created: urls.length })
+          .update({ status: "committed", facilities_created: created })
           .eq("id", uploadId);
       }
       setStage("done");
-      toast.success(`${parsed.facilities.length} facility page${parsed.facilities.length === 1 ? "" : "s"} created.`);
+      const parts = [
+        created ? `${created} facilit${created === 1 ? "y" : "ies"} created` : null,
+        merged ? `insurance added to ${merged} existing` : null,
+      ].filter(Boolean);
+      toast.success(parts.join(" · ") || "Nothing to save");
     } catch (e: unknown) {
       console.error(e);
       const message = e instanceof Error ? e.message : "Please try again.";
@@ -409,20 +547,23 @@ export default function PdfFacilityUpload() {
     }
   };
 
+  const afterSaveHref = isSuperAdmin && queryOrgId
+    ? `/app/admin/organizations/${queryOrgId}?tab=facilities`
+    : "/app/facilities";
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2">
           <Wand2 className="h-7 w-7 text-primary" />
-          Turn your PDF into a live, shareable page
+          Import facilities from a PDF
         </h1>
         <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl">
-          Upload your facility one-pager. We read it directly — no made-up info — and
-          generate a clean, modern page you can share with one link.
+          Saving to <span className="font-medium text-foreground">{orgName}</span>.
+          New locations are created; matches only add missing insurance.
         </p>
       </div>
 
-      {/* Stage indicator */}
       <div className="flex items-center gap-2 text-xs">
         {(["upload", "review", "done"] as const).map((s, i) => {
           const active =
@@ -446,7 +587,7 @@ export default function PdfFacilityUpload() {
                 {done ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
               </div>
               <span className={active || done ? "font-medium" : "text-muted-foreground"}>
-                {s === "upload" ? "Upload PDF" : s === "review" ? "Confirm details" : "Share link"}
+                {s === "upload" ? "Upload PDF" : s === "review" ? "Confirm details" : "Done"}
               </span>
               {i < 2 && <div className="w-8 h-px bg-border mx-1" />}
             </div>
@@ -454,7 +595,6 @@ export default function PdfFacilityUpload() {
         })}
       </div>
 
-      {/* STAGE: UPLOAD */}
       {stage === "upload" && (
         <Card
           className="border-dashed border-2 p-10 text-center hover:border-primary/40 transition-colors cursor-pointer"
@@ -475,7 +615,7 @@ export default function PdfFacilityUpload() {
           </p>
           <div className="mt-5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <span>Reads your PDF directly — never makes anything up</span>
+            <span>Reads facilities and insurance directly — never makes anything up</span>
           </div>
           <input
             ref={fileInputRef}
@@ -490,7 +630,6 @@ export default function PdfFacilityUpload() {
         </Card>
       )}
 
-      {/* STAGE: PARSING */}
       {stage === "parsing" && (
         <Card className="p-10 text-center space-y-4">
           <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
@@ -503,7 +642,6 @@ export default function PdfFacilityUpload() {
         </Card>
       )}
 
-      {/* STAGE: REVIEW */}
       {stage === "review" && parsed && (
         <div className="space-y-5">
           <Card className="p-4 flex items-center justify-between gap-3 flex-wrap">
@@ -515,7 +653,7 @@ export default function PdfFacilityUpload() {
                 <p className="font-medium truncate">{fileName}</p>
                 <p className="text-xs text-muted-foreground">
                   {parsed.facilities.length} facilit
-                  {parsed.facilities.length === 1 ? "y" : "ies"} detected
+                  {parsed.facilities.length === 1 ? "y" : "ies"} detected · saving to {orgName}
                 </p>
               </div>
             </div>
@@ -524,63 +662,32 @@ export default function PdfFacilityUpload() {
             </Button>
           </Card>
 
-          {/* Organization */}
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
+          <Card className="p-5 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <h2 className="font-heading text-lg font-semibold">Organization</h2>
-              <Badge variant="secondary" className="text-xs">From PDF</Badge>
+              <Badge variant="secondary" className="text-xs">Existing — not overwritten</Badge>
             </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
-                <Label>Name</Label>
-                <Input
-                  value={parsed.organization.name}
-                  onChange={(e) => updateOrg({ name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Website</Label>
-                <Input
-                  value={parsed.organization.website ?? ""}
-                  onChange={(e) => updateOrg({ website: e.target.value })}
-                  placeholder="https://"
-                />
-              </div>
-              <div>
-                <Label>Phone</Label>
-                <Input
-                  value={parsed.organization.phone ?? ""}
-                  onChange={(e) => updateOrg({ phone: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>HQ City</Label>
-                <Input
-                  value={parsed.organization.hq_city ?? ""}
-                  onChange={(e) => updateOrg({ hq_city: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>HQ State</Label>
-                <Input
-                  value={parsed.organization.hq_state ?? ""}
-                  onChange={(e) => updateOrg({ hq_state: e.target.value })}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Label>Description</Label>
-                <Textarea
-                  rows={2}
-                  value={parsed.organization.description ?? ""}
-                  onChange={(e) => updateOrg({ description: e.target.value })}
-                />
-              </div>
-            </div>
+            <p className="font-medium">{orgName}</p>
+            {parsed.organization.name && parsed.organization.name !== orgName && (
+              <p className="text-xs text-muted-foreground">
+                PDF listed “{parsed.organization.name}”. We will not change the org profile from this upload.
+              </p>
+            )}
           </Card>
 
-          {/* Facilities */}
           {parsed.facilities.map((f, idx) => {
-            const alreadyCreated = committedKeys.includes(facilityCommitKey(f));
+            const alreadySaved = committedKeys.includes(facilityCommitKey(f));
+            const targetId = importTargets[idx] ?? null;
+            const matched = targetId ? existingById.get(targetId) : null;
+            const extractedDrafts = parsedFacilityContractDrafts(f, approvedPayers);
+            const existingDrafts = targetId
+              ? (contractsByFacility.get(targetId) ?? []).map(contractRowToDraft)
+              : [];
+            const delta = targetId
+              ? countNewContracts(existingDrafts, extractedDrafts)
+              : { newCount: extractedDrafts.length, alreadyCount: 0 };
+            const duplicateTarget = !!targetId && importTargets.filter((id) => id === targetId).length > 1;
+
             return (
             <Card key={idx} className="p-5 space-y-4">
               <div className="flex items-start justify-between gap-2">
@@ -590,20 +697,55 @@ export default function PdfFacilityUpload() {
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Facility {idx + 1} of {parsed.facilities.length}
-                    {alreadyCreated ? " · already created" : ""}
+                    {alreadySaved ? " · already saved" : ""}
                   </p>
                 </div>
-                {alreadyCreated ? (
-                  <Badge variant="secondary">Created</Badge>
-                ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeFacility(idx)}
-                  className="text-destructive hover:text-destructive"
+                <div className="flex items-center gap-2">
+                  {alreadySaved ? (
+                    <Badge variant="secondary">Saved</Badge>
+                  ) : matched ? (
+                    <Badge variant="secondary">Add insurance to existing</Badge>
+                  ) : (
+                    <Badge>Create new</Badge>
+                  )}
+                  {!alreadySaved && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFacility(idx)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Save as</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  disabled={alreadySaved}
+                  value={targetId ?? ""}
+                  onChange={(e) => setTarget(idx, e.target.value || null)}
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <option value="">Create new facility</option>
+                  {existingFacilities.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.name}
+                      {row.city ? ` (${row.city}${row.state ? `, ${row.state}` : ""})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {matched
+                    ? `${delta.newCount} new payer${delta.newCount === 1 ? "" : "s"}, ${delta.alreadyCount} already listed. Existing profile fields stay as they are.`
+                    : `${delta.newCount} insurance contract${delta.newCount === 1 ? "" : "s"} will be created with this facility.`}
+                </p>
+                {duplicateTarget && (
+                  <p className="text-xs text-amber-700">
+                    Another extracted facility is also targeting this location. Insurance from both will be merged in one save.
+                  </p>
                 )}
               </div>
 
@@ -612,82 +754,87 @@ export default function PdfFacilityUpload() {
                   <Label>Name</Label>
                   <Input
                     value={f.name}
-                    disabled={alreadyCreated}
+                    disabled={alreadySaved || !!matched}
                     onChange={(e) => updateFacility(idx, { name: e.target.value })}
                   />
                 </div>
-                <div className="sm:col-span-2">
-                  <Label>Tagline</Label>
-                  <Input
-                    value={f.tagline ?? ""}
-                    onChange={(e) => updateFacility(idx, { tagline: e.target.value })}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label>Address</Label>
-                  <Input
-                    value={f.address_line1 ?? ""}
-                    disabled={alreadyCreated}
-                    onChange={(e) => updateFacility(idx, { address_line1: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>City</Label>
-                  <Input
-                    value={f.city ?? ""}
-                    disabled={alreadyCreated}
-                    onChange={(e) => updateFacility(idx, { city: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label>State</Label>
-                    <Input
-                      value={f.state ?? ""}
-                      onChange={(e) => updateFacility(idx, { state: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Zip</Label>
-                    <Input
-                      value={f.zip ?? ""}
-                      onChange={(e) => updateFacility(idx, { zip: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Phone</Label>
-                  <Input
-                    value={f.phone ?? ""}
-                    onChange={(e) => updateFacility(idx, { phone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Website</Label>
-                  <Input
-                    value={f.website ?? ""}
-                    onChange={(e) => updateFacility(idx, { website: e.target.value })}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label>Levels of Care</Label>
-                  <Input
-                    value={(f.levels_of_care ?? []).join(", ")}
-                    onChange={(e) =>
-                      updateFacility(idx, {
-                        levels_of_care: e.target.value
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter(Boolean),
-                      })
-                    }
-                    placeholder="Detox, Residential, PHP"
-                  />
-                </div>
+                {!matched && (
+                  <>
+                    <div className="sm:col-span-2">
+                      <Label>Tagline</Label>
+                      <Input
+                        value={f.tagline ?? ""}
+                        onChange={(e) => updateFacility(idx, { tagline: e.target.value })}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Address</Label>
+                      <Input
+                        value={f.address_line1 ?? ""}
+                        disabled={alreadySaved}
+                        onChange={(e) => updateFacility(idx, { address_line1: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>City</Label>
+                      <Input
+                        value={f.city ?? ""}
+                        disabled={alreadySaved}
+                        onChange={(e) => updateFacility(idx, { city: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label>State</Label>
+                        <Input
+                          value={f.state ?? ""}
+                          onChange={(e) => updateFacility(idx, { state: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label>Zip</Label>
+                        <Input
+                          value={f.zip ?? ""}
+                          onChange={(e) => updateFacility(idx, { zip: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Phone</Label>
+                      <Input
+                        value={f.phone ?? ""}
+                        onChange={(e) => updateFacility(idx, { phone: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Website</Label>
+                      <Input
+                        value={f.website ?? ""}
+                        onChange={(e) => updateFacility(idx, { website: e.target.value })}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Levels of Care</Label>
+                      <Input
+                        value={(f.levels_of_care ?? []).join(", ")}
+                        onChange={(e) =>
+                          updateFacility(idx, {
+                            levels_of_care: e.target.value
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                        placeholder="Detox, Residential, PHP"
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="sm:col-span-2">
                   <Label>In-Network Payers</Label>
                   <Textarea
                     rows={2}
+                    disabled={alreadySaved}
                     value={(f.payers_in_network ?? []).join(", ")}
                     onChange={(e) =>
                       updateFacility(idx, {
@@ -711,38 +858,39 @@ export default function PdfFacilityUpload() {
                     ))}
                   </div>
                 </div>
-                <div className="sm:col-span-2">
-                  <Label>BD Contact</Label>
-                  <div className="grid sm:grid-cols-3 gap-2">
-                    <Input
-                      value={f.bd_contact_name ?? ""}
-                      onChange={(e) =>
-                        updateFacility(idx, { bd_contact_name: e.target.value })
-                      }
-                      placeholder="Name"
-                    />
-                    <Input
-                      value={f.bd_contact_phone ?? ""}
-                      onChange={(e) =>
-                        updateFacility(idx, { bd_contact_phone: e.target.value })
-                      }
-                      placeholder="Phone"
-                    />
-                    <Input
-                      value={f.bd_contact_email ?? ""}
-                      onChange={(e) =>
-                        updateFacility(idx, { bd_contact_email: e.target.value })
-                      }
-                      placeholder="Email"
-                    />
+                {!matched && (
+                  <div className="sm:col-span-2">
+                    <Label>BD Contact</Label>
+                    <div className="grid sm:grid-cols-3 gap-2">
+                      <Input
+                        value={f.bd_contact_name ?? ""}
+                        onChange={(e) =>
+                          updateFacility(idx, { bd_contact_name: e.target.value })
+                        }
+                        placeholder="Name"
+                      />
+                      <Input
+                        value={f.bd_contact_phone ?? ""}
+                        onChange={(e) =>
+                          updateFacility(idx, { bd_contact_phone: e.target.value })
+                        }
+                        placeholder="Phone"
+                      />
+                      <Input
+                        value={f.bd_contact_email ?? ""}
+                        onChange={(e) =>
+                          updateFacility(idx, { bd_contact_email: e.target.value })
+                        }
+                        placeholder="Email"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </Card>
             );
           })}
 
-          {/* Photos from PDF — user approves each */}
           {(extracting || extractedImages.length > 0) && (
             <Card className="p-5 space-y-4">
               <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -753,7 +901,7 @@ export default function PdfFacilityUpload() {
                       ? "Looking for photos…"
                       : extractedImages.length === 0
                       ? "No usable photos found in the PDF."
-                      : "Pick which photos should appear on your live page. Skip any you don't want included."}
+                      : "New facilities get assigned photos. Existing facilities only append photos you assign here."}
                   </p>
                 </div>
                 {!extracting && extractedImages.length > 0 && (
@@ -834,9 +982,9 @@ export default function PdfFacilityUpload() {
                             }
                             className="absolute bottom-1 left-1 right-1 text-[10px] bg-background/90 backdrop-blur rounded px-1 py-0.5 border border-border"
                           >
-                            {parsed.facilities.map((f, i) => (
+                            {parsed.facilities.map((fac, i) => (
                               <option key={i} value={i}>
-                                {f.name || `Facility ${i + 1}`}
+                                {fac.name || `Facility ${i + 1}`}
                               </option>
                             ))}
                           </select>
@@ -849,17 +997,17 @@ export default function PdfFacilityUpload() {
             </Card>
           )}
 
-          {/* Commit bar */}
           <div className="sticky bottom-4 z-10">
             <Card className="p-4 flex items-center justify-between gap-3 flex-wrap shadow-lg border-primary/20">
               <p className="text-sm">
-                Looks right? We'll create{" "}
-                <span className="font-semibold">
-                  {parsed.facilities.filter((f) => !committedKeys.includes(facilityCommitKey(f))).length} live page
-                  {parsed.facilities.filter((f) => !committedKeys.includes(facilityCommitKey(f))).length === 1 ? "" : "s"}
-                </span>{" "}
-                with shareable links
-                {committedKeys.length > 0 ? ` (${committedKeys.length} already created).` : "."}
+                {pendingCreates > 0 && pendingMerges > 0
+                  ? `Create ${pendingCreates} new and add insurance to ${pendingMerges} existing.`
+                  : pendingMerges > 0
+                  ? `Add insurance to ${pendingMerges} existing facilit${pendingMerges === 1 ? "y" : "ies"}.`
+                  : pendingCreates > 0
+                  ? `Create ${pendingCreates} new facilit${pendingCreates === 1 ? "y" : "ies"}.`
+                  : "Nothing left to save."}
+                {committedKeys.length > 0 ? ` (${committedKeys.length} already saved).` : ""}
               </p>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={reset}>
@@ -868,16 +1016,12 @@ export default function PdfFacilityUpload() {
                 <Button
                   size="sm"
                   onClick={commit}
-                  disabled={
-                    !parsed.facilities.some((f) => !committedKeys.includes(facilityCommitKey(f))) ||
-                    stage !== "review" ||
-                    extracting
-                  }
+                  disabled={!pendingFacilities.length || stage !== "review" || extracting}
                 >
                   {extracting ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Finding photos…</>
                   ) : (
-                    <><CheckCircle2 className="h-4 w-4" /> Confirm & create</>
+                    <><CheckCircle2 className="h-4 w-4" /> Confirm & save</>
                   )}
                 </Button>
               </div>
@@ -886,29 +1030,30 @@ export default function PdfFacilityUpload() {
         </div>
       )}
 
-      {/* STAGE: COMMITTING */}
       {stage === "committing" && (
         <Card className="p-10 text-center space-y-4">
           <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
-          <p className="font-semibold">Creating your pages…</p>
+          <p className="font-semibold">Saving facilities and insurance…</p>
         </Card>
       )}
 
-      {/* STAGE: DONE */}
       {stage === "done" && (
         <Card className="p-8 text-center space-y-5">
           <div className="mx-auto h-14 w-14 rounded-full bg-success/15 grid place-items-center">
             <CheckCircle2 className="h-7 w-7 text-success" />
           </div>
           <div>
-            <h2 className="font-heading text-2xl font-bold">You're live</h2>
+            <h2 className="font-heading text-2xl font-bold">Import complete</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {resultUrls.length} page{resultUrls.length === 1 ? "" : "s"} created and ready to share.
+              {[
+                createdCount ? `${createdCount} new page${createdCount === 1 ? "" : "s"}` : null,
+                mergedCount ? `insurance updated on ${mergedCount}` : null,
+              ].filter(Boolean).join(" · ") || "No changes were needed."}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <Button onClick={() => navigate("/app/facilities")}>
-              View my facilities <ArrowRight className="h-4 w-4" />
+            <Button onClick={() => navigate(afterSaveHref)}>
+              View facilities <ArrowRight className="h-4 w-4" />
             </Button>
             <Button variant="outline" onClick={reset}>
               <Plus className="h-4 w-4" /> Upload another PDF

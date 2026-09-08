@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   Link2,
   Palette,
+  Wand2,
 } from "lucide-react";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
@@ -255,9 +256,16 @@ export default function AdminOrgWorkspace() {
         </TabsContent>
 
         <TabsContent value="facilities" className="mt-6 space-y-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="font-heading text-xl font-bold">Facilities</h2>
-            <AddFacilityDialog organizationId={org.id} onCreated={load} />
+            <div className="flex items-center gap-2">
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/app/facilities/upload-pdf?orgId=${org.id}`}>
+                  <Wand2 className="h-4 w-4" /> Upload PDF
+                </Link>
+              </Button>
+              <AddFacilityDialog organizationId={org.id} onCreated={load} />
+            </div>
           </div>
 
           {facilities.length === 0 ? (

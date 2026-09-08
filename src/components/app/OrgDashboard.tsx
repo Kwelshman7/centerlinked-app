@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -128,6 +129,8 @@ export function OrgDashboard({
     : "/app/settings";
 
   const membersHref = adminMode ? null : "/app/members";
+
+  const uploadPdfHref = `/app/facilities/upload-pdf?orgId=${organizationId}`;
 
   const facilityDetailHref = (id: string) => `/app/facilities/${id}`;
 
@@ -361,6 +364,13 @@ export function OrgDashboard({
                   triggerClassName="w-full justify-start h-10"
                   triggerVariant="ghost"
                 />
+                {canManageFacilityVisibility && (
+                  <Button asChild variant="ghost" className="h-10 justify-start font-normal">
+                    <Link to={uploadPdfHref}>
+                      <Wand2 className="h-4 w-4" /> Upload PDF
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="ghost" className="h-10 justify-start font-normal">
                   <Link to={facilitiesHref}>
                     <Pencil className="h-4 w-4" /> Edit facilities
@@ -408,7 +418,7 @@ export function OrgDashboard({
         </div>
 
         {/* Desktop / tablet: single row */}
-        <div className="hidden md:grid md:grid-cols-6 gap-2">
+        <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-7 gap-2">
           <AddFacilityDialog
             organizationId={organizationId}
             onCreated={reloadFacilities}
@@ -416,6 +426,13 @@ export function OrgDashboard({
             triggerClassName="w-full justify-center lg:justify-start h-10 px-2 lg:px-3 text-xs lg:text-sm"
             triggerVariant="outline"
           />
+          {canManageFacilityVisibility && (
+            <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
+              <Link to={uploadPdfHref}>
+                <Wand2 className="h-4 w-4" /> Upload PDF
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
             <Link to={facilitiesHref}>
               <Pencil className="h-4 w-4" /> Edit facilities

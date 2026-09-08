@@ -7,21 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageUploader } from "@/components/app/ImageUploader";
 import { programPublicPath } from "@/lib/public-urls";
 import { toast } from "sonner";
 import {
-  ArrowLeft, ArrowRight, Building2, Loader2, Lock, Upload, Sparkles, Wand2,
-  Plus, Trash2, CheckCircle2, FileText, X, AlertTriangle,
+  ArrowLeft, ArrowRight, Building2, Loader2, Lock, Upload, Wand2,
+  Plus, Trash2, CheckCircle2, AlertTriangle,
 } from "lucide-react";
 import {
   LEVELS_OF_CARE, HIGHLIGHT_OPTIONS, POPULATION_OPTIONS,
-  SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS, emptyFacility,
+  SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS,
 } from "@/components/app/facility/facility-types";
-import { fileToBase64 } from "@/lib/files";
-import { assertImageFile, assertPdfFile } from "@/lib/upload-guards";
+import { assertImageFile } from "@/lib/upload-guards";
 import { buildFacilityContractDrafts } from "@/lib/match-payer";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
 import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
@@ -62,30 +60,9 @@ const emptyFacility = (): ManualFacility => ({
   image_urls: [], payers_in_network: "", payers_out_of_network: "",
 });
 
-interface PdfFacility {
-  name: string;
-  tagline?: string | null;
-  address_line1?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zip?: string | null;
-  phone?: string | null;
-  website?: string | null;
-  description?: string | null;
-  capacity?: number | null;
-  levels_of_care?: string[];
-  highlights?: string[];
-  bd_contact_name?: string | null;
-  bd_contact_phone?: string | null;
-  bd_contact_email?: string | null;
-  payers_in_network?: string[];
-  payers_out_of_network?: string[];
-}
-
 export default function AdminCreateOrganization() {
   const navigate = useNavigate();
   const { user, isSuperAdmin, loading } = useAuth();
-  const pdfRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
 
   const [stage, setStage] = useState<Stage>("create-org");
@@ -119,12 +96,6 @@ export default function AdminCreateOrganization() {
     }, 400);
     return () => clearTimeout(t);
   }, [orgForm.name]);
-
-  // PDF flow state
-  const [pdfBusy, setPdfBusy] = useState(false);
-  const [pdfFilename, setPdfFilename] = useState("");
-  const [parsedFacilities, setParsedFacilities] = useState<PdfFacility[] | null>(null);
-  const [committing, setCommitting] = useState(false);
 
   // Manual flow state
   const [manualFacilities, setManualFacilities] = useState<ManualFacility[]>([emptyFacility()]);
@@ -234,103 +205,7 @@ export default function AdminCreateOrganization() {
     toast.success("Logo uploaded");
   };
 
-  /* ---------- STAGE 2a: PDF flow ---------- */
-  const handlePdf = async (file: File) => {
-    if (!orgId) return;
-    const pdfCheck = await assertPdfFile(file);
-    if (!pdfCheck.ok) {
-      toast.error(pdfCheck.error);
-      return;
-    }
-    setPdfFilename(file.name);
-    setPdfBusy(true);
-    try {
-      const path = `${orgId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const { error: upErr } = await supabase.storage
-        .from("facility-pdfs")
-        .upload(path, file, { contentType: "application/pdf", upsert: false });
-      if (upErr) throw upErr;
-
-      const pdf_base64 = await fileToBase64(file);
-      const { data, error } = await supabase.functions.invoke("parse-facility-pdf", {
-        body: { pdf_base64, filename: file.name },
-      });
-      if (error) throw error;
-      const parseResult = data as { error?: string; facilities?: PdfFacility[] } | null;
-      if (parseResult?.error) throw new Error(parseResult.error);
-      const facilities = parseResult?.facilities ?? [];
-      if (!facilities.length) throw new Error("No facilities detected in the PDF");
-      setParsedFacilities(facilities);
-      toast.success(`Extracted ${facilities.length} facility${facilities.length === 1 ? "" : "s"}`);
-    } catch (e: unknown) {
-      console.error(e);
-      toast.error(e instanceof Error ? e.message : "Couldn't read that PDF");
-      setPdfFilename("");
-    } finally {
-      setPdfBusy(false);
-    }
-  };
-
-  const commitParsedFacilities = async () => {
-    if (!orgId || !parsedFacilities || !user) return;
-    setCommitting(true);
-    const urls: string[] = [];
-    const failed: { name: string; error: string }[] = [];
-    try {
-      const payers = await loadApprovedPayers();
-      for (const f of parsedFacilities) {
-        const draft = {
-          ...emptyFacility(),
-          name: f.name,
-          tagline: f.tagline ?? "",
-          address_line1: f.address_line1 ?? "",
-          city: f.city ?? "",
-          state: f.state ?? "",
-          zip: f.zip ?? "",
-          phone: f.phone ?? "",
-          website: f.website ?? "",
-          description: f.description ?? "",
-          capacity: f.capacity != null ? String(f.capacity) : "",
-          levels_of_care: f.levels_of_care ?? [],
-          highlights: f.highlights ?? [],
-          bd_contact_name: f.bd_contact_name ?? "",
-          bd_contact_phone: f.bd_contact_phone ?? "",
-          bd_contact_email: f.bd_contact_email ?? "",
-          contracts: [
-            ...buildFacilityContractDrafts(f.payers_in_network ?? [], true, payers),
-            ...buildFacilityContractDrafts(f.payers_out_of_network ?? [], false, payers),
-          ],
-        };
-        const result = await saveFacilityWithContracts({
-          organizationId: orgId,
-          draft,
-          contractsMode: "all",
-        });
-        if (!result.ok) {
-          failed.push({ name: f.name, error: result.error });
-          continue;
-        }
-        if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
-      }
-      if (failed.length) {
-        toast.error(
-          `${urls.length} saved, ${failed.length} failed`,
-          { description: failed.map((x) => `${x.name}: ${x.error}`).join(" · ") },
-        );
-        return;
-      }
-      setCreatedFacilityUrls(urls);
-      setStage("done");
-      toast.success("Facilities created");
-    } catch (e: unknown) {
-      console.error(e);
-      toast.error(e instanceof Error ? e.message : "Couldn't save facilities");
-    } finally {
-      setCommitting(false);
-    }
-  };
-
-  /* ---------- STAGE 2b: manual flow ---------- */
+  /* ---------- STAGE 2: add facilities ---------- */
   const updateManual = (idx: number, patch: Partial<ManualFacility>) => {
     setManualFacilities((prev) => prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
   };
@@ -623,71 +498,18 @@ export default function AdminCreateOrganization() {
 
             {/* PDF TAB */}
             <TabsContent value="pdf" className="mt-4 space-y-4">
-              {!parsedFacilities && (
-                <Card className="border-dashed border-2 p-10 text-center cursor-pointer hover:border-primary/40 transition-colors"
-                  onClick={() => pdfRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handlePdf(f); }}>
-                  {pdfBusy ? (
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                      <p className="text-sm font-medium">Reading {pdfFilename}…</p>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 mx-auto text-primary mb-2" />
-                      <p className="font-semibold">Drop the org's one-pager PDF</p>
-                      <p className="text-xs text-muted-foreground mt-1">or click to browse · PDF up to 15MB</p>
-                      <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                        <Sparkles className="h-3.5 w-3.5 text-primary" />
-                        <span>AI extracts facilities, addresses, levels of care & insurance</span>
-                      </div>
-                    </>
-                  )}
-                  <input ref={pdfRef} type="file" accept="application/pdf" hidden
-                    onChange={(e) => e.target.files?.[0] && handlePdf(e.target.files[0])} />
-                </Card>
-              )}
-
-              {parsedFacilities && (
-                <Card className="p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-primary" />
-                        Extracted {parsedFacilities.length} facility{parsedFacilities.length === 1 ? "" : "s"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{pdfFilename}</p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => { setParsedFacilities(null); setPdfFilename(""); }}>
-                      <X className="h-3.5 w-3.5" /> Discard
-                    </Button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {parsedFacilities.map((f, i) => (
-                      <div key={i} className="rounded-lg border p-3 text-sm">
-                        <p className="font-semibold">{f.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {[f.address_line1, f.city, f.state, f.zip].filter(Boolean).join(", ") || "No address"}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {(f.levels_of_care ?? []).map((l) => <Badge key={l} variant="secondary" className="text-[10px]">{l}</Badge>)}
-                        </div>
-                        {(f.payers_in_network?.length ?? 0) > 0 && (
-                          <p className="text-[11px] text-muted-foreground mt-2">
-                            <span className="font-semibold">In-network:</span> {f.payers_in_network!.join(", ")}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button onClick={commitParsedFacilities} disabled={committing} size="lg" className="w-full sm:w-auto">
-                    {committing ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Save all to {orgName}</>}
-                  </Button>
-                </Card>
-              )}
+              <Card className="p-8 text-center space-y-3">
+                <Wand2 className="h-8 w-8 mx-auto text-primary" />
+                <p className="font-semibold">Import facilities from a PDF</p>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                  Review extracted locations and insurance before saving. Existing facilities are matched so we add payers instead of creating duplicates.
+                </p>
+                <Button asChild>
+                  <Link to={`/app/facilities/upload-pdf?orgId=${orgId}`}>
+                    <Wand2 className="h-4 w-4" /> Upload PDF for {orgName}
+                  </Link>
+                </Button>
+              </Card>
             </TabsContent>
 
             {/* MANUAL TAB */}
@@ -828,7 +650,6 @@ export default function AdminCreateOrganization() {
                 description: "", phone: "", bd_contact_name: "", bd_contact_phone: "",
                 bd_contact_email: "", logo_url: "", verified: false,
               });
-              setParsedFacilities(null); setPdfFilename("");
               setManualFacilities([emptyFacility()]); setCreatedFacilityUrls([]);
             }}>
               Add another organization
