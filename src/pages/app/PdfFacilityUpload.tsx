@@ -14,6 +14,7 @@ import { assertPdfFile } from "@/lib/upload-guards";
 import { programPublicPath } from "@/lib/public-urls";
 import { saveFacilityWithContracts } from "@/lib/save-facility";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
+import { OrgPdfLibrary } from "@/components/app/OrgPdfLibrary";
 import type { PayerMatchInput } from "@/lib/match-payer";
 import {
   type ExistingContractRow,
@@ -90,6 +91,7 @@ export default function PdfFacilityUpload() {
   const [existingFacilities, setExistingFacilities] = useState<ExistingFacilityRow[]>([]);
   const [existingContracts, setExistingContracts] = useState<ExistingContractRow[]>([]);
   const [approvedPayers, setApprovedPayers] = useState<PayerMatchInput[]>([]);
+  const [pdfLibraryKey, setPdfLibraryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,7 +256,14 @@ export default function PdfFacilityUpload() {
       const { error: upErr } = await supabase.storage
         .from("facility-pdfs")
         .upload(path, file, { contentType: "application/pdf", upsert: false });
-      if (upErr) throw upErr;
+      if (upErr) {
+        const missing = /bucket not found/i.test(upErr.message || "");
+        throw new Error(
+          missing
+            ? "PDF storage is not set up. Run supabase/facility-pdfs-storage.sql in the Supabase SQL editor, then try again."
+            : upErr.message,
+        );
+      }
 
       let recId: string | null = null;
       const { data: rec, error: recErr } = await supabase
@@ -275,6 +284,7 @@ export default function PdfFacilityUpload() {
         recId = rec.id;
         setUploadId(rec.id);
       }
+      setPdfLibraryKey((n) => n + 1);
 
       const pdf_base64 = await fileToBase64(file);
       const { data, error } = await supabase.functions.invoke("parse-facility-pdf", {
@@ -627,6 +637,12 @@ export default function PdfFacilityUpload() {
               if (f) handleFile(f);
             }}
           />
+        </Card>
+      )}
+
+      {stage === "upload" && targetOrgId && (
+        <Card className="p-5">
+          <OrgPdfLibrary organizationId={targetOrgId} refreshToken={pdfLibraryKey} />
         </Card>
       )}
 

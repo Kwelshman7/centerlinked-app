@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/app/ImageUploader";
 import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck, CreditCard } from "lucide-react";
 import { SuperAdminSettingsCard } from "@/components/app/admin/SuperAdminPanel";
+import { OrgPdfLibrary } from "@/components/app/OrgPdfLibrary";
 import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
 import { cn } from "@/lib/utils";
 import { mergeOrgImages } from "@/lib/org-hero";
@@ -298,6 +299,11 @@ export default function Settings() {
               );
             })}
           </div>
+          {profile.organization_id && (
+            <div className="pt-2 border-t">
+              <OrgPdfLibrary organizationId={profile.organization_id} />
+            </div>
+          )}
         </Card>
       )}
 
