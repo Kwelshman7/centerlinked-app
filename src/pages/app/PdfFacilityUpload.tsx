@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { fileToBase64 } from "@/lib/files";
 import { assertPdfFile } from "@/lib/upload-guards";
 import { programPublicPath } from "@/lib/public-urls";
 import { saveFacilityWithContracts } from "@/lib/save-facility";
@@ -56,6 +55,25 @@ interface ExtractedImage {
 }
 
 type Stage = "upload" | "parsing" | "review" | "committing" | "done";
+
+async function edgeFunctionMessage(error: unknown, data: unknown): Promise<string> {
+  if (data && typeof data === "object") {
+    const rec = data as { error?: unknown; message?: unknown };
+    if (typeof rec.error === "string" && rec.error.trim()) return rec.error;
+    if (typeof rec.message === "string" && rec.message.trim()) return rec.message;
+  }
+  const ctx = (error as { context?: Response } | null)?.context;
+  if (ctx && typeof ctx.json === "function") {
+    try {
+      const body = await (typeof ctx.clone === "function" ? ctx.clone() : ctx).json();
+      if (typeof body?.error === "string" && body.error.trim()) return body.error;
+      if (typeof body?.message === "string" && body.message.trim()) return body.message;
+    } catch {
+      /* ignore */
+    }
+  }
+  return error instanceof Error ? error.message : "Parse failed";
+}
 
 const EXISTING_FACILITY_SELECT =
   "id,name,tagline,address_line1,city,state,zip,phone,website,description,capacity,levels_of_care,highlights,population_served,specializations,accreditations,image_urls,bd_contact_name,bd_contact_phone,bd_contact_email,hidden_from_org_page";
@@ -286,13 +304,13 @@ export default function PdfFacilityUpload() {
       }
       setPdfLibraryKey((n) => n + 1);
 
-      const pdf_base64 = await fileToBase64(file);
       const { data, error } = await supabase.functions.invoke("parse-facility-pdf", {
-        body: { pdf_base64, filename: file.name, upload_id: recId },
+        body: { storage_path: path, filename: file.name, upload_id: recId },
       });
-      if (error) throw error;
-      const parseResult = data as ParsedPdfPayload & { error?: string };
-      if (parseResult?.error) throw new Error(parseResult.error);
+      const parseResult = data as ParsedPdfPayload & { error?: string } | null;
+      if (error || parseResult?.error) {
+        throw new Error(await edgeFunctionMessage(error, data));
+      }
       const parsedData = parseResult as ParsedPdfPayload;
       if (!parsedData.facilities?.length) throw new Error("No facilities detected in the PDF");
       setParsed(parsedData);
