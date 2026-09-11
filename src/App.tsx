@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -50,6 +51,7 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <Analytics />
+      <SpeedInsights />
       <BrowserRouter>
         <AuthProvider>
           <Routes>
