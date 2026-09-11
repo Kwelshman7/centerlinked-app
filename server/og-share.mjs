@@ -8,6 +8,7 @@ export const DEFAULT_OG_IMAGE = "https://www.centerlinked.com/og-image.png";
 
 const RESERVED_SLUGS = new Set([
   "login",
+  "start",
   "signup",
   "join",
   "auth",
@@ -22,6 +23,7 @@ const RESERVED_SLUGS = new Set([
   "assets",
   "favicon.png",
   "og-image.png",
+  "manifest.webmanifest",
   "robots.txt",
   "sitemap.xml",
   "llms.txt",
@@ -42,6 +44,7 @@ export function isPublicSharePath(pathname) {
   if (
     path.startsWith("/app") ||
     path.startsWith("/login") ||
+    path.startsWith("/start") ||
     path.startsWith("/signup") ||
     path.startsWith("/auth") ||
     path.startsWith("/request-access") ||

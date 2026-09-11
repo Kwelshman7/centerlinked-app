@@ -15,19 +15,19 @@ export default function Search() {
           aria-hidden
         />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8 lg:pb-16 lg:pt-14">
+        <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pb-8 pt-4 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8 lg:pb-16 lg:pt-14">
           <div className="animate-fade-up flex w-full flex-col items-center text-center">
-            <Logo to="" size="lg" className="mb-5 sm:mb-6" />
-            <h1 className="font-heading text-[1.65rem] font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-4xl sm:leading-[1.1]">
+            <Logo to="" size="lg" className="mb-4 hidden sm:mb-6 sm:flex" />
+            <h1 className="font-heading text-[1.45rem] font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-4xl sm:leading-[1.1]">
               Find in-network programs
             </h1>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground sm:mt-3 sm:text-base">
+            <p className="mt-1.5 max-w-md text-sm text-muted-foreground sm:mt-3 sm:text-base">
               Search approved facilities by insurance, location, and level of care.
             </p>
           </div>
 
           <div
-            className="animate-fade-up mt-6 w-full sm:mt-8"
+            className="animate-fade-up mt-5 w-full sm:mt-8"
             style={{ animationDelay: "90ms" }}
           >
             <div className="rounded-2xl border border-border/70 bg-card/95 p-3 shadow-xl shadow-primary/[0.08] ring-1 ring-primary/5 backdrop-blur-sm sm:p-4 md:p-5">

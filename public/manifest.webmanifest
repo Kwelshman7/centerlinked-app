@@ -1,0 +1,26 @@
+{
+  "id": "/start",
+  "name": "CenterLinked",
+  "short_name": "CenterLinked",
+  "description": "Find in-network treatment programs. Sign in to search verified facilities by insurance, location, and level of care.",
+  "start_url": "/start",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2088b8",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

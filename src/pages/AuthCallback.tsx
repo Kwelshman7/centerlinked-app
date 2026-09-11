@@ -25,6 +25,20 @@ function readOAuthParams() {
   };
 }
 
+function consumePostLoginPath() {
+  try {
+    const raw = sessionStorage.getItem("cl_post_login");
+    sessionStorage.removeItem("cl_post_login");
+    if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
+    if (raw === "/login" || raw.startsWith("/login?") || raw === "/start" || raw.startsWith("/start?")) {
+      return null;
+    }
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { user, profile, loading, isSuperAdmin } = useAuth();
@@ -104,7 +118,7 @@ export default function AuthCallback() {
       notifyAuthEvent(isLikelyNewUser(user.created_at) ? "signup" : "login", fullName);
 
       if (isSuperAdmin || bootstrapAdmin) {
-        navigate("/app", { replace: true });
+        navigate(consumePostLoginPath() || "/app", { replace: true });
         return;
       }
 
@@ -113,7 +127,7 @@ export default function AuthCallback() {
         return;
       }
 
-      navigate("/app", { replace: true });
+      navigate(consumePostLoginPath() || "/app", { replace: true });
     })();
   }, [loading, user, profile?.organization_id, isSuperAdmin, navigate]);
 

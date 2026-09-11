@@ -61,7 +61,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
 
   const isHero = variant === "hero";
   const control = isHero
-    ? "h-12 rounded-xl border-border/80 bg-background text-sm shadow-none"
+    ? "h-12 rounded-xl border-border/80 bg-background text-base sm:text-sm shadow-none"
     : undefined;
 
   return (

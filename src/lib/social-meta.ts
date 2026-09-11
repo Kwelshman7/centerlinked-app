@@ -55,12 +55,7 @@ function applyFavicon(icon?: string | null) {
   const href = icon?.trim() || DEFAULT_FAVICON;
   const isDefault = href === DEFAULT_FAVICON;
   setLink("icon", href, isDefault ? { type: "image/png" } : undefined);
-
-  if (isDefault) {
-    document.head.querySelector('link[rel="apple-touch-icon"]')?.remove();
-  } else {
-    setLink("apple-touch-icon", href);
-  }
+  setLink("apple-touch-icon", href);
 }
 
 export function applySocialMeta({
