@@ -11,7 +11,6 @@ import {
   Loader2,
   EyeOff,
 } from "lucide-react";
-import { VerificationBadge } from "@/components/app/search/VerificationBadge";
 import {
   FacilitySheetView,
   SheetOrg,
@@ -287,20 +286,6 @@ export default function FacilityDetail() {
         contracts={sheetContracts}
         mode="internal"
         coverImageUrl={org?.cover_image_url ?? null}
-        contractsHeaderExtra={
-          <div className="flex items-center gap-2 flex-wrap">
-            <VerificationBadge
-              verifiedAt={facility.contracts_verified_at}
-              frozen={facility.verification_frozen}
-              size="sm"
-            />
-            {(isMine || isSuperAdmin) && (
-              <Button asChild size="sm" variant="ghost" className="h-8 px-2 text-xs">
-                <Link to={`/app/facilities/${facility.id}/verify`}>Verify now</Link>
-              </Button>
-            )}
-          </div>
-        }
       />
 
 

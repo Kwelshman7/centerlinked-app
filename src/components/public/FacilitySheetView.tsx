@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Building2,
   MapPin,
-  ShieldCheck,
   ChevronRight,
   User,
   Award,
@@ -27,10 +26,9 @@ import { uniqueAccreditations } from "@/lib/accreditations";
 import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
 import { formatPlanTypeList, sanitizePlanTypes } from "@/lib/plan-types";
 
-/** Hero gallery — shorter on phones so the name and facts stay on the first screen. */
-const HERO_IMAGE_HEIGHT = "h-[200px] sm:h-[240px] xl:h-[280px]";
-const HERO_THUMB_SIZE = "h-12 w-12 sm:h-14 sm:w-14";
-const HERO_THUMB_STRIP = "h-[60px] sm:h-[68px]";
+/** Stacked hero photo on phones. Desktop fills the image half instead. */
+const HERO_IMAGE_HEIGHT = "h-[200px] sm:h-[220px] lg:h-full";
+const HERO_THUMB_SIZE = "h-10 w-10 sm:h-11 sm:w-11";
 
 export interface FacilitySheetData {
   id: string;
@@ -110,10 +108,12 @@ interface Props {
 function fmtDate(d: string | null | undefined) {
   if (!d) return null;
   try {
-    return new Date(d).toLocaleDateString(undefined, {
+    const date = new Date(d);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
       year: "numeric",
-      month: "long",
-      day: "numeric",
     });
   } catch {
     return null;
@@ -232,21 +232,16 @@ export function FacilitySheetView({
   /** Mobile sticky bar matches org pages — single Refer a Patient contact sheet. */
   const showMobileActionBar = hasContact;
 
-  const summaryText =
-    facility.short_description ||
-    facility.tagline ||
-    facility.description ||
+  const programText =
+    facility.description?.trim() ||
+    facility.short_description?.trim() ||
+    facility.tagline?.trim() ||
     null;
 
   const accreditations = uniqueAccreditations(facility.accreditations);
 
   const programTags = categorizeFacilityTags(facility);
   const hasProgramTags = PROGRAM_SECTIONS.some(({ kind }) => programTags[kind].length > 0);
-
-  const hasProgramDetails =
-    facility.description ||
-    facility.tagline ||
-    hasProgramTags;
 
   const hasFactsStrip = (facility.levels_of_care?.length ?? 0) > 0 || contracts.length >= 0;
   const hasServiceArea = !!(address || cityStateZip);
@@ -257,7 +252,7 @@ export function FacilitySheetView({
     <div className={`space-y-5 lg:space-y-6 min-w-0 ${showMobileActionBar ? mobileContactBarPadding(tabBarOffset, footerVisible) : ""}`}>
       {/* Hero */}
       <section className="print-keep-together rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-        <div className="grid xl:grid-cols-2 print:grid-cols-1">
+        <div className="grid lg:grid-cols-2 lg:items-stretch print:grid-cols-1 lg:h-[340px] print:h-auto">
           <HeroGallery
             images={facility.image_urls ?? []}
             fallbackImage={coverImageUrl}
@@ -266,47 +261,68 @@ export function FacilitySheetView({
             canEdit={canEditPhotos}
             facilityId={facilityId ?? facility.id}
             onPhotosUpdated={onPhotosUpdated}
-            className="order-1 xl:order-2 print:hidden"
+            className="order-1 lg:order-2 print:hidden"
           />
 
-          <div className="p-4 sm:p-6 lg:p-7 flex flex-col min-w-0 order-2 xl:order-1">
+          <div className="p-4 sm:p-5 lg:p-6 flex flex-col min-w-0 order-2 lg:order-1 lg:min-h-0 lg:overflow-y-auto">
             <div className="flex items-start justify-between gap-3 min-w-0">
-              <div className="min-w-0 flex-1">
-                {mode === "public" && org?.slug && (
-                  <nav className="flex items-center gap-1.5 text-xs text-muted-foreground print:hidden min-w-0">
-                    <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline truncate min-w-0">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <div
+                  className="relative h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm grid place-items-center"
+                  aria-hidden={!org?.logo_url}
+                >
+                  {org?.logo_url ? (
+                    <img
+                      src={org.logo_url}
+                      alt={`${org.name} logo`}
+                      className="h-[86%] w-[86%] object-contain"
+                    />
+                  ) : (
+                    <div
+                      className="h-full w-full grid place-items-center"
+                      style={{ background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)` }}
+                    >
+                      <Building2 className="h-6 w-6 text-white/90" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  {mode === "public" && org?.slug && (
+                    <nav className="flex items-center gap-1.5 text-xs text-muted-foreground print:hidden min-w-0">
+                      <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline truncate min-w-0">
+                        {org.name}
+                      </Link>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                      <span className="font-medium text-foreground truncate">{facility.name}</span>
+                    </nav>
+                  )}
+                  {mode === "public" && org?.name ? (
+                    <p className="hidden print:block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
                       {org.name}
-                    </Link>
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                    <span className="font-medium text-foreground truncate">{facility.name}</span>
-                  </nav>
-                )}
-                {mode === "public" && org?.name ? (
-                  <p className="hidden print:block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
-                    {org.name}
-                  </p>
-                ) : null}
-                <h1 className="font-heading text-[1.375rem] sm:text-2xl xl:text-[1.75rem] font-bold tracking-tight leading-snug mt-1 break-words">
-                  {facility.name}
-                </h1>
-                {cityStateZip && (
-                  <p className="mt-2 flex items-start gap-1.5 text-sm text-muted-foreground min-w-0">
-                    <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
-                    <a href={directionsHref} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors break-words">
-                      {cityStateZip}
-                    </a>
-                  </p>
-                )}
+                    </p>
+                  ) : null}
+                  <h1 className="font-heading text-[1.375rem] sm:text-2xl lg:text-[1.65rem] font-bold tracking-tight leading-snug mt-0.5 break-words">
+                    {facility.name}
+                  </h1>
+                  {cityStateZip && (
+                    <p className="mt-1.5 flex items-start gap-1.5 text-sm text-muted-foreground min-w-0">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
+                      <a href={directionsHref} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors break-words">
+                        {cityStateZip}
+                      </a>
+                    </p>
+                  )}
+                </div>
               </div>
               {aboutHeaderExtra ? <div className="shrink-0 print:hidden">{aboutHeaderExtra}</div> : null}
             </div>
 
-            {summaryText && (
-              <p className="mt-3 text-sm leading-relaxed text-foreground/75 break-words">{summaryText}</p>
-            )}
+            {programText ? (
+              <ExpandableText text={programText} brand={brand} clampLines={3} className="mt-3 min-w-0" />
+            ) : null}
 
             {accreditations.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {accreditations.map((item) => (
                   <span
                     key={item}
@@ -320,8 +336,8 @@ export function FacilitySheetView({
             )}
 
             {lastUpdated ? (
-              <p className="mt-auto pt-5 text-xs text-muted-foreground print:pt-3">
-                Updated {lastUpdated}
+              <p className="mt-auto pt-4 text-xs text-muted-foreground print:pt-3">
+                Last updated {lastUpdated}
               </p>
             ) : null}
           </div>
@@ -384,7 +400,7 @@ export function FacilitySheetView({
       )}
 
       {/* Unified details */}
-      {(hasFactsStrip || hasProgramDetails || hasServiceArea || repName || repEmail || repPhone) && (
+      {(hasFactsStrip || hasProgramTags || hasServiceArea || repName || repEmail || repPhone) && (
         <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:overflow-visible">
           <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] xl:grid-cols-[minmax(0,1fr)_340px] print:grid-cols-1">
             <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50 print:border-0 print:rounded-none">
@@ -393,27 +409,20 @@ export function FacilitySheetView({
                   <div className="min-w-0">
                     <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} brand={brand} />
                     {inNetworkPayers.length > 0 ? (
-                      <ul className="grid grid-cols-1 2xl:grid-cols-2 gap-1.5">
+                      <ul className="grid grid-cols-2 xl:grid-cols-3 gap-1 print:grid-cols-3">
                         {inNetworkPayers.map((c) => {
                           const types = formatPlanTypeList(sanitizePlanTypes(c.plan_types));
+                          const label = types ? `${c.payer_name} — ${types}` : c.payer_name;
                           return (
                             <li key={c.id} className="min-w-0">
-                              <span className="flex items-start gap-2 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-[12px] sm:text-xs min-w-0">
-                                {c.payer_logo_url ? (
-                                  <img src={c.payer_logo_url} alt={c.payer_name} className="h-3.5 w-3.5 object-contain shrink-0 mt-0.5" />
-                                ) : (
-                                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: brand }} />
-                                )}
-                                <span className="min-w-0">
-                                  <span className="font-semibold block truncate">
-                                    {types ? `${c.payer_name} — ${types}` : c.payer_name}
-                                  </span>
-                                  {!types ? (
-                                    <span className="block text-[11px] font-normal text-muted-foreground">
-                                      Plan type not specified.
-                                    </span>
-                                  ) : null}
-                                </span>
+                              <span
+                                title={label}
+                                className="block truncate whitespace-nowrap rounded-md border border-border/50 bg-background px-2 py-1 text-[11px] sm:text-xs font-semibold"
+                              >
+                                {c.payer_name}
+                                {types ? (
+                                  <span className="font-normal text-muted-foreground"> — {types}</span>
+                                ) : null}
                               </span>
                             </li>
                           );
@@ -441,35 +450,19 @@ export function FacilitySheetView({
                 </div>
               )}
 
-              {hasProgramDetails && (
+              {hasProgramTags && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
                   <SectionHeading title="Program Details" brand={brand} />
-
-                  {(facility.tagline || facility.description) && (
-                    <div className="mb-4 sm:mb-5">
-                      {facility.tagline && facility.tagline !== summaryText && (
-                        <p className="text-sm sm:text-[15px] text-foreground/90 font-medium leading-snug mb-2 break-words">
-                          {facility.tagline}
-                        </p>
-                      )}
-                      {facility.description && facility.description !== summaryText && (
-                        <ExpandableText text={facility.description} brand={brand} />
-                      )}
-                    </div>
-                  )}
-
-                  {hasProgramTags && (
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {PROGRAM_SECTIONS.map(({ kind, title }) => (
-                        <ProgramTagCard
-                          key={kind}
-                          title={title}
-                          items={programTags[kind]}
-                          brand={brand}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {PROGRAM_SECTIONS.map(({ kind, title }) => (
+                      <ProgramTagCard
+                        key={kind}
+                        title={title}
+                        items={programTags[kind]}
+                        brand={brand}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -629,7 +622,7 @@ function HeroGallery({
   const goNext = () => setActiveIndex((i) => (i + 1) % displayImages.length);
 
   return (
-    <div className={`relative bg-muted shrink-0 self-start w-full min-w-0 border-b xl:border-b-0 xl:border-l border-border/60 ${className ?? ""}`}>
+    <div className={`relative bg-muted w-full min-w-0 min-h-0 border-b lg:border-b-0 lg:border-l border-border/60 ${HERO_IMAGE_HEIGHT} ${className ?? ""}`}>
       {canEdit && (
         <Button
           type="button"
@@ -643,69 +636,63 @@ function HeroGallery({
       )}
 
       {currentImage ? (
-        <>
-          <div className={`relative w-full ${HERO_IMAGE_HEIGHT} overflow-hidden`}>
-            <button
-              type="button"
-              onClick={() => setLightboxOpen(true)}
-              className="block w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-              style={{ ["--tw-ring-color" as string]: brand }}
-            >
-              <img
-                src={currentImage}
-                alt={`${facilityName} photo ${activeIndex + 1} of ${displayImages.length}`}
-                className="w-full h-full object-cover object-center"
-                loading="eager"
-              />
-            </button>
-            {hasMany && (
-              <>
-                <button
-                  type="button"
-                  onClick={goPrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-[1] h-9 w-9 grid place-items-center rounded-full bg-black/45 text-white hover:bg-black/60 transition-colors"
-                  aria-label="Previous photo"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-[1] h-9 w-9 grid place-items-center rounded-full bg-black/45 text-white hover:bg-black/60 transition-colors"
-                  aria-label="Next photo"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                <span className="absolute bottom-2 right-2 z-[1] rounded-full bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-white tabular-nums">
+        <div className="relative w-full h-full overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            className="block w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{ ["--tw-ring-color" as string]: brand }}
+          >
+            <img
+              src={currentImage}
+              alt={`${facilityName} photo ${activeIndex + 1} of ${displayImages.length}`}
+              className="w-full h-full object-cover object-center"
+              loading="eager"
+            />
+          </button>
+          {hasMany && (
+            <>
+              <button
+                type="button"
+                onClick={goPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-[1] h-9 w-9 grid place-items-center rounded-full bg-black/45 text-white hover:bg-black/60 transition-colors"
+                aria-label="Previous photo"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-[1] h-9 w-9 grid place-items-center rounded-full bg-black/45 text-white hover:bg-black/60 transition-colors"
+                aria-label="Next photo"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+              <div className="absolute bottom-0 inset-x-0 z-[1] flex items-center gap-2 px-3 py-2 bg-gradient-to-t from-black/55 to-transparent overflow-x-auto">
+                {displayImages.map((src, i) => (
+                  <button
+                    key={src + i}
+                    type="button"
+                    onClick={() => setActiveIndex(i)}
+                    className={`relative ${HERO_THUMB_SIZE} shrink-0 rounded-md overflow-hidden transition-all ${
+                      activeIndex === i ? "ring-2 ring-white" : "ring-1 ring-white/50 opacity-80 hover:opacity-100"
+                    }`}
+                    aria-label={`Show photo ${i + 1}`}
+                    aria-current={activeIndex === i}
+                  >
+                    <img src={src} alt="" className="w-full h-full object-cover object-center" loading="lazy" />
+                  </button>
+                ))}
+                <span className="ml-auto rounded-full bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-white tabular-nums shrink-0">
                   {activeIndex + 1}/{displayImages.length}
                 </span>
-              </>
-            )}
-          </div>
-
-          {hasMany && (
-            <div className={`flex items-center gap-2 px-3 ${HERO_THUMB_STRIP} bg-card border-t border-border/60 overflow-x-auto`}>
-              {displayImages.map((src, i) => (
-                <button
-                  key={src + i}
-                  type="button"
-                  onClick={() => setActiveIndex(i)}
-                  className={`relative ${HERO_THUMB_SIZE} shrink-0 rounded-md overflow-hidden transition-all ${
-                    activeIndex === i ? "ring-2 ring-offset-1" : "ring-1 ring-border/60 opacity-80 hover:opacity-100"
-                  }`}
-                  style={activeIndex === i ? { boxShadow: `0 0 0 2px ${brand}` } : undefined}
-                  aria-label={`Show photo ${i + 1}`}
-                  aria-current={activeIndex === i}
-                >
-                  <img src={src} alt="" className="w-full h-full object-cover object-center" loading="lazy" />
-                </button>
-              ))}
-            </div>
+              </div>
+            </>
           )}
-        </>
+        </div>
       ) : (
         <div
-          className={`flex flex-col items-center justify-center ${HERO_IMAGE_HEIGHT} p-8 text-center`}
+          className="flex flex-col items-center justify-center h-full min-h-[200px] p-8 text-center"
           style={{
             background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 50%, #0f172a 100%)`,
           }}
