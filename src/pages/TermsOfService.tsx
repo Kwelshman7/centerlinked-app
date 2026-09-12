@@ -74,6 +74,20 @@ export default function TermsOfService() {
           distribute Content solely to operate and promote the Service, including public referral profile pages intended
           for professional audiences.
         </p>
+        <p className="mt-4">
+          <strong>Unclaimed profiles.</strong> Some organization profiles on CenterLinked were not created by the
+          organization they describe. These are compiled from publicly available sources — provider websites, published
+          one-pagers, and public directories — and are labeled <em>“Unclaimed — information compiled from public
+          sources.”</em> An unclaimed profile carries no verification mark, because no one at the organization has
+          confirmed it. We do not represent that information on an unclaimed profile is accurate or current.
+        </p>
+        <p className="mt-3">
+          An organization may claim its profile at any time, free of charge, to correct and maintain it. An organization
+          may also ask us to remove its unclaimed profile entirely, for any reason or none. Removal requests are honored
+          without argument and do not require an account — email{" "}
+          <a href="mailto:admin@centerlinked.com?subject=Profile%20removal%20request">admin@centerlinked.com</a> or use
+          the removal link shown on the profile.
+        </p>
       </section>
 
       <section>

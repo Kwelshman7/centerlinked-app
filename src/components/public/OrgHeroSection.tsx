@@ -179,6 +179,20 @@ function IdentityHero({
                     organizationId={org.id}
                     organizationName={org.name}
                   />
+                  {/* Removal must not require an account, so this is a plain
+                      mailto rather than a form behind auth. Prefilled so the
+                      request identifies the profile without the sender
+                      having to explain which page they mean. */}
+                  <a
+                    href={`mailto:admin@centerlinked.com?subject=${encodeURIComponent(
+                      `Profile removal request: ${org.name}`,
+                    )}&body=${encodeURIComponent(
+                      `Please remove the CenterLinked profile for ${org.name}.\n\nProfile: https://www.centerlinked.com/o/${org.slug ?? ""}\n\nMy name:\nMy role at ${org.name}:\n`,
+                    )}`}
+                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Not your organization? Request removal
+                  </a>
                 </div>
               )}
 

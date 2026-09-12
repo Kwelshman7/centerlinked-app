@@ -45,6 +45,14 @@ export default function PrivacyPolicy() {
             to authenticate you and create or update your CenterLinked account.
           </li>
           <li>
+            <strong className="text-foreground">Organization information compiled from public sources:</strong> for some
+            organizations we have assembled a profile from publicly available material — provider websites, published
+            one-pagers, and public directories — before anyone at that organization joined CenterLinked. This is business
+            information about facilities, programs, insurance participation, and published staff contacts; it is not
+            consumer personal data and never includes patient information. These profiles are labeled as unclaimed and
+            carry no verification mark. See section 8 for how to have one removed.
+          </li>
+          <li>
             <strong className="text-foreground">Organization and facility data:</strong> information you or your team
             submit about your organization, facilities, programs, insurance contracts, referral contacts, branding, and
             related professional content.
@@ -157,6 +165,14 @@ export default function PrivacyPolicy() {
           To make a request, email{" "}
           <a href="mailto:legal@centerlinked.com">legal@centerlinked.com</a>. We may need to verify your identity before
           responding. California residents may have additional rights under applicable state privacy laws.
+        </p>
+        <p className="mt-3">
+          <strong className="text-foreground">Removing an unclaimed organization profile.</strong> If your organization
+          has a profile it did not create, you can have it removed. Requests are honored without argument and do not
+          require an account — email{" "}
+          <a href="mailto:admin@centerlinked.com?subject=Profile%20removal%20request">admin@centerlinked.com</a> or use
+          the removal link shown on the profile itself. You may instead claim the profile, free of charge, to correct and
+          maintain it.
         </p>
       </section>
 
