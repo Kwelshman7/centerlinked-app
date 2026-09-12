@@ -162,12 +162,13 @@ function ProgramTagCard({
           {title}
         </h3>
       </div>
-      <ul className="flex flex-wrap gap-1.5">
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
         {items.map((item) => (
-          <li key={item} className="min-w-0">
-            <span className="inline-flex max-w-full items-center rounded-full border border-border/80 bg-background px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-foreground leading-snug">
-              {item}
+          <li key={item} className="flex items-start gap-1.5 min-w-0 text-[13px] sm:text-sm text-foreground leading-snug">
+            <span className="shrink-0 text-muted-foreground select-none" aria-hidden>
+              -
             </span>
+            <span className="min-w-0 break-words">{item}</span>
           </li>
         ))}
       </ul>

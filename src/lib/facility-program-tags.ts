@@ -49,6 +49,106 @@ const ALIASES: Record<string, string> = {
   "eating disorder": "Eating Disorders",
 };
 
+const THERAPY_HINTS = [
+  "therapy",
+  "therapies",
+  "cbt",
+  "dbt",
+  "emdr",
+  "12 step",
+  "twelve step",
+  "motivational interviewing",
+  "motivational",
+  "smart recovery",
+  "psychiatry",
+  "medication management",
+  "holistic",
+  "experiential",
+  "facilitation",
+  "interviewing",
+  "counseling",
+] as const;
+
+const AMENITY_HINTS = [
+  "meal",
+  "meals",
+  "gym",
+  "fitness",
+  "pool",
+  "private rooms",
+  "shared rooms",
+  "ocean",
+  "mountain",
+  "nature",
+  "setting",
+  "pet",
+  "acupuncture",
+  "massage",
+  "yoga",
+  "meditation",
+  "mindfulness",
+  "offsite",
+  "transportation",
+  "laundry",
+  "wi fi",
+  "wifi",
+  "smoking",
+  "beach",
+  "waterfront",
+  "chef",
+] as const;
+
+const WHO_HINTS = [
+  "adults",
+  "young adults",
+  "adolescents",
+  "teens",
+  "professionals",
+  "first responders",
+  "veterans",
+  "military",
+  "lgbtq",
+  "women",
+  "men",
+  "boys",
+  "girls",
+  "faith",
+  "christian",
+  "pregnant",
+  "parents",
+  "seniors",
+] as const;
+
+const CONDITION_HINTS = [
+  "disorder",
+  "disorders",
+  "diagnosis",
+  "ptsd",
+  "trauma",
+  "anxiety",
+  "depression",
+  "bipolar",
+  "ocd",
+  "bpd",
+  "eating",
+  "substance",
+  "alcohol",
+  "opioid",
+  "opioids",
+  "addiction",
+  "addictions",
+  "cocaine",
+  "stimulant",
+  "heroin",
+  "cannabis",
+  "marijuana",
+  "gambling",
+  "co occurring",
+  "dual diagnosis",
+  "mental health",
+  "use disorder",
+] as const;
+
 type CatalogEntry = { kind: ProgramTagKind; label: string };
 
 function catalog(): Map<string, CatalogEntry> {
@@ -68,6 +168,31 @@ function catalog(): Map<string, CatalogEntry> {
 }
 
 const CATALOG = catalog();
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsHint(normalized: string, hints: readonly string[]): boolean {
+  return hints.some((hint) => {
+    const h = norm(hint);
+    if (!h) return false;
+    if (normalized === h) return true;
+    return new RegExp(`(?:^| )${escapeRegExp(h)}(?: |$)`).test(normalized);
+  });
+}
+
+/** Best-effort kind for labels that are not in the official option lists. */
+function inferKind(raw: string): ProgramTagKind | null {
+  const normalized = norm(raw);
+  if (!normalized) return null;
+  // Modalities first so "Trauma-Focused Therapy" is not a condition.
+  if (containsHint(normalized, THERAPY_HINTS)) return "therapies";
+  if (containsHint(normalized, AMENITY_HINTS)) return "amenities";
+  if (containsHint(normalized, WHO_HINTS)) return "whoWeTreat";
+  if (containsHint(normalized, CONDITION_HINTS)) return "conditions";
+  return null;
+}
 
 export const emptyProgramTagBuckets = (): ProgramTagBuckets => ({
   conditions: [],
@@ -98,7 +223,7 @@ export function categorizeFacilityTags(facility: {
       const trimmed = raw.trim();
       if (!trimmed) continue;
       const found = CATALOG.get(norm(trimmed));
-      const kind = found?.kind ?? fallback;
+      const kind = found?.kind ?? inferKind(trimmed) ?? fallback;
       const label = found?.label ?? trimmed;
       const key = norm(label);
       if (seen.has(key)) continue;
