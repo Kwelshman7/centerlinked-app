@@ -6,7 +6,7 @@
  * VA CCN + TRICARE included, rental networks excluded, Medigap hidden from dropdowns.
  */
 
-import catalogData from "@/../../data/insurance-plan-types-catalog.json";
+import catalogData from "../../data/insurance-plan-types-catalog.json";
 
 export interface PlanType {
   id: string;
