@@ -25,7 +25,7 @@ function FieldShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("min-w-0 space-y-1.5", className)}>
+    <div className={cn("min-w-0 space-y-2", className)}>
       <Label
         htmlFor={htmlFor}
         className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
@@ -65,15 +65,15 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
     : undefined;
 
   return (
-    <form onSubmit={submit} className={cn(isHero ? "space-y-3 sm:space-y-3.5" : "space-y-4")}>
+    <form onSubmit={submit} className="space-y-4">
       <div
         className={cn(
           isHero
-            ? "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:gap-3"
+            ? "grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-4 lg:grid-cols-12 lg:gap-x-4 lg:gap-y-4"
             : "space-y-4",
         )}
       >
-        <FieldShell label="Insurance" className={cn(isHero && "sm:col-span-2 lg:col-span-12")}>
+        <FieldShell label="Insurance" className={cn(isHero && "col-span-2 lg:col-span-12")}>
           <PayerCombobox
             payerId={payerId}
             payerName={payerName}
@@ -87,7 +87,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           />
         </FieldShell>
 
-        <FieldShell label="Plan type" htmlFor="search-plan-type" className={cn(isHero && "lg:col-span-3")}>
+        <FieldShell label="Plan type" htmlFor="search-plan-type" className={cn(isHero && "col-span-1 lg:col-span-3")}>
           <Select
             value={planType || "_any"}
             onValueChange={(v) => setPlanType(v === "_any" ? "" : parsePlanTypeParam(v))}
@@ -106,7 +106,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           </Select>
         </FieldShell>
 
-        <FieldShell label="Level of care" htmlFor="search-loc" className={cn(isHero && "lg:col-span-3")}>
+        <FieldShell label="Level of care" htmlFor="search-loc" className={cn(isHero && "col-span-1 lg:col-span-3")}>
           <Select value={loc || "_any"} onValueChange={(v) => setLoc(v === "_any" ? "" : v)}>
             <SelectTrigger id="search-loc" className={control}>
               <SelectValue placeholder="Any level of care" />
@@ -122,7 +122,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           </Select>
         </FieldShell>
 
-        <FieldShell label="State" htmlFor="search-state" className={cn(isHero && "lg:col-span-2")}>
+        <FieldShell label="State" htmlFor="search-state" className={cn(isHero && "col-span-1 lg:col-span-2")}>
           <Select value={state || "_any"} onValueChange={(v) => setState(v === "_any" ? "" : v)}>
             <SelectTrigger id="search-state" className={control}>
               <SelectValue placeholder="Any state" />
@@ -138,7 +138,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           </Select>
         </FieldShell>
 
-        <FieldShell label="City" htmlFor="search-city" className={cn(isHero && "lg:col-span-2")}>
+        <FieldShell label="City" htmlFor="search-city" className={cn(isHero && "col-span-1 lg:col-span-2")}>
           <Input
             id="search-city"
             value={city}
@@ -149,12 +149,12 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         </FieldShell>
 
         {isHero ? (
-          <div className="flex items-end sm:col-span-2 lg:col-span-2">
+          <div className="flex items-end col-span-2 lg:col-span-2 pt-1">
             <Button
               type="submit"
               variant="hero"
               size="lg"
-              className="h-12 w-full rounded-xl text-sm font-semibold"
+              className="h-12 w-full rounded-xl text-base font-semibold sm:text-sm"
             >
               <SearchIcon className="h-4 w-4" />
               Search

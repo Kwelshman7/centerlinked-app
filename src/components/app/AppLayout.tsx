@@ -33,8 +33,8 @@ export function AppLayout() {
 
   const primary: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
-      { to: "/app/dashboard", label: "Home", icon: LayoutDashboard },
       { to: "/app/search", label: "Search", icon: SearchIcon },
+      { to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true },
     ];
     if (isSuperAdmin) {
       items.push({
@@ -55,13 +55,16 @@ export function AppLayout() {
   }, [isSuperAdmin, canManageBilling, user, profile?.organization_id, needsSuperAdminSetup]);
 
   const mobilePrimary: NavItem[] = useMemo(() => {
-    if (!needsSuperAdminSetup) return primary;
-    return [
-      { to: "/app/dashboard", label: "Home", icon: LayoutDashboard },
-      ...(canManageBilling ? [{ to: "/app/billing", label: "Billing", icon: CreditCard } satisfies NavItem] : []),
-      { to: "/app/settings", label: "Settings", icon: Settings },
+    const items: NavItem[] = [
+      { to: "/app/search", label: "Search", icon: SearchIcon },
     ];
-  }, [needsSuperAdminSetup, primary, canManageBilling]);
+    if (user && (isSuperAdmin || profile?.organization_id) && !needsSuperAdminSetup) {
+      items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
+    }
+    items.push({ to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true });
+    items.push({ to: "/app/settings", label: "Settings", icon: Settings });
+    return items;
+  }, [isSuperAdmin, user, profile?.organization_id, needsSuperAdminSetup]);
 
   const secondaryOrg: NavItem[] = [
     { to: "/app/members", label: "Members", icon: Users },
@@ -76,6 +79,10 @@ export function AppLayout() {
 
   const isMessengerThread =
     location.pathname.startsWith("/app/messages") && new URLSearchParams(location.search).get("c");
+  const hideMobileTabBar =
+    isMessengerThread ||
+    location.pathname === "/app/onboarding" ||
+    location.pathname === "/app/facilities/upload-pdf";
 
   const handleSignOut = async () => {
     await signOut();
@@ -111,7 +118,7 @@ export function AppLayout() {
   const SidebarContent = () => (
     <TooltipProvider>
       <div className={cn("flex items-center border-b border-border/50", collapsed ? "px-2 py-4 justify-center" : "px-5 py-5 justify-between gap-2")}>
-        {!collapsed && <Logo to="/app" size="md" />}
+        {!collapsed && <Logo to="/app/search" size="md" />}
         <Button
           variant="ghost"
           size="icon"
@@ -239,7 +246,7 @@ export function AppLayout() {
           ) : (
             <div className="w-9 shrink-0" />
           )}
-          <Logo to="/app" size="sm" />
+          <Logo to="/app/search" size="sm" />
           <div className="w-9 shrink-0" />
         </div>
       </header>
@@ -248,7 +255,7 @@ export function AppLayout() {
         <div
           className={cn(
             "w-full px-4 sm:px-6 lg:px-8 py-5 lg:py-8",
-            !isMessengerThread && "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-10"
+            !hideMobileTabBar && "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-10"
           )}
         >
           <BillingStatusBanner />
@@ -256,7 +263,7 @@ export function AppLayout() {
         </div>
       </main>
 
-      {!isMessengerThread && (
+      {!hideMobileTabBar && (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card/90 backdrop-blur-xl border-t border-border/60" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           <ul
             className={cn(
@@ -265,7 +272,9 @@ export function AppLayout() {
                 ? "grid-cols-6"
                 : mobilePrimary.length === 5
                   ? "grid-cols-5"
-                  : "grid-cols-4",
+                  : mobilePrimary.length === 3
+                    ? "grid-cols-3"
+                    : "grid-cols-4",
             )}
           >
             {mobilePrimary.map(({ to, label, icon: Icon, end }) => (

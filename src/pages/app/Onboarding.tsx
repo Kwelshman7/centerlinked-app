@@ -15,14 +15,17 @@ import {
   ArrowRight,
   Building2,
   Check,
+  FileText,
   Loader2,
   Plus,
+  Search as SearchIcon,
   Sparkles,
   Rocket,
   ListChecks,
   BadgeCheck,
   MapPin,
   Phone as PhoneIcon,
+  Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { orgOnboardingSelect } from "@/lib/org-public-select";
@@ -51,6 +54,7 @@ export default function Onboarding() {
   const addOnly = params.get("add") === "1";
 
   const [step, setStep] = useState(addOnly ? 2 : 1);
+  const [addingHow, setAddingHow] = useState<"undecided" | "manual">(addOnly ? "manual" : "undecided");
   const [saving, setSaving] = useState(false);
   const [orgLoaded, setOrgLoaded] = useState(false);
   const [org, setOrg] = useState<OrgDraft>({
@@ -76,10 +80,13 @@ export default function Onboarding() {
           num_facilities: (data as { num_facilities?: number | null }).num_facilities?.toString() ?? "",
           logo_url: data.logo_url ?? "",
         });
+        if (!addOnly && (data.name ?? "").trim()) {
+          setStep((s) => (s === 1 ? 2 : s));
+        }
       }
       setOrgLoaded(true);
     });
-  }, [profile?.organization_id]);
+  }, [profile?.organization_id, addOnly]);
 
   const updateOrg = <K extends keyof OrgDraft>(k: K, v: OrgDraft[K]) =>
     setOrg((p) => ({ ...p, [k]: v }));
@@ -148,7 +155,7 @@ export default function Onboarding() {
 
       await refresh();
       toast.success("Network submitted!", { description: "Your facilities are pending verification." });
-      navigate("/app");
+      navigate("/app/search");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       toast.error(msg);
@@ -163,8 +170,8 @@ export default function Onboarding() {
 
   return (
     <div className="relative max-w-4xl mx-auto pb-32 sm:pb-12">
-      <Link to="/app" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-6">
-        <ArrowLeft className="h-4 w-4" /> Back to dashboard
+      <Link to="/app/search" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-6">
+        <ArrowLeft className="h-4 w-4" /> {addOnly ? "Back to search" : "Skip to search"}
       </Link>
 
       {/* Header — minimal in add-only mode, hero in full onboarding */}
@@ -178,11 +185,11 @@ export default function Onboarding() {
           <div className="text-center mb-10 animate-fade-up">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary mb-4">
               <Sparkles className="h-3.5 w-3.5" />
-              Let's get your network on the map
+              You&apos;re on as a BD rep
             </div>
-            <h1 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">Set up your treatment network</h1>
+            <h1 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">List your facilities and share your link</h1>
             <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-              Add every program your team manages, the insurance you accept, and the BD rep referrals should reach. Takes about 5 minutes.
+              Import a one-pager or add programs by hand. Keep insurance, contacts, and levels of care accurate so partners always reopen the right page.
             </p>
           </div>
 
@@ -278,7 +285,51 @@ export default function Onboarding() {
       )}
 
       {/* STEP 2: Facilities */}
-      {step === 2 && (
+      {step === 2 && addingHow === "undecided" && !addOnly && (
+        <div className="space-y-4 animate-fade-up">
+          <div className="text-center sm:text-left">
+            <h2 className="font-heading text-xl font-bold">How do you want to add facilities?</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              You can import a PDF one-pager now, or enter programs and insurance yourself.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/app/facilities/upload-pdf?from=onboarding")}
+              className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6 text-left transition-colors hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground grid place-items-center shadow-md mb-4">
+                <Wand2 className="h-5 w-5" />
+              </div>
+              <p className="font-heading font-semibold">Import from a PDF</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Drop a one-pager or insurance list. We’ll read facilities and payers — you confirm before anything saves.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddingHow("manual")}
+              className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6 text-left transition-colors hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <div className="h-10 w-10 rounded-xl bg-muted text-foreground grid place-items-center mb-4">
+                <FileText className="h-5 w-5" />
+              </div>
+              <p className="font-heading font-semibold">Add facilities manually</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Enter each program, location, insurance, and BD contact yourself.
+              </p>
+            </button>
+          </div>
+          <div className="text-center pt-2">
+            <Button variant="ghost" onClick={() => navigate("/app/search")}>
+              <SearchIcon className="h-4 w-4" /> Skip for now — search the network
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && addingHow === "manual" && (
         <div className="space-y-6 animate-fade-up">
           {!addOnly && (
             <div className="rounded-2xl bg-gradient-to-br from-primary/5 via-accent/30 to-card p-5 sm:p-6 border border-border/60">
@@ -374,14 +425,21 @@ export default function Onboarding() {
       )}
 
       {/* Sticky footer nav */}
+      {!(step === 2 && addingHow === "undecided" && !addOnly) && (
       <div className="fixed bottom-0 left-0 right-0 sm:static sm:mt-8 z-30">
-        <div className="bg-card/95 backdrop-blur-md sm:bg-transparent sm:backdrop-blur-none border-t border-border sm:border-0 px-4 py-3 sm:p-0">
+        <div className="bg-card/95 backdrop-blur-md sm:bg-transparent sm:backdrop-blur-none border-t border-border sm:border-0 px-4 py-3 sm:p-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setStep((s) => Math.max(1, s - 1))}
-              disabled={step === 1 || saving}
+              onClick={() => {
+                if (step === 2 && addingHow === "manual" && !addOnly) {
+                  setAddingHow("undecided");
+                  return;
+                }
+                setStep((s) => Math.max(1, s - 1));
+              }}
+              disabled={(step === 1 && addingHow !== "manual") || saving}
             >
               <ArrowLeft className="h-4 w-4" /> Back
             </Button>
@@ -403,6 +461,7 @@ export default function Onboarding() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

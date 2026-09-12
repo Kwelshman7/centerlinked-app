@@ -71,7 +71,7 @@ const App = () => (
             <Route path="/setup-organization" element={<ProtectedRoute><SetupOrganization /></ProtectedRoute>} />
             <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
             <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route index element={<Dashboard />} />
+              <Route index element={<Navigate to="/app/search" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="search" element={<Search />} />
               <Route path="search/results" element={<SearchResults />} />

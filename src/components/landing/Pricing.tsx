@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/billing";
 import {
   ENTERPRISE,
+  LISTED_TIER,
   MEMBERSHIP_INCLUDED,
   PRICING_HEADING,
   PRICING_SLIDER_MAX,
@@ -94,7 +95,37 @@ export function Pricing() {
           </p>
         </div>
 
-        <div className="mt-10 sm:mt-12 mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="mt-10 sm:mt-12 mx-auto max-w-5xl rounded-2xl border border-border bg-card shadow-sm p-6 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <p className="text-sm font-semibold text-foreground">{LISTED_TIER.name}</p>
+                <span className="font-display text-2xl text-foreground">
+                  {LISTED_TIER.priceLabel}
+                </span>
+                <span className="text-xs text-muted-foreground">{LISTED_TIER.priceNote}</span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-xl">
+                {LISTED_TIER.description}
+              </p>
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {LISTED_TIER.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5 min-w-0">
+                    <Check className="h-4 w-4 mt-0.5 shrink-0 text-primary" aria-hidden />
+                    <span className="text-sm text-foreground/90 leading-snug">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Button asChild variant="outline" className="shrink-0">
+              <Link to="/signup">
+                Claim your organization <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-6 sm:mt-8 mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex justify-center border-b border-border/70 px-6 py-4 sm:py-5">
             <div className="flex items-center gap-2.5">
               <div className="inline-flex rounded-full border border-border bg-background p-1">

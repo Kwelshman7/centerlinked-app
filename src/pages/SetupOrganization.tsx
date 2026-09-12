@@ -33,11 +33,13 @@ export default function SetupOrganization() {
       return;
     }
     if (profile?.organization_id || isSuperAdmin) {
-      navigate("/app", { replace: true });
+      navigate("/app/search", { replace: true });
       return;
     }
-    if (typeof sessionStorage !== "undefined" && sessionStorage.getItem("cl_join_draft")) {
-      navigate("/join", { replace: true });
+    try {
+      sessionStorage.removeItem("cl_join_draft");
+    } catch {
+      /* private mode */
     }
   }, [loading, user, profile?.organization_id, isSuperAdmin, navigate]);
 
@@ -53,7 +55,7 @@ export default function SetupOrganization() {
         if (claimed.joined) {
           await refresh();
           toast.success("You've joined your organization");
-          navigate("/app", { replace: true });
+          navigate("/app/search", { replace: true });
           return;
         }
         const next = await getOrgSetupOptions();
@@ -118,11 +120,11 @@ export default function SetupOrganization() {
             <Building2 className="h-3.5 w-3.5" /> Welcome to CenterLinked
           </div>
           <h1 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">
-            Join or create an organization
+            List your facilities. Share your link.
           </h1>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">
             Your work email is on <span className="font-semibold text-foreground">@{domain}</span>.
-            Join your company&apos;s organization, or create one if it doesn&apos;t exist yet.
+            Join your org if it&apos;s already here, or create it so you can publish programs and keep referral partners current.
           </p>
         </div>
 

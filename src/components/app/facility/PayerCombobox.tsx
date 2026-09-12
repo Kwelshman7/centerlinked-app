@@ -37,15 +37,9 @@ interface Props {
   approvedOnly?: boolean;
 }
 
-const CATEGORY_LABEL: Record<string, string> = {
-  national: "National Carriers",
-  regional: "Regional / State Plans",
-  behavioral: "Behavioral Health Carve-outs",
-  government: "Government",
-  military: "Military / Veterans",
-  tpa: "TPAs & Networks",
-  other: "Other",
-};
+function byPayerName(a: PayerOption, b: PayerOption) {
+  return a.name.localeCompare(b.name, "en", { sensitivity: "base", numeric: true });
+}
 
 export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Select payer…", triggerClassName, keepOpenOnSelect = false, approvedOnly = false }: Props) {
   const { user } = useAuth();
@@ -71,14 +65,14 @@ export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Sel
       if (p.name.toLowerCase().includes(q)) return true;
       return (p.aliases ?? []).some((alias) => alias.toLowerCase().includes(q));
     };
-    const approved = payers.filter((p) => p.status === "approved" && p.active !== false && matches(p));
-    const myPending = approvedOnly ? [] : payers.filter((p) => p.status === "pending" && matches(p));
-    const groups: Record<string, PayerOption[]> = {};
-    approved.forEach((p) => {
-      const k = p.category || "other";
-      (groups[k] ||= []).push(p);
-    });
-    return { groups, myPending };
+    const approved = payers
+      .filter((p) => p.status === "approved" && p.active !== false && matches(p))
+      .slice()
+      .sort(byPayerName);
+    const myPending = approvedOnly
+      ? []
+      : payers.filter((p) => p.status === "pending" && matches(p)).slice().sort(byPayerName);
+    return { approved, myPending };
   }, [payers, search, approvedOnly]);
 
   const trimmed = search.trim();
@@ -141,31 +135,29 @@ export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Sel
           <CommandList className="max-h-[320px]">
             <CommandEmpty>No matches. Try suggesting it below.</CommandEmpty>
 
-            {Object.entries(grouped.groups)
-              .sort(([a], [b]) => (CATEGORY_LABEL[a] || a).localeCompare(CATEGORY_LABEL[b] || b))
-              .map(([cat, list]) => (
-                <CommandGroup key={cat} heading={CATEGORY_LABEL[cat] || cat}>
-                {list.map((p) => (
-                    <CommandItem
-                      key={p.id}
-                      value={[p.name, ...(p.aliases ?? [])].join(" ")}
-                      onSelect={() => {
-                        onSelect({ id: p.id, name: p.name });
-                        if (!keepOpenOnSelect) setOpen(false);
-                        setSearch("");
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          payerId === p.id ? "opacity-100" : "opacity-0",
-                        )}
-                      />
-                      {p.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              ))}
+            {grouped.approved.length > 0 && (
+              <CommandGroup>
+                {grouped.approved.map((p) => (
+                  <CommandItem
+                    key={p.id}
+                    value={[p.name, ...(p.aliases ?? [])].join(" ")}
+                    onSelect={() => {
+                      onSelect({ id: p.id, name: p.name });
+                      if (!keepOpenOnSelect) setOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        payerId === p.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {p.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
 
             {grouped.myPending.length > 0 && (
               <>

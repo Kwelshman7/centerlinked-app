@@ -213,17 +213,47 @@ export default function SearchResults() {
 
   const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
 
+  const chips = useMemo(() => {
+    const list: string[] = [];
+    if (payerName) list.push(payerName);
+    if (planType) list.push(planTypeShortLabel(planType));
+    if (loc) list.push(loc);
+    const place = [city, state].filter(Boolean).join(", ");
+    if (place) list.push(place);
+    return list;
+  }, [payerName, planType, loc, city, state]);
+
+  useEffect(() => {
+    setEditing(false);
+  }, [payerId, planType, state, city, loc]);
+
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/app/search">
-            <ArrowLeft className="h-4 w-4" /> New search
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setEditing((v) => !v)}>
-          <SearchIcon className="h-4 w-4" /> {editing ? "Hide filters" : "Edit search"}
-        </Button>
+      <div className="sticky top-12 lg:top-0 z-20 -mx-4 sm:-mx-6 lg:mx-0 bg-muted/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border-b border-border/60 lg:border-0 px-4 sm:px-6 lg:px-0 py-2.5 lg:py-0">
+        <div className="flex items-center justify-between gap-2">
+          <Button asChild variant="ghost" size="sm" className="shrink-0 -ml-2">
+            <Link to="/app/search">
+              <ArrowLeft className="h-4 w-4" /> New search
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" className="shrink-0" onClick={() => setEditing((v) => !v)}>
+            <SearchIcon className="h-4 w-4" /> {editing ? "Hide" : "Edit"}
+          </Button>
+        </div>
+        {chips.length > 0 ? (
+          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {chips.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => setEditing(true)}
+                className="shrink-0 rounded-full border border-border/70 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {editing && (

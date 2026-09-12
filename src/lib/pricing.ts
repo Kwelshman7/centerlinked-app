@@ -66,6 +66,35 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
   },
 ];
 
+/**
+ * Free tier.
+ *
+ * Describes what the product already does without a membership: claiming a
+ * profile, keeping it current, and being findable have never required payment.
+ * Naming it stops a claimant hitting the pricing page and assuming a $99 floor
+ * blocks them.
+ *
+ * Deliberately NOT part of `MEMBERSHIP_TIERS` — that array is the purchasable
+ * catalog and drives checkout, tier matching, and the server mirror in
+ * `server/stripe/pricing.mjs`. A $0 entry there would be meaningless at best
+ * and would break `assertTierMatchesFacilityCount` at worst.
+ */
+export const LISTED_TIER = {
+  id: "listed",
+  name: "Listed",
+  priceLabel: "Free",
+  priceNote: "No card required",
+  description:
+    "Claim your organization, keep it accurate, and stay findable by referral partners.",
+  features: [
+    "Claim your organization's profile",
+    "Keep facilities, insurance, and referral contacts current",
+    "Appear in partner search",
+    "Share your public organization link",
+    "Monthly verification stamp",
+  ],
+} as const;
+
 export type DfyPackage = {
   id: MembershipTierId;
   name: string;
@@ -94,7 +123,7 @@ export const PRICING_HEADING = {
 } as const;
 
 export const PRICING_SUMMARY =
-  "1 facility $99/month, then the monthly rate rises with each added facility up to $499 for 15. 16+ is quoted. Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
+  "Claiming your organization and staying listed is free. Membership starts at $99/month for 1 facility and rises with each added facility up to $499 for 15; 16+ is quoted. Annual billing includes two months free. We’ll build your profile from $499. Referral partners are not billed.";
 
 /**
  * Monthly membership (cents) by live facility count.

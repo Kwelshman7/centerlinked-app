@@ -1,6 +1,11 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import { initMonitoring } from "@/lib/monitoring";
 import "./index.css";
+
+// Before render, so errors thrown during the initial mount are captured too.
+// Installs global handlers for window.onerror and unhandled promise rejections.
+initMonitoring();
 
 // Supabase may return OAuth tokens on Site URL (/) instead of /auth/callback.
 if (

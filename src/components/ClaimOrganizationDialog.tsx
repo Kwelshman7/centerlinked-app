@@ -120,7 +120,8 @@ export function ClaimOrganizationDialog({ organizationId, organizationName }: Pr
         <DialogHeader>
           <DialogTitle>Claim {organizationName}</DialogTitle>
           <DialogDescription>
-            Submit proof of ownership and our team will verify your request before granting access.
+            Claiming is free. Submit proof of ownership and our team will verify your request
+            before granting access.
           </DialogDescription>
         </DialogHeader>
 

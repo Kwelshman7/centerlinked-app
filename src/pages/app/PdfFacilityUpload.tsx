@@ -43,6 +43,7 @@ import {
   ArrowRight,
   Building2,
   Lock,
+  ArrowLeft,
 } from "lucide-react";
 
 interface ExtractedImage {
@@ -85,6 +86,7 @@ export default function PdfFacilityUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const queryOrgId = (searchParams.get("orgId") || "").trim() || null;
+  const fromOnboarding = searchParams.get("from") === "onboarding";
   const targetOrgId = isSuperAdmin
     ? queryOrgId || profile?.organization_id || null
     : profile?.organization_id || null;
@@ -213,7 +215,7 @@ export default function PdfFacilityUpload() {
         <p className="text-sm text-muted-foreground">
           Only organization admins can import facilities and insurance from a PDF.
         </p>
-        <Button asChild variant="outline"><Link to="/app">Back to app</Link></Button>
+        <Button asChild variant="outline"><Link to="/app/search">Back to search</Link></Button>
       </Card>
     );
   }
@@ -575,12 +577,19 @@ export default function PdfFacilityUpload() {
     }
   };
 
-  const afterSaveHref = isSuperAdmin && queryOrgId
-    ? `/app/admin/organizations/${queryOrgId}?tab=facilities`
-    : "/app/facilities";
+  const afterSaveHref = fromOnboarding
+    ? "/app/search"
+    : isSuperAdmin && queryOrgId
+      ? `/app/admin/organizations/${queryOrgId}?tab=facilities`
+      : "/app/facilities";
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
+      {fromOnboarding ? (
+        <Link to="/app/onboarding" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back to onboarding
+        </Link>
+      ) : null}
       <div>
         <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2">
           <Wand2 className="h-7 w-7 text-primary" />
@@ -1087,7 +1096,7 @@ export default function PdfFacilityUpload() {
           </div>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <Button onClick={() => navigate(afterSaveHref)}>
-              View facilities <ArrowRight className="h-4 w-4" />
+              {fromOnboarding ? "Search the network" : "View facilities"} <ArrowRight className="h-4 w-4" />
             </Button>
             <Button variant="outline" onClick={reset}>
               <Plus className="h-4 w-4" /> Upload another PDF

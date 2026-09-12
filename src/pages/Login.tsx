@@ -64,7 +64,7 @@ export default function Login() {
 
   const isAppLogin = location.pathname === "/start";
   const from = safeInternalPath((location.state as { from?: string } | null)?.from);
-  const afterLogin = isAppLogin ? APP_LOGIN_NEXT : "/app";
+  const afterLogin = APP_LOGIN_NEXT;
 
   useEffect(() => {
     applySocialMeta({
@@ -144,7 +144,7 @@ export default function Login() {
       <div className="absolute top-0 right-0 -z-10 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
       <div className="absolute bottom-0 left-0 -z-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
 
-      <div className="w-full max-w-md">
+      <div className="mx-auto w-full max-w-md">
         {isAppLogin ? null : (
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-6">
             <ArrowLeft className="h-4 w-4" /> Back to home
@@ -160,20 +160,8 @@ export default function Login() {
               {isAppLogin ? "Sign in to search" : "Welcome back"}
             </h1>
             <p className="text-sm text-muted-foreground mt-2">
-              {isAppLogin
-                ? "Work email only. After you sign in you’ll land on search."
-                : "Sign in with your work email. Personal emails require CenterLinked approval."}
+              Sign in using your work email.
             </p>
-          </div>
-
-          <GoogleSignInButton className="w-full mb-2" />
-          <p className="text-xs text-muted-foreground text-center mb-4">
-            Approved with a personal email? Skip Google and sign in with that exact address.
-          </p>
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -207,6 +195,13 @@ export default function Login() {
             </Button>
           </form>
 
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
+          </div>
+
+          <GoogleSignInButton className="w-full" />
+
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{" "}
             <Link to="/signup" className="text-primary font-medium hover:underline">Sign up</Link>
@@ -218,13 +213,6 @@ export default function Login() {
             <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
           </p>
         </div>
-
-        {isAppLogin ? (
-          <p className="text-center text-xs text-muted-foreground mt-5 px-1 leading-relaxed">
-            Add this page to your Home Screen for a one-tap app. On iPhone: Share → Add to Home Screen.
-            The CenterLinked logo is the icon.
-          </p>
-        ) : null}
       </div>
     </main>
   );

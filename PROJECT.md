@@ -279,6 +279,22 @@ Schema types live in `src/integrations/supabase/types.ts`. Additional SQL lives 
 
 ---
 
+## Canonical connections
+
+Work only in this folder: `/Users/kylewelshman/Projects/side-projects/centerlinked/app`.
+
+| Service | Canonical target |
+|---------|------------------|
+| **GitHub** | `https://github.com/Kwelshman7/centerlinked-app` |
+| **Vercel** | Project `centerlinked-app` (`prj_s3jPtISaAsvL6lOybD5I9XNECAxt`), domain `https://www.centerlinked.com` |
+| **Supabase** | Project **CenterLinked**, ref `ugxdmpctujlaunpdebmd` (`https://ugxdmpctujlaunpdebmd.supabase.co`). Local CLI link is in `supabase/.temp/linked-project.json`. |
+
+Do not edit or deploy from older copies: `centerlinked-lovable` (GitHub `centerlinked-33f7ae01`, different Supabase ref), `Documents/centerlinked`, `Documents/centerlinked 2` (Next.js leftover), or the iCloud `centerlinked` folder. Older GitHub repos `CenterLinked` and `centerlinked-33f7ae01` are not production.
+
+If Cursor’s Supabase plugin says **Recovery1** is paused, that is a leftover plugin project — not this app. Reconnect the plugin to **CenterLinked** (`ugxdmpctujlaunpdebmd`).
+
+---
+
 ## Deployment Platform
 
 **Vercel** (project name `centerlinked-app`).

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { verificationState } from "@/lib/verification";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { verificationState } from "@/lib/verification";
 import {
   AlertTriangle,
   ArrowRight,
@@ -73,12 +73,19 @@ function orgName(orgs: Map<string, OrgRow>, id: string | null | undefined) {
   return orgs.get(id)?.name ?? "Unknown organization";
 }
 
+function isTestNoise(...parts: Array<string | null | undefined>) {
+  return parts.some((part) => /walkthrough|\be2e\b|signup\.e2e/i.test(part || ""));
+}
+
 async function loadOps() {
   const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const recentCutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
   const [
     orgsRes,
     profilesRes,
+    stuckRes,
+    membersRes,
     leadsRes,
     joinsRes,
     claimsRes,
@@ -101,6 +108,14 @@ async function loadOps() {
       .order("created_at", { ascending: false })
       .limit(40),
     supabase
+      .from("profiles")
+      .select("id,user_id,full_name,email,organization_id,created_at")
+      .is("organization_id", null)
+      .gte("created_at", recentCutoff)
+      .order("created_at", { ascending: false })
+      .limit(40),
+    supabase.from("organization_members").select("organization_id"),
+    supabase
       .from("early_access_leads")
       .select("id,full_name,email,organization,status,created_at,reviewed_at,notes")
       .order("created_at", { ascending: false })
@@ -118,7 +133,7 @@ async function loadOps() {
     supabase
       .from("facilities")
       .select(
-        "id,name,organization_id,verification_status,rejection_reason,verification_frozen,verified_at,contracts_verified_at,created_at",
+        "id,name,organization_id,verification_status,rejection_reason,verification_frozen,verified_at,contracts_verified_at,created_at,updated_at",
       )
       .or("verification_status.eq.pending,verification_status.eq.rejected,verification_frozen.eq.true")
       .order("updated_at", { ascending: false })
@@ -161,6 +176,13 @@ async function loadOps() {
     (((orgsRes.data as OrgRow[]) ?? []).map((o) => [o.id, o]) as Array<[string, OrgRow]>),
   );
   const profiles = ((profilesRes.data as SignupRow[]) ?? []);
+  const stuckProfiles = ((stuckRes.data as SignupRow[]) ?? []);
+  const liveOrgIds = new Set<string>(
+    ((membersRes.data as Array<{ organization_id: string }> | null) ?? []).map((r) => r.organization_id),
+  );
+  for (const p of profiles) {
+    if (p.organization_id) liveOrgIds.add(p.organization_id);
+  }
   const leads = (leadsRes.data ?? []) as Array<{
     id: string;
     full_name: string;
@@ -189,6 +211,9 @@ async function loadOps() {
     reviewed_at: string | null;
     organization_id: string;
   }>;
+  for (const claim of claims.filter((x) => x.status === "approved")) {
+    liveOrgIds.add(claim.organization_id);
+  }
   const facilityIssues = (facilityIssuesRes.data ?? []) as Array<{
     id: string;
     name: string;
@@ -199,6 +224,7 @@ async function loadOps() {
     verified_at: string | null;
     contracts_verified_at: string | null;
     created_at: string;
+    updated_at: string;
   }>;
   const facilityHistory = (facilityHistoryRes.data ?? []) as Array<{
     id: string;
@@ -279,7 +305,9 @@ async function loadOps() {
       tone: "amber",
     });
   }
-  for (const r of facilityIssues.filter((x) => x.verification_status === "pending")) {
+  for (const r of facilityIssues.filter(
+    (x) => x.verification_status === "pending" && !isTestNoise(x.name, orgName(orgs, x.organization_id)),
+  )) {
     pending.push({
       id: `fac-${r.id}`,
       href: "/app/verifications",
@@ -314,9 +342,8 @@ async function loadOps() {
   pending.sort((a, b) => +new Date(b.when) - +new Date(a.when));
 
   const problems: QueueItem[] = [];
-  const recentCutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
-  for (const p of profiles.filter(
-    (x) => !x.organization_id && !superAdminIds.has(x.user_id) && x.created_at >= recentCutoff,
+  for (const p of stuckProfiles.filter(
+    (x) => !superAdminIds.has(x.user_id) && !isTestNoise(x.full_name, x.email),
   )) {
     problems.push({
       id: `stuck-${p.id}`,
@@ -328,7 +355,9 @@ async function loadOps() {
       tone: "red",
     });
   }
-  for (const o of [...orgs.values()].filter((x) => !x.verified && x.created_at >= recentCutoff)) {
+  for (const o of [...orgs.values()].filter(
+    (x) => !x.verified && x.created_at >= recentCutoff && liveOrgIds.has(x.id) && !isTestNoise(x.name),
+  )) {
     problems.push({
       id: `unverified-${o.id}`,
       href: `/app/admin/organizations/${o.id}`,
@@ -339,46 +368,43 @@ async function loadOps() {
       tone: "amber",
     });
   }
-  for (const r of facilityIssues.filter((x) => x.verification_status === "rejected")) {
+  for (const r of facilityIssues.filter(
+    (x) =>
+      x.verification_status === "rejected" &&
+      liveOrgIds.has(x.organization_id) &&
+      (x.updated_at || x.created_at) >= recentCutoff &&
+      !isTestNoise(x.name),
+  )) {
     problems.push({
       id: `rej-fac-${r.id}`,
       href: `/app/facilities/${r.id}`,
       title: r.name,
       detail: r.rejection_reason || `Rejected · ${orgName(orgs, r.organization_id)}`,
-      when: r.created_at,
+      when: r.updated_at || r.created_at,
       badge: "Facility rejected",
       tone: "red",
     });
   }
-  for (const r of facilityIssues.filter((x) => x.verification_frozen)) {
+  for (const r of facilityIssues.filter(
+    (x) =>
+      x.verification_frozen &&
+      liveOrgIds.has(x.organization_id) &&
+      (x.updated_at || x.created_at) >= recentCutoff &&
+      !isTestNoise(x.name),
+  )) {
     problems.push({
       id: `frozen-${r.id}`,
       href: `/app/facilities/${r.id}/verify`,
       title: r.name,
       detail: `${orgName(orgs, r.organization_id)} · frozen until re-verified`,
-      when: r.contracts_verified_at || r.created_at,
+      when: r.updated_at || r.contracts_verified_at || r.created_at,
       badge: "Frozen",
       tone: "red",
     });
   }
-  for (const r of due) {
-    const already =
-      problems.some((p) => p.id === `frozen-${r.facility_id}`) ||
-      facilityIssues.some((f) => f.id === r.facility_id && f.verification_frozen);
-    if (already) continue;
-    const state = verificationState(r.contracts_verified_at, false);
-    if (state.tier !== "stale" && state.tier !== "never") continue;
-    problems.push({
-      id: `due-${r.facility_id}`,
-      href: `/app/facilities/${r.facility_id}/verify`,
-      title: r.facility_name,
-      detail: `${orgName(orgs, r.organization_id)} · ${state.label}`,
-      when: r.contracts_verified_at || new Date().toISOString(),
-      badge: "Stale verification",
-      tone: "amber",
-    });
-  }
-  for (const r of leads.filter((x) => x.status === "denied")) {
+  for (const r of leads.filter(
+    (x) => x.status === "denied" && (x.reviewed_at || x.created_at) >= recentCutoff && !isTestNoise(x.full_name, x.email),
+  )) {
     problems.push({
       id: `denied-lead-${r.id}`,
       href: "/app/admin/requests",
@@ -389,7 +415,9 @@ async function loadOps() {
       tone: "red",
     });
   }
-  for (const r of payers.filter((x) => x.status === "rejected")) {
+  for (const r of payers.filter(
+    (x) => x.status === "rejected" && x.created_at >= recentCutoff && !isTestNoise(x.name),
+  )) {
     problems.push({
       id: `rej-payer-${r.id}`,
       href: "/app/admin/insurance",
@@ -397,6 +425,21 @@ async function loadOps() {
       detail: r.rejection_reason || "Payer suggestion rejected",
       when: r.created_at,
       badge: "Payer rejected",
+    });
+  }
+  for (const r of due) {
+    if (!liveOrgIds.has(r.organization_id) || isTestNoise(r.facility_name, orgName(orgs, r.organization_id))) continue;
+    if (problems.some((p) => p.id === `frozen-${r.facility_id}`)) continue;
+    const state = verificationState(r.contracts_verified_at, false);
+    if (state.tier !== "stale" && state.tier !== "never") continue;
+    problems.push({
+      id: `due-${r.facility_id}`,
+      href: `/app/facilities/${r.facility_id}/verify`,
+      title: r.facility_name,
+      detail: `${orgName(orgs, r.organization_id)} · ${state.label}`,
+      when: r.contracts_verified_at || new Date().toISOString(),
+      badge: state.tier === "never" ? "Never verified" : "Stale verification",
+      tone: "amber",
     });
   }
   problems.sort((a, b) => +new Date(b.when) - +new Date(a.when));
@@ -482,11 +525,15 @@ async function loadOps() {
   }
   history.sort((a, b) => +new Date(b.when) - +new Date(a.when));
 
-  const signupWeek = profiles.filter((p) => p.created_at >= weekAgo).length;
+  const signupWeek = profiles.filter(
+    (p) => p.created_at >= weekAgo && !isTestNoise(p.full_name, p.email),
+  ).length;
   const errors: string[] = [];
   for (const [label, res] of [
     ["organizations", orgsRes],
     ["profiles", profilesRes],
+    ["stuck signups", stuckRes],
+    ["members", membersRes],
     ["access requests", leadsRes],
     ["join requests", joinsRes],
     ["claims", claimsRes],
@@ -562,7 +609,7 @@ export function AdminOverview({ compact = false }: { compact?: boolean }) {
   const [data, setData] = useState<OpsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedJoin, setCopiedJoin] = useState(false);
-  const joinUrl = `${typeof window !== "undefined" ? window.location.origin : "https://www.centerlinked.com"}/join`;
+  const joinUrl = "https://www.centerlinked.com/join";
 
   const refresh = async () => {
     setLoading(true);
@@ -631,7 +678,7 @@ export function AdminOverview({ compact = false }: { compact?: boolean }) {
               Organization join link
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Send this anywhere. They create an account, add their organization, locations, and in-network contracts.
+              Send this to a BD rep. They sign up with a work email, list their facilities, and share a live link partners can reopen.
             </p>
             <p className="text-sm font-medium mt-2 break-all">{joinUrl}</p>
           </div>
@@ -729,7 +776,7 @@ export function AdminOverview({ compact = false }: { compact?: boolean }) {
               </div>
               <QueueList
                 items={data.problems}
-                empty="No rejected, frozen, or stuck items right now."
+                empty="No current signup or review issues."
                 limit={problemLimit}
               />
             </Card>
@@ -806,8 +853,8 @@ export function AdminOverview({ compact = false }: { compact?: boolean }) {
 
           <p className="text-xs text-muted-foreground">
             Pricing-page questions still go to admin@centerlinked.com — they are not stored as in-app
-            tickets. Denied access requests, rejected facilities, frozen programs, and users stuck in
-            organization setup appear under Problems.
+            tickets. Problems lists recent stuck signups and review issues at organizations that have
+            members. Catalog-wide verification freshness stays under Verifications.
           </p>
         </>
       ) : null}

@@ -12,7 +12,7 @@ export function OrgClaimCard({ organizationId, organizationName }: Props) {
         Send a Referral
       </p>
       <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-        No BD contact set up yet. Claim this profile to add your team and start
+        No BD contact set up yet. Claiming is free — add your team and start
         receiving referrals.
       </p>
       <div className="flex justify-center">
