@@ -1,0 +1,742 @@
+{
+  "version": "2026.09.11-centerlinked-v1",
+  "meta": {
+    "as_of": "2026-09-11",
+    "medicaid_state_overlay_required": true,
+    "bcbs_local_plan_required": true,
+    "include_rental_networks": false,
+    "medigap_note": "Medigap does not use facility networks like MA; listed as informational where carriers sell it. Facilities participate with Original Medicare.",
+    "usage": "UI: select insurer_id -> show plan_types where dropdown=true. Use contracting_notes and aliases for search.",
+    "filtered_for": "CenterLinked facility plan-type dropdowns",
+    "medigap_in_dropdown": false,
+    "bcbs_mode": "major_licensees_plus_other_local",
+    "mbho_separate": true,
+    "include_va_ccn_tricare": true,
+    "medicaid_state_overlay_included": false,
+    "user_selections": [
+      "Blues: major licensees plus Other local Blue catch-all",
+      "Keep MBHOs as separate contracting entities",
+      "Include VA CCN and TRICARE"
+    ],
+    "decided_defaults": [
+      "Exclude rental networks (MultiPlan/PHCS/First Health)",
+      "Hide Medigap from facility dropdowns",
+      "Defer state→Medicaid MCO overlay to follow-up"
+    ]
+  },
+  "insurers": [
+    {
+      "insurer_id": "uhc",
+      "display_name": "UnitedHealthcare",
+      "aliases": ["UHC", "United Healthcare", "UnitedHealth Group", "Optum"],
+      "category": "national_carrier",
+      "contracting_notes": "In-network usually at product/network family within UHC participation. UMR/Oxford/Surest/Student Resources may use distinct payer IDs. Behavioral health often requires separate Optum Behavioral Health contract.",
+      "plan_types": [
+        {"id": "uhc_choice", "label": "Choice", "lob": "commercial", "dropdown": true, "network_style": "EPO-like", "notes": "In-network only except emergencies"},
+        {"id": "uhc_choice_plus", "label": "Choice Plus", "lob": "commercial", "dropdown": true, "network_style": "PPO-like"},
+        {"id": "uhc_options_ppo", "label": "Options PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "uhc_navigate", "label": "Navigate", "lob": "commercial", "dropdown": true, "network_style": "narrow HMO-like", "aliases": ["Navigate Balanced", "Navigate Plus"]},
+        {"id": "uhc_nexusaco", "label": "NexusACO", "lob": "commercial", "dropdown": true, "network_style": "ACO", "aliases": ["NexusACO OA", "NexusACO OAP", "NexusACO R", "NexusACO RB", "NexusACO RP"]},
+        {"id": "uhc_core", "label": "Core / Core Essential", "lob": "commercial", "dropdown": true, "network_style": "narrow open-access"},
+        {"id": "uhc_edge", "label": "EDGE", "lob": "commercial", "dropdown": true, "network_style": "tiered open-access"},
+        {"id": "uhc_select", "label": "Select / Select Plus", "lob": "commercial", "dropdown": true, "network_style": "open-access"},
+        {"id": "uhc_signaturevalue", "label": "SignatureValue (HMO family)", "lob": "commercial", "dropdown": true, "network_style": "HMO", "notes": "CA-strong: Advantage, Alliance, Focus, Flex, Harmony"},
+        {"id": "uhc_tiered", "label": "Tiered Benefit Plans", "lob": "commercial", "dropdown": true, "network_style": "tiered"},
+        {"id": "uhc_surest", "label": "Surest", "lob": "commercial", "dropdown": true, "network_style": "fixed-copay", "notes": "Typically rides UHC commercial participation; distinct claims/payer ID"},
+        {"id": "uhc_all_savers", "label": "All Savers", "lob": "commercial", "dropdown": true, "network_style": "varies"},
+        {"id": "uhc_oxford_freedom", "label": "Oxford Freedom", "lob": "commercial", "dropdown": true, "network_style": "PPO-like", "notes": "Northeast / tri-state"},
+        {"id": "uhc_oxford_liberty", "label": "Oxford Liberty", "lob": "commercial", "dropdown": true, "network_style": "mid-network"},
+        {"id": "uhc_oxford_metro", "label": "Oxford Metro", "lob": "commercial", "dropdown": true, "network_style": "narrow", "aliases": ["Garden State"]},
+        {"id": "uhc_umr", "label": "UMR (ASO/TPA)", "lob": "commercial", "dropdown": true, "network_style": "varies", "notes": "Network often Choice Plus or regional; separate admin"},
+        {"id": "uhc_student_resources", "label": "Student Resources (UHCSR)", "lob": "commercial", "dropdown": true, "network_style": "varies"},
+        {"id": "uhc_exchange", "label": "Individual / ACA Marketplace", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "uhc_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO", "aliases": ["AARP Medicare Advantage HMO"]},
+        {"id": "uhc_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO", "aliases": ["AARP Medicare Advantage Choice PPO", "LPPO", "RPPO"]},
+        {"id": "uhc_dsnp", "label": "Dual Complete / D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "uhc_csnp", "label": "Chronic SNP (C-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "uhc_isnp", "label": "Institutional SNP / Nursing Home plans", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "uhc_group_ma", "label": "Group Medicare Advantage", "lob": "medicare_advantage", "dropdown": true, "network_style": "varies"},
+        {"id": "uhc_community_plan", "label": "Community Plan (Medicaid/CHIP)", "lob": "medicaid", "dropdown": true, "network_style": "MCO"}
+      ],
+      "parent": "UnitedHealth Group"
+    },
+    {
+      "insurer_id": "optum_bh",
+      "display_name": "Optum Behavioral Health",
+      "aliases": ["Optum BH", "Provider Express", "United Behavioral Health", "UBH"],
+      "category": "mbho",
+      "contracting_notes": "Primary BH/SUD carve-out for UnitedHealthcare. Facilities often need this contract separately from UHC medical to be in-network for behavioral benefits.",
+      "plan_types": [
+        {"id": "optum_bh_commercial", "label": "UHC Commercial BH", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "optum_bh_ma", "label": "UHC Medicare Advantage BH", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "optum_bh_medicaid", "label": "UHC Community Plan / Medicaid BH", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "optum_bh_exchange", "label": "UHC Exchange / Individual BH", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "optum_bh_other", "label": "Other Optum-managed carve-out sponsors", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"}
+      ],
+      "parent": "UnitedHealth Group"
+    },
+    {
+      "insurer_id": "aetna",
+      "display_name": "Aetna",
+      "aliases": ["Aetna CVS Health", "CVS Health"],
+      "category": "national_carrier",
+      "contracting_notes": "Choice POS II and Open Choice PPO are broad national staples. APCN/APCN+ are performance/ACO overlays. Meritain uses Aetna networks with distinct admin.",
+      "plan_types": [
+        {"id": "aetna_hmo_network_only", "label": "HMO — Health Network Only", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "aetna_select_epo", "label": "EPO — Aetna Select", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "aetna_oa_select", "label": "EPO — Open Access Aetna Select", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "aetna_elect_choice", "label": "EPO — Open Access Elect Choice", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "aetna_qpos", "label": "POS — Quality Point of Service (QPOS)", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "aetna_managed_choice", "label": "POS — Managed Choice", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "aetna_oa_managed_choice", "label": "POS — Open Access Managed Choice", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "aetna_choice_pos_ii", "label": "POS — Choice POS II", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "aetna_health_network_option", "label": "Health Network Option", "lob": "commercial", "dropdown": true, "network_style": "POS-like"},
+        {"id": "aetna_open_choice", "label": "PPO — Open Choice", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "aetna_traditional_choice", "label": "Indemnity — Traditional Choice", "lob": "commercial", "dropdown": true, "network_style": "indemnity"},
+        {"id": "aetna_apcn", "label": "Premier Care Network / APCN+", "lob": "commercial", "dropdown": true, "network_style": "performance/ACO", "notes": "Overlay on Choice POS II / Open Access Select"},
+        {"id": "aetna_whole_health", "label": "Aetna Whole Health / ACO / JV", "lob": "commercial", "dropdown": true, "network_style": "ACO", "aliases": ["Innovation Health"]},
+        {"id": "aetna_meritain", "label": "Meritain Health (ASO)", "lob": "commercial", "dropdown": true, "network_style": "varies"},
+        {"id": "aetna_exchange", "label": "Individual / ACA Marketplace", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "aetna_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "aetna_ma_hmopos", "label": "Medicare Advantage HMO-POS", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO-POS"},
+        {"id": "aetna_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "aetna_dsnp", "label": "Dual Eligible SNP (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "aetna_better_health", "label": "Aetna Better Health (Medicaid/CHIP)", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "aetna_bh", "label": "Aetna Behavioral Health", "lob": "behavioral", "dropdown": true, "network_style": "integrated/carve-out"}
+      ],
+      "parent": "CVS Health"
+    },
+    {
+      "insurer_id": "cigna",
+      "display_name": "Cigna Healthcare",
+      "aliases": ["Cigna", "The Cigna Group"],
+      "category": "national_carrier",
+      "contracting_notes": "OAP is broad national; LocalPlus is narrower and may need explicit participation. Medicare Advantage largely moved to HealthSpring (HCSC). BH via Evernorth Behavioral Health.",
+      "plan_types": [
+        {"id": "cigna_oap", "label": "Open Access Plus (OAP)", "lob": "commercial", "dropdown": true, "network_style": "PPO-like"},
+        {"id": "cigna_ppo", "label": "PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "cigna_epo", "label": "EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "cigna_localplus", "label": "LocalPlus / LocalPlus In-Network", "lob": "commercial", "dropdown": true, "network_style": "narrow"},
+        {"id": "cigna_surefit", "label": "SureFit", "lob": "commercial", "dropdown": true, "network_style": "narrow"},
+        {"id": "cigna_hmo", "label": "HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "cigna_hmo_oa", "label": "HMO Open Access / HMO POS Open Access", "lob": "commercial", "dropdown": true, "network_style": "HMO-OA"},
+        {"id": "cigna_network", "label": "Medical Network plans", "lob": "commercial", "dropdown": true, "network_style": "local"},
+        {"id": "cigna_indemnity", "label": "Medical Indemnity", "lob": "commercial", "dropdown": true, "network_style": "indemnity"},
+        {"id": "cigna_clearity", "label": "Clearity", "lob": "commercial", "dropdown": true, "network_style": "varies"},
+        {"id": "cigna_exchange", "label": "Individual / ACA Marketplace", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "cigna_medicaid", "label": "Medicaid (limited / market-specific)", "lob": "medicaid", "dropdown": true, "network_style": "MCO"}
+      ],
+      "parent": "The Cigna Group"
+    },
+    {
+      "insurer_id": "evernorth_bh",
+      "display_name": "Evernorth Behavioral Health",
+      "aliases": ["Evernorth BH", "Cigna Behavioral"],
+      "category": "mbho",
+      "contracting_notes": "MBHO for Cigna commercial and affiliated products. Often separate from Cigna medical contract for BH/SUD facilities.",
+      "plan_types": [
+        {"id": "evernorth_commercial", "label": "Commercial BH (Cigna OAP/PPO/HMO/LocalPlus sponsors)", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "evernorth_ma_legacy", "label": "Medicare Advantage BH (legacy / HealthSpring coordination)", "lob": "behavioral", "dropdown": true, "network_style": "carve-out", "notes": "Confirm HealthSpring vs Evernorth role on card"},
+        {"id": "evernorth_other", "label": "Other Evernorth-managed plan sponsors", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"}
+      ],
+      "parent": "The Cigna Group"
+    },
+    {
+      "insurer_id": "healthspring",
+      "display_name": "HealthSpring",
+      "aliases": ["Cigna Medicare Advantage (legacy)", "HCSC HealthSpring"],
+      "category": "medicare_focused",
+      "contracting_notes": "Former Cigna Medicare Advantage book; now under HCSC/HealthSpring. Verify entity on member ID.",
+      "plan_types": [
+        {"id": "hs_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "hs_ma_hmopos", "label": "Medicare Advantage HMO-POS", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO-POS"},
+        {"id": "hs_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "hs_dsnp", "label": "D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"}
+      ],
+      "parent": "Health Care Service Corporation (HCSC)"
+    },
+    {
+      "insurer_id": "anthem_elevance",
+      "display_name": "Anthem / Elevance Health",
+      "aliases": ["Anthem", "Elevance", "Anthem Blue Cross", "Anthem BCBS", "Empire BCBS"],
+      "category": "national_carrier",
+      "contracting_notes": "Also operates as BCBS licensee in multiple states. Contract with local Anthem/affiliate market. BH often via Carelon Behavioral Health.",
+      "plan_types": [
+        {"id": "anthem_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "anthem_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "anthem_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "anthem_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "anthem_pathway", "label": "Pathway / Pathway Essentials", "lob": "exchange", "dropdown": true, "network_style": "narrow HMO/POS", "notes": "Often ACA/individual"},
+        {"id": "anthem_exchange", "label": "Individual / ACA Marketplace", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "anthem_ma_hmo", "label": "Medicare Advantage HMO / HMO-POS", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "anthem_ma_ppo", "label": "Medicare Advantage PPO / Regional PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "anthem_dsnp", "label": "Dual Advantage / D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "anthem_medicaid", "label": "Medicaid / Healthy Blue (state brands)", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "anthem_fep", "label": "FEP (via Blue system)", "lob": "federal", "dropdown": true, "network_style": "PPO"}
+      ],
+      "parent": "Elevance Health"
+    },
+    {
+      "insurer_id": "carelon_bh",
+      "display_name": "Carelon Behavioral Health",
+      "aliases": ["Beacon Health Options", "Beacon", "Carelon", "BHOVO"],
+      "category": "mbho",
+      "contracting_notes": "Formerly Beacon Health Options. Manages Anthem/Elevance BH and many other plan sponsors including Medicaid carve-outs. Often separate contract from medical Anthem.",
+      "plan_types": [
+        {"id": "carelon_commercial", "label": "Commercial BH carve-out", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "carelon_anthem", "label": "Anthem / Elevance-affiliated BH", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "carelon_ma", "label": "Medicare Advantage BH", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "carelon_medicaid", "label": "Medicaid BH carve-out", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "carelon_eap", "label": "EAP / specialty BH", "lob": "behavioral", "dropdown": true, "network_style": "specialty"}
+      ],
+      "parent": "Elevance Health"
+    },
+    {
+      "insurer_id": "humana",
+      "display_name": "Humana",
+      "aliases": ["Humana Inc.", "Humana Healthy Horizons"],
+      "category": "national_carrier",
+      "contracting_notes": "Medicare Advantage is core book; HMO vs PPO often separate network flags. Medicaid via Healthy Horizons requires state Medicaid enrollment + Humana contract. TRICARE East via Humana Military (see tricare).",
+      "plan_types": [
+        {"id": "humana_comm_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "humana_comm_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "humana_comm_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "humana_comm_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "humana_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO", "aliases": ["Gold Plus"]},
+        {"id": "humana_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO", "aliases": ["Choice", "Honor"]},
+        {"id": "humana_ma_pffs", "label": "Medicare Advantage PFFS", "lob": "medicare_advantage", "dropdown": true, "network_style": "PFFS"},
+        {"id": "humana_dsnp", "label": "D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "humana_csnp", "label": "C-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "humana_isnp", "label": "I-SNP / Institutional", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "humana_group_ma", "label": "Group Medicare Advantage", "lob": "medicare_advantage", "dropdown": true, "network_style": "varies"},
+        {"id": "humana_healthy_horizons", "label": "Healthy Horizons (Medicaid/LTSS)", "lob": "medicaid", "dropdown": true, "network_style": "MCO"}
+      ],
+      "parent": "Humana"
+    },
+    {
+      "insurer_id": "kaiser",
+      "display_name": "Kaiser Permanente",
+      "aliases": ["Kaiser", "KP", "Kaiser Foundation Health Plan"],
+      "category": "regional_integrated",
+      "contracting_notes": "Closed integrated HMO model by region. Community facility contracts are specialty/overflow/BH — not broad national PPO. Contract with regional KP entity.",
+      "plan_types": [
+        {"id": "kp_comm_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "kp_comm_pos", "label": "Commercial HMO-POS / Added Choice", "lob": "commercial", "dropdown": true, "network_style": "HMO-POS"},
+        {"id": "kp_exchange", "label": "Individual / ACA Marketplace HMO", "lob": "exchange", "dropdown": true, "network_style": "HMO"},
+        {"id": "kp_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "kp_ma_hmopos", "label": "Medicare Advantage HMO-POS", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO-POS"},
+        {"id": "kp_dsnp", "label": "Dual Complete / D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "kp_medicaid", "label": "Medicaid / Medi-Cal managed care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"}
+      ],
+      "parent": "Kaiser Permanente"
+    },
+    {
+      "insurer_id": "centene",
+      "display_name": "Centene",
+      "aliases": ["Centene Corporation"],
+      "category": "national_carrier",
+      "contracting_notes": "Parent of Ambetter (ACA), Wellcare (Medicare), Health Net, and many state Medicaid brands. Contract with the brand/legal entity on the ID card.",
+      "plan_types": [
+        {"id": "centene_state_medicaid", "label": "State Medicaid MCO (local brand)", "lob": "medicaid", "dropdown": true, "network_style": "MCO", "notes": "State overlay required — Sunshine, Buckeye, Meridian, Superior, etc."},
+        {"id": "centene_chip", "label": "CHIP / Children's Medicaid", "lob": "medicaid", "dropdown": true, "network_style": "MCO"}
+      ],
+      "parent": "Centene"
+    },
+    {
+      "insurer_id": "ambetter",
+      "display_name": "Ambetter",
+      "aliases": ["Ambetter from Centene", "Ambetter Health"],
+      "category": "exchange_focused",
+      "contracting_notes": "Centene's ACA Marketplace brand. Network tiers: Premier (broader), Select (exclusive), Value (PCP/referral).",
+      "plan_types": [
+        {"id": "ambetter_premier", "label": "Ambetter Premier", "lob": "exchange", "dropdown": true, "network_style": "broader"},
+        {"id": "ambetter_select", "label": "Ambetter Select", "lob": "exchange", "dropdown": true, "network_style": "exclusive/narrow"},
+        {"id": "ambetter_value", "label": "Ambetter Value", "lob": "exchange", "dropdown": true, "network_style": "PCP/referral"},
+        {"id": "ambetter_solutions", "label": "Ambetter Solutions / off-exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"}
+      ],
+      "parent": "Centene"
+    },
+    {
+      "insurer_id": "wellcare",
+      "display_name": "Wellcare",
+      "aliases": ["WellCare", "Wellcare by Centene"],
+      "category": "medicare_focused",
+      "contracting_notes": "Centene Medicare brand (MA and Part D).",
+      "plan_types": [
+        {"id": "wellcare_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "wellcare_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "wellcare_pffs", "label": "Medicare Advantage PFFS", "lob": "medicare_advantage", "dropdown": true, "network_style": "PFFS"},
+        {"id": "wellcare_dsnp", "label": "D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "wellcare_csnp", "label": "C-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "wellcare_pdp", "label": "Medicare Part D (PDP)", "lob": "pharmacy", "dropdown": true, "network_style": "N/A", "notes": "Pharmacy; not facility medical network"}
+      ],
+      "parent": "Centene"
+    },
+    {
+      "insurer_id": "health_net",
+      "display_name": "Health Net",
+      "aliases": ["Health Net of California", "Ambetter from Health Net"],
+      "category": "regional_carrier",
+      "contracting_notes": "Strong California footprint: commercial, Covered California (Ambetter from Health Net), Medicare, Medi-Cal.",
+      "plan_types": [
+        {"id": "hn_commercial", "label": "Commercial (HMO/PPO/EPO)", "lob": "commercial", "dropdown": true, "network_style": "varies"},
+        {"id": "hn_exchange", "label": "Marketplace / Covered California", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "hn_ma", "label": "Medicare Advantage", "lob": "medicare_advantage", "dropdown": true, "network_style": "varies"},
+        {"id": "hn_medicaid", "label": "Medi-Cal / Medicaid", "lob": "medicaid", "dropdown": true, "network_style": "MCO"}
+      ],
+      "parent": "Centene"
+    },
+    {
+      "insurer_id": "molina",
+      "display_name": "Molina Healthcare",
+      "aliases": ["Molina", "Molina Marketplace"],
+      "category": "national_carrier",
+      "contracting_notes": "Primarily Medicaid/MA/Marketplace HMO by state entity. Out-of-network rare except emergencies.",
+      "plan_types": [
+        {"id": "molina_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "HMO"},
+        {"id": "molina_chip", "label": "CHIP", "lob": "medicaid", "dropdown": true, "network_style": "HMO"},
+        {"id": "molina_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "molina_dsnp", "label": "Dual Options / D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "molina_marketplace", "label": "Molina Marketplace (ACA HMO)", "lob": "exchange", "dropdown": true, "network_style": "HMO"},
+        {"id": "molina_mmp", "label": "MMP / dual demonstration", "lob": "medicare_advantage", "dropdown": true, "network_style": "integrated", "notes": "Where still active"}
+      ],
+      "parent": "Molina Healthcare"
+    },
+    {
+      "insurer_id": "magellan",
+      "display_name": "Magellan Healthcare",
+      "aliases": ["Magellan", "Magellan Behavioral Health", "Magellan Health"],
+      "category": "mbho",
+      "contracting_notes": "Distinct MBHO with Medicaid/government strength and FEHB products. Portal/credentialing separate from Centene medical brands. Update parent after Madison close.",
+      "plan_types": [
+        {"id": "magellan_commercial", "label": "Commercial BH carve-out", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "magellan_medicaid", "label": "Medicaid BH managed care", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "magellan_ma", "label": "Medicare Advantage BH", "lob": "behavioral", "dropdown": true, "network_style": "carve-out"},
+        {"id": "magellan_fehb", "label": "Federal / FEHB BH", "lob": "federal", "dropdown": true, "network_style": "carve-out"},
+        {"id": "magellan_specialty", "label": "Specialty (ABA/EAP etc.)", "lob": "behavioral", "dropdown": true, "network_style": "specialty"}
+      ],
+      "parent": "Centene (sale to Madison Health Group announced Feb 2026 — pending)"
+    },
+    {
+      "insurer_id": "tricare",
+      "display_name": "TRICARE",
+      "aliases": ["Humana Military", "TriWest", "DoD TRICARE"],
+      "category": "federal",
+      "contracting_notes": "Contract with regional contractor network (Humana Military East or TriWest West), not a single TRICARE Inc. entity. HNFS no longer holds continental regional contract under T-5.",
+      "plan_types": [
+        {"id": "tricare_prime", "label": "TRICARE Prime", "lob": "federal", "dropdown": true, "network_style": "HMO-like"},
+        {"id": "tricare_select", "label": "TRICARE Select", "lob": "federal", "dropdown": true, "network_style": "PPO-like"},
+        {"id": "tricare_for_life", "label": "TRICARE For Life", "lob": "federal", "dropdown": true, "network_style": "Medicare wrap"},
+        {"id": "tricare_reserve", "label": "TRICARE Reserve Select / Retired Reserve / Young Adult", "lob": "federal", "dropdown": true, "network_style": "varies"},
+        {"id": "tricare_usfhp", "label": "US Family Health Plan (USFHP)", "lob": "federal", "dropdown": true, "network_style": "designated", "notes": "Limited geographic designated providers"}
+      ],
+      "parent": "Defense Health Agency (contractors: Humana Military East; TriWest West)"
+    },
+    {
+      "insurer_id": "va_ccn",
+      "display_name": "VA Community Care Network",
+      "aliases": ["VA CCN", "Veterans Community Care", "TriWest CCN", "Optum CCN"],
+      "category": "federal",
+      "contracting_notes": "Not commercial insurance. Network via Optum or TriWest by CCN region. Include if VA referrals are in facility BD scope.",
+      "plan_types": [
+        {"id": "va_ccn_standard", "label": "VA Community Care Network", "lob": "federal", "dropdown": true, "network_style": "CCN"}
+      ],
+      "parent": "U.S. Department of Veterans Affairs (regional contractors)"
+    },
+    {
+      "insurer_id": "bcbs_association",
+      "display_name": "Blue Cross Blue Shield (Association framework)",
+      "aliases": ["BCBS", "Blue Cross", "Blue Shield", "The Blues"],
+      "category": "association_framework",
+      "contracting_notes": "NOT a single contracting entity. Facilities contract with the local Blues licensee (host plan). BlueCard makes other Blues members in-network under host rules. Use specific licensee insurer_ids below.",
+      "plan_types": [
+        {"id": "bcbs_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bcbs_pos", "label": "Commercial POS / Open Access", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bcbs_exchange", "label": "ACA Marketplace / Individual", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bcbs_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_snp", "label": "MA Special Needs Plans (D/C/I-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bcbs_medicaid", "label": "Medicaid Managed Care / CHIP", "lob": "medicaid", "dropdown": true, "network_style": "MCO", "notes": "Only where this Blue operates an MCO"},
+        {"id": "bcbs_fep", "label": "FEP (Federal Employee Program)", "lob": "federal", "dropdown": true, "network_style": "PPO", "notes": "Local plan contracts Preferred network; BlueCard/FEP national product"},
+        {"id": "bcbs_bluecard", "label": "BlueCard visiting members", "lob": "commercial", "dropdown": true, "network_style": "host network", "notes": "Usually covered under host plan contract — optional UI flag, not separate contract"}
+      ],
+      "parent": "Blue Cross Blue Shield Association (33 independent licensees)"
+    },
+    {
+      "insurer_id": "bcbs_other_local",
+      "display_name": "Other local Blue Cross Blue Shield",
+      "aliases": ["Other BCBS", "Local Blue", "Blue Cross Blue Shield (other)", "BCBS Other"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Catch-all for Blues licensees not listed individually. Facilities contract with the local host plan; BlueCard covers visiting members under that host contract.",
+      "plan_types": [
+        {"id": "bcbs_other_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_other_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_other_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bcbs_other_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bcbs_other_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bcbs_other_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_other_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_other_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bcbs_other_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "bcbs_other_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO", "notes": "Often administered via local Blue; BlueCard rules apply"},
+        {"id": "bcbs_other_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host", "notes": "Not a separate contract — reflects host-plan BlueCard participation"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "hcsc",
+      "display_name": "HCSC (BCBS IL/TX/NM/OK/MT)",
+      "aliases": ["Health Care Service Corporation", "BCBS Illinois", "BCBS Texas", "BCBS New Mexico", "BCBS Oklahoma", "BCBS Montana"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Operates BCBS plans in IL, TX, NM, OK, MT. Contract with HCSC entity.",
+      "plan_types": [
+        {"id": "hcsc_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "hcsc_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "hcsc_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "hcsc_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "hcsc_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "hcsc_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "hcsc_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "hcsc_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "hcsc_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "hcsc_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "hcsc_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "highmark",
+      "display_name": "Highmark",
+      "aliases": ["Highmark BCBS"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Operates in PA, WV, DE, and Highmark WNY / Northeastern NY.",
+      "plan_types": [
+        {"id": "highmark_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "highmark_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "highmark_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "highmark_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "highmark_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "highmark_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "highmark_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "highmark_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "highmark_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "highmark_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "highmark_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "carefirst",
+      "display_name": "CareFirst BlueCross BlueShield",
+      "aliases": ["CareFirst"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Operates in MD, DC, and parts of VA.",
+      "plan_types": [
+        {"id": "carefirst_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "carefirst_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "carefirst_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "carefirst_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "carefirst_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "carefirst_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "carefirst_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "carefirst_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "carefirst_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "carefirst_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "carefirst_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "florida_blue",
+      "display_name": "Florida Blue",
+      "aliases": ["GuideWell", "BCBS of Florida"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Florida Blues licensee.",
+      "plan_types": [
+        {"id": "flblue_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "flblue_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "flblue_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "flblue_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "flblue_options", "label": "BlueOptions PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "flblue_bluecare", "label": "BlueCare HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "flblue_blueselect", "label": "BlueSelect", "lob": "commercial", "dropdown": true, "network_style": "varies"},
+        {"id": "flblue_myblue", "label": "myBlue", "lob": "exchange", "dropdown": true, "network_style": "exchange"},
+        {"id": "flblue_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "flblue_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "flblue_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "flblue_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "flblue_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "flblue_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "flblue_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "blue_shield_ca",
+      "display_name": "Blue Shield of California",
+      "aliases": ["BSCA", "Blue Shield CA"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "CA Blues licensee — distinct from Anthem Blue Cross of CA.",
+      "plan_types": [
+        {"id": "bsca_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bsca_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bsca_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bsca_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bsca_trio", "label": "Trio HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bsca_access_plus", "label": "Access+ HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bsca_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bsca_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bsca_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bsca_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bsca_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "bsca_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "bsca_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "independence_bc",
+      "display_name": "Independence Blue Cross",
+      "aliases": ["IBX", "Independence", "AmeriHealth"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "SE Pennsylvania Blues licensee.",
+      "plan_types": [
+        {"id": "ibx_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "ibx_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "ibx_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "ibx_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "ibx_personal_choice", "label": "Personal Choice PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "ibx_keystone_hmo", "label": "Keystone HMO / Keystone Health Plan East", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "ibx_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "ibx_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "ibx_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "ibx_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "ibx_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "ibx_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "ibx_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "premera",
+      "display_name": "Premera Blue Cross",
+      "aliases": ["Premera"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Operates in WA and AK.",
+      "plan_types": [
+        {"id": "premera_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "premera_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "premera_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "premera_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "premera_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "premera_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "premera_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "premera_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "premera_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "premera_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "premera_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "regence",
+      "display_name": "Regence (Cambia)",
+      "aliases": ["Regence BCBS", "Cambia Health Solutions"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Operates in OR, UT, ID, and Regence BCBS of Washington.",
+      "plan_types": [
+        {"id": "regence_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "regence_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "regence_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "regence_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "regence_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "regence_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "regence_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "regence_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "regence_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "regence_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "regence_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "bcbs_mi",
+      "display_name": "Blue Cross Blue Shield of Michigan",
+      "aliases": ["BCBSM"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Michigan Blues licensee.",
+      "plan_types": [
+        {"id": "bcbs_mi_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_mi_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_mi_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bcbs_mi_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bcbs_mi_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bcbs_mi_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_mi_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_mi_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bcbs_mi_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "bcbs_mi_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "bcbs_mi_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "bcbs_ma",
+      "display_name": "Blue Cross Blue Shield of Massachusetts",
+      "aliases": ["BCBSMA"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Massachusetts Blues licensee.",
+      "plan_types": [
+        {"id": "bcbs_ma_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_ma_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_ma_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bcbs_ma_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bcbs_ma_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bcbs_ma_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_ma_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_ma_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bcbs_ma_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "bcbs_ma_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "bcbs_ma_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "horizon_nj",
+      "display_name": "Horizon Blue Cross Blue Shield of New Jersey",
+      "aliases": ["Horizon BCBSNJ", "Horizon"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "New Jersey Blues licensee.",
+      "plan_types": [
+        {"id": "horizon_nj_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "horizon_nj_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "horizon_nj_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "horizon_nj_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "horizon_nj_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "horizon_nj_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "horizon_nj_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "horizon_nj_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "horizon_nj_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "horizon_nj_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "horizon_nj_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "bcbs_nc",
+      "display_name": "Blue Cross Blue Shield of North Carolina",
+      "aliases": ["BCBSNC", "Blue Cross NC"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "North Carolina Blues licensee.",
+      "plan_types": [
+        {"id": "bcbs_nc_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_nc_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_nc_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bcbs_nc_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bcbs_nc_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bcbs_nc_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_nc_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_nc_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bcbs_nc_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "bcbs_nc_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "bcbs_nc_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "bcbs_tn",
+      "display_name": "BlueCross BlueShield of Tennessee",
+      "aliases": ["BCBST"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Tennessee Blues licensee.",
+      "plan_types": [
+        {"id": "bcbs_tn_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_tn_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_tn_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bcbs_tn_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bcbs_tn_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bcbs_tn_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_tn_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_tn_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bcbs_tn_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "bcbs_tn_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "bcbs_tn_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "bcbs_al",
+      "display_name": "Blue Cross Blue Shield of Alabama",
+      "aliases": ["BCBSAL"],
+      "category": "bcbs_licensee",
+      "contracting_notes": "Alabama Blues licensee.",
+      "plan_types": [
+        {"id": "bcbs_al_commercial_ppo", "label": "Commercial PPO", "lob": "commercial", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_al_commercial_hmo", "label": "Commercial HMO", "lob": "commercial", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_al_commercial_epo", "label": "Commercial EPO", "lob": "commercial", "dropdown": true, "network_style": "EPO"},
+        {"id": "bcbs_al_commercial_pos", "label": "Commercial POS", "lob": "commercial", "dropdown": true, "network_style": "POS"},
+        {"id": "bcbs_al_aca", "label": "ACA Marketplace / Exchange", "lob": "exchange", "dropdown": true, "network_style": "varies"},
+        {"id": "bcbs_al_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "bcbs_al_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "bcbs_al_dsnp", "label": "Dual Special Needs Plan (D-SNP)", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"},
+        {"id": "bcbs_al_medicaid", "label": "Medicaid Managed Care", "lob": "medicaid", "dropdown": true, "network_style": "MCO"},
+        {"id": "bcbs_al_fep", "label": "Federal Employee Program (FEP)", "lob": "commercial", "dropdown": true, "network_style": "PPO/HMO"},
+        {"id": "bcbs_al_bluecard", "label": "BlueCard (host plan participation)", "lob": "commercial", "dropdown": true, "network_style": "host"}
+      ],
+      "parent": "Blue Cross Blue Shield Association"
+    },
+    {
+      "insurer_id": "scan",
+      "display_name": "SCAN Health Plan",
+      "aliases": ["SCAN"],
+      "category": "medicare_focused",
+      "contracting_notes": "Medicare Advantage specialist; market-limited.",
+      "plan_types": [
+        {"id": "scan_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "scan_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "scan_dsnp", "label": "D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"}
+      ],
+      "parent": "SCAN Health Plan"
+    },
+    {
+      "insurer_id": "alignment",
+      "display_name": "Alignment Health",
+      "aliases": ["Alignment Health Plan"],
+      "category": "medicare_focused",
+      "contracting_notes": "Medicare Advantage specialist; market-limited. Include if placement geography overlaps.",
+      "plan_types": [
+        {"id": "alignment_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "alignment_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "alignment_dsnp", "label": "D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"}
+      ],
+      "parent": "Alignment Health"
+    },
+    {
+      "insurer_id": "devoted",
+      "display_name": "Devoted Health",
+      "aliases": ["Devoted"],
+      "category": "medicare_focused",
+      "contracting_notes": "Medicare Advantage specialist; market-limited. Include if placement geography overlaps.",
+      "plan_types": [
+        {"id": "devoted_ma_hmo", "label": "Medicare Advantage HMO", "lob": "medicare_advantage", "dropdown": true, "network_style": "HMO"},
+        {"id": "devoted_ma_ppo", "label": "Medicare Advantage PPO", "lob": "medicare_advantage", "dropdown": true, "network_style": "PPO"},
+        {"id": "devoted_dsnp", "label": "D-SNP", "lob": "medicare_advantage", "dropdown": true, "network_style": "SNP"}
+      ],
+      "parent": "Devoted Health"
+    },
+    {
+      "insurer_id": "original_medicare",
+      "display_name": "Original Medicare (Part A/B)",
+      "aliases": ["Medicare FFS", "CMS Medicare"],
+      "category": "federal",
+      "contracting_notes": "Not a private insurer network. Facility participates with Medicare (Part A/B). Medigap follows Medicare payment; MA requires separate plan contracts.",
+      "plan_types": [
+        {"id": "medicare_part_a", "label": "Medicare Part A (hospital)", "lob": "medicare_ffs", "dropdown": true, "network_style": "FFS"},
+        {"id": "medicare_part_b", "label": "Medicare Part B (medical)", "lob": "medicare_ffs", "dropdown": true, "network_style": "FFS"}
+      ],
+      "parent": "Centers for Medicare & Medicaid Services"
+    }
+  ]
+}

@@ -298,7 +298,7 @@ Deno.serve(async (req: Request) => {
     };
 
     let pdfBytes: Uint8Array | null = null;
-    let orgId: string | null = storagePath ? orgIdFromPath(storagePath) : null;
+    const orgId: string | null = storagePath ? orgIdFromPath(storagePath) : null;
 
     if (storagePath) {
       if (!orgId) return json({ error: "Invalid storage_path" }, 400);
