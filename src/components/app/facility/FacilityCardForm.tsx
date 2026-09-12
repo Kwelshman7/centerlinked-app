@@ -26,6 +26,8 @@ import { PlanTypeChecklist } from "./PlanTypeChecklist";
 import { FacilityBdRepFields } from "./FacilityBdRepFields";
 import { useAuth } from "@/contexts/AuthContext";
 import { sanitizePlanTypes } from "@/lib/plan-types";
+import { getDropdownPlanTypeIds } from "@/lib/insurance-plan-types-catalog";
+import { payerNameToInsurerId } from "@/lib/payer-to-insurer-map";
 
 interface Props {
   value: FacilityDraft;
@@ -389,6 +391,11 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
                       value={sanitizePlanTypes(c.plan_types)}
                       onChange={(plan_types) => setContractPlanTypes(i, plan_types)}
                       showHelper={i === 0}
+                      allowedPlanTypeIds={
+                        payerNameToInsurerId(c.payer_name)
+                          ? getDropdownPlanTypeIds(payerNameToInsurerId(c.payer_name)!)
+                          : []
+                      }
                     />
                   </li>
                 ))}
