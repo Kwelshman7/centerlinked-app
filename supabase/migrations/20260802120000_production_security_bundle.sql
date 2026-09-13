@@ -24,6 +24,9 @@
 --                                    -- billing INSERT lock; preferred_provider lock;
 --                                    -- due-list auth; posts/likes tenant SELECT;
 --                                    -- get_public_program_sheet requires org.verified
+-- 12. drop-legacy-cl-export.sql      -- applied 13 Sep 2026: drop cl_export / cl_csv
+--                                    -- and unused cl_* / q(text) helpers. Do not
+--                                    -- LIKE-match cl_% (would hit claim_pending_org_invite).
 --
 -- Read-only apply check (does not write):
 --   inspect-live-security.sql
