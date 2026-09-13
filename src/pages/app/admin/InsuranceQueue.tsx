@@ -193,7 +193,7 @@ export default function InsuranceQueue() {
 
   const markSelfPay = async (facilityId: string, next: boolean) => {
     setBusy(true);
-    const result = await setFacilitySelfPayOnly(facilityId, next);
+    const result = await setFacilitySelfPayOnly(facilityId, next, user?.id);
     setBusy(false);
     if (!result.ok) {
       toast.error(result.error);
@@ -203,11 +203,12 @@ export default function InsuranceQueue() {
     load();
   };
 
-  const verifyContract = async (contractId: string) => {
+  const verifyContract = async (facilityId: string, contractId: string) => {
     if (!user) return;
     setBusy(true);
     const result = await recordContractVerification({
       contractId,
+      facilityId,
       userId: user.id,
       method: "bd_confirmation",
     });
@@ -388,7 +389,7 @@ export default function InsuranceQueue() {
                               size="sm"
                               variant="outline"
                               disabled={busy}
-                              onClick={() => verifyContract(contract.id)}
+                              onClick={() => verifyContract(row.id, contract.id)}
                             >
                               Record verification
                             </Button>

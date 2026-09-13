@@ -12,6 +12,7 @@ import {
 } from "@/lib/insurance-contract-status";
 import { sanitizePlanTypes } from "@/lib/plan-types";
 import type { PayerMatchInput } from "@/lib/match-payer";
+import { recordVerificationEvent } from "@/lib/record-verification-event";
 
 export interface AdminContractWrite {
   facilityId: string;
@@ -90,16 +91,26 @@ export async function upsertAdminInsuranceContract(
 export async function setFacilitySelfPayOnly(
   facilityId: string,
   selfPayOnly: boolean,
+  actorId?: string | null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const { error } = await supabase
     .from("facilities")
     .update({ self_pay_only: selfPayOnly })
     .eq("id", facilityId);
-  return error ? { ok: false, error: error.message } : { ok: true };
+  if (error) return { ok: false, error: error.message };
+  await recordVerificationEvent({
+    facilityId,
+    entityType: "facility",
+    action: selfPayOnly ? "marked_self_pay" : "updated",
+    actorId,
+    notes: selfPayOnly ? "Marked self-pay only" : "Cleared self-pay only",
+  });
+  return { ok: true };
 }
 
 export async function recordContractVerification(args: {
   contractId: string;
+  facilityId: string;
   userId: string;
   method: VerificationMethod;
   publicNotes?: string | null;
@@ -118,7 +129,17 @@ export async function recordContractVerification(args: {
       notes: trimOrNull(args.publicNotes, 2000),
     })
     .eq("id", args.contractId);
-  return error ? { ok: false, error: error.message } : { ok: true };
+  if (error) return { ok: false, error: error.message };
+  await recordVerificationEvent({
+    facilityId: args.facilityId,
+    entityType: "insurance_contract",
+    entityId: args.contractId,
+    action: "confirmed",
+    method,
+    actorId: args.userId,
+    notes: args.publicNotes,
+  });
+  return { ok: true };
 }
 
 export interface BulkLinkResult {

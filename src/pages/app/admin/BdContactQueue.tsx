@@ -10,6 +10,7 @@ import { Loader2, Search, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { bdContactStatusLabel, hasAssignedBdContact, isBdContactVerified } from "@/lib/bd-contact";
+import { recordVerificationEvent } from "@/lib/record-verification-event";
 
 type Filter = "missing" | "unverified" | "assigned";
 
@@ -111,6 +112,13 @@ export default function BdContactQueue() {
       toast.error(error.message);
       return;
     }
+    await recordVerificationEvent({
+      facilityId: row.id,
+      entityType: "bd_contact",
+      action: "verified_contact",
+      method: "admin_review",
+      actorId: user.id,
+    });
     toast.success("BD contact marked verified");
     load();
   };

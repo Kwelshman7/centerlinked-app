@@ -24,6 +24,7 @@ import {
   locationGaps,
   type LocationGap,
 } from "@/lib/location-quality";
+import { recordVerificationEvent } from "@/lib/record-verification-event";
 
 type Filter = LocationGap | "incomplete" | "duplicates";
 
@@ -53,7 +54,7 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
 ];
 
 export default function LocationQueue() {
-  const { isSuperAdmin, loading } = useAuth();
+  const { isSuperAdmin, user, loading } = useAuth();
   const [rows, setRows] = useState<Row[] | null>(null);
   const [filter, setFilter] = useState<Filter>("incomplete");
   const [search, setSearch] = useState("");
@@ -147,6 +148,13 @@ export default function LocationQueue() {
       toast.error(error.message);
       return;
     }
+    await recordVerificationEvent({
+      facilityId: editing.id,
+      entityType: "location",
+      action: "updated_location",
+      actorId: user?.id,
+      notes: "Location fields edited. Blank values left unknown.",
+    });
     toast.success("Location fields updated. Empty values stay empty — nothing was invented.");
     setEditing(null);
     load();

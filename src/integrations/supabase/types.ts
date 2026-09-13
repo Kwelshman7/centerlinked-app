@@ -1314,6 +1314,50 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          facility_id: string
+          id: string
+          method: string | null
+          notes: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          facility_id: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          facility_id?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_events_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_reminders: {
         Row: {
           created_at: string

@@ -10,6 +10,8 @@ import { ArrowLeft, CheckCircle2, Loader2, Pencil, Shield, Plus, Trash2 } from "
 import { toast } from "sonner";
 import { VerificationBadge } from "@/components/app/search/VerificationBadge";
 import { stampVerified, verificationState } from "@/lib/verification";
+import { VERIFICATION_DISCLAIMER } from "@/lib/verification-events";
+import { recordVerificationEvent } from "@/lib/record-verification-event";
 import { replaceInNetworkContracts } from "@/lib/save-facility";
 import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
 import { PlanTypeChecklist } from "@/components/app/facility/PlanTypeChecklist";
@@ -88,6 +90,16 @@ export default function VerifyContracts() {
       action,
       notes: notes.trim() || null,
     });
+    if (!error) {
+      await recordVerificationEvent({
+        facilityId: facility.id,
+        entityType: "facility",
+        action: action === "updated_contracts" ? "updated" : "confirmed",
+        method: "facility_contract_review",
+        notes: notes.trim() || null,
+        actorId: user.id,
+      });
+    }
     return { error };
   };
 
@@ -170,6 +182,10 @@ export default function VerifyContracts() {
         </div>
         <p className="text-sm text-muted-foreground mt-1">
           {facility.name}{facility.city || facility.state ? ` · ${[facility.city, facility.state].filter(Boolean).join(", ")}` : ""}
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          This stamps the facility review date. It does not mark individual payers verified.{" "}
+          {VERIFICATION_DISCLAIMER}
         </p>
         {state.daysAgo !== null && (
           <p className="text-xs text-muted-foreground mt-1">
