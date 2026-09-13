@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
 import { applySocialMeta } from "@/lib/social-meta";
 
-const EFFECTIVE_DATE = "August 22, 2026";
+const EFFECTIVE_DATE = "September 13, 2026";
 
 export default function TermsOfService() {
   useEffect(() => {
@@ -133,16 +133,15 @@ export default function TermsOfService() {
       <section>
         <h2>8. Fees</h2>
         <p>
-          Organization membership is billed through Stripe to the subscribing organization, not to referral partners who
-          only view a public profile. Membership is priced by how many live facilities the organization lists, as shown
-          on the Pricing page: $99 per month for 1 facility, then a higher monthly amount for each additional facility
-          through $499 per month for 15 facilities. Annual billing is two months free. Organizations with 16 or more
-          facilities are quoted. An optional one-time Done For You setup starts at $499 for 1 facility and increases
-          with facility count through $2,500 for 15 facilities; 16+ setup is quoted. Team seats are unlimited on every
-          paid plan. During early access, organizations may continue to use the Service if membership is not yet active;
-          we may change that at any time.
-          Paid checkouts are subject to Stripe’s terms. If we change prices, we will provide notice before charging a
-          new amount.
+          Claiming and listing an organization is free. Paid membership is optional and is billed through Stripe to the
+          subscribing organization, not to referral partners who only view a public profile. Membership is priced by how
+          many live facilities the organization lists, as shown on the Pricing page: $99 per month for 1 facility, then
+          a higher monthly amount for each additional facility through $499 per month for 15 facilities. Annual billing
+          is two months free. Organizations with 16 or more facilities are quoted. An optional one-time Done For You
+          setup starts at $499 for 1 facility and increases with facility count through $2,500 for 15 facilities; 16+
+          setup is quoted. Team seats are unlimited on every paid plan. Organizations that have not subscribed may
+          continue to use the Service. Paid checkouts are subject to Stripe’s terms. If we change prices, we will
+          provide notice before charging a new amount.
         </p>
       </section>
 
