@@ -1,13 +1,12 @@
-import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Shield } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { UserRound } from "lucide-react";
 import { OrgDashboard } from "@/components/app/OrgDashboard";
+import { OrgClaimOptions } from "@/components/app/OrgClaimOptions";
 import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
 import { AdminOverview } from "@/pages/app/admin/AdminOverview";
 
 export default function Dashboard() {
-  const { profile, isSuperAdmin, needsSuperAdminSetup } = useAuth();
+  const { user, profile, isSuperAdmin, needsSuperAdminSetup } = useAuth();
   const orgId = profile?.organization_id ?? null;
 
   if (isSuperAdmin) {
@@ -37,25 +36,31 @@ export default function Dashboard() {
     );
   }
 
+  // Free account with no organization yet: My profile.
   return (
-    <div className="max-w-2xl mx-auto text-center py-16">
-      {needsSuperAdminSetup && (
-        <div className="text-left mb-8">
-          <SuperAdminSetupAlert />
-        </div>
-      )}
-      <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-      <h1 className="font-heading text-2xl font-bold">No organization linked</h1>
-      <p className="text-muted-foreground mt-2">
-        Join your company&apos;s organization if it already exists, or create a new one.
-      </p>
-      <div className="flex items-center justify-center gap-3 mt-6">
-        <Button asChild size="lg">
-          <Link to="/setup-organization">
-            <Plus className="h-4 w-4" /> Join or create organization
-          </Link>
-        </Button>
+    <div className="max-w-2xl mx-auto space-y-6">
+      {needsSuperAdminSetup && <SuperAdminSetupAlert />}
+      <div>
+        <h1 className="font-heading text-2xl font-bold">My profile</h1>
+        <p className="text-muted-foreground mt-1">
+          Your free account can search the full in-network database.
+        </p>
       </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6 flex items-center gap-4">
+        <div className="h-12 w-12 rounded-full bg-primary/10 text-primary grid place-items-center shrink-0">
+          <UserRound className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold truncate">{profile?.full_name || user?.email}</p>
+          <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+        </div>
+        <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success ring-1 ring-success/20">
+          Free
+        </span>
+      </div>
+
+      <OrgClaimOptions />
     </div>
   );
 }

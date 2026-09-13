@@ -123,7 +123,13 @@ export default function AuthCallback() {
       }
 
       if (!profile?.organization_id) {
-        navigate("/setup-organization", { replace: true });
+        // New accounts get the claim/create step (skippable); returning free users go straight to Search.
+        navigate(
+          isLikelyNewUser(user.created_at)
+            ? "/setup-organization"
+            : consumePostLoginPath() || "/app/search",
+          { replace: true },
+        );
         return;
       }
 

@@ -12,6 +12,7 @@ import {
   PanelLeft,
   Menu,
   CreditCard,
+  UserRound,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -30,11 +31,15 @@ export function AppLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const canManageBilling = (isFacilityAdmin || isSuperAdmin) && !!profile?.organization_id;
+  /** Free users without an organization get Search + My profile only. */
+  const hasOrgAccess = isSuperAdmin || !!profile?.organization_id;
 
   const primary: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       { to: "/app/search", label: "Search", icon: SearchIcon },
-      { to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true },
+      hasOrgAccess
+        ? { to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true }
+        : { to: "/app/dashboard", label: "My profile", icon: UserRound, end: true },
     ];
     if (isSuperAdmin) {
       items.push({
@@ -44,27 +49,33 @@ export function AppLayout() {
         end: true,
       });
     }
-    if (user && (isSuperAdmin || profile?.organization_id) && !needsSuperAdminSetup) {
+    if (user && hasOrgAccess && !needsSuperAdminSetup) {
       items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
     }
     if (canManageBilling) {
       items.push({ to: "/app/billing", label: "Billing", icon: CreditCard });
     }
-    items.push({ to: "/app/settings", label: "Settings", icon: Settings });
+    if (hasOrgAccess) {
+      items.push({ to: "/app/settings", label: "Settings", icon: Settings });
+    }
     return items;
-  }, [isSuperAdmin, canManageBilling, user, profile?.organization_id, needsSuperAdminSetup]);
+  }, [isSuperAdmin, canManageBilling, user, hasOrgAccess, needsSuperAdminSetup]);
 
   const mobilePrimary: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       { to: "/app/search", label: "Search", icon: SearchIcon },
     ];
-    if (user && (isSuperAdmin || profile?.organization_id) && !needsSuperAdminSetup) {
+    if (user && hasOrgAccess && !needsSuperAdminSetup) {
       items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
     }
-    items.push({ to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true });
-    items.push({ to: "/app/settings", label: "Settings", icon: Settings });
+    if (hasOrgAccess) {
+      items.push({ to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true });
+      items.push({ to: "/app/settings", label: "Settings", icon: Settings });
+    } else {
+      items.push({ to: "/app/dashboard", label: "My profile", icon: UserRound, end: true });
+    }
     return items;
-  }, [isSuperAdmin, user, profile?.organization_id, needsSuperAdminSetup]);
+  }, [user, hasOrgAccess, needsSuperAdminSetup]);
 
   const secondaryOrg: NavItem[] = [
     { to: "/app/members", label: "Members", icon: Users },
@@ -274,7 +285,9 @@ export function AppLayout() {
                   ? "grid-cols-5"
                   : mobilePrimary.length === 3
                     ? "grid-cols-3"
-                    : "grid-cols-4",
+                    : mobilePrimary.length === 2
+                      ? "grid-cols-2"
+                      : "grid-cols-4",
             )}
           >
             {mobilePrimary.map(({ to, label, icon: Icon, end }) => (

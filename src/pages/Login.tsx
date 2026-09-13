@@ -57,7 +57,7 @@ function applyAppLoginHead() {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, loading: authLoading, isSuperAdmin } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -91,16 +91,13 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return;
-    if (!profile?.organization_id && !isSuperAdmin) {
-      navigate("/setup-organization", { replace: true });
-      return;
-    }
+    // Users without an organization land on Search too; ProtectedRoute sends org-only paths back there.
     if (from) {
       navigate(from, { replace: true });
       return;
     }
     navigate(afterLogin, { replace: true });
-  }, [authLoading, user, profile?.organization_id, isSuperAdmin, from, afterLogin, navigate]);
+  }, [authLoading, user, from, afterLogin, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

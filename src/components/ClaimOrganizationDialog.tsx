@@ -29,9 +29,16 @@ const schema = z.object({
 interface Props {
   organizationId: string;
   organizationName: string;
+  triggerLabel?: string;
+  onSubmitted?: () => void;
 }
 
-export function ClaimOrganizationDialog({ organizationId, organizationName }: Props) {
+export function ClaimOrganizationDialog({
+  organizationId,
+  organizationName,
+  triggerLabel = "Claim this organization",
+  onSubmitted,
+}: Props) {
   const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -101,6 +108,7 @@ export function ClaimOrganizationDialog({ organizationId, organizationName }: Pr
       toast.success("Claim submitted. Our team will review it shortly.");
       setOpen(false);
       reset();
+      onSubmitted?.();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not submit claim";
       toast.error(msg);
@@ -113,7 +121,7 @@ export function ClaimOrganizationDialog({ organizationId, organizationName }: Pr
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <ShieldCheck className="h-4 w-4" /> Claim this organization
+          <ShieldCheck className="h-4 w-4" /> {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">

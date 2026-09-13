@@ -4,10 +4,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SuperAdminAccessDenied } from "@/components/app/admin/SuperAdminSetupAlert";
 import { Loader2 } from "lucide-react";
 
+/**
+ * Signed-in users without an organization (free accounts) may use these paths.
+ * Search reads are still limited by RLS to approved facilities; /app/dashboard renders My profile.
+ */
 const ORG_OPTIONAL_PATHS = new Set([
   "/setup-organization",
   "/create-organization",
   "/app/onboarding",
+  "/app/search",
+  "/app/search/results",
+  "/app/dashboard",
 ]);
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
