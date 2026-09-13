@@ -48,7 +48,7 @@ export function LaptopFrame({
       {/* Hinge / base */}
       <div className="relative mx-auto">
         <div className="h-2 sm:h-2.5 bg-gradient-to-b from-neutral-700 to-neutral-800 rounded-b-sm" />
-        <div className="mx-auto h-3 sm:h-4 w-[108%] -translate-x-[3.7%] rounded-b-xl bg-gradient-to-b from-neutral-600 to-neutral-800 shadow-lg" />
+        <div className="mx-auto h-3 sm:h-4 w-full rounded-b-xl bg-gradient-to-b from-neutral-600 to-neutral-800 shadow-lg" />
         <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-16 sm:w-24 rounded-full bg-neutral-500/40" />
       </div>
     </div>

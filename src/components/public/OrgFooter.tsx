@@ -197,7 +197,7 @@ export function OrgFooter({
   );
 
   return (
-    <div className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 space-y-3">
+    <div className="relative w-[100vw] max-w-[100vw] ml-[calc(50%-50vw)] space-y-3">
       {/* Normal flow reserves space below the facility grid; the negative margin
           overlaps the logo with the footer only, never the cards above it. */}
       <div className="relative z-10 flex justify-center pt-6 -mb-12 lg:pt-8 lg:-mb-20 print:mb-0 print:pt-0">

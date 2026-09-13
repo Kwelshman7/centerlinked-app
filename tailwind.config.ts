@@ -8,10 +8,14 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "1.5rem",
+      padding: {
+        DEFAULT: "1rem",
+        sm: "1.25rem",
+        lg: "1.5rem",
+      },
       screens: {
-        sm: "640px",
-        md: "768px",
+        // Cap width only at desktop. sm/md max-widths lock a ~760px
+        // preview or tablet pane to 640px and leave empty side margins.
         lg: "1024px",
         xl: "1200px",
         "2xl": "1400px",

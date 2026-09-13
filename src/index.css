@@ -114,21 +114,10 @@
     @apply border-border;
   }
 
-  /* Global scale-down: shrinks rem-based sizing across the entire app
-     (typography, spacing, radii, shadows) without altering layout or content.
-     Tailwind defaults assume 16px; we step it down responsively so more
-     content fits comfortably on every screen size. */
+  /* Fluid rem scale so typography and spacing track the viewport
+     instead of jumping at fixed breakpoints (split-pane / tablet). */
   html {
-    font-size: 14px;
-  }
-  @media (min-width: 640px) {
-    html { font-size: 14.5px; }
-  }
-  @media (min-width: 1024px) {
-    html { font-size: 15px; }
-  }
-  @media (min-width: 1536px) {
-    html { font-size: 15.5px; }
+    font-size: clamp(13.5px, 0.28vw + 12.4px, 15.5px);
   }
 
   body {
@@ -413,14 +402,15 @@
 .pt-safe { padding-top: env(safe-area-inset-top); }
 .bottom-safe { bottom: env(safe-area-inset-bottom); }
 .h-safe-tabbar { height: calc(64px + env(safe-area-inset-bottom)); }
-/* Only html: overflow-x:hidden computes overflow-y to auto and creates a
-   viewport scrollport. Applying it to body and #root as well nests extra
-   scroll containers and can clip long app pages (e.g. Manage organizations). */
+/* clip avoids the nested scrollport that overflow-x:hidden on body/#root
+   used to create (it clipped long app pages such as Manage organizations). */
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
+  width: 100%;
   max-width: 100%;
 }
 body, #root {
+  width: 100%;
   max-width: 100%;
 }
 

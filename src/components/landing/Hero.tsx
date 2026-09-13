@@ -9,13 +9,9 @@ import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { PhoneFrame } from "./PhoneFrame";
-import { OrgLogoCarousel } from "./OrgLogoCarousel";
 import { DisplayAccent, DisplayHeading } from "./DisplayHeading";
 import { PublicOrgSheetPreviewContent } from "./PublicOrgSheetPreview";
 import centerlinkedLogo from "@/assets/centerlinked-logo-full.png";
-
-/** Set to true to show partner logos under the hero. */
-const SHOW_ORG_LOGO_CAROUSEL = false;
 
 /** Simple tri-fold brochure glyph (lucide has no brochure icon). */
 function TriFoldBrochureIcon({ className }: { className?: string }) {
@@ -152,9 +148,9 @@ export function Hero() {
         <div className="container">
           <div
             className={cn(
-              "mx-auto grid w-full max-w-6xl",
-              "grid-cols-1 items-center gap-8 sm:gap-10",
-              "pt-8 pb-12 sm:pt-10 sm:pb-14",
+              "mx-auto grid w-full max-w-6xl min-w-0",
+              "grid-cols-1 items-center gap-6 sm:gap-8",
+              "pt-6 pb-10 sm:pt-8 sm:pb-12",
               "lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12 xl:gap-16",
               "lg:pt-12 lg:pb-16 xl:pt-14 xl:pb-20",
             )}
@@ -167,7 +163,7 @@ export function Hero() {
 
                 <DisplayHeading
                   as="h1"
-                  className="text-center lg:text-left text-[1.9rem] leading-[1.12] sm:text-[2.6rem] sm:leading-[1.08] lg:text-[2.85rem] xl:text-[3.15rem] lg:leading-[1.06]"
+                  className="text-center lg:text-left text-[1.7rem] leading-[1.14] sm:text-[2.15rem] sm:leading-[1.1] lg:text-[2.85rem] xl:text-[3.15rem] lg:leading-[1.06]"
                 >
                   Your Treatment Center Needs a{" "}
                   <DisplayAccent>Referral Link.</DisplayAccent>
@@ -226,10 +222,6 @@ export function Hero() {
           </div>
         </div>
       </div>
-
-      {SHOW_ORG_LOGO_CAROUSEL ? (
-        <OrgLogoCarousel className="relative z-10" />
-      ) : null}
     </section>
   );
 }
