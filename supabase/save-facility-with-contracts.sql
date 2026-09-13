@@ -46,6 +46,18 @@ DECLARE
   payer_name_val text;
   in_network_val boolean;
   plan_types_val text[];
+  contract_status_val text;
+  network_name_val text;
+  loc_covered_val text[];
+  covered_states_val text[];
+  effective_date_val date;
+  termination_date_val date;
+  verified_at_val timestamptz;
+  verified_by_val uuid;
+  verification_method_val text;
+  internal_notes_val text;
+  public_notes_val text;
+  original_imported_val text;
 BEGIN
   IF uid IS NULL THEN
     RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '42501';
@@ -306,6 +318,32 @@ BEGIN
     WHERE id = fac_id;
   END IF;
 
+  IF mode IN ('all', 'in_network') THEN
+    DROP TABLE IF EXISTS _save_fac_contract_keep;
+    CREATE TEMP TABLE _save_fac_contract_keep ON COMMIT DROP AS
+    SELECT
+      payer_id,
+      lower(btrim(payer_name)) AS payer_key,
+      contract_status,
+      network_name,
+      levels_of_care_covered,
+      covered_states,
+      effective_date,
+      termination_date,
+      verified_at,
+      verified_by,
+      verification_method,
+      internal_notes,
+      notes,
+      original_imported_value
+    FROM public.insurance_contracts
+    WHERE facility_id = fac_id
+      AND (
+        mode = 'all'
+        OR (mode = 'in_network' AND in_network = true)
+      );
+  END IF;
+
   IF mode = 'all' THEN
     DELETE FROM public.insurance_contracts WHERE facility_id = fac_id;
   ELSIF mode = 'in_network' THEN
@@ -330,10 +368,23 @@ BEGIN
         END;
       END IF;
 
+      contract_status_val := lower(trim(coalesce(rec->>'contract_status', '')));
+      IF contract_status_val NOT IN (
+        'active', 'inactive', 'pending_verification', 'unknown', 'out_of_network'
+      ) THEN
+        contract_status_val := NULL;
+      END IF;
+
       in_network_val := CASE
         WHEN mode = 'in_network' THEN true
+        WHEN contract_status_val IS NOT NULL THEN
+          contract_status_val IN ('active', 'pending_verification')
         ELSE COALESCE((rec->>'in_network')::boolean, true)
       END;
+
+      IF contract_status_val IS NULL THEN
+        contract_status_val := CASE WHEN in_network_val THEN 'active' ELSE 'unknown' END;
+      END IF;
 
       plan_types_val := ARRAY[]::text[];
       IF jsonb_typeof(rec->'plan_types') = 'array' THEN
@@ -356,19 +407,156 @@ BEGIN
         );
       END IF;
 
+      network_name_val := nullif(trim(coalesce(rec->>'network_name', '')), '');
+      IF network_name_val IS NOT NULL AND char_length(network_name_val) > 160 THEN
+        RAISE EXCEPTION 'Network name is too long';
+      END IF;
+
+      loc_covered_val := ARRAY[]::text[];
+      IF jsonb_typeof(rec->'levels_of_care_covered') = 'array' THEN
+        loc_covered_val := ARRAY(
+          SELECT DISTINCT trim(elem)
+          FROM jsonb_array_elements_text(rec->'levels_of_care_covered') AS elem
+          WHERE length(trim(elem)) BETWEEN 1 AND 80
+          LIMIT 40
+        );
+      END IF;
+
+      covered_states_val := ARRAY[]::text[];
+      IF jsonb_typeof(rec->'covered_states') = 'array' THEN
+        covered_states_val := ARRAY(
+          SELECT DISTINCT upper(trim(elem))
+          FROM jsonb_array_elements_text(rec->'covered_states') AS elem
+          WHERE upper(trim(elem)) ~ '^[A-Z]{2}$'
+        );
+      END IF;
+
+      effective_date_val := NULL;
+      IF nullif(trim(coalesce(rec->>'effective_date', '')), '') IS NOT NULL THEN
+        BEGIN
+          effective_date_val := (rec->>'effective_date')::date;
+        EXCEPTION WHEN others THEN
+          RAISE EXCEPTION 'Invalid effective_date';
+        END;
+      END IF;
+
+      termination_date_val := NULL;
+      IF nullif(trim(coalesce(rec->>'termination_date', '')), '') IS NOT NULL THEN
+        BEGIN
+          termination_date_val := (rec->>'termination_date')::date;
+        EXCEPTION WHEN others THEN
+          RAISE EXCEPTION 'Invalid termination_date';
+        END;
+      END IF;
+
+      verified_at_val := NULL;
+      IF nullif(trim(coalesce(rec->>'verified_at', '')), '') IS NOT NULL THEN
+        BEGIN
+          verified_at_val := (rec->>'verified_at')::timestamptz;
+        EXCEPTION WHEN others THEN
+          RAISE EXCEPTION 'Invalid verified_at';
+        END;
+      END IF;
+
+      verified_by_val := NULL;
+      IF nullif(trim(coalesce(rec->>'verified_by', '')), '') IS NOT NULL THEN
+        BEGIN
+          verified_by_val := (rec->>'verified_by')::uuid;
+        EXCEPTION WHEN others THEN
+          RAISE EXCEPTION 'Invalid verified_by';
+        END;
+      END IF;
+
+      verification_method_val := lower(trim(coalesce(rec->>'verification_method', '')));
+      IF verification_method_val NOT IN (
+        'bd_confirmation', 'payer_portal', 'contract_document', 'phone', 'email', 'other'
+      ) THEN
+        verification_method_val := NULL;
+      END IF;
+
+      internal_notes_val := nullif(trim(coalesce(rec->>'internal_notes', '')), '');
+      IF internal_notes_val IS NOT NULL AND char_length(internal_notes_val) > 4000 THEN
+        RAISE EXCEPTION 'Internal notes are too long';
+      END IF;
+
+      public_notes_val := nullif(trim(coalesce(rec->>'notes', rec->>'public_notes', '')), '');
+      IF public_notes_val IS NOT NULL AND char_length(public_notes_val) > 2000 THEN
+        RAISE EXCEPTION 'Public notes are too long';
+      END IF;
+
+      original_imported_val := nullif(trim(coalesce(rec->>'original_imported_value', '')), '');
+      IF original_imported_val IS NOT NULL AND char_length(original_imported_val) > 500 THEN
+        RAISE EXCEPTION 'Original imported value is too long';
+      END IF;
+
       INSERT INTO public.insurance_contracts (
         facility_id,
         payer_id,
         payer_name,
         in_network,
-        plan_types
+        plan_types,
+        contract_status,
+        network_name,
+        levels_of_care_covered,
+        covered_states,
+        effective_date,
+        termination_date,
+        verified_at,
+        verified_by,
+        verification_method,
+        internal_notes,
+        notes,
+        original_imported_value
       ) VALUES (
         fac_id,
         payer_id_val,
         payer_name_val,
         in_network_val,
-        COALESCE(plan_types_val, ARRAY[]::text[])
+        COALESCE(plan_types_val, ARRAY[]::text[]),
+        contract_status_val,
+        network_name_val,
+        COALESCE(loc_covered_val, ARRAY[]::text[]),
+        COALESCE(covered_states_val, ARRAY[]::text[]),
+        effective_date_val,
+        termination_date_val,
+        verified_at_val,
+        verified_by_val,
+        verification_method_val,
+        internal_notes_val,
+        public_notes_val,
+        COALESCE(original_imported_val, payer_name_val)
       );
+
+      UPDATE public.insurance_contracts c
+      SET
+        network_name = COALESCE(c.network_name, k.network_name),
+        levels_of_care_covered = CASE
+          WHEN coalesce(array_length(c.levels_of_care_covered, 1), 0) > 0 THEN c.levels_of_care_covered
+          ELSE COALESCE(k.levels_of_care_covered, ARRAY[]::text[])
+        END,
+        covered_states = CASE
+          WHEN coalesce(array_length(c.covered_states, 1), 0) > 0 THEN c.covered_states
+          ELSE COALESCE(k.covered_states, ARRAY[]::text[])
+        END,
+        effective_date = COALESCE(c.effective_date, k.effective_date),
+        termination_date = COALESCE(c.termination_date, k.termination_date),
+        verified_at = COALESCE(c.verified_at, k.verified_at),
+        verified_by = COALESCE(c.verified_by, k.verified_by),
+        verification_method = COALESCE(c.verification_method, k.verification_method),
+        internal_notes = COALESCE(c.internal_notes, k.internal_notes),
+        notes = COALESCE(c.notes, k.notes),
+        original_imported_value = COALESCE(
+          nullif(c.original_imported_value, c.payer_name),
+          k.original_imported_value,
+          c.original_imported_value
+        )
+      FROM _save_fac_contract_keep k
+      WHERE c.facility_id = fac_id
+        AND c.payer_name = payer_name_val
+        AND (
+          (payer_id_val IS NOT NULL AND k.payer_id = payer_id_val)
+          OR k.payer_key = lower(payer_name_val)
+        );
     END LOOP;
   END IF;
 

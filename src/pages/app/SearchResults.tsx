@@ -23,35 +23,75 @@ import {
   contractMatchesPlanType,
   parsePlanTypeParam,
   planTypeShortLabel,
-  sanitizePlanTypes,
 } from "@/lib/plan-types";
+import { insuranceMatchFromContract } from "@/lib/insurance-contract-status";
+import type { OrgSearchFacility } from "@/components/app/search/OrgResultCard";
 
-type ContractRow = {
+type OrgFields = {
+  id: string;
+  name: string;
+  slug: string | null;
+  logo_url: string | null;
+  hq_city: string | null;
+  hq_state: string | null;
+};
+
+type FacilityFields = {
+  id: string;
+  name: string;
+  slug: string | null;
+  city: string | null;
+  state: string | null;
+  levels_of_care: string[];
+  image_urls: string[];
+  verification_status: string;
+  contracts_verified_at: string | null;
+  verification_frozen: boolean;
+  self_pay_only?: boolean | null;
+  organization_id: string;
+  organizations: OrgFields | null;
+};
+
+type ContractFields = {
   payer_id: string | null;
   payer_name: string;
   plan_types: string[] | null;
-  facilities: {
-    id: string;
-    name: string;
-    slug: string | null;
-    city: string | null;
-    state: string | null;
-    levels_of_care: string[];
-    image_urls: string[];
-    verification_status: string;
-    contracts_verified_at: string | null;
-    verification_frozen: boolean;
-    organization_id: string;
-    organizations: {
-      id: string;
-      name: string;
-      slug: string | null;
-      logo_url: string | null;
-      hq_city: string | null;
-      hq_state: string | null;
-    } | null;
-  } | null;
+  in_network?: boolean | null;
+  contract_status?: string | null;
+  verified_at?: string | null;
 };
+
+type ContractRow = ContractFields & { facilities: FacilityFields | null };
+
+const FACILITY_SELECT =
+  "id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,self_pay_only,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state)";
+const CONTRACT_SELECT =
+  "payer_id,payer_name,plan_types,in_network,contract_status,verified_at";
+
+function toFacilityCard(
+  f: FacilityFields,
+  contract: ContractFields | null,
+  payerNameFallback: string,
+  options?: { skipMatchBadge?: boolean },
+): OrgSearchFacility {
+  const match = insuranceMatchFromContract(contract, { selfPayOnly: f.self_pay_only });
+  const showMatch = !options?.skipMatchBadge;
+  return {
+    id: f.id,
+    name: f.name,
+    slug: f.slug,
+    city: f.city,
+    state: f.state,
+    image_urls: f.image_urls ?? [],
+    matched_payer: showMatch
+      ? match.payerName ?? (contract ? payerNameFallback : undefined)
+      : undefined,
+    matched_plan_types: showMatch ? match.planTypes : [],
+    insurance_match_status: showMatch ? match.status : undefined,
+    insurance_verified_at: showMatch ? match.verifiedAt : null,
+    levels_of_care: f.levels_of_care ?? [],
+  };
+}
 
 type OrgSearchBase = Omit<OrgSearchResult, "in_your_network">;
 
@@ -99,60 +139,18 @@ export default function SearchResults() {
         payer = (data as PayerMatchInput | null) ?? null;
       }
 
-      let q = supabase
-        .from("insurance_contracts")
-        .select(
-          "payer_id,payer_name,plan_types, facilities!inner(id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state))",
-        )
-        .eq("in_network", true);
-
-      if (payer) {
-        q = q.or(buildPayerOrFilter(payer));
-      } else if (payerId) {
-        q = q.eq("payer_id", payerId);
-      }
-
-      q = q.eq("facilities.verification_status", "approved");
-      q = q.eq("facilities.verification_frozen", false);
       const stateCode = resolveStateCode(state);
       const stateName = stateCode ? US_STATES.find((s) => s.code === stateCode)?.name : null;
-      if (stateCode && stateName && stateName.toUpperCase() !== stateCode) {
-        q = q.or(`state.eq.${stateCode},state.ilike.${stateName}`, { referencedTable: "facilities" });
-      } else if (state) {
-        q = q.ilike("facilities.state", `%${state}%`);
-      }
-      if (city) q = q.ilike("facilities.city", `%${city}%`);
-      if (loc) q = q.contains("facilities.levels_of_care", [loc]);
-
-      const { data, error } = await q.limit(500);
-      if (cancelled) return;
-
-      if (error) {
-        setBaseResults([]);
-        setLoadError(error.message || "Search failed");
-        toast.error("Search failed", { description: "Try again. If this continues, refresh the page." });
-        setLoading(false);
-        return;
-      }
-
-      setTruncated((data?.length ?? 0) >= 500);
-
-      let rows = (data as unknown as ContractRow[]) ?? [];
-      if (payer) {
-        rows = rows.filter((row) => contractMatchesPayer(row, payer!));
-      }
-      if (planType) {
-        rows = rows.filter((row) => contractMatchesPlanType(row.plan_types, planType));
-      }
-      if (state) {
-        rows = rows.filter((row) => stateMatchesFilter(row.facilities?.state, state));
-      }
 
       const byOrg = new Map<string, OrgSearchBase>();
       const seenFac = new Map<string, Set<string>>();
-      rows.forEach((row) => {
-        const f = row.facilities;
-        if (!f || !f.organizations) return;
+      const addFacility = (
+        f: FacilityFields,
+        contract: ContractFields | null,
+        options?: { skipMatchBadge?: boolean },
+      ) => {
+        if (!f.organizations || f.verification_status !== "approved") return;
+        if (state && !stateMatchesFilter(f.state, state)) return;
         const org = f.organizations;
         if (!byOrg.has(org.id)) {
           byOrg.set(org.id, {
@@ -169,26 +167,82 @@ export default function SearchResults() {
         }
         const entry = byOrg.get(org.id)!;
         const seen = seenFac.get(org.id)!;
-        if (!seen.has(f.id)) {
-          seen.add(f.id);
-          entry.facilities.push({
-            id: f.id,
-            name: f.name,
-            slug: f.slug,
-            city: f.city,
-            state: f.state,
-            image_urls: f.image_urls ?? [],
-            matched_payer: payer?.name ?? row.payer_name,
-            matched_plan_types: sanitizePlanTypes(row.plan_types),
-            levels_of_care: f.levels_of_care ?? [],
-          });
-          if (f.contracts_verified_at) {
-            if (!entry.latest_verified_at || f.contracts_verified_at > entry.latest_verified_at) {
-              entry.latest_verified_at = f.contracts_verified_at;
-            }
+        if (seen.has(f.id)) return;
+        seen.add(f.id);
+        entry.facilities.push(
+          toFacilityCard(f, contract, payer?.name ?? contract?.payer_name ?? "", options),
+        );
+        if (contract?.verified_at) {
+          if (!entry.latest_verified_at || contract.verified_at > entry.latest_verified_at) {
+            entry.latest_verified_at = contract.verified_at;
           }
         }
-      });
+      };
+
+      if (payer || payerId) {
+        let q = supabase
+          .from("insurance_contracts")
+          .select(`${CONTRACT_SELECT}, facilities!inner(${FACILITY_SELECT})`);
+
+        if (payer) q = q.or(buildPayerOrFilter(payer));
+        else if (payerId) q = q.eq("payer_id", payerId);
+
+        q = q.eq("facilities.verification_status", "approved");
+        if (stateCode && stateName && stateName.toUpperCase() !== stateCode) {
+          q = q.or(`state.eq.${stateCode},state.ilike.${stateName}`, { referencedTable: "facilities" });
+        } else if (state) {
+          q = q.ilike("facilities.state", `%${state}%`);
+        }
+        if (city) q = q.ilike("facilities.city", `%${city}%`);
+        if (loc) q = q.contains("facilities.levels_of_care", [loc]);
+
+        const { data, error } = await q.limit(500);
+        if (cancelled) return;
+        if (error) {
+          setBaseResults([]);
+          setLoadError(error.message || "Search failed");
+          toast.error("Search failed", { description: "Try again. If this continues, refresh the page." });
+          setLoading(false);
+          return;
+        }
+
+        setTruncated((data?.length ?? 0) >= 500);
+        let rows = (data as unknown as ContractRow[]) ?? [];
+        if (payer) rows = rows.filter((row) => contractMatchesPayer(row, payer));
+        if (planType) rows = rows.filter((row) => contractMatchesPlanType(row.plan_types, planType));
+        rows.forEach((row) => {
+          if (row.facilities) addFacility(row.facilities, row);
+        });
+      } else {
+        let q = supabase
+          .from("facilities")
+          .select(`${FACILITY_SELECT},insurance_contracts(${CONTRACT_SELECT})`)
+          .eq("verification_status", "approved");
+        if (stateCode && stateName && stateName.toUpperCase() !== stateCode) {
+          q = q.or(`state.eq.${stateCode},state.ilike.${stateName}`);
+        } else if (state) {
+          q = q.ilike("state", `%${state}%`);
+        }
+        if (city) q = q.ilike("city", `%${city}%`);
+        if (loc) q = q.contains("levels_of_care", [loc]);
+
+        const { data, error } = await q.limit(500);
+        if (cancelled) return;
+        if (error) {
+          setBaseResults([]);
+          setLoadError(error.message || "Search failed");
+          toast.error("Search failed", { description: "Try again. If this continues, refresh the page." });
+          setLoading(false);
+          return;
+        }
+
+        setTruncated((data?.length ?? 0) >= 500);
+        type FacilitySearchRow = FacilityFields & { insurance_contracts?: ContractFields[] | null };
+        ((data as unknown as FacilitySearchRow[]) ?? []).forEach((row) => {
+          const contracts = row.insurance_contracts ?? [];
+          addFacility(row, null, { skipMatchBadge: contracts.length > 0 && !row.self_pay_only });
+        });
+      }
 
       setBaseResults(Array.from(byOrg.values()));
       setLoading(false);
@@ -243,6 +297,11 @@ export default function SearchResults() {
           <p className="mt-1 text-sm text-muted-foreground">
             {summary}
             {loading || loadError ? "" : ` · ${resultCount}`}
+          </p>
+          <p className="mt-2 max-w-3xl text-xs text-muted-foreground">
+            Insurance status comes from structured contract records. A directory match does not
+            confirm benefits or admission eligibility — those still need to be verified with the
+            facility and payer. Missing insurance data is shown as unknown, not out of network.
           </p>
         </div>
       </header>

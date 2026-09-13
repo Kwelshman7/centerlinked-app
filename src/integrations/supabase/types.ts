@@ -216,6 +216,7 @@ export type Database = {
           preferred_until: string | null
           quick_highlights: string[]
           rejection_reason: string | null
+          self_pay_only: boolean
           short_description: string | null
           slug: string | null
           specializations: string[]
@@ -259,6 +260,7 @@ export type Database = {
           preferred_until?: string | null
           quick_highlights?: string[]
           rejection_reason?: string | null
+          self_pay_only?: boolean
           short_description?: string | null
           slug?: string | null
           specializations?: string[]
@@ -302,6 +304,7 @@ export type Database = {
           preferred_until?: string | null
           quick_highlights?: string[]
           rejection_reason?: string | null
+          self_pay_only?: boolean
           short_description?: string | null
           slug?: string | null
           specializations?: string[]
@@ -379,37 +382,70 @@ export type Database = {
       }
       insurance_contracts: {
         Row: {
+          contract_status: string
+          covered_states: string[]
           created_at: string
+          effective_date: string | null
           facility_id: string
           id: string
           in_network: boolean
+          internal_notes: string | null
+          levels_of_care_covered: string[]
+          network_name: string | null
           notes: string | null
+          original_imported_value: string | null
           payer_id: string | null
           payer_name: string
           plan_types: string[]
+          termination_date: string | null
           updated_at: string
+          verification_method: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          contract_status?: string
+          covered_states?: string[]
           created_at?: string
+          effective_date?: string | null
           facility_id: string
           id?: string
           in_network?: boolean
+          internal_notes?: string | null
+          levels_of_care_covered?: string[]
+          network_name?: string | null
           notes?: string | null
+          original_imported_value?: string | null
           payer_id?: string | null
           payer_name: string
           plan_types?: string[]
+          termination_date?: string | null
           updated_at?: string
+          verification_method?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          contract_status?: string
+          covered_states?: string[]
           created_at?: string
+          effective_date?: string | null
           facility_id?: string
           id?: string
           in_network?: boolean
+          internal_notes?: string | null
+          levels_of_care_covered?: string[]
+          network_name?: string | null
           notes?: string | null
+          original_imported_value?: string | null
           payer_id?: string | null
           payer_name?: string
           plan_types?: string[]
+          termination_date?: string | null
           updated_at?: string
+          verification_method?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {

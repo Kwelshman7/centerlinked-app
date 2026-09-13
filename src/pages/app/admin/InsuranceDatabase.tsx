@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -79,9 +79,14 @@ export default function InsuranceDatabase() {
           <h1 className="text-2xl font-bold tracking-tight">Insurance Database</h1>
           <p className="text-sm text-muted-foreground">Master list of insurance carriers used across search and contracts.</p>
         </div>
-        <Button onClick={() => { setEditing(emptyDraft()); setDrawerOpen(true); }}>
-          <Plus className="h-4 w-4" /> Add insurance
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button asChild variant="outline">
+            <Link to="/app/admin/insurance-queue">Insurance queue</Link>
+          </Button>
+          <Button onClick={() => { setEditing(emptyDraft()); setDrawerOpen(true); }}>
+            <Plus className="h-4 w-4" /> Add insurance
+          </Button>
+        </div>
       </div>
 
       {pendingCount > 0 && (

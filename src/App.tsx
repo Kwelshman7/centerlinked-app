@@ -31,6 +31,7 @@ import Feed from "./pages/app/Feed";
 import Messenger from "./pages/app/Messenger";
 import SearchResults from "./pages/app/SearchResults";
 import InsuranceDatabase from "./pages/app/admin/InsuranceDatabase";
+import InsuranceQueue from "./pages/app/admin/InsuranceQueue";
 import AccessRequests from "./pages/app/admin/AccessRequests";
 import OrganizationClaims from "./pages/app/admin/OrganizationClaims";
 import AdminCreateOrganization from "./pages/app/admin/AdminCreateOrganization";
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="network" element={<Navigate to="/app/organizations" replace />} />
               <Route path="admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
               <Route path="admin/insurance" element={<AdminRoute><InsuranceDatabase /></AdminRoute>} />
+              <Route path="admin/insurance-queue" element={<AdminRoute><InsuranceQueue /></AdminRoute>} />
               <Route path="admin/requests" element={<AdminRoute><AccessRequests /></AdminRoute>} />
               <Route path="admin/join-requests" element={<AdminRoute><JoinRequests /></AdminRoute>} />
               <Route path="admin/claims" element={<AdminRoute><OrganizationClaims /></AdminRoute>} />

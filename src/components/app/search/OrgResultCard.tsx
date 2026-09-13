@@ -4,6 +4,8 @@ import { Building2, ChevronDown, MapPin, ShieldCheck, Star } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { programPublicPath } from "@/lib/public-urls";
 import { formatPlanTypeList } from "@/lib/plan-types";
+import { InsuranceMatchBadge } from "@/components/app/search/InsuranceMatchBadge";
+import type { InsuranceMatchStatus } from "@/lib/insurance-contract-status";
 
 export interface OrgSearchFacility {
   id: string;
@@ -14,6 +16,8 @@ export interface OrgSearchFacility {
   image_urls?: string[];
   matched_payer?: string;
   matched_plan_types?: string[];
+  insurance_match_status?: InsuranceMatchStatus;
+  insurance_verified_at?: string | null;
   levels_of_care?: string[];
 }
 
@@ -153,7 +157,16 @@ export function OrgResultCard({
                     <p className="text-[10px] text-muted-foreground truncate">
                       {[place, level].filter(Boolean).join(" · ")}
                     </p>
-                    {f.matched_payer ? (
+                    {f.insurance_match_status ? (
+                      <InsuranceMatchBadge
+                        status={f.insurance_match_status}
+                        payerName={
+                          f.matched_plan_types?.length
+                            ? `${f.matched_payer} — ${formatPlanTypeList(f.matched_plan_types)}`
+                            : f.matched_payer
+                        }
+                      />
+                    ) : f.matched_payer ? (
                       <span className="self-start text-[9px] font-bold bg-success/10 text-success border border-success/20 px-1.5 py-px rounded-full truncate max-w-full">
                         {f.matched_plan_types?.length
                           ? `${f.matched_payer} — ${formatPlanTypeList(f.matched_plan_types)}`
@@ -303,7 +316,19 @@ export function SearchFacilityCard({
         {levels.length > 0 ? (
           <p className="line-clamp-2 text-[11px] text-foreground/75">{levels.slice(0, 3).join(" · ")}</p>
         ) : null}
-        {payerLabel ? (
+        {f.insurance_match_status ? (
+          <div className="mt-auto space-y-1">
+            <InsuranceMatchBadge
+              status={f.insurance_match_status}
+              payerName={payerLabel}
+            />
+            {f.insurance_match_status === "verified" && f.insurance_verified_at ? (
+              <p className="text-[10px] text-muted-foreground">
+                Verified {new Date(f.insurance_verified_at).toLocaleDateString()}
+              </p>
+            ) : null}
+          </div>
+        ) : payerLabel ? (
           <span className="mt-auto self-start truncate rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
             {payerLabel}
           </span>

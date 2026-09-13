@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { Building2, Inbox, LayoutDashboard, Shield, ShieldCheck, CheckSquare, Database, Plus, UserPlus } from "lucide-react";
+import { Building2, Inbox, LayoutDashboard, Shield, ShieldCheck, CheckSquare, ClipboardList, Database, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ const adminLinks = [
   { to: "/app/admin/claims", label: "Org claims", icon: ShieldCheck },
   { to: "/app/verifications", label: "Verifications", icon: CheckSquare },
   { to: "/app/admin/insurance", label: "Insurance DB", icon: Database },
+  { to: "/app/admin/insurance-queue", label: "Insurance queue", icon: ClipboardList },
 ] as const;
 
 export function SuperAdminBanner() {
