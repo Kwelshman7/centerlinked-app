@@ -67,32 +67,21 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
 ];
 
 /**
- * Free tier.
- *
- * Describes what the product already does without a membership: claiming a
- * profile, keeping it current, and being findable have never required payment.
- * Naming it stops a claimant hitting the pricing page and assuming a $99 floor
- * blocks them.
+ * Free slider position ($0). Not a Stripe plan.
  *
  * Deliberately NOT part of `MEMBERSHIP_TIERS` — that array is the purchasable
  * catalog and drives checkout, tier matching, and the server mirror in
- * `server/stripe/pricing.mjs`. A $0 entry there would be meaningless at best
- * and would break `assertTierMatchesFacilityCount` at worst.
+ * `server/stripe/pricing.mjs`. A $0 entry there would break
+ * `assertTierMatchesFacilityCount`.
  */
 export const LISTED_TIER = {
   id: "listed",
-  name: "Listed",
-  priceLabel: "Free",
+  name: "Free",
+  priceLabel: "$0",
   priceNote: "No card required",
+  cta: "Start for free",
   description:
-    "Claim your organization, keep it accurate, and stay findable by referral partners.",
-  features: [
-    "Claim your organization's profile",
-    "Keep facilities, insurance, and referral contacts current",
-    "Appear in partner search",
-    "Share your public organization link",
-    "Monthly verification stamp",
-  ],
+    "Search for free and provide the in-network providers you work with.",
 } as const;
 
 export type DfyPackage = {
@@ -185,13 +174,25 @@ export function suggestedTierForFacilityCount(count: number): MembershipTierId |
   return "enterprise";
 }
 
-/** Landing slider: 1–15 self-serve, 16 means 16+ (quoted). */
+/** Landing slider: 0 = free, 1–15 self-serve, 16 means 16+ (quoted). */
+export const PRICING_SLIDER_MIN = 0;
 export const PRICING_SLIDER_MAX = 16;
 
 export type MembershipQuote =
   | {
+      facilityCount: 0;
+      facilityLabel: string;
+      isListed: true;
+      isEnterprise: false;
+      tier: null;
+      monthlyCents: 0;
+      annualCents: 0;
+      dfyCents: null;
+    }
+  | {
       facilityCount: number;
       facilityLabel: string;
+      isListed: false;
       isEnterprise: false;
       tier: MembershipTier;
       monthlyCents: number;
@@ -201,6 +202,7 @@ export type MembershipQuote =
   | {
       facilityCount: number;
       facilityLabel: string;
+      isListed: false;
       isEnterprise: true;
       tier: null;
       monthlyCents: null;
@@ -227,12 +229,26 @@ export function dfyCentsForCount(count: number) {
 
 /** Published membership quote for a live facility count (slider / checkout). */
 export function membershipQuoteForFacilityCount(count: number): MembershipQuote {
-  const n = Math.min(PRICING_SLIDER_MAX, Math.max(1, Math.floor(Number(count) || 1)));
+  const raw = Math.floor(Number(count));
+  if (!Number.isFinite(raw) || raw <= 0) {
+    return {
+      facilityCount: 0,
+      facilityLabel: LISTED_TIER.name,
+      isListed: true,
+      isEnterprise: false,
+      tier: null,
+      monthlyCents: 0,
+      annualCents: 0,
+      dfyCents: null,
+    };
+  }
+  const n = Math.min(PRICING_SLIDER_MAX, raw);
   const tierId = suggestedTierForFacilityCount(n);
   if (tierId === "enterprise") {
     return {
       facilityCount: n,
       facilityLabel: ENTERPRISE.facilityLabel,
+      isListed: false,
       isEnterprise: true,
       tier: null,
       monthlyCents: null,
@@ -248,6 +264,7 @@ export function membershipQuoteForFacilityCount(count: number): MembershipQuote 
     return {
       facilityCount: n,
       facilityLabel: ENTERPRISE.facilityLabel,
+      isListed: false,
       isEnterprise: true,
       tier: null,
       monthlyCents: null,
@@ -258,6 +275,7 @@ export function membershipQuoteForFacilityCount(count: number): MembershipQuote 
   return {
     facilityCount: n,
     facilityLabel: n === 1 ? "1 facility" : `${n} facilities`,
+    isListed: false,
     isEnterprise: false,
     tier,
     monthlyCents,

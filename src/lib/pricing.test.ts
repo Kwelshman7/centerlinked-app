@@ -42,13 +42,19 @@ test("facility count maps to the right membership and DFY package", () => {
   assert.equal(dfyPackageForFacilityCount(20), "enterprise");
 });
 
-test("slider quote rises with each facility and keeps published bookends", () => {
+test("slider quote starts at free and rises with each facility", () => {
+  const listed = membershipQuoteForFacilityCount(0);
+  assert.equal(listed.isListed, true);
+  assert.equal(listed.monthlyCents, 0);
+  assert.equal(listed.facilityLabel, "Free");
+
   const one = membershipQuoteForFacilityCount(1);
   const two = membershipQuoteForFacilityCount(2);
   const five = membershipQuoteForFacilityCount(5);
   const six = membershipQuoteForFacilityCount(6);
   const fifteen = membershipQuoteForFacilityCount(15);
   const enterprise = membershipQuoteForFacilityCount(16);
+  assert.equal(one.isListed, false);
   assert.equal(one.isEnterprise, false);
   assert.equal(one.monthlyCents, 9900);
   assert.equal(one.annualCents, 99_000);

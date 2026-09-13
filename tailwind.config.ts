@@ -16,9 +16,10 @@ export default {
       screens: {
         // Cap width only at desktop. sm/md max-widths lock a ~760px
         // preview or tablet pane to 640px and leave empty side margins.
+        // Keep xl/2xl on the same rail so header and sections share one center.
         lg: "1024px",
         xl: "1200px",
-        "2xl": "1400px",
+        "2xl": "1200px",
       },
     },
     extend: {

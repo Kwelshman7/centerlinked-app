@@ -148,7 +148,7 @@ export function Hero() {
         <div className="container">
           <div
             className={cn(
-              "mx-auto grid w-full max-w-6xl min-w-0",
+              "grid w-full min-w-0",
               "grid-cols-1 items-center gap-6 sm:gap-8",
               "pt-6 pb-10 sm:pt-8 sm:pb-12",
               "lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12 xl:gap-16",

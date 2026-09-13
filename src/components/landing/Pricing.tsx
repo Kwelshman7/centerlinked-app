@@ -12,7 +12,7 @@ import {
   LISTED_TIER,
   MEMBERSHIP_INCLUDED,
   PRICING_HEADING,
-  PRICING_SLIDER_MAX,
+  PRICING_SLIDER_MIN,
   formatUsdFromCents,
   membershipQuoteForFacilityCount,
   type BillingInterval,
@@ -25,24 +25,26 @@ type LoadingKey = `${MembershipTierId}-${"self" | "dfy"}` | "enterprise" | null;
 
 const YEARLY_SAVE_PERCENT = 20;
 
+const SLIDER_END = 15;
+
 const SLIDER_TICKS = [
+  { value: 0, label: "Free" },
   { value: 1, label: "1" },
   { value: 5, label: "5" },
   { value: 10, label: "10" },
-  { value: 15, label: "15" },
-  { value: 16, label: "16+" },
+  { value: 15, label: "15+" },
 ] as const;
 
 export function Pricing() {
   const { user, profile, isFacilityAdmin, isSuperAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [interval, setInterval] = useState<BillingInterval>("month");
-  const [facilityCount, setFacilityCount] = useState(1);
+  const [facilityCount, setFacilityCount] = useState(PRICING_SLIDER_MIN);
   const [loadingKey, setLoadingKey] = useState<LoadingKey>(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
   const quote = membershipQuoteForFacilityCount(facilityCount);
-  const fillPct = ((facilityCount - 1) / (PRICING_SLIDER_MAX - 1)) * 100;
+  const sliderProgress = (facilityCount - PRICING_SLIDER_MIN) / (SLIDER_END - PRICING_SLIDER_MIN);
 
   const handleCheckout = async (membershipTier: MembershipTierId, doneForYou: boolean) => {
     if (authLoading) return;
@@ -95,37 +97,7 @@ export function Pricing() {
           </p>
         </div>
 
-        <div className="mt-10 sm:mt-12 mx-auto max-w-5xl rounded-2xl border border-border bg-card shadow-sm p-6 sm:p-8">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <p className="text-sm font-semibold text-foreground">{LISTED_TIER.name}</p>
-                <span className="font-display text-2xl text-foreground">
-                  {LISTED_TIER.priceLabel}
-                </span>
-                <span className="text-xs text-muted-foreground">{LISTED_TIER.priceNote}</span>
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-xl">
-                {LISTED_TIER.description}
-              </p>
-              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                {LISTED_TIER.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5 min-w-0">
-                    <Check className="h-4 w-4 mt-0.5 shrink-0 text-primary" aria-hidden />
-                    <span className="text-sm text-foreground/90 leading-snug">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Button asChild variant="outline" className="shrink-0">
-              <Link to="/signup">
-                Claim your organization <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-6 sm:mt-8 mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="mt-10 sm:mt-12 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex justify-center border-b border-border/70 px-6 py-4 sm:py-5">
             <div className="flex items-center gap-2.5">
               <div className="inline-flex rounded-full border border-border bg-background p-1">
@@ -177,56 +149,80 @@ export function Pricing() {
               <div className="text-center lg:text-left">
                 <p className="text-sm font-semibold text-muted-foreground">How many facilities?</p>
                 <p className="mt-2 font-display text-3xl sm:text-4xl text-foreground">
-                  {quote.facilityLabel}
+                  {quote.isListed ? LISTED_TIER.name : facilityCount >= SLIDER_END ? "15+" : quote.facilityLabel}
                 </p>
               </div>
 
-              <div className="mt-6">
+              <div className="facility-count-slider-wrap mt-6">
                 <label className="sr-only" htmlFor="facility-count-slider">
                   Number of live facilities
                 </label>
                 <input
                   id="facility-count-slider"
                   type="range"
-                  min={1}
-                  max={PRICING_SLIDER_MAX}
+                  min={PRICING_SLIDER_MIN}
+                  max={SLIDER_END}
                   step={1}
                   value={facilityCount}
                   onChange={(e) => setFacilityCount(Number(e.target.value))}
-                  aria-valuemin={1}
-                  aria-valuemax={PRICING_SLIDER_MAX}
+                  aria-valuemin={PRICING_SLIDER_MIN}
+                  aria-valuemax={SLIDER_END}
                   aria-valuenow={facilityCount}
                   aria-valuetext={
-                    quote.isEnterprise
-                      ? "16 or more facilities, custom pricing"
-                      : `${quote.facilityLabel}, ${formatUsdFromCents(interval === "year" ? quote.annualCents : quote.monthlyCents)} ${interval === "year" ? "per year" : "per month"}`
+                    quote.isListed
+                      ? `${LISTED_TIER.name}, ${LISTED_TIER.priceLabel}`
+                      : quote.isEnterprise
+                        ? "16 or more facilities, custom pricing"
+                        : `${quote.facilityLabel}, ${formatUsdFromCents(interval === "year" ? quote.annualCents : quote.monthlyCents)} ${interval === "year" ? "per year" : "per month"}`
                   }
                   className="facility-count-slider w-full cursor-pointer appearance-none bg-transparent"
                   style={{
-                    background: `linear-gradient(to right, hsl(var(--primary)) ${fillPct}%, hsl(var(--border)) ${fillPct}%)`,
-                    height: "8px",
-                    borderRadius: "999px",
+                    ["--slider-progress" as string]: String(sliderProgress),
                   }}
                 />
-                <div className="mt-2 flex justify-between text-[11px] sm:text-xs font-medium text-muted-foreground">
-                  {SLIDER_TICKS.map((tick) => (
-                    <button
-                      key={tick.value}
-                      type="button"
-                      className={cn(
-                        "tabular-nums hover:text-foreground transition-colors",
-                        facilityCount === tick.value && "text-primary font-semibold",
-                      )}
-                      onClick={() => setFacilityCount(tick.value)}
-                    >
-                      {tick.label}
-                    </button>
-                  ))}
+                <div className="relative mt-2 h-5 text-[11px] sm:text-xs font-medium text-muted-foreground">
+                  {SLIDER_TICKS.map((tick) => {
+                    const progress =
+                      (tick.value - PRICING_SLIDER_MIN) / (SLIDER_END - PRICING_SLIDER_MIN);
+                    const isFirst = tick.value === PRICING_SLIDER_MIN;
+                    const isLast = tick.value === SLIDER_END;
+                    return (
+                      <button
+                        key={tick.value}
+                        type="button"
+                        className={cn(
+                          "absolute top-0 tabular-nums hover:text-foreground transition-colors",
+                          isFirst ? "translate-x-0" : isLast ? "-translate-x-full" : "-translate-x-1/2",
+                          facilityCount === tick.value && "text-primary font-semibold",
+                        )}
+                        style={{
+                          left: `calc(var(--thumb) / 2 + (100% - var(--thumb)) * ${progress})`,
+                        }}
+                        onClick={() => setFacilityCount(tick.value)}
+                      >
+                        {tick.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="mt-8 text-center lg:text-left">
-                {quote.isEnterprise ? (
+                {quote.isListed ? (
+                  <>
+                    <div className="flex items-baseline justify-center lg:justify-start gap-1.5">
+                      <span className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
+                        {LISTED_TIER.priceLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-sm font-medium text-foreground/80">
+                      {LISTED_TIER.priceNote}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {LISTED_TIER.description}
+                    </p>
+                  </>
+                ) : quote.isEnterprise ? (
                   <>
                     <p className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
                       Custom
@@ -260,7 +256,14 @@ export function Pricing() {
                 )}
               </div>
 
-              {quote.isEnterprise ? (
+              {quote.isListed ? (
+                <Button asChild variant="hero" size="lg" className="mt-8 w-full group rounded-full">
+                  <Link to="/signup">
+                    {LISTED_TIER.cta}
+                    <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </Button>
+              ) : quote.isEnterprise ? (
                 <Button asChild variant="hero" size="lg" className="mt-8 w-full rounded-full">
                   <Link to="/signup">
                     Create your account
@@ -318,8 +321,17 @@ export function Pricing() {
       </div>
 
       <style>{`
-        .facility-count-slider {
+        .facility-count-slider-wrap {
           --thumb: 1.25rem;
+        }
+        .facility-count-slider {
+          height: 8px;
+          border-radius: 999px;
+          background: linear-gradient(
+            to right,
+            hsl(var(--primary)) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--slider-progress)),
+            hsl(var(--border)) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--slider-progress))
+          );
         }
         .facility-count-slider::-webkit-slider-thumb {
           -webkit-appearance: none;

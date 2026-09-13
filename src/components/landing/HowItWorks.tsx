@@ -83,7 +83,7 @@ export function HowItWorks() {
         </div>
 
         {/* Desktop / tablet process rail */}
-        <div className="mt-12 sm:mt-16 max-w-5xl mx-auto hidden md:block">
+        <div className="mt-12 sm:mt-16 hidden md:block">
           <div className="relative mb-10">
             <div className="absolute left-[16.67%] right-[16.67%] top-1/2 -translate-y-1/2 h-[2px] bg-border" aria-hidden>
               <div
