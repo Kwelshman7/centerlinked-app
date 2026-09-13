@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
-import { LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
+import { CONDITION_OPTIONS, LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
 import { PLAN_TYPES, parsePlanTypeParam } from "@/lib/plan-types";
 import { US_STATES } from "@/lib/us-states";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,9 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   const [planType, setPlanType] = useState(parsePlanTypeParam(params.get("planType")));
   const [state, setState] = useState(params.get("state") ?? "");
   const [city, setCity] = useState(params.get("city") ?? "");
+  const [zip, setZip] = useState(params.get("zip") ?? "");
+  const [specialty, setSpecialty] = useState(params.get("specialty") ?? "");
+  const [accreditation, setAccreditation] = useState(params.get("accreditation") ?? "");
   const [loc, setLoc] = useState(params.get("loc") ?? "");
 
   useEffect(() => {
@@ -53,6 +56,9 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
     setPlanType(parsePlanTypeParam(params.get("planType")));
     setState(params.get("state") ?? "");
     setCity(params.get("city") ?? "");
+    setZip(params.get("zip") ?? "");
+    setSpecialty(params.get("specialty") ?? "");
+    setAccreditation(params.get("accreditation") ?? "");
     setLoc(params.get("loc") ?? "");
   }, [params]);
 
@@ -64,6 +70,9 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
     if (planType) q.set("planType", planType);
     if (state) q.set("state", state);
     if (city) q.set("city", city);
+    if (zip.trim()) q.set("zip", zip.trim());
+    if (specialty) q.set("specialty", specialty);
+    if (accreditation.trim()) q.set("accreditation", accreditation.trim());
     if (loc) q.set("loc", loc);
     navigate(`/app/search/results?${q.toString()}`);
   };
@@ -175,6 +184,55 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="Any city"
+            className={control}
+          />
+        </FieldShell>
+
+        <FieldShell
+          label="ZIP"
+          htmlFor="search-zip"
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+        >
+          <Input
+            id="search-zip"
+            value={zip}
+            onChange={(e) => setZip(e.target.value)}
+            placeholder="Exact ZIP"
+            inputMode="numeric"
+            className={control}
+          />
+        </FieldShell>
+
+        <FieldShell
+          label="Specialty"
+          htmlFor="search-specialty"
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+        >
+          <Select value={specialty || "_any"} onValueChange={(v) => setSpecialty(v === "_any" ? "" : v)}>
+            <SelectTrigger id="search-specialty" className={control}>
+              <SelectValue placeholder="Any specialty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_any">Any specialty</SelectItem>
+              {CONDITION_OPTIONS.map((item) => (
+                <SelectItem key={item} value={item}>
+                  {item}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FieldShell>
+
+        <FieldShell
+          label="Accreditation"
+          htmlFor="search-accreditation"
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+        >
+          <Input
+            id="search-accreditation"
+            value={accreditation}
+            onChange={(e) => setAccreditation(e.target.value)}
+            placeholder="e.g. Joint Commission"
             className={control}
           />
         </FieldShell>

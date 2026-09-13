@@ -1314,6 +1314,45 @@ export type Database = {
         }
         Relationships: []
       }
+      search_events: {
+        Row: {
+          accreditation: string | null
+          city: string | null
+          created_at: string
+          id: string
+          loc: string | null
+          payer_name: string | null
+          plan_type: string | null
+          specialty: string | null
+          state: string | null
+          zip: string | null
+        }
+        Insert: {
+          accreditation?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          loc?: string | null
+          payer_name?: string | null
+          plan_type?: string | null
+          specialty?: string | null
+          state?: string | null
+          zip?: string | null
+        }
+        Update: {
+          accreditation?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          loc?: string | null
+          payer_name?: string | null
+          plan_type?: string | null
+          specialty?: string | null
+          state?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       verification_events: {
         Row: {
           action: string

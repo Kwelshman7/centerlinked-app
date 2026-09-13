@@ -48,6 +48,9 @@ type FacilityFields = {
   contracts_verified_at: string | null;
   verification_frozen: boolean;
   self_pay_only?: boolean | null;
+  zip?: string | null;
+  specializations?: string[] | null;
+  accreditations?: string[] | null;
   bd_contact_name?: string | null;
   bd_contact_phone?: string | null;
   bd_contact_email?: string | null;
@@ -69,7 +72,7 @@ type ContractFields = {
 type ContractRow = ContractFields & { facilities: FacilityFields | null };
 
 const FACILITY_SELECT =
-  "id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,self_pay_only,bd_contact_name,bd_contact_phone,bd_contact_email,bd_contact_title,bd_contact_verified_at,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state)";
+  "id,name,slug,city,state,zip,specializations,accreditations,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,self_pay_only,bd_contact_name,bd_contact_phone,bd_contact_email,bd_contact_title,bd_contact_verified_at,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state)";
 const CONTRACT_SELECT =
   "payer_id,payer_name,plan_types,in_network,contract_status,verified_at";
 
@@ -119,6 +122,9 @@ export default function SearchResults() {
   const planType = parsePlanTypeParam(params.get("planType"));
   const state = params.get("state") ?? "";
   const city = params.get("city") ?? "";
+  const zip = (params.get("zip") ?? "").replace(/\D/g, "").slice(0, 5);
+  const specialty = params.get("specialty") ?? "";
+  const accreditation = params.get("accreditation") ?? "";
   const loc = params.get("loc") ?? "";
 
   const summary = useMemo(() => {
@@ -126,10 +132,12 @@ export default function SearchResults() {
     if (payerName) parts.push(payerName);
     if (planType) parts.push(planTypeShortLabel(planType));
     if (loc) parts.push(loc);
-    const place = [city, state].filter(Boolean).join(", ");
+    if (specialty) parts.push(specialty);
+    if (accreditation) parts.push(accreditation);
+    const place = [city, state, zip].filter(Boolean).join(", ");
     if (place) parts.push(`in ${place}`);
     return parts.length ? parts.join(" · ") : "All verified organizations";
-  }, [payerName, planType, loc, city, state]);
+  }, [payerName, planType, loc, specialty, accreditation, city, state, zip]);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,6 +169,17 @@ export default function SearchResults() {
       ) => {
         if (!f.organizations || f.verification_status !== "approved") return;
         if (state && !stateMatchesFilter(f.state, state)) return;
+        if (zip && (f.zip ?? "").replace(/\D/g, "").slice(0, 5) !== zip) return;
+        if (specialty) {
+          const haystack = [...(f.specializations ?? []), ...(f.levels_of_care ?? [])]
+            .join(" ")
+            .toLowerCase();
+          if (!haystack.includes(specialty.toLowerCase())) return;
+        }
+        if (accreditation) {
+          const haystack = (f.accreditations ?? []).join(" ").toLowerCase();
+          if (!haystack.includes(accreditation.toLowerCase())) return;
+        }
         const org = f.organizations;
         if (!byOrg.has(org.id)) {
           byOrg.set(org.id, {
@@ -204,6 +223,7 @@ export default function SearchResults() {
           q = q.ilike("facilities.state", `%${state}%`);
         }
         if (city) q = q.ilike("facilities.city", `%${city}%`);
+        if (zip) q = q.ilike("facilities.zip", `${zip}%`);
         if (loc) q = q.contains("facilities.levels_of_care", [loc]);
 
         const { data, error } = await q.limit(500);
@@ -234,6 +254,7 @@ export default function SearchResults() {
           q = q.ilike("state", `%${state}%`);
         }
         if (city) q = q.ilike("city", `%${city}%`);
+        if (zip) q = q.ilike("zip", `${zip}%`);
         if (loc) q = q.contains("levels_of_care", [loc]);
 
         const { data, error } = await q.limit(500);
@@ -255,12 +276,22 @@ export default function SearchResults() {
       }
 
       setBaseResults(Array.from(byOrg.values()));
+      void supabase.from("search_events").insert({
+        payer_name: payerName || null,
+        plan_type: planType || null,
+        state: state || null,
+        city: city || null,
+        zip: zip || null,
+        loc: loc || null,
+        specialty: specialty || null,
+        accreditation: accreditation || null,
+      });
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [payerId, planType, state, city, loc]);
+  }, [payerId, planType, state, city, zip, loc, specialty, accreditation]);
 
   const results = useMemo(
     () =>
@@ -312,6 +343,8 @@ export default function SearchResults() {
             Insurance status comes from structured contract records. A directory match does not
             confirm benefits or admission eligibility — those still need to be verified with the
             facility and payer. Missing insurance data is shown as unknown, not out of network.
+            ZIP is an exact listing match. Radius search is unavailable because coordinates are
+            not stored.
           </p>
         </div>
       </header>
