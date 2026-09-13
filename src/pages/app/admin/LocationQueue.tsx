@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -55,8 +55,10 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
 
 export default function LocationQueue() {
   const { isSuperAdmin, user, loading } = useAuth();
+  const [params] = useSearchParams();
   const [rows, setRows] = useState<Row[] | null>(null);
-  const [filter, setFilter] = useState<Filter>("incomplete");
+  const initialFilter = params.get("filter") === "duplicates" ? "duplicates" : "incomplete";
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Row | null>(null);
   const [draft, setDraft] = useState({

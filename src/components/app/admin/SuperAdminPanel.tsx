@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { Building2, Inbox, LayoutDashboard, Shield, ShieldCheck, CheckSquare, ClipboardList, Database, Plus, Tags, UserPlus, UserRound, MapPin, ScrollText } from "lucide-react";
+import { Building2, Inbox, LayoutDashboard, Shield, ShieldCheck, CheckSquare, ClipboardList, Database, Plus, Tags, UserPlus, UserRound, MapPin, ScrollText, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ const adminLinks = [
   { to: "/app/admin/bd-queue", label: "BD contacts", icon: UserRound },
   { to: "/app/admin/location-queue", label: "Locations", icon: MapPin },
   { to: "/app/admin/audit", label: "Verification audit", icon: ScrollText },
+  { to: "/app/admin/data-quality", label: "Data quality", icon: Gauge },
 ] as const;
 
 export function SuperAdminBanner() {

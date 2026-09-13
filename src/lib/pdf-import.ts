@@ -3,6 +3,9 @@ import { emptyFacility } from "@/components/app/facility/facility-types";
 import { buildFacilityContractDrafts, normalizePayerName } from "@/lib/match-payer";
 import type { PayerMatchInput } from "@/lib/match-payer";
 import { sanitizePlanTypes } from "@/lib/plan-types";
+import { importGaps } from "@/lib/data-quality";
+
+export { importGaps };
 
 export interface ParsedFacility {
   name: string;

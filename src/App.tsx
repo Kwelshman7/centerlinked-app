@@ -36,6 +36,7 @@ import NormalizationQueue from "./pages/app/admin/NormalizationQueue";
 import BdContactQueue from "./pages/app/admin/BdContactQueue";
 import LocationQueue from "./pages/app/admin/LocationQueue";
 import AuditLog from "./pages/app/admin/AuditLog";
+import DataQuality from "./pages/app/admin/DataQuality";
 import AccessRequests from "./pages/app/admin/AccessRequests";
 import OrganizationClaims from "./pages/app/admin/OrganizationClaims";
 import AdminCreateOrganization from "./pages/app/admin/AdminCreateOrganization";
@@ -88,6 +89,7 @@ const App = () => (
               <Route path="admin/bd-queue" element={<AdminRoute><BdContactQueue /></AdminRoute>} />
               <Route path="admin/location-queue" element={<AdminRoute><LocationQueue /></AdminRoute>} />
               <Route path="admin/audit" element={<AdminRoute><AuditLog /></AdminRoute>} />
+              <Route path="admin/data-quality" element={<AdminRoute><DataQuality /></AdminRoute>} />
               <Route path="admin/requests" element={<AdminRoute><AccessRequests /></AdminRoute>} />
               <Route path="admin/join-requests" element={<AdminRoute><JoinRequests /></AdminRoute>} />
               <Route path="admin/claims" element={<AdminRoute><OrganizationClaims /></AdminRoute>} />
