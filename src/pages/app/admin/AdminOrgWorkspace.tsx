@@ -18,6 +18,7 @@ import {
   Link2,
   Palette,
   Wand2,
+  Share2,
 } from "lucide-react";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
@@ -27,6 +28,8 @@ import { OrgSharedLinksPanel } from "@/components/app/OrgSharedLinksPanel";
 import { AdminOrgBrandingForm } from "@/components/app/admin/AdminOrgBrandingForm";
 import { EditOrganizationDialog, type OrgEditable } from "@/components/app/admin/EditOrganizationDialog";
 import { toast } from "sonner";
+import { shareOrCopyUrl } from "@/lib/share";
+import { orgPublicPath } from "@/lib/public-urls";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -178,16 +181,16 @@ export default function AdminOrgWorkspace() {
       </Link>
 
       <Card className="p-5 sm:p-6">
-        <div className="flex flex-col gap-4 sm:gap-5">
-          <div className="flex items-start gap-4 sm:gap-5">
-            <div className="w-20 h-20 rounded-xl bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
               {org.logo_url ? (
                 <img src={org.logo_url} alt={org.name} className="w-full h-full object-contain p-2" />
               ) : (
                 <Building2 className="h-10 w-10 text-muted-foreground" />
               )}
             </div>
-            <div className="min-w-0 flex-1 space-y-2">
+            <div className="min-w-0 flex-1 space-y-1.5">
               <h1 className="font-heading text-2xl sm:text-3xl font-bold leading-tight text-balance break-words line-clamp-2">
                 {org.name}
               </h1>
@@ -209,14 +212,29 @@ export default function AdminOrgWorkspace() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap sm:justify-end">
+          <div className="flex items-center gap-2 flex-wrap sm:justify-end shrink-0">
             <EditOrganizationDialog org={org} onSaved={load} triggerLabel="Edit profile" />
             {org.slug && (
-              <Button asChild size="sm" variant="outline">
-                <Link to={`/o/${org.slug}`} target="_blank">
-                  <ExternalLink className="h-4 w-4" /> Public page
-                </Link>
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    const url = `${window.location.origin}${orgPublicPath(org.slug)}`;
+                    const ok = await shareOrCopyUrl({ url, title: org.name });
+                    if (ok) toast.success("Link copied", { description: url });
+                    else toast.error("Could not copy link");
+                  }}
+                >
+                  <Share2 className="h-4 w-4" /> Share
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link to={`/o/${org.slug}`} target="_blank">
+                    <ExternalLink className="h-4 w-4" /> Public page
+                  </Link>
+                </Button>
+              </>
             )}
           </div>
         </div>

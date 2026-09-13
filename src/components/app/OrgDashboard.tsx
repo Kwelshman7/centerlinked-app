@@ -9,16 +9,12 @@ import {
   Pencil,
   Phone,
   ExternalLink,
-  Palette,
-  UserPlus,
   Eye,
   EyeOff,
-  ChevronDown,
   Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { shareOrCopyUrl } from "@/lib/share";
 import { orgPublicPath } from "@/lib/public-urls";
@@ -123,10 +119,6 @@ export function OrgDashboard({
       : facilityCount === 1
         ? `/app/facilities/${allFacilities[0].id}`
         : "/app#org-facilities";
-
-  const brandingHref = adminMode
-    ? `/app/admin/organizations/${organizationId}?tab=branding`
-    : "/app/settings";
 
   const membersHref = adminMode ? null : "/app/members";
 
@@ -280,11 +272,13 @@ export function OrgDashboard({
             </h1>
             {org?.name && <p className="text-sm text-muted-foreground mt-1 truncate">{org.name}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-2 shrink-0 sm:flex sm:items-center sm:flex-wrap">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleViewPublic} disabled={!org?.slug}>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={handleShare} disabled={!org?.slug}>
+              <Share2 className="h-4 w-4" /> Share
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleViewPublic} disabled={!org?.slug}>
               <ExternalLink className="h-4 w-4" /> Public page
             </Button>
-            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} triggerClassName="w-full sm:w-auto" />
           </div>
         </div>
       )}
@@ -329,155 +323,6 @@ export function OrgDashboard({
         </div>
       </section>
 
-      {/* Quick actions — one row on desktop; compact menu on mobile */}
-      <Card className="p-3 sm:p-4">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="min-w-0">
-            <h2 className="font-heading text-sm font-bold">Quick actions</h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {org && !publicLive
-                ? "Public page and share stay off until the organization is approved."
-                : "Manage your profile, team, and facilities."}
-            </p>
-          </div>
-
-          {/* Mobile: single menu */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="md:hidden shrink-0 gap-1.5"
-                aria-label="Open quick actions"
-              >
-                Actions
-                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-56 p-2" sideOffset={8}>
-              <div className="flex flex-col gap-1">
-                <AddFacilityDialog
-                  organizationId={organizationId}
-                  onCreated={reloadFacilities}
-                  triggerLabel="Add facility"
-                  triggerClassName="w-full justify-start h-10"
-                  triggerVariant="ghost"
-                />
-                {canManageFacilityVisibility && (
-                  <Button asChild variant="ghost" className="h-10 justify-start font-normal">
-                    <Link to={uploadPdfHref}>
-                      <Wand2 className="h-4 w-4" /> Upload PDF
-                    </Link>
-                  </Button>
-                )}
-                <Button asChild variant="ghost" className="h-10 justify-start font-normal">
-                  <Link to={facilitiesHref}>
-                    <Pencil className="h-4 w-4" /> Edit facilities
-                  </Link>
-                </Button>
-                {membersHref ? (
-                  <Button asChild variant="ghost" className="h-10 justify-start font-normal">
-                    <Link to={membersHref}>
-                      <UserPlus className="h-4 w-4" /> Manage team
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button asChild variant="ghost" className="h-10 justify-start font-normal">
-                    <Link to={brandingHref}>
-                      <Users className="h-4 w-4" /> Org profile
-                    </Link>
-                  </Button>
-                )}
-                <Button asChild variant="ghost" className="h-10 justify-start font-normal">
-                  <Link to={brandingHref}>
-                    <Palette className="h-4 w-4" /> Full branding
-                  </Link>
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-10 justify-start font-normal"
-                  onClick={handleShare}
-                  disabled={!org?.slug}
-                >
-                  <Share2 className="h-4 w-4" /> Share link
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-10 justify-start font-normal"
-                  onClick={handleViewPublic}
-                  disabled={!org?.slug}
-                >
-                  <ExternalLink className="h-4 w-4" /> Public page
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Desktop / tablet: single row */}
-        <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-7 gap-2">
-          <AddFacilityDialog
-            organizationId={organizationId}
-            onCreated={reloadFacilities}
-            triggerLabel="Add facility"
-            triggerClassName="w-full justify-center lg:justify-start h-10 px-2 lg:px-3 text-xs lg:text-sm"
-            triggerVariant="outline"
-          />
-          {canManageFacilityVisibility && (
-            <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
-              <Link to={uploadPdfHref}>
-                <Wand2 className="h-4 w-4" /> Upload PDF
-              </Link>
-            </Button>
-          )}
-          <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
-            <Link to={facilitiesHref}>
-              <Pencil className="h-4 w-4" /> Edit facilities
-            </Link>
-          </Button>
-          {membersHref ? (
-            <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
-              <Link to={membersHref}>
-                <UserPlus className="h-4 w-4" /> Manage team
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
-              <Link to={brandingHref}>
-                <Users className="h-4 w-4" /> Org profile
-              </Link>
-            </Button>
-          )}
-          <Button asChild variant="outline" className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm">
-            <Link to={brandingHref}>
-              <Palette className="h-4 w-4" /> Full branding
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm"
-            onClick={handleShare}
-            disabled={!org?.slug}
-          >
-            <Share2 className="h-4 w-4" /> Share link
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 justify-center lg:justify-start px-2 lg:px-3 text-xs lg:text-sm"
-            onClick={handleViewPublic}
-            disabled={!org?.slug}
-          >
-            <ExternalLink className="h-4 w-4" /> Public page
-          </Button>
-        </div>
-      </Card>
-
-      {/* Facilities grid */}
       <Card id="org-facilities" className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <div className="min-w-0">
@@ -485,15 +330,18 @@ export function OrgDashboard({
             <p className="text-xs text-muted-foreground mt-0.5">
               {filteredCount} {filteredCount === 1 ? "location" : "locations"}
               {selectedState !== "all" ? " in this state" : ""}
+              {org && !publicLive ? " · Public page stays off until the organization is approved." : ""}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0">
-            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} triggerClassName="w-full sm:w-auto" />
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-              <Link to={facilitiesHref}>
-                <Pencil className="h-3.5 w-3.5" /> Manage
-              </Link>
-            </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {canManageFacilityVisibility && (
+              <Button asChild variant="outline" size="sm">
+                <Link to={uploadPdfHref}>
+                  <Wand2 className="h-3.5 w-3.5" /> Upload PDF
+                </Link>
+              </Button>
+            )}
+            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} />
           </div>
         </div>
 
@@ -514,7 +362,16 @@ export function OrgDashboard({
             <p className="text-sm text-muted-foreground mt-1 mb-4">
               Add programs so BD reps can share them.
             </p>
-            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} />
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {canManageFacilityVisibility && (
+                <Button asChild variant="outline" size="sm">
+                  <Link to={uploadPdfHref}>
+                    <Wand2 className="h-4 w-4" /> Upload PDF
+                  </Link>
+                </Button>
+              )}
+              <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} />
+            </div>
           </div>
         ) : pageFacilities.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground">No facilities in this state.</div>

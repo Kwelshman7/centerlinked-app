@@ -5,15 +5,13 @@ import {
   Building2,
   Users,
   BarChart3,
-  Pencil,
   Phone,
   MessageSquare,
   Mail,
   ExternalLink,
-  Palette,
-  UserPlus,
   Plus,
   Share2,
+  Wand2,
 } from "lucide-react";
 import { FacilityGrid, FacilityGridCard } from "@/components/FacilityGridCard";
 import {
@@ -23,15 +21,6 @@ import {
   FEATURED_FACILITY_INDEX,
 } from "./demoOrgData";
 import { cn } from "@/lib/utils";
-
-const quickActions = [
-  { label: "Add facility", icon: Plus },
-  { label: "Edit facilities", icon: Pencil },
-  { label: "Manage team", icon: UserPlus },
-  { label: "Full branding", icon: Palette },
-  { label: "Share link", icon: Share2 },
-  { label: "Public page", icon: ExternalLink },
-];
 
 export function DemoDashboardPreviewBody({
   highlightFacilityIndex = null,
@@ -84,15 +73,15 @@ export function DemoDashboardPreviewBody({
               isMobile ? "h-6 px-1.5 text-[8px]" : "h-5 px-1.5 text-[7px]",
             )}
           >
-            <ExternalLink className={isMobile ? "h-2.5 w-2.5" : "h-2.5 w-2.5"} /> Public page
+            <Share2 className="h-2.5 w-2.5" /> Share
           </span>
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-md bg-primary text-primary-foreground font-semibold shadow-sm",
+              "inline-flex items-center gap-1 rounded-md border border-border bg-background font-semibold",
               isMobile ? "h-6 px-1.5 text-[8px]" : "h-5 px-1.5 text-[7px]",
             )}
           >
-            <Plus className={isMobile ? "h-2.5 w-2.5" : "h-2.5 w-2.5"} /> Add facility
+            <ExternalLink className="h-2.5 w-2.5" /> Public page
           </span>
         </div>
       </div>
@@ -109,8 +98,6 @@ export function DemoDashboardPreviewBody({
         />
         <ContactKpi isMobile={isMobile} />
       </div>
-
-      <QuickActionsPanel isMobile={isMobile} />
 
       <div
         className={cn(
@@ -130,19 +117,19 @@ export function DemoDashboardPreviewBody({
           <div className="flex items-center gap-1 shrink-0">
             <span
               className={cn(
+                "inline-flex items-center gap-0.5 rounded-md border border-border font-semibold",
+                isMobile ? "h-5 px-1.5 text-[7.5px]" : "h-4 px-1.5 text-[6.5px]",
+              )}
+            >
+              <Wand2 className="h-2 w-2" /> PDF
+            </span>
+            <span
+              className={cn(
                 "inline-flex items-center gap-0.5 rounded-md bg-primary text-primary-foreground font-semibold",
                 isMobile ? "h-5 px-1.5 text-[7.5px]" : "h-4 px-1.5 text-[6.5px]",
               )}
             >
               <Plus className="h-2 w-2" /> Add
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 rounded-md border border-border font-semibold",
-                isMobile ? "h-5 px-1.5 text-[7.5px]" : "h-4 px-1.5 text-[6.5px]",
-              )}
-            >
-              <Pencil className="h-2 w-2" /> Manage
             </span>
           </div>
         </div>
@@ -192,33 +179,6 @@ export function DemoDashboardPreviewBody({
             ))}
           </FacilityGrid>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function QuickActionsPanel({ isMobile = false }: { isMobile?: boolean }) {
-  return (
-    <div className={cn("rounded-md border border-border/60 bg-card shadow-sm", isMobile ? "p-2" : "p-1.5")}>
-      <p className={cn("font-heading font-bold mb-1", isMobile ? "text-[10px] mb-1.5" : "text-[9px]")}>
-        Quick actions
-      </p>
-      <div className={cn("grid gap-1", isMobile ? "grid-cols-2" : "grid-cols-3")}>
-        {quickActions.map((a) => {
-          const Icon = a.icon;
-          return (
-            <div
-              key={a.label}
-              className={cn(
-                "rounded-md border border-border/70 bg-background inline-flex items-center gap-1 font-semibold text-foreground/90",
-                isMobile ? "h-7 px-1.5 text-[8.5px]" : "h-6 px-1 text-[7px]",
-              )}
-            >
-              <Icon className={cn("text-primary shrink-0", isMobile ? "h-3 w-3" : "h-2.5 w-2.5")} />
-              <span className="truncate">{a.label}</span>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
