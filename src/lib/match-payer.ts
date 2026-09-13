@@ -224,6 +224,34 @@ export function getPayerMatchTerms(payer: Pick<PayerMatchInput, "name" | "aliase
   return Array.from(terms);
 }
 
+/**
+ * Distinct BCBS-family licensees must not collapse into generic BCBS via contains.
+ * Anthem stays Anthem even though the legal name includes “Blue Cross Blue Shield.”
+ */
+export function isDistinctBcbsLicensee(name: string): boolean {
+  const n = normalizePayerName(name);
+  if (!n) return false;
+  if (
+    /^(anthem|elevance|horizon|empire|highmark|carefirst|florida blue|wellmark|excellus|independence|premera|regence|capital blue)/.test(
+      n,
+    )
+  ) {
+    return true;
+  }
+  if (n.includes("blue shield of california")) return true;
+  if (/blue cross blue shield of |bluecross blueshield of /.test(n)) return true;
+  return false;
+}
+
+export function isGenericBcbsLabel(name: string): boolean {
+  const n = normalizePayerName(name);
+  return (
+    n === "bcbs" ||
+    n === "blue cross blue shield" ||
+    n === "blue cross blue shield association"
+  );
+}
+
 export function contractMatchesPayer(
   contract: { payer_id?: string | null; payer_name: string },
   payer: PayerMatchInput,
@@ -234,27 +262,11 @@ export function contractMatchesPayer(
   if (!contractNorm) return false;
 
   const terms = getPayerMatchTerms(payer);
-  if (terms.includes(contractNorm) || terms.includes(normalizeCompact(contract.payer_name))) {
-    return true;
-  }
-
   const contractCompact = normalizeCompact(contract.payer_name);
+  if (terms.includes(contractNorm) || terms.includes(contractCompact)) return true;
+
   const payerCompact = normalizeCompact(payer.name);
-  if (contractCompact && payerCompact) {
-    if (contractCompact === payerCompact) return true;
-    if (contractCompact.length >= 5 && payerCompact.includes(contractCompact)) return true;
-    if (payerCompact.length >= 5 && contractCompact.includes(payerCompact)) return true;
-  }
-
-  const payerNorm = normalizePayerName(payer.name);
-  if (payerNorm.length >= 4 && contractNorm.includes(payerNorm)) return true;
-  if (contractNorm.length >= 4 && payerNorm.includes(contractNorm)) return true;
-
-  for (const alias of payer.aliases ?? []) {
-    const aliasNorm = normalizePayerName(alias);
-    if (!aliasNorm || aliasNorm.length < 4) continue;
-    if (contractNorm.includes(aliasNorm) || aliasNorm.includes(contractNorm)) return true;
-  }
+  if (contractCompact && payerCompact && contractCompact === payerCompact) return true;
 
   return false;
 }

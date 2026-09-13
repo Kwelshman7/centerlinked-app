@@ -35,6 +35,39 @@ export type Database = {
         }
         Relationships: []
       }
+      accreditation_bodies: {
+        Row: {
+          active: boolean
+          aliases: string[]
+          canonical_name: string
+          created_at: string
+          id: string
+          kind: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          aliases?: string[]
+          canonical_name: string
+          created_at?: string
+          id?: string
+          kind?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          aliases?: string[]
+          canonical_name?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       approved_personal_emails: {
         Row: {
           approved_by: string | null
@@ -495,6 +528,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      normalization_change_log: {
+        Row: {
+          action: string
+          created_at: string
+          domain: string
+          facility_id: string | null
+          id: string
+          notes: string | null
+          record_id: string | null
+          source_label: string
+          target_name: string | null
+          target_slug: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          domain: string
+          facility_id?: string | null
+          id?: string
+          notes?: string | null
+          record_id?: string | null
+          source_label: string
+          target_name?: string | null
+          target_slug?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          domain?: string
+          facility_id?: string | null
+          id?: string
+          notes?: string | null
+          record_id?: string | null
+          source_label?: string
+          target_name?: string | null
+          target_slug?: string | null
+        }
+        Relationships: []
       }
       org_analytics_events: {
         Row: {

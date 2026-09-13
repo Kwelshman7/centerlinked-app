@@ -81,17 +81,7 @@ export const CONDITION_OPTIONS = [
 /** @deprecated Prefer THERAPY_OPTIONS + CONDITION_OPTIONS. Kept for older admin forms. */
 export const SPECIALIZATION_OPTIONS = [...THERAPY_OPTIONS, ...CONDITION_OPTIONS] as const;
 
-// Accreditations & certifications
-export const ACCREDITATION_OPTIONS = [
-  "JCAHO (Joint Commission)",
-  "CARF Accredited",
-  "LegitScript Certified",
-  "FARR Certified",
-  "NAATP Member",
-  "State Licensed",
-  "DCF Licensed",
-  "NABH Member",
-] as const;
+export { ACCREDITATION_OPTIONS } from "@/lib/accreditations";
 
 export interface FacilityContractDraft {
   payer_id: string | null;

@@ -31,7 +31,7 @@ import { ExpandableText } from "@/components/public/ExpandableText";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { useNearbyCities } from "@/hooks/useNearbyCities";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
-import { uniqueAccreditations } from "@/lib/accreditations";
+import { displayAccreditations } from "@/lib/accreditations";
 import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
 import { formatPlanTypeList, sanitizePlanTypes } from "@/lib/plan-types";
 
@@ -273,7 +273,7 @@ export function FacilitySheetView({
     facility.tagline?.trim() ||
     null;
 
-  const accreditations = uniqueAccreditations(facility.accreditations);
+  const accreditations = displayAccreditations(facility.accreditations);
 
   const programTags = categorizeFacilityTags(facility);
   const hasProgramTags = PROGRAM_SECTIONS.some(({ kind }) => programTags[kind].length > 0);

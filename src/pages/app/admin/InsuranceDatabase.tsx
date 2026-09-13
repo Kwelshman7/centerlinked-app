@@ -83,6 +83,9 @@ export default function InsuranceDatabase() {
           <Button asChild variant="outline">
             <Link to="/app/admin/insurance-queue">Insurance queue</Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link to="/app/admin/normalization">Canonical names</Link>
+          </Button>
           <Button onClick={() => { setEditing(emptyDraft()); setDrawerOpen(true); }}>
             <Plus className="h-4 w-4" /> Add insurance
           </Button>

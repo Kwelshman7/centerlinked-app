@@ -12,7 +12,7 @@ import {
   htmlToImageSafeOptions,
 } from "@/lib/export-one-pager-capture";
 import { categorizeFacilityTags } from "@/lib/facility-program-tags";
-import { uniqueAccreditations } from "@/lib/accreditations";
+import { displayAccreditations } from "@/lib/accreditations";
 import { polishOnePagerCopy } from "@/lib/one-pager-copy";
 import {
   FacilityOnePager,
@@ -56,7 +56,7 @@ export async function exportFacilityOnePagerPdf(
       therapies: tags.therapies,
       whoWeTreat: tags.whoWeTreat,
       amenities: tags.amenities,
-      accreditations: uniqueAccreditations(input.facility.accreditations),
+      accreditations: displayAccreditations(input.facility.accreditations),
     }),
   ]);
 

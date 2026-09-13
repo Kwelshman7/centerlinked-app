@@ -1,4 +1,4 @@
-import { uniqueAccreditations } from "@/lib/accreditations";
+import { displayAccreditations } from "@/lib/accreditations";
 import { contrastingTextColor } from "@/lib/color-contrast";
 import { categorizeFacilityTags } from "@/lib/facility-program-tags";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
@@ -78,7 +78,7 @@ export function FacilityOnePager({
   const conditions = programTags.conditions.slice(0, 8);
   const whoWeTreat = programTags.whoWeTreat.slice(0, 8);
   const therapies = programTags.therapies.slice(0, 8);
-  const accreditations = uniqueAccreditations(facility.accreditations).slice(0, 6);
+  const accreditations = displayAccreditations(facility.accreditations).slice(0, 6);
 
   const facilityHasOwnBd = !!(
     facility.bd_contact_name?.trim() &&
