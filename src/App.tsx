@@ -50,6 +50,7 @@ import AuthCallback from "./pages/AuthCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import OrgOnePagerPreview from "./pages/dev/OrgOnePagerPreview";
+import LaunchImport from "./pages/LaunchImport";
 
 const App = () => (
   <AppErrorBoundary>
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/start" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/join" element={<Join />} />
+            <Route path="/launch/:token" element={<LaunchImport />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />

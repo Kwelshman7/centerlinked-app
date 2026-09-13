@@ -5,6 +5,7 @@ import { handleNotifyAuthEvent } from "./server/email/handlers/notify-auth-event
 import { handleNotifyPricingInquiry } from "./server/email/handlers/notify-pricing-inquiry.mjs";
 import { handleSendWelcome } from "./server/email/handlers/send-welcome.mjs";
 import { handleSendOrgInvite } from "./server/email/handlers/send-org-invite.mjs";
+import { handleLaunchImport } from "./server/launch-import/handler.mjs";
 
 const EMAIL_API_PATHS = new Set([
   "/api/notify-access-request",
@@ -12,6 +13,7 @@ const EMAIL_API_PATHS = new Set([
   "/api/send-welcome",
   "/api/notify-auth-event",
   "/api/send-org-invite",
+  "/api/launch-import",
 ]);
 
 /**
@@ -34,7 +36,10 @@ export function emailApiPlugin(): Plugin {
         }
 
         try {
-          const body = await readJsonBody(req);
+          const body = await readJsonBody(
+            req,
+            pathname === "/api/launch-import" ? 20 * 1024 * 1024 : undefined,
+          );
           if (body === null) {
             sendJson(res, 400, { error: "Invalid JSON body" });
             return;
@@ -60,6 +65,12 @@ export function emailApiPlugin(): Plugin {
 
           if (pathname === "/api/send-org-invite") {
             const result = await handleSendOrgInvite(body, getBearerToken(req));
+            sendJson(res, result.status, result.json);
+            return;
+          }
+
+          if (pathname === "/api/launch-import") {
+            const result = await handleLaunchImport(body, getBearerToken(req));
             sendJson(res, result.status, result.json);
             return;
           }

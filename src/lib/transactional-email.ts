@@ -24,7 +24,12 @@ async function postJson(path: string, body: unknown, auth = false) {
     body: JSON.stringify(body),
   });
 
-  const json = (await res.json().catch(() => ({}))) as { error?: string; ok?: boolean; to?: string };
+  const json = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    ok?: boolean;
+    to?: string;
+    url?: string;
+  };
   if (!res.ok) {
     throw new Error(json.error || `Email request failed (${res.status})`);
   }
@@ -66,6 +71,13 @@ export async function sendOrgWelcomeEmail(input: {
  */
 export async function sendOrgInvite(input: { organization_id: string; email: string }) {
   return postJson("/api/send-org-invite", input, true);
+}
+
+/** Super-admin only. Returns the secret launch-import URL if LAUNCH_IMPORT_TOKEN is set. */
+export async function fetchLaunchImportShareUrl(): Promise<{ url: string }> {
+  const json = await postJson("/api/launch-import", { action: "share-url" }, true);
+  if (!json.url) throw new Error("Launch import URL is not configured.");
+  return { url: json.url };
 }
 
 export type AuthEmailEvent = "signup" | "login";

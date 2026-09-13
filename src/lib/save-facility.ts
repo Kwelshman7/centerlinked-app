@@ -70,6 +70,9 @@ function contractsPayload(contracts: FacilityContractDraft[]) {
       payer_name: c.payer_name.trim(),
       in_network: !!c.in_network,
       plan_types: sanitizePlanTypes(c.plan_types),
+      contract_status: c.contract_status || undefined,
+      original_imported_value: c.original_imported_value?.trim() || undefined,
+      verified_at: c.verified_at?.trim() || undefined,
     }));
 }
 

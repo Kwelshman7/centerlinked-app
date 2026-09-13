@@ -9,6 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import {
+  clearPendingJoinPdf,
+  consumeJoinImportPath,
+  peekPendingJoinPdfName,
+  takePendingJoinPdf,
+} from "@/lib/join-intent";
 import { assertPdfFile } from "@/lib/upload-guards";
 import { programPublicPath } from "@/lib/public-urls";
 import { saveFacilityWithContracts } from "@/lib/save-facility";
@@ -28,6 +34,7 @@ import {
   mergeContractDrafts,
   parsedFacilityContractDrafts,
   parsedFacilityToDraft,
+  reviewImportGaps,
   suggestedImportTargets,
 } from "@/lib/pdf-import";
 import {
@@ -77,7 +84,17 @@ async function edgeFunctionMessage(error: unknown, data: unknown): Promise<strin
 }
 
 const EXISTING_FACILITY_SELECT =
-  "id,name,tagline,address_line1,city,state,zip,phone,website,description,capacity,levels_of_care,highlights,population_served,specializations,accreditations,image_urls,bd_contact_name,bd_contact_phone,bd_contact_email,hidden_from_org_page";
+  "id,name,tagline,address_line1,city,state,zip,phone,website,description,capacity,levels_of_care,highlights,population_served,specializations,accreditations,image_urls,bd_contact_name,bd_contact_phone,bd_contact_email,hidden_from_org_page,self_pay_only";
+
+function StartPendingPdf({ file, onFile }: { file: File; onFile: (file: File) => void }) {
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    onFile(file);
+  }, [file, onFile]);
+  return null;
+}
 
 export default function PdfFacilityUpload() {
   const navigate = useNavigate();
@@ -87,6 +104,7 @@ export default function PdfFacilityUpload() {
 
   const queryOrgId = (searchParams.get("orgId") || "").trim() || null;
   const fromOnboarding = searchParams.get("from") === "onboarding";
+  const fromJoin = searchParams.get("from") === "join";
   const targetOrgId = isSuperAdmin
     ? queryOrgId || profile?.organization_id || null
     : profile?.organization_id || null;
@@ -111,7 +129,29 @@ export default function PdfFacilityUpload() {
   const [existingFacilities, setExistingFacilities] = useState<ExistingFacilityRow[]>([]);
   const [existingContracts, setExistingContracts] = useState<ExistingContractRow[]>([]);
   const [approvedPayers, setApprovedPayers] = useState<PayerMatchInput[]>([]);
+  const [leftoverGaps, setLeftoverGaps] = useState<string[]>([]);
   const [pdfLibraryKey, setPdfLibraryKey] = useState(0);
+  const [pendingJoinPdf, setPendingJoinPdf] = useState<File | null>(null);
+  const [reselectPdfName, setReselectPdfName] = useState<string | null>(null);
+  const pendingJoinStarted = useRef(false);
+
+  useEffect(() => {
+    if (fromJoin && targetOrgId && orgReady && !orgMissing) {
+      consumeJoinImportPath();
+    }
+  }, [fromJoin, targetOrgId, orgReady, orgMissing]);
+
+  useEffect(() => {
+    if (authLoading || !orgReady || !targetOrgId || orgMissing || !user || !isFacilityAdmin) return;
+    if (pendingJoinStarted.current) return;
+    pendingJoinStarted.current = true;
+    const pending = takePendingJoinPdf();
+    if (pending) {
+      setPendingJoinPdf(pending);
+      return;
+    }
+    setReselectPdfName(peekPendingJoinPdfName());
+  }, [authLoading, orgReady, targetOrgId, orgMissing, user, isFacilityAdmin]);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,7 +189,7 @@ export default function PdfFacilityUpload() {
       if (rows.length) {
         const { data: contracts } = await supabase
           .from("insurance_contracts")
-          .select("facility_id,payer_id,payer_name,in_network,plan_types")
+          .select("facility_id,payer_id,payer_name,in_network,plan_types,contract_status,original_imported_value,verified_at")
           .in("facility_id", rows.map((row) => row.id));
         if (!cancelled) setExistingContracts((contracts as ExistingContractRow[]) ?? []);
       } else {
@@ -264,6 +304,8 @@ export default function PdfFacilityUpload() {
       toast.error(pdfCheck.error);
       return;
     }
+    clearPendingJoinPdf();
+    setReselectPdfName(null);
     setFileName(file.name);
     setCommittedKeys([]);
     setResultUrls([]);
@@ -358,6 +400,7 @@ export default function PdfFacilityUpload() {
     setCreatedCount(0);
     setMergedCount(0);
     setCommittedKeys([]);
+    setLeftoverGaps([]);
     setExtractedImages([]);
     setImageAssignments({});
     setUploadId(null);
@@ -538,6 +581,9 @@ export default function PdfFacilityUpload() {
             payer_name: c.payer_name,
             in_network: c.in_network,
             plan_types: c.plan_types,
+            contract_status: c.contract_status,
+            original_imported_value: c.original_imported_value,
+            verified_at: c.verified_at,
           })),
         );
         if (result.slug) urls.push(programPublicPath(result.slug, orgSlug));
@@ -547,6 +593,25 @@ export default function PdfFacilityUpload() {
       setResultUrls(urls);
       setCreatedCount(created);
       setMergedCount(merged);
+
+      const leftover = [
+        ...new Set(
+          parsed.facilities.flatMap((f, i) => {
+            if (!nextCommitted.has(facilityCommitKey(f))) return [];
+            const targetId = importTargets[i] ?? null;
+            return reviewImportGaps({
+              parsed: f,
+              extractedContracts: parsedFacilityContractDrafts(f, payers),
+              assignedPhotoCount: (approvedByFacility[i] ?? []).length,
+              existing: targetId ? existingById.get(targetId) ?? null : null,
+              existingContracts: targetId
+                ? (liveContracts.get(targetId) ?? []).map(contractRowToDraft)
+                : [],
+            });
+          }),
+        ),
+      ];
+      setLeftoverGaps(leftover);
 
       if (failed.length) {
         toast.error(
@@ -568,7 +633,11 @@ export default function PdfFacilityUpload() {
         created ? `${created} facilit${created === 1 ? "y" : "ies"} created` : null,
         merged ? `insurance added to ${merged} existing` : null,
       ].filter(Boolean);
-      toast.success(parts.join(" · ") || "Nothing to save");
+      toast.success(parts.join(" · ") || "Nothing to save", {
+        description: leftover.length
+          ? `Still unknown: ${leftover.join(" · ")}. Leave blank rather than guessing.`
+          : undefined,
+      });
     } catch (e: unknown) {
       console.error(e);
       const message = e instanceof Error ? e.message : "Please try again.";
@@ -577,17 +646,21 @@ export default function PdfFacilityUpload() {
     }
   };
 
-  const afterSaveHref = fromOnboarding
-    ? "/app/search"
-    : isSuperAdmin && queryOrgId
-      ? `/app/admin/organizations/${queryOrgId}?tab=facilities`
-      : "/app/facilities";
+  const afterSaveHref =
+    fromOnboarding || fromJoin
+      ? "/app/search"
+      : isSuperAdmin && queryOrgId
+        ? `/app/admin/organizations/${queryOrgId}?tab=facilities`
+        : "/app/facilities";
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {fromOnboarding ? (
-        <Link to="/app/onboarding" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back to onboarding
+      {fromOnboarding || fromJoin ? (
+        <Link
+          to={fromJoin ? "/app/search" : "/app/onboarding"}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> {fromJoin ? "Back to search" : "Back to onboarding"}
         </Link>
       ) : null}
       <div>
@@ -597,7 +670,8 @@ export default function PdfFacilityUpload() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl">
           Saving to <span className="font-medium text-foreground">{orgName}</span>.
-          New locations are created; matches only add missing insurance.
+          New locations are created; matches only add missing insurance. Missing
+          street, ZIP, BD, or insurance stays unknown — nothing is invented.
         </p>
       </div>
 
@@ -632,6 +706,16 @@ export default function PdfFacilityUpload() {
         })}
       </div>
 
+      {stage === "upload" && pendingJoinPdf && (
+        <StartPendingPdf
+          file={pendingJoinPdf}
+          onFile={(file) => {
+            setPendingJoinPdf(null);
+            void handleFile(file);
+          }}
+        />
+      )}
+
       {stage === "upload" && (
         <Card
           className="border-dashed border-2 p-10 text-center hover:border-primary/40 transition-colors cursor-pointer"
@@ -650,6 +734,12 @@ export default function PdfFacilityUpload() {
           <p className="text-sm text-muted-foreground mt-1">
             or click to browse · PDF up to 15MB
           </p>
+          {reselectPdfName ? (
+            <p className="mt-3 text-sm text-foreground">
+              You chose <span className="font-medium">{reselectPdfName}</span> on the join page.
+              Select that PDF again to extract it — nothing is saved until you review and confirm.
+            </p>
+          ) : null}
           <div className="mt-5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             <span>Reads facilities and insurance directly — never makes anything up</span>
@@ -730,6 +820,18 @@ export default function PdfFacilityUpload() {
               ? countNewContracts(existingDrafts, extractedDrafts)
               : { newCount: extractedDrafts.length, alreadyCount: 0 };
             const duplicateTarget = !!targetId && importTargets.filter((id) => id === targetId).length > 1;
+            const assignedPhotoCount = extractedImages.filter(
+              (img) => imageAssignments[img.id] === idx,
+            ).length;
+            const gaps = alreadySaved
+              ? []
+              : reviewImportGaps({
+                  parsed: f,
+                  extractedContracts: extractedDrafts,
+                  assignedPhotoCount,
+                  existing: matched ?? null,
+                  existingContracts: existingDrafts,
+                });
 
             return (
             <Card key={idx} className="p-5 space-y-4">
@@ -789,6 +891,15 @@ export default function PdfFacilityUpload() {
                   <p className="text-xs text-amber-700">
                     Another extracted facility is also targeting this location. Insurance from both will be merged in one save.
                   </p>
+                )}
+                {gaps.length > 0 && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    <p className="font-medium">Will stay unknown after import</p>
+                    <p className="mt-1">{gaps.join(" · ")}</p>
+                    <p className="mt-1 text-amber-800/80">
+                      Fill only values that are on the PDF or that you have confirmed. Do not guess.
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -889,6 +1000,9 @@ export default function PdfFacilityUpload() {
                     }
                     placeholder="Aetna, Cigna, Blue Cross Blue Shield"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Saved as reported in-network, not verified. Verification is a later step.
+                  </p>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {(f.payers_in_network ?? []).map((p) => (
                       <Badge
@@ -896,6 +1010,30 @@ export default function PdfFacilityUpload() {
                         variant="secondary"
                         className="bg-success/10 text-success border-success/30"
                       >
+                        {p}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Out-of-network (only if the PDF says so)</Label>
+                  <Textarea
+                    rows={2}
+                    disabled={alreadySaved}
+                    value={(f.payers_out_of_network ?? []).join(", ")}
+                    onChange={(e) =>
+                      updateFacility(idx, {
+                        payers_out_of_network: e.target.value
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean),
+                      })
+                    }
+                    placeholder="Leave blank unless the PDF marks a payer out of network"
+                  />
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {(f.payers_out_of_network ?? []).map((p) => (
+                      <Badge key={p} variant="outline">
                         {p}
                       </Badge>
                     ))}
@@ -1093,6 +1231,12 @@ export default function PdfFacilityUpload() {
                 mergedCount ? `insurance updated on ${mergedCount}` : null,
               ].filter(Boolean).join(" · ") || "No changes were needed."}
             </p>
+            {leftoverGaps.length > 0 && (
+              <p className="text-xs text-amber-800 mt-3 max-w-md mx-auto">
+                Still unknown: {leftoverGaps.join(" · ")}. Those stay blank — they are not
+                “no” or out of network.
+              </p>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <Button onClick={() => navigate(afterSaveHref)}>

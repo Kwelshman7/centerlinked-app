@@ -15,6 +15,9 @@
     },
     "api/send-verification-reminders.js": {
       "maxDuration": 60
+    },
+    "api/launch-import.js": {
+      "maxDuration": 120
     }
   },
   "crons": [

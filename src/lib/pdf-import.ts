@@ -1,9 +1,9 @@
-import type { FacilityContractDraft, FacilityDraft } from "@/components/app/facility/facility-types";
-import { emptyFacility } from "@/components/app/facility/facility-types";
-import { buildFacilityContractDrafts, normalizePayerName } from "@/lib/match-payer";
-import type { PayerMatchInput } from "@/lib/match-payer";
-import { sanitizePlanTypes } from "@/lib/plan-types";
-import { importGaps } from "@/lib/data-quality";
+import type { FacilityContractDraft, FacilityDraft } from "../components/app/facility/facility-types.ts";
+import { emptyFacility } from "../components/app/facility/facility-types.ts";
+import { buildFacilityContractDrafts, normalizePayerName } from "./match-payer.ts";
+import type { PayerMatchInput } from "./match-payer.ts";
+import { sanitizePlanTypes } from "./plan-types.ts";
+import { importGaps } from "./data-quality.ts";
 
 export { importGaps };
 
@@ -61,6 +61,7 @@ export interface ExistingFacilityRow {
   bd_contact_phone: string | null;
   bd_contact_email: string | null;
   hidden_from_org_page: boolean | null;
+  self_pay_only?: boolean | null;
 }
 
 export interface ExistingContractRow {
@@ -69,6 +70,9 @@ export interface ExistingContractRow {
   payer_name: string;
   in_network: boolean;
   plan_types?: string[] | null;
+  contract_status?: string | null;
+  original_imported_value?: string | null;
+  verified_at?: string | null;
 }
 
 /** Null = create a new facility. */
@@ -129,6 +133,9 @@ export function contractRowToDraft(row: ExistingContractRow): FacilityContractDr
     payer_name: row.payer_name,
     in_network: !!row.in_network,
     plan_types: sanitizePlanTypes(row.plan_types),
+    contract_status: row.contract_status ?? null,
+    original_imported_value: row.original_imported_value ?? null,
+    verified_at: row.verified_at ?? null,
   };
 }
 
@@ -142,6 +149,9 @@ export function mergeContractDrafts(
     payer_name: c.payer_name,
     in_network: !!c.in_network,
     plan_types: sanitizePlanTypes(c.plan_types),
+    contract_status: c.contract_status ?? null,
+    original_imported_value: c.original_imported_value ?? null,
+    verified_at: c.verified_at ?? null,
   }));
 
   for (const next of extracted) {
@@ -152,6 +162,9 @@ export function mergeContractDrafts(
       payer_name: next.payer_name.trim(),
       in_network: !!next.in_network,
       plan_types: sanitizePlanTypes(next.plan_types),
+      contract_status: next.contract_status ?? null,
+      original_imported_value: next.original_imported_value ?? next.payer_name.trim(),
+      verified_at: next.verified_at ?? null,
     });
   }
 
@@ -172,14 +185,89 @@ export function countNewContracts(
   return { newCount, alreadyCount };
 }
 
+function draftFromImportedName(
+  raw: string,
+  inNetwork: boolean,
+  payers: PayerMatchInput[],
+): FacilityContractDraft | null {
+  const original = raw.trim();
+  if (!original) return null;
+  const [base] = buildFacilityContractDrafts([original], inNetwork, payers);
+  if (!base) return null;
+  return {
+    ...base,
+    contract_status: inNetwork ? "active" : "out_of_network",
+    original_imported_value: original,
+    verified_at: null,
+  };
+}
+
 export function parsedFacilityContractDrafts(
   facility: ParsedFacility,
   payers: PayerMatchInput[],
 ): FacilityContractDraft[] {
-  return [
-    ...buildFacilityContractDrafts(facility.payers_in_network ?? [], true, payers),
-    ...buildFacilityContractDrafts(facility.payers_out_of_network ?? [], false, payers),
-  ];
+  const drafts: FacilityContractDraft[] = [];
+  const inNetworkNames = facility.payers_in_network ?? [];
+  const seenInNetwork = new Set(
+    inNetworkNames.map((raw) => normalizePayerName(raw)).filter(Boolean),
+  );
+
+  for (const raw of inNetworkNames) {
+    const draft = draftFromImportedName(raw, true, payers);
+    if (draft) drafts.push(draft);
+  }
+  for (const raw of facility.payers_out_of_network ?? []) {
+    if (seenInNetwork.has(normalizePayerName(raw))) continue;
+    const draft = draftFromImportedName(raw, false, payers);
+    if (draft) drafts.push(draft);
+  }
+  return drafts;
+}
+
+function photoPlaceholders(count: number): string[] {
+  return Array.from({ length: Math.max(0, count) }, (_, i) => `assigned-${i + 1}`);
+}
+
+/** Gaps that will remain after this import if the user does not fill them. */
+export function reviewImportGaps(args: {
+  parsed: ParsedFacility;
+  extractedContracts: FacilityContractDraft[];
+  assignedPhotoCount: number;
+  existing?: ExistingFacilityRow | null;
+  existingContracts?: FacilityContractDraft[];
+}): string[] {
+  if (args.existing) {
+    const merged = mergeContractDrafts(args.existingContracts ?? [], args.extractedContracts);
+    const images = [...(args.existing.image_urls ?? []), ...photoPlaceholders(args.assignedPhotoCount)];
+    return importGaps({
+      address_line1: args.existing.address_line1,
+      city: args.existing.city,
+      state: args.existing.state,
+      zip: args.existing.zip,
+      phone: args.existing.phone,
+      website: args.existing.website,
+      image_urls: images,
+      bd_contact_name: args.existing.bd_contact_name,
+      bd_contact_phone: args.existing.bd_contact_phone,
+      bd_contact_email: args.existing.bd_contact_email,
+      self_pay_only: args.existing.self_pay_only,
+      contract_count: merged.length,
+    });
+  }
+
+  return importGaps({
+    address_line1: args.parsed.address_line1,
+    city: args.parsed.city,
+    state: args.parsed.state,
+    zip: args.parsed.zip,
+    phone: args.parsed.phone,
+    website: args.parsed.website,
+    image_urls: photoPlaceholders(args.assignedPhotoCount),
+    bd_contact_name: args.parsed.bd_contact_name,
+    bd_contact_phone: args.parsed.bd_contact_phone,
+    bd_contact_email: args.parsed.bd_contact_email,
+    contract_count: args.extractedContracts.length,
+  });
 }
 
 /** Full draft so an update cannot wipe live facility fields. */

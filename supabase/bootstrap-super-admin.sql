@@ -1,5 +1,5 @@
 -- Run once in Supabase Dashboard → SQL Editor.
--- Allowlists admin@centerlinked.com and grants super_admin when that user exists.
+-- Allowlists admin@centerlinked.com and kyle@centerlinked.com and grants super_admin when those users exist.
 
 -- 1) Emails allowed to self-grant super_admin on login (via bootstrap_super_admin RPC)
 CREATE TABLE IF NOT EXISTS public.bootstrap_admin_emails (
@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS public.bootstrap_admin_emails (
 ALTER TABLE public.bootstrap_admin_emails ENABLE ROW LEVEL SECURITY;
 
 INSERT INTO public.bootstrap_admin_emails (email)
-VALUES (lower('admin@centerlinked.com'))
+VALUES
+  (lower('admin@centerlinked.com')),
+  (lower('kyle@centerlinked.com'))
 ON CONFLICT (email) DO NOTHING;
 
 -- 2) RPC called by the app after Google/email sign-in
@@ -64,7 +66,7 @@ GRANT EXECUTE ON FUNCTION public.bootstrap_super_admin() TO authenticated;
 INSERT INTO public.user_roles (user_id, role)
 SELECT u.id, 'super_admin'::public.app_role
 FROM auth.users u
-WHERE lower(u.email) = lower('admin@centerlinked.com')
+WHERE lower(u.email) IN (lower('admin@centerlinked.com'), lower('kyle@centerlinked.com'))
   AND NOT EXISTS (
     SELECT 1 FROM public.user_roles ur
     WHERE ur.user_id = u.id AND ur.role = 'super_admin'::public.app_role

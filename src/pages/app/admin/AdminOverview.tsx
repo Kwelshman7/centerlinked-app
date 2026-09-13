@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { fetchLaunchImportShareUrl } from "@/lib/transactional-email";
 import { verificationState } from "@/lib/verification";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -609,7 +610,15 @@ export function AdminOverview({ compact = false }: { compact?: boolean }) {
   const [data, setData] = useState<OpsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedJoin, setCopiedJoin] = useState(false);
+  const [copiedLaunch, setCopiedLaunch] = useState(false);
+  const [launchUrl, setLaunchUrl] = useState<string | null>(null);
   const joinUrl = "https://www.centerlinked.com/join";
+
+  useEffect(() => {
+    fetchLaunchImportShareUrl()
+      .then((result) => setLaunchUrl(result.url))
+      .catch(() => setLaunchUrl(null));
+  }, []);
 
   const refresh = async () => {
     setLoading(true);
@@ -702,6 +711,42 @@ export function AdminOverview({ compact = false }: { compact?: boolean }) {
           </Button>
         </div>
       </Card>
+
+      {launchUrl && (
+        <Card className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+            <div className="min-w-0">
+              <p className="font-heading font-semibold text-sm flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-primary shrink-0" />
+                Launch PDF import link
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                For a few trusted helpers only. They can upload a one-pager, confirm the extract, and create an unclaimed org. The owner then gets a free claim email. Anyone with this URL can write listings — do not post it publicly.
+              </p>
+              <p className="text-sm font-medium mt-2 break-all">{launchUrl}</p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="shrink-0 w-full sm:w-auto"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(launchUrl);
+                  setCopiedLaunch(true);
+                  toast.success("Launch import link copied");
+                  window.setTimeout(() => setCopiedLaunch(false), 1800);
+                } catch {
+                  toast.error("Could not copy link");
+                }
+              }}
+            >
+              {copiedLaunch ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedLaunch ? "Copied" : "Copy link"}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {loading && !data ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-10 justify-center">

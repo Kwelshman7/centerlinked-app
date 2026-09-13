@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { notifyAuthEvent } from "@/lib/transactional-email";
 import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
+import { hasJoinImportIntent, peekJoinImportPath } from "@/lib/join-intent";
 
 /** sessionStorage key shared with AuthCallback for PWA / Google sign-in. */
 const POST_LOGIN_PATH_KEY = "cl_post_login";
@@ -79,6 +80,7 @@ export default function Login() {
 
   useEffect(() => {
     try {
+      if (hasJoinImportIntent()) return;
       if (isAppLogin) {
         sessionStorage.setItem(POST_LOGIN_PATH_KEY, APP_LOGIN_NEXT);
       } else {
@@ -94,6 +96,11 @@ export default function Login() {
     // Users without an organization land on Search too; ProtectedRoute sends org-only paths back there.
     if (from) {
       navigate(from, { replace: true });
+      return;
+    }
+    const importPath = peekJoinImportPath();
+    if (importPath) {
+      navigate(importPath, { replace: true });
       return;
     }
     navigate(afterLogin, { replace: true });

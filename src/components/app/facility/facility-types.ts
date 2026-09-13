@@ -81,7 +81,7 @@ export const CONDITION_OPTIONS = [
 /** @deprecated Prefer THERAPY_OPTIONS + CONDITION_OPTIONS. Kept for older admin forms. */
 export const SPECIALIZATION_OPTIONS = [...THERAPY_OPTIONS, ...CONDITION_OPTIONS] as const;
 
-export { ACCREDITATION_OPTIONS } from "@/lib/accreditations";
+export { ACCREDITATION_OPTIONS } from "../../../lib/accreditations.ts";
 
 export interface FacilityContractDraft {
   payer_id: string | null;
@@ -90,6 +90,10 @@ export interface FacilityContractDraft {
   pending?: boolean;
   /** Known slugs from `@/lib/plan-types`. Empty = not specified. */
   plan_types: string[];
+  /** Optional. RPC infers from in_network when omitted. */
+  contract_status?: string | null;
+  original_imported_value?: string | null;
+  verified_at?: string | null;
 }
 
 export interface FacilityDraft {

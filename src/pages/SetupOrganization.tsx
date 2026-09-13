@@ -6,6 +6,7 @@ import { ArrowRight, Building2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { claimPendingOrgInvite } from "@/lib/org-setup";
 import { OrgClaimOptions } from "@/components/app/OrgClaimOptions";
+import { consumeJoinImportPath, peekJoinImportPath } from "@/lib/join-intent";
 
 export default function SetupOrganization() {
   const { user, profile, loading, refresh, isSuperAdmin } = useAuth();
@@ -19,7 +20,7 @@ export default function SetupOrganization() {
       return;
     }
     if (profile?.organization_id || isSuperAdmin) {
-      navigate("/app/search", { replace: true });
+      navigate(consumeJoinImportPath() || "/app/search", { replace: true });
       return;
     }
     try {
@@ -40,7 +41,7 @@ export default function SetupOrganization() {
         if (claimed.joined) {
           await refresh();
           toast.success("You've joined your organization");
-          navigate("/app/search", { replace: true });
+          navigate(consumeJoinImportPath() || "/app/search", { replace: true });
           return;
         }
       } catch (err) {
@@ -79,8 +80,10 @@ export default function SetupOrganization() {
             Your free account is ready.
           </h1>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">
-            Claim or create your organization to manage your profile, insurance, and programs. Or skip for now and
-            start searching — you can do this anytime from My profile.
+            Claim or create your organization to manage your profile, insurance, and programs.
+            {peekJoinImportPath()
+              ? " Next you’ll upload a facilities PDF, review the extract, and confirm before anything is saved."
+              : " Or skip for now and start searching — you can do this anytime from My profile."}
           </p>
           <Button asChild variant="hero-outline" size="lg" className="mt-5">
             <Link to="/app/search">

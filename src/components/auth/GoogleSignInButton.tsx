@@ -7,12 +7,18 @@ import { useState } from "react";
 interface Props {
   label?: string;
   className?: string;
+  onBeforeSignIn?: () => void;
 }
 
-export function GoogleSignInButton({ label = "Continue with Google", className }: Props) {
+export function GoogleSignInButton({
+  label = "Continue with Google",
+  className,
+  onBeforeSignIn,
+}: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
+    onBeforeSignIn?.();
     setLoading(true);
     const { error } = await signInWithGoogle();
     if (error) {

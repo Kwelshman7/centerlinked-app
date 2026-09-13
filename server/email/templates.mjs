@@ -361,6 +361,64 @@ export function orgAssignedEmail({ recipientName, organizationName, alreadyLinke
 }
 
 /**
+ * Launch-import claim invite. The org is already in the database; the owner
+ * signs up with this email and claim_pending_org_invite attaches them as admin.
+ * Creating the account and claiming the org is free.
+ */
+export function orgClaimInviteEmail({ recipientName, organizationName }) {
+  const name = recipientName?.trim() || "there";
+  const org = organizationName?.trim() || "your organization";
+  const login = appLoginUrl();
+  const signupUrl = `${siteUrl()}/signup`;
+
+  const bodyHtml = `
+    ${heading(`Claim ${escapeHtml(org)} on CenterLinked — free`)}
+    ${para(`Hi ${escapeHtml(name)},`)}
+    ${para(
+      `Your organization profile for <strong style="color:${BRAND.navy};">${escapeHtml(org)}</strong> is already on CenterLinked. Create a free account with this same email to claim it and keep locations, insurance, and referral contacts current.`,
+    )}
+    ${label("What is free")}
+    ${listItems([
+      "Creating your CenterLinked account",
+      "Claiming this organization as admin",
+      "Keeping the live referral page up to date",
+    ])}
+    ${ctaButton(signupUrl, "Create your free account")}
+    ${mutedPara(
+      "Use this same email address when you sign up — that is how we connect you to the organization. No card is required to claim it.",
+    )}
+    <p style="margin:20px 0 0;font-family:${FONT};font-size:13px;line-height:1.55;color:${BRAND.muted};">
+      Already have an account? <a href="${login}" style="color:${BRAND.primary};text-decoration:none;">Sign in</a> and you will be added automatically.
+      Not expecting this? You can ignore this email — nothing is required until you sign up.
+    </p>
+    ${supportLine()}
+  `;
+
+  return {
+    subject: `Claim ${safeSubjectPart(org)} on CenterLinked — free`,
+    html: layout({
+      preheader: `${org} is ready to claim. Your account and the claim are free.`,
+      title: `Claim ${org} on CenterLinked`,
+      bodyHtml,
+    }),
+    text: [
+      `Claim ${org} on CenterLinked — free`,
+      "",
+      `Hi ${name},`,
+      "",
+      `Your organization profile for ${org} is already on CenterLinked.`,
+      "Create a free account with this same email to claim it.",
+      "No card is required to create the account or claim the organization.",
+      "",
+      `Create your free account: ${signupUrl}`,
+      `Already have an account? Sign in: ${login}`,
+      "",
+      `Questions? ${SUPPORT}`,
+    ].join("\n"),
+  };
+}
+
+/**
  * Admin notification when a new user account is created.
  */
 export function adminNewSignupEmail({ full_name, email }) {

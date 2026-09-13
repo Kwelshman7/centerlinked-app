@@ -10,6 +10,7 @@ import { ImageUploader } from "@/components/app/ImageUploader";
 import { ArrowLeft, ArrowRight, Building2, Loader2, Sparkles, Shield, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { getEmailDomain } from "@/lib/email-domains";
+import { consumeJoinImportPath } from "@/lib/join-intent";
 
 export default function CreateOrganization() {
   const { user, profile, loading, refresh } = useAuth();
@@ -81,14 +82,14 @@ export default function CreateOrganization() {
         });
         await refresh();
         setSaving(false);
-        navigate("/app/onboarding", { replace: true });
+        navigate(consumeJoinImportPath() || "/app/onboarding", { replace: true });
         return;
       }
     }
     await refresh();
     setSaving(false);
     toast.success("Organization created!", { description: "Now let's add your facilities." });
-    navigate("/app/onboarding", { replace: true });
+    navigate(consumeJoinImportPath() || "/app/onboarding", { replace: true });
   };
 
   return (

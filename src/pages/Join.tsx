@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
-import { ArrowDown, BadgeCheck, Loader2 } from "lucide-react";
+import { BadgeCheck, FileText, Loader2, Search as SearchIcon, ShieldCheck, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,38 +11,119 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { applySocialMeta } from "@/lib/social-meta";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
-import { JoinShowcase } from "@/components/auth/JoinShowcase";
 import { notifyAuthEvent } from "@/lib/transactional-email";
+import { assertPdfFile } from "@/lib/upload-guards";
+import {
+  clearPendingJoinPdf,
+  consumeJoinImportPath,
+  hasJoinImportIntent,
+  peekPendingJoinPdfName,
+  setJoinImportIntent,
+  setPendingJoinPdf,
+} from "@/lib/join-intent";
+
+const STEPS = [
+  {
+    title: "Create a free account",
+    detail: "Use your work email. No card required.",
+  },
+  {
+    title: "Claim or create your organization",
+    detail: "Facilities and insurance are saved here — not before.",
+  },
+  {
+    title: "Review the extract, then save",
+    detail: "AI reads programs, insurance, and photos. You confirm every field before anything is committed.",
+  },
+] as const;
+
+function formatBytes(size: number) {
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export default function Join() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, profile, loading, isSuperAdmin } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(() => (searchParams.get("email") || "").trim());
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [awaitingEmail, setAwaitingEmail] = useState(false);
+  const [wantsImport, setWantsImport] = useState(
+    () => searchParams.get("import") === "pdf" || hasJoinImportIntent(),
+  );
+  const [pickedPdf, setPickedPdf] = useState<File | null>(null);
+  const [pickedPdfName, setPickedPdfName] = useState(() => peekPendingJoinPdfName() || "");
 
   useEffect(() => {
     applySocialMeta({
       title: "Join CenterLinked free",
       description:
-        "Sign up free with your work email to search in-network treatment programs by insurance and state, and list your organization for referral partners.",
+        "Sign up free with your work email. Import a facilities PDF, review the extracted data and photos, and confirm before anything is saved.",
       path: "/join",
     });
   }, []);
 
   useEffect(() => {
+    if (searchParams.get("import") === "pdf") {
+      setJoinImportIntent();
+      setWantsImport(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (loading) return;
     if (user && (profile?.organization_id || isSuperAdmin)) {
-      navigate("/app/search", { replace: true });
+      const importPath = wantsImport ? consumeJoinImportPath() : null;
+      navigate(importPath || "/app/search", { replace: true });
       return;
     }
     if (user && !profile?.organization_id) {
       navigate("/setup-organization", { replace: true });
     }
-  }, [loading, user, profile?.organization_id, isSuperAdmin, navigate]);
+  }, [loading, user, profile?.organization_id, isSuperAdmin, navigate, wantsImport]);
+
+  const focusAccountForm = () => {
+    document.getElementById("create-account")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const startPdfImport = () => {
+    setJoinImportIntent();
+    setWantsImport(true);
+    focusAccountForm();
+    toast.message("Create your free account next", {
+      description:
+        "After you claim or create your organization, you’ll upload the PDF, review the extract, and confirm before save.",
+    });
+  };
+
+  const onPdfChosen = async (file: File | undefined) => {
+    if (!file) return;
+    const check = await assertPdfFile(file);
+    if (!check.ok) {
+      toast.error(check.error);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setPendingJoinPdf(file);
+    setPickedPdf(file);
+    setPickedPdfName(file.name);
+    setWantsImport(true);
+    focusAccountForm();
+    toast.message("PDF selected", {
+      description: "Create your free account next. You’ll review the extract before anything is saved.",
+    });
+  };
+
+  const clearPickedPdf = () => {
+    clearPendingJoinPdf();
+    setPickedPdf(null);
+    setPickedPdfName("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +145,9 @@ export default function Join() {
         });
         return;
       }
+
+      if (wantsImport) setJoinImportIntent();
+      if (pickedPdf) setPendingJoinPdf(pickedPdf);
 
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -93,10 +177,6 @@ export default function Join() {
     }
   };
 
-  const scrollToForm = () => {
-    document.getElementById("create-account")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   if (loading || user) {
     return (
       <main className="min-h-dvh grid place-items-center bg-hero-gradient">
@@ -114,48 +194,143 @@ export default function Join() {
       <div className="relative mx-auto w-full max-w-6xl">
         <div className="mb-6 flex items-center justify-between gap-3 lg:mb-10">
           <Logo to="/" size="md" />
-          <Link to="/login" className="text-sm font-medium text-primary hover:underline">
+          <Link
+            to="/login"
+            className="text-sm font-medium text-primary hover:underline"
+            onClick={() => {
+              if (wantsImport) setJoinImportIntent();
+              if (pickedPdf) setPendingJoinPdf(pickedPdf);
+            }}
+          >
             Sign in
           </Link>
         </div>
 
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:gap-14">
-          <section className="flex min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
+          <section className="min-w-0">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success ring-1 ring-success/20">
-              <BadgeCheck className="h-3.5 w-3.5" /> Free to sign up · No card required
+              <BadgeCheck className="h-3.5 w-3.5" /> Free · Work email · No card
             </span>
             <h1 className="font-heading mt-4 text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
-              Search in-network treatment programs — free.
+              Join the referral network.
             </h1>
-            <p className="mt-3 max-w-lg text-[15px] text-muted-foreground sm:text-base">
-              Sign up with your work email to search by insurance and state. Claim your organization anytime so referral
-              partners can find you too.
+            <p className="mt-3 max-w-xl text-[15px] text-muted-foreground sm:text-base">
+              Create a free work-email account. Then search in-network programs, or list your
+              organization by importing a facilities PDF.
             </p>
 
-            <JoinShowcase className="mt-8 w-full" />
+            <ol className="mt-8 space-y-3">
+              {STEPS.map((step, index) => (
+                <li
+                  key={step.title}
+                  className="flex gap-3 rounded-xl border border-border/60 bg-card/70 px-3 py-3 sm:px-4"
+                >
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-heading text-sm font-semibold">{step.title}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{step.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
 
-            <p className="font-heading mt-8 max-w-lg text-lg font-bold leading-snug text-foreground sm:text-xl">
-              List your organization on CenterLinked for free today and grow your referral network.
+            <div
+              className="mt-6 rounded-2xl border-2 border-dashed border-primary/30 bg-card/80 p-4 sm:p-5"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                void onPdfChosen(e.dataTransfer.files?.[0]);
+              }}
+            >
+              <p className="font-heading font-semibold">Import your facilities PDF</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Upload a one-pager or insurance list. We extract facilities, contracts, and images.
+                You confirm the extract is correct before anything is committed.
+              </p>
+
+              {pickedPdfName ? (
+                <div className="mt-4 flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 px-3 py-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{pickedPdfName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {pickedPdf
+                        ? `${formatBytes(pickedPdf.size)} · selected — not saved yet`
+                        : "Selected on this device — you’ll confirm it again if you leave this tab"}
+                    </p>
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" onClick={clearPickedPdf} aria-label="Remove PDF">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Button
+                    type="button"
+                    variant="hero"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Choose facilities PDF
+                  </Button>
+                  <button
+                    type="button"
+                    className="text-sm font-medium text-primary hover:underline"
+                    onClick={startPdfImport}
+                  >
+                    I’ll upload after I create my account
+                  </button>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  void onPdfChosen(e.target.files?.[0]);
+                }}
+              />
+
+              <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                Nothing is saved until you review and confirm. Missing data stays blank — we do not
+                invent contracts or addresses. PDF up to 15MB.
+              </p>
+            </div>
+
+            <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+              <SearchIcon className="h-4 w-4 shrink-0" />
+              Only here to search? Create the same free account, then skip listing for now.
             </p>
-            <Button type="button" variant="hero" size="lg" className="mt-5 lg:hidden" onClick={scrollToForm}>
-              Create free account <ArrowDown className="h-4 w-4" />
-            </Button>
           </section>
 
           <div id="create-account" className="w-full scroll-mt-6 lg:sticky lg:top-8">
-            <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-md shadow-xl p-6 sm:p-8 animate-fade-up">
-              <div className="text-center mb-6">
+            <div className="rounded-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur-md animate-fade-up sm:p-8">
+              <div className="mb-6 text-center">
                 <h2 className="font-heading text-2xl font-bold text-foreground">Create your free account</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Use your work email. Free to sign up, no card required.
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {wantsImport
+                    ? pickedPdfName
+                      ? `Next you’ll claim your organization, then review ${pickedPdfName} before save.`
+                      : "After this, you’ll claim your organization, upload the PDF, and review the extract before save."
+                    : "Work email required. Free to sign up, no card required."}
                 </p>
               </div>
 
               {awaitingEmail ? (
-                <div className="rounded-xl border border-border/70 bg-muted/40 p-5 text-center space-y-3">
+                <div className="space-y-3 rounded-xl border border-border/70 bg-muted/40 p-5 text-center">
                   <p className="font-heading font-semibold">Confirm your work email</p>
                   <p className="text-sm text-muted-foreground">
                     Click the link we sent to finish creating your free account.
+                    {wantsImport ? " We’ll continue to PDF import after you sign in." : ""}
                   </p>
                   <Button asChild variant="outline">
                     <Link to="/login">Sign in</Link>
@@ -204,6 +379,8 @@ export default function Join() {
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account…
                         </>
+                      ) : wantsImport ? (
+                        "Continue to organization setup"
                       ) : (
                         "Create free account"
                       )}
@@ -219,16 +396,30 @@ export default function Join() {
                     </div>
                   </div>
 
-                  <GoogleSignInButton label="Sign up with Google" className="w-full" />
+                  <GoogleSignInButton
+                    label="Sign up with Google"
+                    className="w-full"
+                    onBeforeSignIn={() => {
+                      if (wantsImport) setJoinImportIntent();
+                      if (pickedPdf) setPendingJoinPdf(pickedPdf);
+                    }}
+                  />
 
-                  <p className="text-center text-sm text-muted-foreground mt-6">
+                  <p className="mt-6 text-center text-sm text-muted-foreground">
                     Already have an account?{" "}
-                    <Link to="/login" className="text-primary font-medium hover:underline">
+                    <Link
+                      to="/login"
+                      className="font-medium text-primary hover:underline"
+                      onClick={() => {
+                        if (wantsImport) setJoinImportIntent();
+                        if (pickedPdf) setPendingJoinPdf(pickedPdf);
+                      }}
+                    >
                       Sign in
                     </Link>
                   </p>
 
-                  <p className="text-center text-xs text-muted-foreground mt-4">
+                  <p className="mt-4 text-center text-xs text-muted-foreground">
                     By creating an account, you agree to our{" "}
                     <Link to="/terms" className="text-primary hover:underline">
                       Terms of Service

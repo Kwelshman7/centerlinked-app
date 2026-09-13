@@ -24,8 +24,10 @@ If a field is truly absent, use null or []. Do not leave a field empty when the 
 Map levels of care to these labels when they clearly match:
 Detox, Residential, PHP, IOP, Mental Health Residential, Mental Health PHP/IOP, Outpatient, Sober Living, MAT, Dual Diagnosis.
 One facility object per location. Split insurance by facility when listed per site.
-Copy every visible insurance / payer name into payers_in_network. Logo text counts if you can read the brand.
-Copy addresses, phones, websites, and referral/BD contacts when shown.
+Copy payer names the document presents as accepted or in-network into payers_in_network. Logo text in an accepted-insurance section counts if you can read the brand.
+Copy names the document explicitly marks out of network or not contracted into payers_out_of_network. Do not put the same name in both lists.
+If network status is not stated, omit the payer — do not guess in-network or out-of-network. Missing insurance stays unknown.
+Copy addresses, phones, websites, and referral/BD contacts only when shown. Do not invent a street, ZIP, or contact.
 Keep payer names as written on the page.
 
 JSON shape:
