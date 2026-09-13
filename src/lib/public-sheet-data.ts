@@ -69,6 +69,17 @@ export interface PublicProgramSheetPayload {
     favicon_url?: string | null;
   }) | null;
   contracts: (SheetContract & { payer_id?: string | null })[];
+  /** Approved, listed facilities for this org — used to skip "View More" on one-location orgs. */
+  publishedFacilityCount: number;
+}
+
+async function countPublishedFacilities(organizationId: string): Promise<number> {
+  const { count } = await supabase
+    .from("facilities")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("verification_status", "approved");
+  return count ?? 0;
 }
 
 export async function fetchPublicOrgSheet(slug: string): Promise<PublicOrgSheetPayload | null> {
@@ -235,6 +246,7 @@ export async function fetchPublicProgramSheet(
         plan_types: asStringArray(row.plan_types),
         payer_logo_url: null,
       })),
+    publishedFacilityCount: await countPublishedFacilities(String(facRow.organization_id)),
   };
 }
 
@@ -318,5 +330,6 @@ async function fetchPublicProgramSheetLegacy(slug: string): Promise<PublicProgra
       ...row,
       payer_logo_url: null,
     })),
+    publishedFacilityCount: await countPublishedFacilities(String(f.organization_id)),
   };
 }

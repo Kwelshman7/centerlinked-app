@@ -26,6 +26,7 @@ import {
 } from "@/lib/plan-types";
 import { insuranceMatchFromContract } from "@/lib/insurance-contract-status";
 import type { OrgSearchFacility } from "@/components/app/search/OrgResultCard";
+import { rememberSearchSession } from "@/lib/search-session";
 
 type OrgFields = {
   id: string;
@@ -319,7 +320,26 @@ export default function SearchResults() {
 
   const selectedOrg = results.find((r) => r.org_id === selectedOrgId) ?? null;
   const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
-  const orgHref = selectedOrg?.org_slug ? `/o/${selectedOrg.org_slug}` : null;
+  const onlyFacility = selectedOrg?.facilities.length === 1 ? selectedOrg.facilities[0] : null;
+  const orgHref = selectedOrg?.org_slug
+    ? onlyFacility?.slug
+      ? `/o/${selectedOrg.org_slug}/p/${onlyFacility.slug}`
+      : `/o/${selectedOrg.org_slug}`
+    : null;
+  const resultsPath = `/app/search/results${params.toString() ? `?${params.toString()}` : ""}`;
+
+  useEffect(() => {
+    if (loading || loadError) return;
+    const orgs = results
+      .filter((r) => r.org_slug)
+      .map((r) => ({ slug: r.org_slug as string, name: r.org_name, logo_url: r.logo_url }));
+    if (orgs.length === 0) return;
+    rememberSearchSession({
+      returnTo: resultsPath,
+      summary,
+      orgs,
+    });
+  }, [loading, loadError, results, resultsPath, summary]);
 
   const resultCount = loading
     ? "Searching…"
@@ -340,11 +360,7 @@ export default function SearchResults() {
             {loading || loadError ? "" : ` · ${resultCount}`}
           </p>
           <p className="mt-2 max-w-3xl text-xs text-muted-foreground">
-            Insurance status comes from structured contract records. A directory match does not
-            confirm benefits or admission eligibility — those still need to be verified with the
-            facility and payer. Missing insurance data is shown as unknown, not out of network.
-            ZIP is an exact listing match. Radius search is unavailable because coordinates are
-            not stored.
+            A match is not a benefits or admission confirmation — still verify with the facility.
           </p>
         </div>
       </header>

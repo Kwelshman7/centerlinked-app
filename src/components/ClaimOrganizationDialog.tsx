@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ShieldCheck, Upload } from "lucide-react";
+import { FOOTER_ACTION_ICON_CLASS } from "@/lib/org-shared-footer";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
@@ -30,6 +31,8 @@ interface Props {
   organizationId: string;
   organizationName: string;
   triggerLabel?: string;
+  triggerClassName?: string;
+  triggerStyle?: CSSProperties;
   onSubmitted?: () => void;
 }
 
@@ -37,6 +40,8 @@ export function ClaimOrganizationDialog({
   organizationId,
   organizationName,
   triggerLabel = "Claim this organization",
+  triggerClassName,
+  triggerStyle,
   onSubmitted,
 }: Props) {
   const { user, profile } = useAuth();
@@ -120,9 +125,16 @@ export function ClaimOrganizationDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <ShieldCheck className="h-4 w-4" /> {triggerLabel}
-        </Button>
+        {triggerClassName ? (
+          <button type="button" className={triggerClassName} style={triggerStyle}>
+            <ShieldCheck className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+            {triggerLabel}
+          </button>
+        ) : (
+          <Button variant="outline" size="sm" className="gap-2">
+            <ShieldCheck className="h-4 w-4" /> {triggerLabel}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>

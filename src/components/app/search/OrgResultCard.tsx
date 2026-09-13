@@ -62,7 +62,13 @@ export function OrgResultCard({
   className,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const orgHref = o.org_slug ? `/o/${o.org_slug}` : "#";
+  const onlyFacility = o.facilities.length === 1 ? o.facilities[0] : null;
+  const orgHref =
+    o.org_slug && onlyFacility?.slug
+      ? programPublicPath(onlyFacility.slug, o.org_slug)
+      : o.org_slug
+        ? `/o/${o.org_slug}`
+        : "#";
   const shown =
     collapsibleFacilities && expanded ? o.facilities : o.facilities.slice(0, facilityLimit);
   const overflow = Math.max(0, o.facilities.length - shown.length);

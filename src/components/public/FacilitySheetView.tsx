@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Building2,
@@ -172,6 +171,13 @@ const PROGRAM_SECTION_ICONS: Record<string, LucideIcon> = {
   amenities: Sparkles,
 };
 
+function programSectionGridClass(count: number) {
+  if (count <= 1) return "grid grid-cols-1 gap-3";
+  if (count === 2) return "grid grid-cols-1 sm:grid-cols-2 gap-3";
+  if (count === 3) return "grid grid-cols-1 md:grid-cols-3 gap-3";
+  return "grid grid-cols-1 sm:grid-cols-2 gap-3";
+}
+
 function ProgramTagCard({
   title,
   items,
@@ -185,7 +191,7 @@ function ProgramTagCard({
 }) {
   if (items.length === 0) return null;
   return (
-    <div className="rounded-xl border border-border/70 bg-muted/25 p-3.5 sm:p-4 min-w-0">
+    <div className="rounded-xl border border-border/70 bg-muted/25 p-3.5 sm:p-4 min-w-0 h-full">
       <div className="flex items-center gap-2 mb-3">
         {Icon ? (
           <span className="shrink-0" style={{ color: brand }} aria-hidden>
@@ -198,7 +204,7 @@ function ProgramTagCard({
           {title}
         </h3>
       </div>
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
+      <ul className="space-y-1.5">
         {items.map((item) => (
           <li key={item} className="flex items-start gap-1.5 min-w-0 text-[13px] sm:text-sm text-foreground leading-snug">
             <span className="shrink-0 text-muted-foreground select-none" aria-hidden>
@@ -284,7 +290,8 @@ export function FacilitySheetView({
   const accreditations = displayAccreditations(facility.accreditations);
 
   const programTags = categorizeFacilityTags(facility);
-  const hasProgramTags = PROGRAM_SECTIONS.some(({ kind }) => programTags[kind].length > 0);
+  const visibleProgramSections = PROGRAM_SECTIONS.filter(({ kind }) => programTags[kind].length > 0);
+  const hasProgramTags = visibleProgramSections.length > 0;
 
   const hasFactsStrip = (facility.levels_of_care?.length ?? 0) > 0 || contracts.length >= 0;
   const hasServiceArea = !!(address || cityStateZip);
@@ -309,42 +316,13 @@ export function FacilitySheetView({
 
           <div className="p-4 sm:p-5 lg:p-6 flex flex-col min-w-0 order-2 lg:order-1 lg:min-h-0 lg:overflow-y-auto">
             <div className="flex items-start justify-between gap-3 min-w-0">
-              <div className="flex items-start gap-3 min-w-0 flex-1">
-                <div
-                  className="relative h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm grid place-items-center"
-                  aria-hidden={!org?.logo_url}
-                >
-                  {org?.logo_url ? (
-                    <img
-                      src={org.logo_url}
-                      alt={`${org.name} logo`}
-                      className="h-[86%] w-[86%] object-contain"
-                    />
-                  ) : (
-                    <div
-                      className="h-full w-full grid place-items-center"
-                      style={{ background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)` }}
-                    >
-                      <Building2 className="h-6 w-6 text-white/90" />
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  {mode === "public" && org?.slug && (
-                    <nav className="flex items-center gap-1.5 text-xs text-muted-foreground print:hidden min-w-0">
-                      <Link to={`/o/${org.slug}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline truncate min-w-0">
-                        {org.name}
-                      </Link>
-                      <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                      <span className="font-medium text-foreground truncate">{facility.name}</span>
-                    </nav>
-                  )}
+              <div className="min-w-0 flex-1">
                   {mode === "public" && org?.name ? (
                     <p className="hidden print:block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
                       {org.name}
                     </p>
                   ) : null}
-                  <h1 className="font-heading text-[1.375rem] sm:text-2xl lg:text-[1.65rem] font-bold tracking-tight leading-snug mt-0.5 break-words">
+                  <h1 className="font-heading text-[1.375rem] sm:text-2xl lg:text-[1.65rem] font-bold tracking-tight leading-snug break-words">
                     {facility.name}
                   </h1>
                   {cityStateZip && (
@@ -355,7 +333,6 @@ export function FacilitySheetView({
                       </a>
                     </p>
                   )}
-                </div>
               </div>
               {aboutHeaderExtra ? <div className="shrink-0 print:hidden">{aboutHeaderExtra}</div> : null}
             </div>
@@ -443,178 +420,179 @@ export function FacilitySheetView({
 
       {/* Unified details */}
       {(hasFactsStrip || hasProgramTags || hasServiceArea || repName || repEmail || repPhone) && (
-        <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:overflow-visible">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:grid-cols-[minmax(0,1fr)_400px] print:grid-cols-1">
-            <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50 print:border-0 print:rounded-none">
-              {hasFactsStrip && (
-                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading
-                    title="In-Network"
-                    icon={ShieldCheck}
-                    headerExtra={contractsHeaderExtra}
-                    brand={brand}
-                  />
-                  {inNetworkPayers.length > 0 ? (
-                    <ul className="grid grid-cols-2 xl:grid-cols-3 gap-1 print:grid-cols-3">
-                      {inNetworkPayers.map((c) => {
-                        const types = formatPlanTypeList(sanitizePlanTypes(c.plan_types));
-                        const label = types ? `${c.payer_name} — ${types}` : c.payer_name;
-                        return (
-                          <li key={c.id} className="min-w-0">
-                            <span
-                              title={label}
-                              className="block truncate whitespace-nowrap rounded-md border border-border/50 bg-background px-2 py-1 text-[11px] sm:text-xs font-semibold"
-                            >
-                              {c.payer_name}
-                              {types ? (
-                                <span className="font-normal text-muted-foreground"> — {types}</span>
-                              ) : null}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">None listed</p>
-                  )}
-                </div>
-              )}
+        <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+          <div className="min-w-0 divide-y divide-border/50">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)] print:grid-cols-1 lg:items-stretch">
+                {hasFactsStrip && (
+                  <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5 min-w-0 lg:border-r lg:border-border/50">
+                    <SectionHeading
+                      title="In-Network"
+                      icon={ShieldCheck}
+                      headerExtra={contractsHeaderExtra}
+                      brand={brand}
+                    />
+                    {inNetworkPayers.length > 0 ? (
+                      <ul className="flex flex-wrap gap-1.5">
+                        {inNetworkPayers.map((c) => {
+                          const types = formatPlanTypeList(sanitizePlanTypes(c.plan_types));
+                          const label = types ? `${c.payer_name} — ${types}` : c.payer_name;
+                          return (
+                            <li key={c.id} className="min-w-0 max-w-full">
+                              <span
+                                title={label}
+                                className="inline-flex max-w-full items-center rounded-md border border-border/50 bg-background px-2.5 py-1 text-[11px] sm:text-xs font-semibold"
+                              >
+                                <span className="truncate">{c.payer_name}</span>
+                                {types ? (
+                                  <span className="ml-1 font-normal text-muted-foreground truncate">
+                                    — {types}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">None listed</p>
+                    )}
+                  </div>
+                )}
 
-              {hasProgramTags && (
-                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Program Details" icon={ClipboardList} brand={brand} />
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {PROGRAM_SECTIONS.map(({ kind, title }) => (
-                      <ProgramTagCard
-                        key={kind}
-                        title={title}
-                        items={programTags[kind]}
+                <aside className="hidden lg:flex print:hidden items-center px-4 py-4 xl:px-5 min-w-0">
+                  {hasContact ? (
+                    <div className="w-full">
+                      <OrgHeroContactCard
+                        contacts={[
+                          {
+                            name: repName || "BD Representative",
+                            title: repTitle,
+                            location: cityStateZip || null,
+                            phone: repPhone,
+                            email: repEmail,
+                          },
+                        ]}
+                        organizationId={org?.id}
                         brand={brand}
-                        icon={PROGRAM_SECTION_ICONS[kind]}
+                        heading="For Referrals"
+                        website={org?.website ?? null}
+                        size="default"
+                        className="shadow-sm ring-1"
                       />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {accreditations.length > 0 && (
-                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Accreditations" icon={BadgeCheck} brand={brand} />
-                  <ul className="flex flex-wrap gap-1.5">
-                    {accreditations.map((item) => (
-                      <li key={item} className="min-w-0">
-                        <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-[12px] sm:text-xs font-medium text-foreground leading-snug break-words">
-                          <Award className="h-3 w-3 shrink-0" style={{ color: brand }} aria-hidden />
-                          {item}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {hasServiceArea && (
-                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Service Area" icon={MapPinned} brand={brand} />
-                  <div className="grid grid-cols-1 xl:grid-cols-[160px_1fr] gap-4 print:grid-cols-1">
-                    <a
-                      href={directionsHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative h-[120px] md:h-full md:min-h-[120px] w-full rounded-lg overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0 print:hidden"
+                      {showUnverified ? (
+                        <p className="mt-2 text-xs text-amber-700">Contact not yet verified</p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div
+                      className="w-full rounded-xl border bg-card px-4 py-3.5 shadow-sm ring-1 ring-black/5 min-w-0"
+                      style={{ borderColor: `${brand}38` }}
                     >
-                      <iframe
-                        title={`Map for ${facility.name}`}
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(address || cityStateZip)}&z=11&output=embed`}
-                        className="absolute inset-0 w-full h-full border-0 pointer-events-none scale-[1.02]"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-transparent group-hover:bg-black/5 transition-colors" />
-                    </a>
-                    <div className="min-w-0">
-                      {locatedLine && (
-                        <p className="text-sm text-foreground/80 leading-relaxed mb-2.5 break-words">
-                          {locatedLine}
+                      <p
+                        className="text-[11px] font-bold uppercase tracking-[0.14em] mb-2.5"
+                        style={{ color: brand }}
+                      >
+                        For Referrals
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
+                          <User className="h-5 w-5" />
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-snug">
+                          {mode === "internal"
+                            ? "Assign a BD rep from the org dashboard so referrals have a contact."
+                            : "No BD contact on file yet."}
                         </p>
-                      )}
-                      {nearbyCitiesLoading ? (
-                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 print:hidden">
-                          {Array.from({ length: 6 }).map((_, i) => (
-                            <li key={i} className="flex items-center gap-2 min-w-0">
-                              <div className="h-3 w-3 rounded-full bg-muted animate-pulse shrink-0" />
-                              <div className="h-3 flex-1 rounded bg-muted animate-pulse" />
-                            </li>
-                          ))}
-                        </ul>
-                      ) : nearbyCities.length > 0 ? (
-                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
-                          {nearbyCities.map((nearbyCity) => (
-                            <li key={nearbyCity} className="flex items-center gap-1.5 text-sm min-w-0">
-                              <Check className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
-                              <span className="break-words">{nearbyCity}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-sm text-muted-foreground break-words">
-                          Serving communities throughout {facility.state ?? "the surrounding area"}.
-                        </p>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
-            </div>
+                  )}
+                </aside>
+              </div>
 
-            {/* Desktop sidebar contact — sits at top of section and pops forward */}
-            <aside className="hidden lg:block print:hidden relative z-10 lg:sticky lg:top-20 lg:self-start lg:rounded-r-2xl px-4 pt-4 pb-6 xl:px-5 xl:pt-5">
-              {hasContact ? (
-                <>
-                <OrgHeroContactCard
-                  contacts={[
-                    {
-                      name: repName || "BD Representative",
-                      title: repTitle,
-                      location: cityStateZip || null,
-                      phone: repPhone,
-                      email: repEmail,
-                    },
-                  ]}
-                  organizationId={org?.id}
-                  brand={brand}
-                  heading="For Referrals"
-                  website={org?.website ?? null}
-                  size="lg"
-                  className="shadow-lg ring-1"
-                />
-                {showUnverified ? (
-                  <p className="mt-2 text-xs text-amber-700">Contact not yet verified</p>
-                ) : null}
-                </>
-              ) : (
-                <div
-                  className="rounded-xl border bg-card p-5 sm:p-6 space-y-3 shadow-lg ring-1 ring-black/5 min-w-0"
-                  style={{ borderColor: `${brand}38` }}
-                >
-                  <p
-                    className="text-[11px] font-bold uppercase tracking-[0.14em] text-center"
-                    style={{ color: brand }}
+            {hasProgramTags && (
+              <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
+                <SectionHeading title="Program Details" icon={ClipboardList} brand={brand} />
+                <div className={programSectionGridClass(visibleProgramSections.length)}>
+                  {visibleProgramSections.map(({ kind, title }) => (
+                    <ProgramTagCard
+                      key={kind}
+                      title={title}
+                      items={programTags[kind]}
+                      brand={brand}
+                      icon={PROGRAM_SECTION_ICONS[kind]}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {accreditations.length > 0 && (
+              <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
+                <SectionHeading title="Accreditations" icon={BadgeCheck} brand={brand} />
+                <ul className="flex flex-wrap gap-1.5">
+                  {accreditations.map((item) => (
+                    <li key={item} className="min-w-0">
+                      <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-[12px] sm:text-xs font-medium text-foreground leading-snug break-words">
+                        <Award className="h-3 w-3 shrink-0" style={{ color: brand }} aria-hidden />
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {hasServiceArea && (
+              <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
+                <SectionHeading title="Service Area" icon={MapPinned} brand={brand} />
+                <div className="grid grid-cols-1 md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] gap-4 print:grid-cols-1">
+                  <a
+                    href={directionsHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative h-36 w-full rounded-lg overflow-hidden bg-muted ring-1 ring-border/60 group shrink-0 print:hidden"
                   >
-                    For Referrals
-                  </p>
-                  <div className="flex items-center gap-3.5">
-                    <div className="h-14 w-14 rounded-full bg-muted text-muted-foreground grid place-items-center shrink-0">
-                      <User className="h-6 w-6" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {mode === "internal"
-                        ? "Assign a BD rep from the org dashboard so referrals have a contact."
-                        : "No BD contact on file yet."}
-                    </p>
+                    <iframe
+                      title={`Map for ${facility.name}`}
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent(address || cityStateZip)}&z=11&output=embed`}
+                      className="absolute inset-0 w-full h-full border-0 pointer-events-none scale-[1.02]"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-transparent group-hover:bg-black/5 transition-colors" />
+                  </a>
+                  <div className="min-w-0">
+                    {locatedLine && (
+                      <p className="text-sm text-foreground/80 leading-relaxed mb-2.5 break-words">
+                        {locatedLine}
+                      </p>
+                    )}
+                    {nearbyCitiesLoading ? (
+                      <ul className="flex flex-wrap gap-x-4 gap-y-1.5 print:hidden">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <li key={i} className="flex items-center gap-2 min-w-[8rem]">
+                            <div className="h-3 w-3 rounded-full bg-muted animate-pulse shrink-0" />
+                            <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : nearbyCities.length > 0 ? (
+                      <ul className="flex flex-wrap gap-x-4 gap-y-1.5">
+                        {nearbyCities.map((nearbyCity) => (
+                          <li key={nearbyCity} className="flex items-center gap-1.5 text-sm min-w-0">
+                            <Check className="h-3.5 w-3.5 shrink-0" style={{ color: brand }} />
+                            <span className="break-words">{nearbyCity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground break-words">
+                        Serving communities throughout {facility.state ?? "the surrounding area"}.
+                      </p>
+                    )}
                   </div>
                 </div>
-              )}
-            </aside>
+              </div>
+            )}
           </div>
         </section>
       )}

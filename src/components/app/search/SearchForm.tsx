@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search as SearchIcon } from "lucide-react";
+import { ChevronDown, Search as SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
 import { CONDITION_OPTIONS, LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
 import { PLAN_TYPES, parsePlanTypeParam } from "@/lib/plan-types";
-import { US_STATES } from "@/lib/us-states";
+import { resolveStateCode, US_STATES } from "@/lib/us-states";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 type SearchFormVariant = "hero" | "inline" | "toolbar";
@@ -49,6 +50,53 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   const [specialty, setSpecialty] = useState(params.get("specialty") ?? "");
   const [accreditation, setAccreditation] = useState(params.get("accreditation") ?? "");
   const [loc, setLoc] = useState(params.get("loc") ?? "");
+  const [citiesByState, setCitiesByState] = useState<Record<string, string[]>>({});
+  const [listedStateCodes, setListedStateCodes] = useState<string[]>([]);
+  const [moreOpen, setMoreOpen] = useState(
+    () => !!(params.get("zip") || params.get("specialty") || params.get("accreditation")),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("facilities")
+        .select("city,state")
+        .eq("verification_status", "approved")
+        .not("city", "is", null);
+      if (cancelled) return;
+      const grouped = new Map<string, Map<string, string>>();
+      for (const row of data ?? []) {
+        const code = resolveStateCode(row.state);
+        const cityName = (row.city ?? "").trim();
+        if (!code || !cityName) continue;
+        if (!grouped.has(code)) grouped.set(code, new Map());
+        const cities = grouped.get(code)!;
+        const key = cityName.toLowerCase();
+        if (!cities.has(key)) cities.set(key, cityName);
+      }
+      const next: Record<string, string[]> = {};
+      for (const [code, cities] of grouped) {
+        next[code] = [...cities.values()].sort((a, b) => a.localeCompare(b));
+      }
+      setCitiesByState(next);
+      setListedStateCodes(
+        US_STATES.map((s) => s.code).filter((code) => (next[code]?.length ?? 0) > 0),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stateCities = useMemo(() => {
+    const code = resolveStateCode(state);
+    const listed = code ? citiesByState[code] ?? [] : [];
+    if (city && !listed.some((name) => name.toLowerCase() === city.toLowerCase())) {
+      return [city, ...listed];
+    }
+    return listed;
+  }, [state, city, citiesByState]);
 
   useEffect(() => {
     setPayerId(params.get("payerId"));
@@ -159,17 +207,31 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           htmlFor="search-state"
           className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
         >
-          <Select value={state || "_any"} onValueChange={(v) => setState(v === "_any" ? "" : v)}>
+          <Select
+            value={state || "_any"}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : v;
+              setState(next);
+              const code = resolveStateCode(next);
+              const allowed = code ? citiesByState[code] ?? [] : [];
+              if (city && !allowed.some((name) => name.toLowerCase() === city.toLowerCase())) {
+                setCity("");
+              }
+              if (!next) setCity("");
+            }}
+          >
             <SelectTrigger id="search-state" className={control}>
               <SelectValue placeholder="Any state" />
             </SelectTrigger>
             <SelectContent className="max-h-72">
               <SelectItem value="_any">Any state</SelectItem>
-              {US_STATES.map((s) => (
-                <SelectItem key={s.code} value={s.code}>
-                  {s.name}
-                </SelectItem>
-              ))}
+              {(listedStateCodes.length ? US_STATES.filter((s) => listedStateCodes.includes(s.code)) : US_STATES).map(
+                (s) => (
+                  <SelectItem key={s.code} value={s.code}>
+                    {s.name}
+                  </SelectItem>
+                ),
+              )}
             </SelectContent>
           </Select>
         </FieldShell>
@@ -179,72 +241,94 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           htmlFor="search-city"
           className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
         >
-          <Input
-            id="search-city"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="Any city"
-            className={control}
-          />
-        </FieldShell>
-
-        <FieldShell
-          label="ZIP"
-          htmlFor="search-zip"
-          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
-        >
-          <Input
-            id="search-zip"
-            value={zip}
-            onChange={(e) => setZip(e.target.value)}
-            placeholder="Exact ZIP"
-            inputMode="numeric"
-            className={control}
-          />
-        </FieldShell>
-
-        <FieldShell
-          label="Specialty"
-          htmlFor="search-specialty"
-          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
-        >
-          <Select value={specialty || "_any"} onValueChange={(v) => setSpecialty(v === "_any" ? "" : v)}>
-            <SelectTrigger id="search-specialty" className={control}>
-              <SelectValue placeholder="Any specialty" />
+          <Select
+            value={city || "_any"}
+            onValueChange={(v) => setCity(v === "_any" ? "" : v)}
+            disabled={!state}
+          >
+            <SelectTrigger id="search-city" className={control}>
+              <SelectValue placeholder={state ? "Any city" : "Select a state first"} />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="_any">Any specialty</SelectItem>
-              {CONDITION_OPTIONS.map((item) => (
-                <SelectItem key={item} value={item}>
-                  {item}
+            <SelectContent className="max-h-72">
+              <SelectItem value="_any">Any city</SelectItem>
+              {stateCities.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </FieldShell>
 
-        <FieldShell
-          label="Accreditation"
-          htmlFor="search-accreditation"
-          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
-        >
-          <Input
-            id="search-accreditation"
-            value={accreditation}
-            onChange={(e) => setAccreditation(e.target.value)}
-            placeholder="e.g. Joint Commission"
-            className={control}
-          />
-        </FieldShell>
+        {moreOpen ? (
+          <>
+            <FieldShell
+              label="ZIP"
+              htmlFor="search-zip"
+              className={cn(isHero && "col-span-1 lg:col-span-4", isToolbar && "col-span-1 lg:col-span-3")}
+            >
+              <Input
+                id="search-zip"
+                value={zip}
+                onChange={(e) => setZip(e.target.value)}
+                placeholder="Exact ZIP"
+                inputMode="numeric"
+                className={control}
+              />
+            </FieldShell>
+            <FieldShell
+              label="Specialty"
+              htmlFor="search-specialty"
+              className={cn(isHero && "col-span-1 lg:col-span-4", isToolbar && "col-span-1 lg:col-span-3")}
+            >
+              <Select value={specialty || "_any"} onValueChange={(v) => setSpecialty(v === "_any" ? "" : v)}>
+                <SelectTrigger id="search-specialty" className={control}>
+                  <SelectValue placeholder="Any specialty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_any">Any specialty</SelectItem>
+                  {CONDITION_OPTIONS.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FieldShell>
+            <FieldShell
+              label="Accreditation"
+              htmlFor="search-accreditation"
+              className={cn(isHero && "col-span-2 lg:col-span-4", isToolbar && "col-span-2 lg:col-span-3")}
+            >
+              <Input
+                id="search-accreditation"
+                value={accreditation}
+                onChange={(e) => setAccreditation(e.target.value)}
+                placeholder="e.g. Joint Commission"
+                className={control}
+              />
+            </FieldShell>
+          </>
+        ) : null}
 
         {isHero || isToolbar ? (
           <div
             className={cn(
-              "flex items-end",
+              "flex items-end gap-2",
               isHero && "col-span-2 pt-1 lg:col-span-12",
               isToolbar && "col-span-2 lg:col-span-6 lg:justify-end",
             )}
           >
+            <Button
+              type="button"
+              variant="ghost"
+              size={isToolbar ? "sm" : "lg"}
+              className={cn("shrink-0 text-muted-foreground", isHero && "h-12", isToolbar && "h-10")}
+              onClick={() => setMoreOpen((open) => !open)}
+            >
+              {moreOpen ? "Fewer filters" : "More filters"}
+              <ChevronDown className={cn("h-4 w-4 transition-transform", moreOpen && "rotate-180")} />
+            </Button>
             <Button
               type="submit"
               variant={isHero ? "hero" : "default"}

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 interface OrgHeroOrg {
   id: string;
   name: string;
+  slug?: string | null;
   logo_url: string | null;
   description: string | null;
   tagline: string | null;
@@ -18,6 +19,28 @@ interface OrgHeroOrg {
   image_urls?: string[] | null;
   verified: boolean;
   updated_at?: string | null;
+}
+
+/** Status, one claim button, and a quiet removal link — the only claim UI on a public org page. */
+export function OrgUnclaimedActions({ org }: { org: Pick<OrgHeroOrg, "id" | "name" | "slug"> }) {
+  return (
+    <div className="space-y-2">
+      <UnclaimedMark size="md" />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+        <ClaimOrganizationDialog organizationId={org.id} organizationName={org.name} />
+        <a
+          href={`mailto:admin@centerlinked.com?subject=${encodeURIComponent(
+            `Profile removal request: ${org.name}`,
+          )}&body=${encodeURIComponent(
+            `Please remove the CenterLinked profile for ${org.name}.\n\nProfile: https://www.centerlinked.com/o/${org.slug ?? ""}\n\nMy name:\nMy role at ${org.name}:\n`,
+          )}`}
+          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        >
+          Request removal
+        </a>
+      </div>
+    </div>
+  );
 }
 
 interface Props {
@@ -45,6 +68,8 @@ interface Props {
    * `heading` / `all` — desktop identity band with contact card.
    */
   parts?: "all" | "media" | "heading";
+  /** When the shared branded header already shows the mark. */
+  hideLogo?: boolean;
 }
 
 /**
@@ -62,6 +87,7 @@ export function OrgHeroSection({
   compact = false,
   logoSize = "default",
   parts = "all",
+  hideLogo = false,
 }: Props) {
   if (compact || parts === "media") {
     return <MobileLogoHero org={org} brand={brand} compact={compact} logoSize={logoSize} />;
@@ -75,6 +101,7 @@ export function OrgHeroSection({
       facilityCount={facilityCount}
       verifiedAt={verifiedAt}
       contactAside={contactAside}
+      hideLogo={hideLogo}
     />
   );
 }
@@ -87,6 +114,7 @@ function IdentityHero({
   facilityCount,
   verifiedAt,
   contactAside,
+  hideLogo,
 }: {
   org: OrgHeroOrg;
   brand: string;
@@ -94,6 +122,7 @@ function IdentityHero({
   facilityCount: number;
   verifiedAt?: string | null;
   contactAside?: ReactNode;
+  hideLogo: boolean;
 }) {
   const headline = org.name;
   const tagline = org.tagline && org.tagline !== org.name ? org.tagline : null;
@@ -124,29 +153,31 @@ function IdentityHero({
           )}
         >
           <div className="flex items-center min-w-0 gap-5 lg:gap-6">
-            <div
-              className={cn(
-                "relative shrink-0 overflow-hidden rounded-2xl border border-border/70 bg-white shadow-md grid place-items-center",
-                "h-[9rem] w-[9rem] lg:h-[11rem] lg:w-[11rem]",
-              )}
-            >
-              {org.logo_url ? (
-                <img
-                  src={org.logo_url}
-                  alt={`${org.name} logo`}
-                  className="h-[88%] w-[88%] object-contain"
-                />
-              ) : (
-                <div
-                  className="h-full w-full grid place-items-center"
-                  style={{
-                    background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
-                  }}
-                >
-                  <Building2 className="h-10 w-10 text-white/90" aria-hidden />
-                </div>
-              )}
-            </div>
+            {hideLogo ? null : (
+              <div
+                className={cn(
+                  "relative shrink-0 overflow-hidden rounded-2xl border border-border/70 bg-white shadow-md grid place-items-center",
+                  "h-[9rem] w-[9rem] lg:h-[11rem] lg:w-[11rem]",
+                )}
+              >
+                {org.logo_url ? (
+                  <img
+                    src={org.logo_url}
+                    alt={`${org.name} logo`}
+                    className="h-[88%] w-[88%] object-contain"
+                  />
+                ) : (
+                  <div
+                    className="h-full w-full grid place-items-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${brand} 0%, ${brand}cc 100%)`,
+                    }}
+                  >
+                    <Building2 className="h-10 w-10 text-white/90" aria-hidden />
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="min-w-0 flex-1 space-y-2.5">
               <h1 className="font-heading font-extrabold tracking-tight text-foreground leading-[1.12] text-3xl lg:text-[2.5rem]">
@@ -169,31 +200,7 @@ function IdentityHero({
                   size="md"
                 />
               ) : (
-                // Unclaimed profile: say so, and always offer a way to take it
-                // over. Some unclaimed sheets carry a compiled BD contact and
-                // therefore never render OrgClaimCard, so this is the only
-                // claim route on those pages.
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <UnclaimedMark size="md" />
-                  <ClaimOrganizationDialog
-                    organizationId={org.id}
-                    organizationName={org.name}
-                  />
-                  {/* Removal must not require an account, so this is a plain
-                      mailto rather than a form behind auth. Prefilled so the
-                      request identifies the profile without the sender
-                      having to explain which page they mean. */}
-                  <a
-                    href={`mailto:admin@centerlinked.com?subject=${encodeURIComponent(
-                      `Profile removal request: ${org.name}`,
-                    )}&body=${encodeURIComponent(
-                      `Please remove the CenterLinked profile for ${org.name}.\n\nProfile: https://www.centerlinked.com/o/${org.slug ?? ""}\n\nMy name:\nMy role at ${org.name}:\n`,
-                    )}`}
-                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                  >
-                    Not your organization? Request removal
-                  </a>
-                </div>
+                <OrgUnclaimedActions org={org} />
               )}
 
               {description ? (

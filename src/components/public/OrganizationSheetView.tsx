@@ -165,14 +165,19 @@ export function OrganizationSheetView({
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:flex-1 gap-0.5 sm:gap-1.5">
-                <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight">
+                <h2
+                  className={cn(
+                    "font-heading text-lg sm:text-xl font-bold tracking-tight",
+                    !showFilters && "text-center w-full",
+                  )}
+                >
                   Our Facilities
                 </h2>
-                {filteredFacilities.length > 0 && (
+                {showFilters && filteredFacilities.length > 0 && (
                   <span className="text-xs sm:text-sm text-muted-foreground shrink-0">
                     {filteredFacilities.length}{" "}
                     {filteredFacilities.length === 1 ? "location" : "locations"}
-                    {showFilters && filterActive ? " matching filters" : ""}
+                    {filterActive ? " matching filters" : ""}
                   </span>
                 )}
               </div>

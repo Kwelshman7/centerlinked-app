@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Building2 } from "lucide-react";
-import { OrgHeroSection } from "@/components/public/OrgHeroSection";
+import { Building2, FileText, Share2, User } from "lucide-react";
+import { SearchContextBar } from "@/components/app/search/SearchContextBar";
+import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
+import { ClaimOrganizationDialog } from "@/components/ClaimOrganizationDialog";
 import { OrganizationSheetView, OrgSheetData } from "@/components/public/OrganizationSheetView";
-import { OrgHeroContactCard, HeroContact } from "@/components/public/OrgHeroContactCard";
-import { OrgClaimCard } from "@/components/public/OrgClaimCard";
+import { type HeroContact } from "@/components/public/OrgHeroContactCard";
 import { ShowcaseFacility } from "@/components/public/OrgFacilityShowcaseCard";
 import { Button } from "@/components/ui/button";
 import { applySocialMeta, orgShareCardType, orgShareIcon, orgShareImage } from "@/lib/social-meta";
@@ -13,7 +14,13 @@ import { trackOrgEvent } from "@/lib/track-org-event";
 import { resolveStateCode, stateDisplayName } from "@/lib/us-states";
 import { useOrgBrandColor } from "@/hooks/useOrgBrandColor";
 import { fetchPublicOrgSheet } from "@/lib/public-sheet-data";
-import { orgPublicUrl } from "@/lib/public-urls";
+import { orgPublicUrl, programPublicPath } from "@/lib/public-urls";
+import {
+  FOOTER_ACTION_BTN_CLASS,
+  FOOTER_ACTION_ICON_CLASS,
+  footerActionButtonStyle,
+  openReferPatientSheet,
+} from "@/lib/org-shared-footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -213,47 +220,76 @@ export default function OrgSheet() {
   }
 
   const briefDescription = org.description?.trim() || null;
+  const onlyFacility = facilities.length === 1 ? facilities[0] : null;
+  if (onlyFacility?.slug && org.slug) {
+    return <Navigate to={programPublicPath(onlyFacility.slug, org.slug)} replace />;
+  }
 
-  const contactAside = heroContact ? (
-    <OrgHeroContactCard
-      contacts={[heroContact]}
-      organizationId={org.id}
-      brand={brand}
-      heading="For Referrals"
-      website={org.website}
-      size="lg"
-      className="w-full"
-    />
-  ) : (
-    <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-1">
-      <OrgClaimCard organizationId={org.id} organizationName={org.name} />
-    </div>
-  );
+  const actionStyle = footerActionButtonStyle(brand);
+  const shareUrl =
+    org.slug && typeof window !== "undefined"
+      ? orgPublicUrl(window.location.origin, org.slug)
+      : org.slug
+        ? `https://www.centerlinked.com/o/${org.slug}`
+        : "";
 
   return (
     <div id="top" className="min-h-screen bg-background overflow-x-hidden">
-      {/* Mobile: logo-on-top strip — matches landing PublicOrgSheetPreview */}
-      <div className="lg:hidden">
-        <OrgHeroSection
-          org={org}
-          brand={brand}
-          compact
-          parts="media"
-          verifiedAt={verifiedAt}
-        />
-      </div>
-
-      {/* Desktop: identity band + contact card */}
-      <div className="hidden lg:block">
-        <OrgHeroSection
-          org={org}
-          brand={brand}
-          description={briefDescription}
-          facilityCount={facilities.length}
-          verifiedAt={verifiedAt}
-          contactAside={contactAside}
-        />
-      </div>
+      <SearchContextBar currentOrgSlug={org.slug} />
+      <ProgramOrgHeader org={org} brand={brand} logoHref={null}>
+        {heroContact ? (
+          <button
+            type="button"
+            onClick={() => openReferPatientSheet()}
+            className={FOOTER_ACTION_BTN_CLASS}
+            style={actionStyle}
+          >
+            <User className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+            Refer Patient
+          </button>
+        ) : null}
+        {shareUrl ? (
+          <button
+            type="button"
+            className={FOOTER_ACTION_BTN_CLASS}
+            style={actionStyle}
+            onClick={async () => {
+              try {
+                if (navigator.share) {
+                  await navigator.share({ title: org.name, url: shareUrl });
+                } else {
+                  await navigator.clipboard.writeText(shareUrl);
+                  toast.success("Link copied");
+                }
+                trackOrgEvent(org.id, "share_click");
+              } catch {
+                /* user cancelled share */
+              }
+            }}
+          >
+            <Share2 className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+            Share Link
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className={FOOTER_ACTION_BTN_CLASS}
+          style={actionStyle}
+          onClick={() => void handleExportPdf()}
+        >
+          <FileText className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
+          Export PDF
+        </button>
+        {!org.verified ? (
+          <ClaimOrganizationDialog
+            organizationId={org.id}
+            organizationName={org.name}
+            triggerLabel="Claim"
+            triggerClassName={FOOTER_ACTION_BTN_CLASS}
+            triggerStyle={actionStyle}
+          />
+        ) : null}
+      </ProgramOrgHeader>
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 lg:pt-3 pb-0 space-y-4 sm:space-y-5">
         <OrganizationSheetView

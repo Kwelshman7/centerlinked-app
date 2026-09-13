@@ -1,23 +1,14 @@
 import { Link, NavLink } from "react-router-dom";
-import { Building2, Inbox, LayoutDashboard, Shield, ShieldCheck, CheckSquare, ClipboardList, Database, Plus, Tags, UserPlus, UserRound, MapPin, ScrollText, Gauge } from "lucide-react";
+import { Building2, LayoutDashboard, Shield, CheckSquare, Database, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const adminLinks = [
   { to: "/app/admin", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/app/admin/organizations", label: "Manage organizations", icon: Building2, end: true },
-  { to: "/app/admin/organizations/new", label: "Add organization", icon: Plus },
-  { to: "/app/admin/join-requests", label: "Join requests", icon: UserPlus },
-  { to: "/app/admin/requests", label: "Access requests", icon: Inbox },
-  { to: "/app/admin/claims", label: "Org claims", icon: ShieldCheck },
+  { to: "/app/admin/organizations", label: "Organizations", icon: Building2, end: true },
   { to: "/app/verifications", label: "Verifications", icon: CheckSquare },
-  { to: "/app/admin/insurance", label: "Insurance DB", icon: Database },
-  { to: "/app/admin/insurance-queue", label: "Insurance queue", icon: ClipboardList },
-  { to: "/app/admin/normalization", label: "Canonical names", icon: Tags },
-  { to: "/app/admin/bd-queue", label: "BD contacts", icon: UserRound },
-  { to: "/app/admin/location-queue", label: "Locations", icon: MapPin },
-  { to: "/app/admin/audit", label: "Verification audit", icon: ScrollText },
+  { to: "/app/admin/insurance", label: "Insurance", icon: Database },
   { to: "/app/admin/data-quality", label: "Data quality", icon: Gauge },
 ] as const;
 
