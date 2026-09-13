@@ -9,7 +9,7 @@ Match the code that is already in this repository. Do not introduce a second sty
 - Package manager is **npm**. Do not add yarn/pnpm lockfiles.
 - TypeScript is **not strict** (`strictNullChecks` / `noImplicitAny` off). Still type new public functions, props, and API payloads. Do not spread `any` to “make it compile.”
 - ESLint: unused-vars is off. Do not enable noisy new lint rules as a drive-by.
-- `@tanstack/react-query` is installed and **unused**. Do not add `QueryClientProvider` / `useQuery` unless asked.
+- Do not add `QueryClientProvider` / `useQuery` unless asked. Data fetching stays ad hoc.
 - Zod is used sparsely. Do not wrap the whole app in schemas; follow the nearest file.
 
 ## File naming

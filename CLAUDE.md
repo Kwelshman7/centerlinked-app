@@ -60,7 +60,7 @@ npm run reconcile-contracts:apply
 8. Do not create extra markdown docs unless asked.
 9. Do not claim lint/build/tests passed unless you ran them. If env is missing, say so and give a manual checklist.
 
-Data fetching is ad-hoc `useState`/`useEffect` plus a few hooks. `@tanstack/react-query` is installed but **not wired** — do not add a QueryClient unless asked.
+Data fetching is ad-hoc `useState`/`useEffect` plus a few hooks. Do not add a QueryClient unless asked.
 
 ## Layering
 

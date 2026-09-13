@@ -2,9 +2,9 @@
 
 Senior-engineer onboarding document for the production CenterLinked application as it exists today. This describes systems, file paths, dependencies, and blast radius — not a roadmap.
 
-**Stack summary:** Vite + React 18 SPA · React Router 6 · Supabase (Auth, Postgres, RLS, Storage, Realtime, Edge Functions) · Stripe Billing · Resend email · Vercel (static SPA + serverless `api/` + middleware). There are **no Next.js Server Actions**.
+**Stack summary:** Vite + React 18 SPA · React Router 6 · Supabase (Auth, Postgres, RLS, Storage, Realtime, Edge Functions) · Stripe Billing · Resend email · Sentry (optional via `VITE_SENTRY_DSN`) · Vercel (static SPA + serverless `api/` + middleware + weekly cron). There are **no Next.js Server Actions**.
 
-**Feature flags:** `FEATURES.community = false` in `src/config/features.ts` — Feed and Messenger routes exist but redirect to `/app`. **Billing soft-gate:** inactive subscriptions show a dismissible banner; the app remains usable during early access.
+**Feature flags:** `FEATURES.community = false` in `src/config/features.ts` — Feed and Messenger routes exist but redirect to `/app`. **Billing soft-gate:** listing is free; inactive memberships show a dismissible banner; the app remains usable without a paid plan.
 
 ---
 
@@ -29,20 +29,21 @@ Organize a multi-tenant behavioral-health referral platform: organizations own f
 | `server/` | Shared Node handlers used by Vite plugins (local) and `api/` (prod) |
 | `supabase/` | SQL scripts / hardening / billing / RLS (applied via Dashboard or CLI) |
 | `vite.config.ts` + `vite-plugin-*.ts` | Dev server + local API middleware |
-| `vercel.json` | SPA rewrite; OG function includes `dist/index.html` |
+| `vercel.json` | SPA rewrite; OG function includes; weekly verification-reminder cron |
 | `middleware.js` | Vercel edge: social-preview bots → `/api/og` |
 | `public/` | Static assets (`robots.txt`, `sitemap.xml`, logos) |
 
 ### Boot sequence
 1. `src/main.tsx` — if OAuth tokens land on `/` hash, rewrite to `/auth/callback`; else mount `<App />`.
-2. `src/App.tsx` — `AppErrorBoundary` → `TooltipProvider` → Sonner toaster → Vercel Analytics → `BrowserRouter` → `AuthProvider` → routes.
-3. Authenticated app shell: `ProtectedRoute` → `AppLayout` → nested `<Outlet />` pages.
+2. `src/main.tsx` also calls `initMonitoring()` (Sentry when `VITE_SENTRY_DSN` is set).
+3. `src/App.tsx` — `AppErrorBoundary` → `TooltipProvider` → Sonner toaster (`theme="light"`) → Vercel Analytics → `BrowserRouter` → `AuthProvider` → routes.
+4. Authenticated app shell: `ProtectedRoute` → `AppLayout` → nested `<Outlet />` pages. `/app` index redirects to `/app/search`.
 
 ### Primary files
 - `package.json`, `vite.config.ts`, `src/main.tsx`, `src/App.tsx`, `src/index.css`, `tailwind.config.ts`
 
 ### Dependencies
-- React 18, react-router-dom, @supabase/supabase-js, @tanstack/react-query (listed but **not wired** in the SPA today), Radix/shadcn-style UI, motion, zod (server email validation), stripe (server), papaparse (CSV/PDF upload flows), sharp (facility-images tooling).
+- React 18, react-router-dom, @supabase/supabase-js, Radix/shadcn-style UI, motion, sonner, zod (server email validation), stripe (server), papaparse (CSV/PDF upload flows), sharp (facility-images tooling), @sentry/react (optional DSN).
 
 ### Potential impact if modified
 Changing bootstrap, aliases (`@` → `src`), or Vite plugins breaks local API parity with production. Changing `vercel.json` rewrites can break SPA deep links or isolate `/api/*` incorrectly.
@@ -58,7 +59,7 @@ Map public marketing, auth, public share URLs, org onboarding, and the authentic
 
 **Public / marketing**
 - `/` — landing (`pages/Index.tsx`)
-- `/login`, `/signup`, `/auth/callback`
+- `/login`, `/signup` (redirects to `/join`), `/join`, `/auth/callback`
 - `/request-access`
 - `/privacy`, `/terms`
 - `/o/:orgSlug/p/:programSlug`, `/p/:slug` — program (facility) sheets
@@ -70,7 +71,7 @@ Map public marketing, auth, public share URLs, org onboarding, and the authentic
 - `/setup-organization`, `/create-organization` — `ProtectedRoute` only
 
 **Authenticated app (`/app` → `AppLayout`)**
-- `/app`, `/app/dashboard` — dashboard
+- `/app` index → `/app/search`; `/app/dashboard` — dashboard
 - `/app/search`, `/app/search/results`
 - `/app/network` → redirect to `/app/organizations`
 - `/app/organizations` — referral network + directory
@@ -122,11 +123,14 @@ Postgres (Supabase) is the system of record for tenants, facilities, insurance c
 | `org_analytics_events` | Engagement events (also via edge function) |
 | `early_access_leads` | Access-request intake |
 | `approved_personal_emails` | Personal-email allowlist exceptions |
+| `bootstrap_admin_emails` | Server-only super-admin allowlist |
+| `facility_pdf_uploads` | PDF ingest records (`facility-pdfs` storage path) |
+| `access_request_rate_limits` | Access-request fingerprint rate limits |
 | `stripe_webhook_events` | Webhook idempotency |
 | `conversations`, `conversation_participants`, `messages` | DMs (UI feature-flagged off) |
 | `posts`, `post_likes` | Community feed (UI feature-flagged off) |
 
-Enums: `app_role`, `payer_status`, `verification_status`.
+Enums: `app_role`, `org_role`, `payer_status`, `verification_status`.
 
 ### Key RPCs
 - Auth/org: `is_email_auth_allowed`, `email_signup_eligible`, `bootstrap_super_admin`, `is_bootstrap_admin_candidate`, `claim_pending_org_invite`, `get_org_setup_options`, `create_organization_with_owner`, `admin_create_organization`, `link_user_to_organization`, `request_to_join_organization`, `review_organization_join_request`, `list_org_join_requests`, `list_superadmin_join_requests`
@@ -134,7 +138,7 @@ Enums: `app_role`, `payer_status`, `verification_status`.
 - Facilities: `save_facility_with_contracts`, `freeze_stale_facilities`, `list_facilities_due_for_verification`
 - Orgs: `update_organization_profile`, `get_org_engagement_stats`, `slugify`
 - Messaging: `get_or_create_direct_conversation`, `is_conversation_participant`
-- Email/access: `approve_personal_email`, `consume_access_request_rate_limit` (SQL script)
+- Email/access: `approve_personal_email`, `consume_access_request_rate_limit`
 
 ### SQL script inventory (`supabase/`)
 Applied operationally (not always via a single migration runner):
@@ -146,7 +150,7 @@ Applied operationally (not always via a single migration runner):
 - `migrations/00000000000000_rls_policy_snapshot.json` — live policy inventory (~75 policies)
 
 ### Storage buckets (client usage)
-`facility-images`, `org-logos`, `avatars`, `post-images` — uploads via `ImageUploader` → public URLs.
+`facility-images`, `org-logos`, `avatars`, `post-images`, `claim-proofs`, `facility-pdfs` — image uploads via `ImageUploader` → public URLs.
 
 ### Primary files
 - `src/integrations/supabase/types.ts`, `src/integrations/supabase/client.ts`, `supabase/*.sql`
@@ -242,7 +246,7 @@ Tenant root: branding, public mini-homepage, membership, referral network, billi
 2. **Create:** `/create-organization` → RPC `create_organization_with_owner`.
 3. **Admin create:** `/app/admin/organizations/new` → `admin_create_organization`.
 4. **Join:** invites (`org_invites` + `claim_pending_org_invite`) or join requests + review.
-5. **Claim:** public `OrgClaimCard` / `ClaimOrganizationDialog` → `organization_claims` (admin review).
+5. **Claim:** public `OrgClaimCard` / `ClaimOrganizationDialog` → `organization_claims`. Admin approve (`OrganizationClaims.tsx`) assigns the claimant as `facility_admin` and emails them.
 6. **Profile/branding:** Settings + admin workspace call `update_organization_profile`; public sheet at `/o/:slug` or `/:slug`.
 7. **Network:** `referral_network` via `useReferralNetwork` on Organizations page.
 
@@ -268,7 +272,7 @@ Represent treatment programs (locations) under an organization: clinical metadat
 - Create/edit via dialogs + `saveFacilityWithContracts` → RPC `save_facility_with_contracts` (atomic facility + contracts).
 - Onboarding batch (`Onboarding.tsx`) and PDF/CSV upload (`PdfFacilityUpload.tsx`).
 - Verification: `verification_status` pending/approved/rejected; monthly contract freshness (`contracts_verified_at`, `verification_frozen`); verify UI at `/app/facilities/:id/verify`.
-- Public program sheet: `/o/:orgSlug/p/:programSlug` or `/p/:slug`.
+- Public program sheet: `/o/:orgSlug/p/:programSlug` or `/p/:slug`. Org and facility sheets can export a Letter **one-pager PDF**.
 - Visibility: `hidden_from_org_page` for public org page listing.
 - Preferred provider flags managed in Verifications admin UI.
 - Offline/ops tooling: `server/facility-images/*` batch pipeline; `approve-all-facilities.mjs`, `reconcile-facility-contracts.mjs`.
@@ -375,7 +379,7 @@ Transactional email and in-app toast feedback — not a push/notification center
 | Auth events | `POST /api/notify-auth-event` (Bearer) — signup/login notices |
 | Org welcome | `POST /api/send-welcome` (Bearer, super-admin path) |
 | Stripe DFY | Webhook sends admin email on Done For You purchase |
-| Verification reminders | `verification_reminders` table (data model; admin Verifications UI) |
+| Verification reminders | `verification_reminders` table + weekly Vercel cron → `/api/send-verification-reminders` |
 | Billing soft-gate | `BillingStatusBanner` in-app (not email) |
 
 ### Primary files
@@ -493,6 +497,13 @@ Vercel serverless endpoints for concerns that must not run in the browser: Strip
 | `/api/notify-auth-event` | POST | Bearer JWT | `server/email/handlers/notify-auth-event.mjs` |
 | `/api/send-welcome` | POST | Bearer JWT | `server/email/handlers/send-welcome.mjs` |
 | `/api/og` | GET | none (`?path=`) | `server/og-meta.mjs` via `api/og.js` |
+| `/api/og-image` | GET | none | Share-card PNG (`api/og-image.js`); `/api/og-icon` rewrites to `?variant=icon` |
+| `/api/public-image` | GET | none | Same-origin raster proxy for one-pager capture |
+| `/api/one-pager-copy` | POST | Bearer JWT | Factual one-pager description polish |
+| `/api/send-verification-reminders` | GET/POST | Bearer `CRON_SECRET` | Weekly stale-contract reminder emails |
+| `/api/send-org-invite` | POST | Bearer JWT | Org invite email |
+| `/api/notify-pricing-inquiry` | POST | public (rate-limited) | Pricing inquiry notify |
+| `/api/sitemap` | GET | none | Dynamic sitemap (`/sitemap.xml` rewrite) |
 
 ### Local parity
 Vite plugins mount the same handlers during `npm run dev`:
@@ -502,7 +513,7 @@ Vite plugins mount the same handlers during `npm run dev`:
 - `vite-plugin-social-preview.ts` (bot UA only; does not intercept normal browsers)
 
 ### Edge middleware
-`middleware.js` — for social preview bots on public share paths, rewrite to `/api/og?path=...`.
+`middleware.js` — for social preview bots on public share paths, rewrite to `/api/og?path=...`. Default SPA OG/Twitter image in `index.html` is `https://www.centerlinked.com/og-image.png`.
 
 ### Primary files
 - `api/*`, `server/**`, `vite-plugin-*.ts`, `middleware.js`, `vercel.json`
@@ -647,8 +658,7 @@ Keep client state simple: React local state + one auth context + Supabase as rem
 - **Supabase Realtime** — Feed + Messenger channels (community paths).
 - **Toasts** — ephemeral UX messages (Sonner).
 
-### Not in use (despite dependency)
-- `@tanstack/react-query` is in `package.json` but **no `QueryClientProvider` / `useQuery` usage** in `src/` today.
+Data fetching stays local `useState` / `useEffect` (no React Query / `QueryClient`).
 
 ### Potential impact if modified
 Introducing a global store without aligning AuthContext can duplicate session truth. Caching layers must respect RLS user identity (token changes).
@@ -661,7 +671,7 @@ Introducing a global store without aligning AuthContext can duplicate session tr
 Fail visibly for users without blank screens; keep analytics/email non-blocking.
 
 ### Layers
-- **Render:** `AppErrorBoundary` — catch render errors, offer reload; logs name/message/componentStack only.
+- **Render:** `AppErrorBoundary` — catch render errors, offer reload; logs name/message/componentStack only. Optional Sentry via `initMonitoring()` when `VITE_SENTRY_DSN` is set.
 - **Auth:** toasts + sign-out on disallowed email; AuthCallback timeout → login.
 - **Data:** page-level `error.message` toasts; many loads set empty arrays on failure.
 - **API:** handlers return JSON `{ error }` with HTTP status; Stripe/email log server-side.
@@ -690,7 +700,7 @@ Limited explicit caching — mostly browser session + CDN/OG headers + Stripe/DB
 | Access-request rate limit | `access_request_rate_limits` fingerprints |
 | Vite/browser | Standard static asset hashing from Vite build |
 
-No Redis or React Query cache layer in the SPA today.
+No Redis or client query-cache layer in the SPA today.
 
 ### Potential impact if modified
 Aggressive OG caching can serve stale org titles/images after branding updates (5-minute window). Breaking webhook idempotency can double-apply subscription updates.
@@ -798,6 +808,8 @@ From `.env.example` — **never commit real secrets**.
 | `STRIPE_PRICE_MEMBERSHIP` | Profile $99/mo price id (Network/Group/annual use Checkout `price_data`) |
 | `STRIPE_PRICE_SETUP` | 1-facility Done For You $499 price id (larger DFY uses `price_data`) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Optional; Checkout is hosted redirect |
+| `VITE_SENTRY_DSN` | Optional; public write-only Sentry ingest DSN (unset = no-op) |
+| `CRON_SECRET` | Bearer secret for `/api/send-verification-reminders` |
 | `OPENAI_API_KEY` | Optional facility-images pipeline quality checks |
 | `PORT` | Local Vite port (default 8080) |
 
@@ -808,7 +820,8 @@ Forbidden: `VITE_SUPABASE_SERVICE_ROLE` (Vite config throws if set).
 ## Billing Soft-Gate (detail)
 
 - Membership modeled on `organizations.subscription_status` (`none` \| Stripe statuses).
-- `BillingStatusBanner` shows when status is not `active`/`trialing`; copy states the app remains usable during early access; dismissible per session mount.
+- Free **Listed** tier (`LISTED_TIER` in `src/lib/pricing.ts`) — claim/keep-current/appear-in-search without a card.
+- `BillingStatusBanner` shows when status is not `active`/`trialing`; copy states listing is free and membership is optional; dismissible per session mount.
 - Hard feature locks by subscription are **not** applied across Search/Facilities today — banner + Billing page are the gate.
 
 Primary files: `src/components/app/BillingStatusBanner.tsx`, `src/lib/billing.ts`, `src/pages/app/Billing.tsx`, `supabase/org-billing.sql`, `server/stripe/**`.

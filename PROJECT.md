@@ -47,27 +47,28 @@ The platform is invite-oriented / work-email gated. It is designed for professio
 ### Public / marketing
 - Marketing landing page (hero → who it’s for → problem → how it works → product proof → dashboard → monthly verification → pricing → FAQ → CTA)
 - Privacy Policy and Terms of Service
-- Early-access / request-access intake form
+- Early-access / request-access intake form (`/request-access`); shareable signup lives at **`/join`** (`/signup` redirects there)
 - Public **organization sheets** (`/o/:slug` and `/:slug`) — approved, non-frozen facilities (`hidden_from_org_page` honored)
 - Public **program / facility sheets** (`/o/:orgSlug/p/:programSlug`; legacy `/p/:slug` supported) — frozen programs return not found
+- Downloadable **one-pager PDFs** from public org/facility sheets (Letter layout + `/api/one-pager-copy` polish)
 
 ### Authenticated product
 - Organization setup, create, claim, and domain-based join requests
 - Organization dashboard (profile, engagement stats, shared links)
 - Multi-facility management (create/edit, photos, BD contacts, levels of care, specializations, etc.)
 - Insurance contracts per facility (linked to a curated payer database)
-- In-app **Search** by insurance, state, city, level of care (approved + not frozen; state CA/California normalized)
+- In-app **Search** by insurance, state, city, level of care (approved + not frozen; state CA/California normalized). `/app` index redirects to `/app/search`.
 - **Referral network** (preferred partner orgs; surfaced in search)
 - Team members and email invites
 - Monthly **contract verification** workflow (fresh / recent / stale / frozen)
 - PDF facility upload + parse review flow (via Supabase Edge Functions)
-- Stripe billing: facility-banded membership (Profile $99/mo, Network $249/mo, Group $499/mo; annual = 2 months free) and optional Done For You setup ($499 / $1,200 / $2,500). 16+ is quoted.
+- Stripe billing: free **Listed** tier (`LISTED_TIER`) plus facility-banded membership (Profile $99/mo, Network $249/mo, Group $499/mo; annual = 2 months free) and optional Done For You setup ($499 / $1,200 / $2,500). 16+ is quoted.
 - Settings and org branding (logo, colors, cover/footer images, social links, CTAs)
 
 ### Super-admin tooling
 - Manage organizations / create org workspace
 - Access requests (early-access leads) + personal-email allowlist
-- Organization claims review
+- Organization claims review (approve assigns the claimant as `facility_admin` and emails them)
 - Join requests review
 - Facility verifications queue
 - Insurance (payers) database
@@ -114,11 +115,12 @@ The platform is invite-oriented / work-email gated. It is designed for professio
 | Billing | Stripe (Checkout, Customer Portal, webhooks) |
 | Email | Resend |
 | Analytics | Vercel Analytics |
+| Error monitoring | Sentry (`@sentry/react`) when `VITE_SENTRY_DSN` is set; no-op otherwise |
 | Optional AI ops | OpenAI (`gpt-4o-mini`) in facility-image batch pipeline; PDF parse via Supabase Edge Functions |
 | Geocoding (nearby cities) | Open-Meteo + local US cities JSON |
 | Package manager | npm (`package-lock.json`) |
 
-**Not actively used in app code despite being installed:** `@tanstack/react-query` (no QueryClient / `useQuery` usage found).
+Data fetching is ad-hoc `useState` / `useEffect` plus a few hooks. There is no React Query / `QueryClient`.
 
 ---
 
@@ -206,7 +208,7 @@ app/
 ├── vite-plugin-*.ts          # Local API/OG/auth/stripe/email plugins
 ├── vite.config.ts
 ├── middleware.js             # Vercel middleware → /api/og for social bots
-├── vercel.json               # SPA rewrites + OG function includes
+├── vercel.json               # SPA rewrites, OG includes, weekly verification-reminder cron
 ├── index.html                # Meta, OG defaults, JSON-LD
 ├── package.json
 └── .env.example              # Documented environment variables
@@ -239,7 +241,7 @@ app/
 
 ### Typical flows
 
-1. **Signup / login** → AuthCallback → email allowlist checks → ensure profile → optional bootstrap admin / claim invite → `/setup-organization` or `/app`
+1. **Signup / login** → `/signup` redirects to `/join` → AuthCallback → email allowlist checks → ensure profile → optional bootstrap admin / claim invite → `/setup-organization` or `/app` (index → `/app/search`)
 2. **Facility save** → client `saveFacilityWithContracts` → RPC `save_facility_with_contracts` (atomic facility + contracts)
 3. **Public share** → partner opens `/o/:slug` or program URL → approved facilities + contracts → `track-org-event` Edge Function (page views / contact clicks)
 4. **Search** → filters → query contracts joined to approved, non-frozen facilities → group by org → prioritize network partners. Public sheets use the same approved + not-frozen rule (`src/lib/facility-visibility.ts`).
@@ -266,8 +268,8 @@ app/
 
 Key tables include:
 
-- Identity / access: `profiles`, `user_roles`, `organization_members`, `org_invites`, `organization_join_requests`, `approved_personal_emails`, `bootstrap_admin_emails`, `early_access_leads`
-- Core domain: `organizations`, `facilities`, `insurance_contracts`, `payers`
+- Identity / access: `profiles`, `user_roles`, `organization_members`, `org_invites`, `organization_join_requests`, `approved_personal_emails`, `bootstrap_admin_emails`, `early_access_leads`, `access_request_rate_limits`
+- Core domain: `organizations`, `facilities`, `insurance_contracts`, `payers`, `facility_pdf_uploads`
 - Network / community: `referral_network`, `posts`, `post_likes`, `conversations`, `conversation_participants`, `messages`
 - Ops: `organization_claims`, `contract_verifications`, `verification_reminders`, `preferred_provider_changes`, `org_analytics_events`, `stripe_webhook_events`
 
@@ -303,6 +305,7 @@ If Cursor’s Supabase plugin says **Recovery1** is paused, that is a leftover p
 - `vercel.json` rewrites non-`api` routes to `index.html`
 - Serverless functions in `api/`
 - `middleware.js` rewrites social-preview bot traffic on public share paths to `/api/og`
+- Weekly verification-reminder cron: `vercel.json` → `GET/POST /api/send-verification-reminders` (`0 14 * * 2`, Bearer `CRON_SECRET`)
 - Production site URL documented as `https://www.centerlinked.com`
 - Local dev: `vite` on port **8080** with plugins mirroring production API routes
 
@@ -317,11 +320,12 @@ If Cursor’s Supabase plugin says **Recovery1** is paused, that is a leftover p
 | **Resend** | Transactional email (access requests, auth events, welcome, DFY admin notify) |
 | **Google OAuth** | Sign-in provider via Supabase |
 | **Vercel Analytics** | Product analytics in `App.tsx` |
+| **Sentry** | Client error reporting when `VITE_SENTRY_DSN` is set (`src/lib/monitoring.ts`); unset is a no-op |
 | **OpenAI** | Optional vision QC in `server/facility-images` batch pipeline |
 | **Open-Meteo** | Geocoding for nearby-cities display on program sheets |
 | **Google Fonts** | Inter + Montserrat |
 
-Residual artifact: default OG images in `index.html` are hosted on a GPT Engineer / Lovable-era GCS path; there is no Lovable SDK dependency in `package.json`.
+Default OG / Twitter image in `index.html` is `https://www.centerlinked.com/og-image.png`. Public share unfurls still go through middleware + `/api/og`.
 
 ---
 
@@ -335,6 +339,7 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 | `VITE_SUPABASE_URL` | Supabase project URL for the client |
 | `VITE_SUPABASE_ANON_KEY` | Public anon key (RLS-enforced) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Optional; not required for hosted Checkout redirect |
+| `VITE_SENTRY_DSN` | Optional; public write-only Sentry ingest DSN. Unset = monitoring is a no-op |
 
 ### Server / scripts only (must NOT use `VITE_` prefix)
 | Variable | Purpose |
@@ -350,6 +355,7 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 | `STRIPE_PRICE_MEMBERSHIP` | Price ID for Profile $99/mo membership (other tiers use Checkout `price_data`) |
 | `STRIPE_PRICE_SETUP` | Price ID for 1-facility Done For You $499 (larger DFY packages use Checkout `price_data`) |
 | `OPENAI_API_KEY` | Optional; facility-image quality checks |
+| `CRON_SECRET` | Bearer secret required by `/api/send-verification-reminders` (Vercel Cron) |
 
 ### Configured outside this file
 - Google OAuth client ID/secret in Supabase + Google Cloud Console
@@ -364,8 +370,8 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 - Auth (email, Google, callback, work-email gates, auth hook)
 - Access request intake + admin review
 - Org setup / create / join / claim flows
-- Authenticated shell with dashboard, facilities, search, network, members, settings, billing
-- Public org and program sheets with analytics events
+- Authenticated shell with dashboard, facilities, search (`/app` → `/app/search`), network, members, settings, billing
+- Public org and program sheets with analytics events and one-pager PDF export
 - Stripe checkout, portal, webhook idempotency, billing UI
 - GitHub Actions CI (`lint` / `test` / `build` on PR and push to main)
 - Monthly verification UI and admin verifications page
@@ -374,9 +380,8 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 - Facility image offline pipeline and payer/contract maintenance scripts
 
 ### Soft / partial
-- **Billing soft-gate:** Non-active subscriptions show a dismissible banner; the app remains usable (early-access posture)
-- **Org claim approve:** Admin UI notes that approval does not automatically link the claimant user to the org
-- **Hero partner logo carousel:** Implemented but disabled (`SHOW_ORG_LOGO_CAROUSEL = false`)
+- **Billing soft-gate:** Non-active subscriptions show a dismissible banner; the app remains usable (early-access posture). Free **Listed** tier is available without a card.
+- **Org claim approve:** Approving a claim assigns the claimant as `facility_admin` and emails them (`OrganizationClaims.tsx`). If they have not created an account yet, they are attached on first sign-in.
 - **`email_signup_eligible` RPC:** Present in SQL/types; live auth path uses `is_email_auth_allowed` instead
 - **Terms §8 vs Pricing:** Fees in Terms now match the facility-banded catalog; early-access copy still allows use without an active membership
 
@@ -396,13 +401,12 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 1. **Community features are disabled** while older messaging (`public/llms.txt`) still describes a BD peer network / census-post product narrative.
 2. **Subscription status does not hard-lock product features** — only UI banners/CTAs.
 3. **TypeScript strictness is loose**, so many null/any issues will not fail the build.
-4. **`@tanstack/react-query` is unused**; data fetching/caching is ad hoc per page/component.
-5. **Social OG for public sheets** depends on middleware + `/api/og` + crawler detection; normal browsers still receive the SPA shell.
-6. **PDF parse / image extract Edge Functions** are invoked from the app but their source is not in this repo’s `api/` folder.
-7. **Catch-all public slug route** (`/:slug`) requires reserved-slug discipline so marketing/app paths are not shadowed.
-8. **Dark mode CSS tokens** exist without a full product theme toggle.
-9. **SQL change management** is still a manual Supabase SQL Editor checklist (`supabase/migrations/20260802120000_production_security_bundle.sql`). Inspect with `supabase/inspect-live-security.sql` before assuming production matches the repo. GitHub Actions does not apply SQL.
-10. **Facility image pipeline** is offline/batch (Sharp + optional OpenAI), not part of the request path.
+4. **Social OG for public sheets** depends on middleware + `/api/og` + crawler detection; normal browsers still receive the SPA shell. Default `index.html` OG image is `/og-image.png` on the production domain.
+5. **PDF parse / image extract Edge Functions** are invoked from the app but their source is not in this repo’s `api/` folder.
+6. **Catch-all public slug route** (`/:slug`) requires reserved-slug discipline so marketing/app paths are not shadowed.
+7. **Dark mode CSS tokens** exist without a full product theme toggle. Toasts are pinned to `theme="light"`.
+8. **SQL change management** is still a manual Supabase SQL Editor checklist (`supabase/migrations/20260802120000_production_security_bundle.sql`). Inspect with `supabase/inspect-live-security.sql` before assuming production matches the repo. GitHub Actions does not apply SQL.
+9. **Facility image pipeline** is offline/batch (Sharp + optional OpenAI), not part of the request path.
 
 ---
 
@@ -428,13 +432,13 @@ These are architectural facts that will matter as usage grows — not a roadmap.
 | Path | Purpose |
 |------|---------|
 | `/` | Marketing landing |
-| `/login`, `/signup`, `/auth/callback` | Authentication |
+| `/login`, `/signup`, `/join`, `/auth/callback` | Authentication (`/signup` redirects to `/join`) |
 | `/request-access` | Early access form |
 | `/privacy`, `/terms` | Legal |
 | `/setup-organization`, `/create-organization` | Org onboarding |
 | `/o/:slug`, `/:slug` | Public org sheet |
 | `/o/:org/p/:program`, `/p/:slug` | Public facility/program sheet |
-| `/app/*` | Authenticated application |
+| `/app/*` | Authenticated application (`/app` index → `/app/search`) |
 | `/app/admin/*`, `/app/verifications` | Super-admin tools |
 | `/api/*` | Serverless APIs (Stripe, email, auth hook, OG) |
 
@@ -443,7 +447,7 @@ These are architectural facts that will matter as usage grows — not a roadmap.
 ## Getting Oriented as a New Engineer
 
 1. Read `.env.example` and set local env (never commit secrets).
-2. Run `npm install` and `npm run dev` (Vite on port 8080). `npm test` covers checkout rules, visibility, and payer matching.
+2. Run `npm install` and `npm run dev` (Vite on port 8080). `npm test` covers checkout rules, visibility, payer matching, and the insurance plan-types catalog.
 3. Confirm Supabase URL/anon key, and that the security-bundle SQL files have been applied to your project (see `DATABASE.md` repository SQL map). Deploy SPA/API only after those RPCs exist, or stamp/invite calls 404.
 4. Trace a happy path: login → setup org → add facility → open public `/o/:slug` → run search → verify contracts → open billing.
 5. For server behavior, start from thin `api/*.js` files and follow into `server/**`.
