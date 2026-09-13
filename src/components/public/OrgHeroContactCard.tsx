@@ -125,32 +125,32 @@ export function OrgHeroContactCard({
                 <div className="min-w-0 flex-1 text-left">
                   <p
                     className={cn(
-                      "font-semibold leading-tight truncate text-foreground",
+                      "font-semibold leading-tight break-words text-foreground",
                       lg ? "text-base sm:text-lg" : "text-[15px] sm:text-base",
                     )}
                   >
                     {c.name}
                   </p>
-                  {c.title && (
+                  {c.title ? (
                     <p
                       className={cn(
-                        "text-muted-foreground leading-snug mt-0.5 line-clamp-2",
+                        "text-muted-foreground leading-snug mt-0.5 break-words",
                         lg ? "text-sm" : "text-xs",
                       )}
                     >
                       {c.title}
                     </p>
-                  )}
-                  {c.location && (
+                  ) : null}
+                  {c.location ? (
                     <p
                       className={cn(
-                        "text-muted-foreground mt-0.5 truncate",
+                        "text-muted-foreground mt-0.5 break-words",
                         lg ? "text-xs" : "text-[11px]",
                       )}
                     >
                       {c.location}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
 

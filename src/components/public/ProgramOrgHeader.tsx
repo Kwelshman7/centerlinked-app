@@ -21,10 +21,10 @@ export function ProgramOrgHeader({ org, facilityName, brand, trailing }: Props) 
       className="bg-card/95 backdrop-blur-xl border-b sticky top-0 z-30 print:hidden"
       style={{ borderColor: `${brand}30` }}
     >
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
-        <Link to={orgHref} className="flex items-center gap-2.5 min-w-0 group">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 min-h-14 sm:min-h-16 py-2 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+        <Link to={orgHref} className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 group">
           <div
-            className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-white border shadow-sm overflow-hidden grid place-items-center shrink-0"
+            className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-white border shadow-sm overflow-hidden grid place-items-center shrink-0"
             style={{ borderColor: `${brand}35` }}
           >
             {org.logo_url ? (
@@ -33,7 +33,7 @@ export function ProgramOrgHeader({ org, facilityName, brand, trailing }: Props) 
               <Building2 className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p
               className="font-heading font-bold text-sm sm:text-base truncate transition-opacity group-hover:opacity-80"
               style={{ color: brand }}
@@ -45,7 +45,7 @@ export function ProgramOrgHeader({ org, facilityName, brand, trailing }: Props) 
         </Link>
 
         {trailing ? (
-          <div className="flex items-center gap-2 shrink-0">{trailing}</div>
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">{trailing}</div>
         ) : null}
       </div>
     </header>

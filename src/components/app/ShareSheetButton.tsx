@@ -64,7 +64,9 @@ export function ShareSheetButton({
   if (hideCopy) {
     return (
       <Button type="button" variant={variant} size={size} onClick={share} className={className} style={style}>
-        <Share2 className="h-4 w-4" /> {label}
+        <Share2 className="h-4 w-4" />
+        <span className="sm:hidden">Share</span>
+        <span className="hidden sm:inline">{label}</span>
       </Button>
     );
   }

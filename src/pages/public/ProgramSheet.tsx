@@ -14,6 +14,7 @@ import {
 import { OrgFooter } from "@/components/public/OrgFooter";
 import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
 import { ShareSheetButton } from "@/components/app/ShareSheetButton";
+import { MakeReferralButton } from "@/components/public/MakeReferralButton";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import {
   programDisplayPath,
@@ -204,6 +205,34 @@ export default function ProgramSheet() {
       />
     ) : null;
 
+  const referName = facility.bd_contact_name || org?.bd_contact_name;
+  const referPhone = facility.bd_contact_phone || org?.bd_contact_phone;
+  const referEmail = facility.bd_contact_email || org?.bd_contact_email;
+  const hasReferContact = !!(sanitizePhone(referPhone) || referEmail?.trim());
+
+  const referAction = hasReferContact ? (
+    <MakeReferralButton
+      name={referName}
+      phone={referPhone}
+      email={referEmail}
+      organizationId={org?.id}
+      variant={shareAction ? "outline" : "default"}
+      style={
+        shareAction
+          ? undefined
+          : { backgroundColor: brand, borderColor: brand, color: "#ffffff" }
+      }
+    />
+  ) : null;
+
+  const headerActions =
+    referAction || shareAction ? (
+      <>
+        {referAction}
+        {shareAction}
+      </>
+    ) : null;
+
   return (
     <div className="min-h-screen bg-muted/30 overflow-x-hidden">
       {org ? (
@@ -211,13 +240,13 @@ export default function ProgramSheet() {
           org={org}
           facilityName={facility.name}
           brand={brand}
-          trailing={shareAction}
+          trailing={headerActions}
         />
       ) : (
         <header className="bg-slate-900 text-white border-b border-slate-800 print:hidden">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
             <span className="font-heading font-bold truncate">{facility.name}</span>
-            {shareAction}
+            {headerActions}
           </div>
         </header>
       )}
@@ -288,13 +317,7 @@ export default function ProgramSheet() {
           orgLinkLabel="View More"
           showExportPdf
           onExportPdf={handleExportPdf}
-          showReferSlot={
-            !!(
-              sanitizePhone(facility.bd_contact_phone || org?.bd_contact_phone) ||
-              facility.bd_contact_email ||
-              org?.bd_contact_email
-            )
-          }
+          showReferSlot={hasReferContact}
         />
       </main>
     </div>

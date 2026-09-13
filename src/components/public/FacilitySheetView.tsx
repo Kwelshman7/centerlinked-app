@@ -4,9 +4,17 @@ import { Button } from "@/components/ui/button";
 import {
   Building2,
   MapPin,
+  MapPinned,
   ChevronRight,
   User,
   Award,
+  BadgeCheck,
+  ShieldCheck,
+  ClipboardList,
+  HeartPulse,
+  Brain,
+  Users,
+  Sparkles,
   Check,
   Pencil,
   ImageIcon,
@@ -14,6 +22,7 @@ import {
   ChevronLeft,
   Phone,
   Mail,
+  type LucideIcon,
 } from "lucide-react";
 import { EditPhotosDialog } from "@/components/public/FacilityPhotoGallery";
 import { MobileContactBar, mobileContactBarPadding } from "@/components/public/MobileContactBar";
@@ -122,19 +131,29 @@ function fmtDate(d: string | null | undefined) {
 
 function SectionHeading({
   title,
+  icon: Icon,
   headerExtra,
   brand,
 }: {
   title: string;
+  icon: LucideIcon;
   headerExtra?: ReactNode;
   brand?: string;
 }) {
   return (
     <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-3.5">
       <div className="flex items-center gap-2.5 min-w-0">
-        {brand ? (
-          <span className="h-5 w-[3px] rounded-full shrink-0" style={{ background: brand }} aria-hidden />
-        ) : null}
+        <span
+          className="h-8 w-8 rounded-lg grid place-items-center shrink-0 border"
+          style={{
+            backgroundColor: brand ? `${brand}14` : undefined,
+            color: brand,
+            borderColor: brand ? `${brand}24` : undefined,
+          }}
+          aria-hidden
+        >
+          <Icon className="h-4 w-4" strokeWidth={2.25} />
+        </span>
         <h2 className="font-heading text-base sm:text-[17px] font-bold tracking-tight text-foreground">
           {title}
         </h2>
@@ -144,20 +163,35 @@ function SectionHeading({
   );
 }
 
+const PROGRAM_SECTION_ICONS: Record<string, LucideIcon> = {
+  conditions: HeartPulse,
+  therapies: Brain,
+  whoWeTreat: Users,
+  amenities: Sparkles,
+};
+
 function ProgramTagCard({
   title,
   items,
   brand,
+  icon: Icon,
 }: {
   title: string;
   items: string[];
   brand: string;
+  icon?: LucideIcon;
 }) {
   if (items.length === 0) return null;
   return (
     <div className="rounded-xl border border-border/70 bg-muted/25 p-3.5 sm:p-4 min-w-0">
       <div className="flex items-center gap-2 mb-3">
-        <span className="h-4 w-[3px] rounded-full shrink-0" style={{ background: brand }} aria-hidden />
+        {Icon ? (
+          <span className="shrink-0" style={{ color: brand }} aria-hidden>
+            <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
+          </span>
+        ) : (
+          <span className="h-4 w-[3px] rounded-full shrink-0" style={{ background: brand }} aria-hidden />
+        )}
         <h3 className="font-heading text-[13px] sm:text-sm font-bold tracking-tight text-foreground">
           {title}
         </h3>
@@ -322,15 +356,14 @@ export function FacilitySheetView({
               <ExpandableText text={programText} brand={brand} clampLines={3} className="mt-3 min-w-0" />
             ) : null}
 
-            {accreditations.length > 0 && (
+            {facility.levels_of_care?.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {accreditations.map((item) => (
+                {facility.levels_of_care.map((level) => (
                   <span
-                    key={item}
-                    className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium text-foreground/90"
+                    key={level}
+                    className="inline-flex max-w-full items-center rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium text-foreground/90 leading-snug break-words"
                   >
-                    <Award className="h-3 w-3 shrink-0" style={{ color: brand }} aria-hidden />
-                    {item}
+                    {level}
                   </span>
                 ))}
               </div>
@@ -403,57 +436,45 @@ export function FacilitySheetView({
       {/* Unified details */}
       {(hasFactsStrip || hasProgramTags || hasServiceArea || repName || repEmail || repPhone) && (
         <section className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden lg:overflow-visible">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] xl:grid-cols-[minmax(0,1fr)_340px] print:grid-cols-1">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:grid-cols-[minmax(0,1fr)_400px] print:grid-cols-1">
             <div className="min-w-0 divide-y divide-border/50 lg:rounded-l-2xl lg:overflow-hidden lg:border-r lg:border-border/50 print:border-0 print:rounded-none">
               {hasFactsStrip && (
-                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5 grid gap-6">
-                  <div className="min-w-0">
-                    <SectionHeading title="In-Network" headerExtra={contractsHeaderExtra} brand={brand} />
-                    {inNetworkPayers.length > 0 ? (
-                      <ul className="grid grid-cols-2 xl:grid-cols-3 gap-1 print:grid-cols-3">
-                        {inNetworkPayers.map((c) => {
-                          const types = formatPlanTypeList(sanitizePlanTypes(c.plan_types));
-                          const label = types ? `${c.payer_name} — ${types}` : c.payer_name;
-                          return (
-                            <li key={c.id} className="min-w-0">
-                              <span
-                                title={label}
-                                className="block truncate whitespace-nowrap rounded-md border border-border/50 bg-background px-2 py-1 text-[11px] sm:text-xs font-semibold"
-                              >
-                                {c.payer_name}
-                                {types ? (
-                                  <span className="font-normal text-muted-foreground"> — {types}</span>
-                                ) : null}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">None listed</p>
-                    )}
-                  </div>
-
-                  {facility.levels_of_care?.length > 0 && (
-                    <div className="min-w-0">
-                      <SectionHeading title="Care Levels" brand={brand} />
-                      <ul className="flex flex-wrap gap-1.5">
-                        {facility.levels_of_care.map((level) => (
-                          <li key={level} className="min-w-0">
-                            <span className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-2.5 py-1 text-[12px] sm:text-xs font-medium text-foreground leading-snug break-words">
-                              {level}
+                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
+                  <SectionHeading
+                    title="In-Network"
+                    icon={ShieldCheck}
+                    headerExtra={contractsHeaderExtra}
+                    brand={brand}
+                  />
+                  {inNetworkPayers.length > 0 ? (
+                    <ul className="grid grid-cols-2 xl:grid-cols-3 gap-1 print:grid-cols-3">
+                      {inNetworkPayers.map((c) => {
+                        const types = formatPlanTypeList(sanitizePlanTypes(c.plan_types));
+                        const label = types ? `${c.payer_name} — ${types}` : c.payer_name;
+                        return (
+                          <li key={c.id} className="min-w-0">
+                            <span
+                              title={label}
+                              className="block truncate whitespace-nowrap rounded-md border border-border/50 bg-background px-2 py-1 text-[11px] sm:text-xs font-semibold"
+                            >
+                              {c.payer_name}
+                              {types ? (
+                                <span className="font-normal text-muted-foreground"> — {types}</span>
+                              ) : null}
                             </span>
                           </li>
-                        ))}
-                      </ul>
-                    </div>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">None listed</p>
                   )}
                 </div>
               )}
 
               {hasProgramTags && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Program Details" brand={brand} />
+                  <SectionHeading title="Program Details" icon={ClipboardList} brand={brand} />
                   <div className="grid sm:grid-cols-2 gap-3">
                     {PROGRAM_SECTIONS.map(({ kind, title }) => (
                       <ProgramTagCard
@@ -461,15 +482,32 @@ export function FacilitySheetView({
                         title={title}
                         items={programTags[kind]}
                         brand={brand}
+                        icon={PROGRAM_SECTION_ICONS[kind]}
                       />
                     ))}
                   </div>
                 </div>
               )}
 
+              {accreditations.length > 0 && (
+                <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
+                  <SectionHeading title="Accreditations" icon={BadgeCheck} brand={brand} />
+                  <ul className="flex flex-wrap gap-1.5">
+                    {accreditations.map((item) => (
+                      <li key={item} className="min-w-0">
+                        <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-[12px] sm:text-xs font-medium text-foreground leading-snug break-words">
+                          <Award className="h-3 w-3 shrink-0" style={{ color: brand }} aria-hidden />
+                          {item}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {hasServiceArea && (
                 <div className="print-keep-together px-4 sm:px-6 py-4 sm:py-5">
-                  <SectionHeading title="Service Area" brand={brand} />
+                  <SectionHeading title="Service Area" icon={MapPinned} brand={brand} />
                   <div className="grid grid-cols-1 xl:grid-cols-[160px_1fr] gap-4 print:grid-cols-1">
                     <a
                       href={directionsHref}
