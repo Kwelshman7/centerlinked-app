@@ -54,6 +54,8 @@ export interface FacilitySheetData {
   bd_contact_name: string | null;
   bd_contact_phone: string | null;
   bd_contact_email: string | null;
+  bd_contact_title?: string | null;
+  bd_contact_verified_at?: string | null;
   description?: string | null;
   tagline?: string | null;
   updated_at?: string | null;
@@ -258,11 +260,17 @@ export function FacilitySheetView({
   const displayPhone = formatPhoneDisplay(repPhone);
   const hasContact = !!(cleanPhone || repEmail);
   const hasBdForPdf = !!(repName?.trim() || cleanPhone || repEmail);
-  const repTitle = facilityHasOwnBd
-    ? "Business Development Representative"
-    : org?.bd_contact_name
-      ? "Organization Business Development Contact"
-      : "Business Development Representative";
+  const repTitle = facility.bd_contact_title?.trim()
+    ? facility.bd_contact_title.trim()
+    : facilityHasOwnBd
+      ? "Business Development Representative"
+      : org?.bd_contact_name
+        ? "Organization Business Development Contact"
+        : "Business Development Representative";
+  const showUnverified =
+    mode === "internal" &&
+    facilityHasOwnBd &&
+    !facility.bd_contact_verified_at?.trim();
 
   /** Mobile sticky bar matches org pages — single Refer a Patient contact sheet. */
   const showMobileActionBar = hasContact;
@@ -561,6 +569,7 @@ export function FacilitySheetView({
             {/* Desktop sidebar contact — sits at top of section and pops forward */}
             <aside className="hidden lg:block print:hidden relative z-10 lg:sticky lg:top-20 lg:self-start lg:rounded-r-2xl px-4 pt-4 pb-6 xl:px-5 xl:pt-5">
               {hasContact ? (
+                <>
                 <OrgHeroContactCard
                   contacts={[
                     {
@@ -578,6 +587,10 @@ export function FacilitySheetView({
                   size="lg"
                   className="shadow-lg ring-1"
                 />
+                {showUnverified ? (
+                  <p className="mt-2 text-xs text-amber-700">Contact not yet verified</p>
+                ) : null}
+                </>
               ) : (
                 <div
                   className="rounded-xl border bg-card p-5 sm:p-6 space-y-3 shadow-lg ring-1 ring-black/5 min-w-0"

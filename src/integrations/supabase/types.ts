@@ -68,6 +68,114 @@ export type Database = {
         }
         Relationships: []
       }
+      bd_representatives: {
+        Row: {
+          active: boolean
+          availability_status: string
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          internal_notes: string | null
+          last_verified_at: string | null
+          organization_id: string | null
+          organization_name: string | null
+          payer_expertise: string[]
+          phone: string | null
+          preferred_contact_method: string | null
+          states_covered: string[]
+          territory: string | null
+          title: string | null
+          updated_at: string
+          verification_method: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          availability_status?: string
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          internal_notes?: string | null
+          last_verified_at?: string | null
+          organization_id?: string | null
+          organization_name?: string | null
+          payer_expertise?: string[]
+          phone?: string | null
+          preferred_contact_method?: string | null
+          states_covered?: string[]
+          territory?: string | null
+          title?: string | null
+          updated_at?: string
+          verification_method?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          availability_status?: string
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          internal_notes?: string | null
+          last_verified_at?: string | null
+          organization_id?: string | null
+          organization_name?: string | null
+          payer_expertise?: string[]
+          phone?: string | null
+          preferred_contact_method?: string | null
+          states_covered?: string[]
+          territory?: string | null
+          title?: string | null
+          updated_at?: string
+          verification_method?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      facility_bd_assignments: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          is_primary: boolean
+          representative_id: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          is_primary?: boolean
+          representative_id: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          is_primary?: boolean
+          representative_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_bd_assignments_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_bd_assignments_representative_id_fkey"
+            columns: ["representative_id"]
+            isOneToOne: false
+            referencedRelation: "bd_representatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approved_personal_emails: {
         Row: {
           approved_by: string | null
@@ -228,6 +336,9 @@ export type Database = {
           bd_contact_email: string | null
           bd_contact_name: string | null
           bd_contact_phone: string | null
+          bd_contact_title: string | null
+          bd_contact_verified_at: string | null
+          bd_contact_verified_by: string | null
           capacity: number | null
           city: string | null
           contracts_verified_at: string | null
@@ -272,6 +383,9 @@ export type Database = {
           bd_contact_email?: string | null
           bd_contact_name?: string | null
           bd_contact_phone?: string | null
+          bd_contact_title?: string | null
+          bd_contact_verified_at?: string | null
+          bd_contact_verified_by?: string | null
           capacity?: number | null
           city?: string | null
           contracts_verified_at?: string | null
@@ -316,6 +430,9 @@ export type Database = {
           bd_contact_email?: string | null
           bd_contact_name?: string | null
           bd_contact_phone?: string | null
+          bd_contact_title?: string | null
+          bd_contact_verified_at?: string | null
+          bd_contact_verified_by?: string | null
           capacity?: number | null
           city?: string | null
           contracts_verified_at?: string | null

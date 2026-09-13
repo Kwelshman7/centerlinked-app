@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
 import { FacilityBdRepFields, BdContactValue } from "./FacilityBdRepFields";
+import { syncPrimaryBdAssignment } from "@/lib/admin-bd";
 
 interface Props {
   facilityId: string;
@@ -71,6 +72,19 @@ export function AssignFacilityBdDialog({
         .eq("id", facilityId);
       if (error) {
         toast.error(error.message);
+        return;
+      }
+      const synced = await syncPrimaryBdAssignment({
+        facilityId,
+        organizationId,
+        name: value.bd_contact_name.trim() || null,
+        phone: value.bd_contact_phone.trim() || null,
+        email: value.bd_contact_email.trim() || null,
+      });
+      if (!synced.ok) {
+        toast.error(`Saved on the listing, but the reusable BD record failed: ${synced.error}`);
+        setOpen(false);
+        onSaved();
         return;
       }
       toast.success(

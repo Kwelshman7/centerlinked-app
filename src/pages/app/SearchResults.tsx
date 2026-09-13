@@ -48,6 +48,11 @@ type FacilityFields = {
   contracts_verified_at: string | null;
   verification_frozen: boolean;
   self_pay_only?: boolean | null;
+  bd_contact_name?: string | null;
+  bd_contact_phone?: string | null;
+  bd_contact_email?: string | null;
+  bd_contact_title?: string | null;
+  bd_contact_verified_at?: string | null;
   organization_id: string;
   organizations: OrgFields | null;
 };
@@ -64,7 +69,7 @@ type ContractFields = {
 type ContractRow = ContractFields & { facilities: FacilityFields | null };
 
 const FACILITY_SELECT =
-  "id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,self_pay_only,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state)";
+  "id,name,slug,city,state,levels_of_care,image_urls,verification_status,contracts_verified_at,verification_frozen,self_pay_only,bd_contact_name,bd_contact_phone,bd_contact_email,bd_contact_title,bd_contact_verified_at,organization_id,organizations(id,name,slug,logo_url,hq_city,hq_state)";
 const CONTRACT_SELECT =
   "payer_id,payer_name,plan_types,in_network,contract_status,verified_at";
 
@@ -90,6 +95,11 @@ function toFacilityCard(
     insurance_match_status: showMatch ? match.status : undefined,
     insurance_verified_at: showMatch ? match.verifiedAt : null,
     levels_of_care: f.levels_of_care ?? [],
+    bd_contact_name: f.bd_contact_name ?? null,
+    bd_contact_phone: f.bd_contact_phone ?? null,
+    bd_contact_email: f.bd_contact_email ?? null,
+    bd_contact_title: f.bd_contact_title ?? null,
+    bd_contact_verified_at: f.bd_contact_verified_at ?? null,
   };
 }
 

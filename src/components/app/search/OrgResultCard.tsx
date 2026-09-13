@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { programPublicPath } from "@/lib/public-urls";
 import { formatPlanTypeList } from "@/lib/plan-types";
 import { InsuranceMatchBadge } from "@/components/app/search/InsuranceMatchBadge";
+import { BdContactLine } from "@/components/app/search/BdContactLine";
 import type { InsuranceMatchStatus } from "@/lib/insurance-contract-status";
 
 export interface OrgSearchFacility {
@@ -19,6 +20,11 @@ export interface OrgSearchFacility {
   insurance_match_status?: InsuranceMatchStatus;
   insurance_verified_at?: string | null;
   levels_of_care?: string[];
+  bd_contact_name?: string | null;
+  bd_contact_phone?: string | null;
+  bd_contact_email?: string | null;
+  bd_contact_title?: string | null;
+  bd_contact_verified_at?: string | null;
 }
 
 export interface OrgSearchResult {
@@ -283,10 +289,8 @@ export function SearchFacilityCard({
     : null;
 
   return (
-    <Link
-      to={href}
-      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-primary/40 hover:shadow-md"
-    >
+    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-primary/40 hover:shadow-md">
+      <Link to={href} className="flex min-h-0 flex-1 flex-col">
       <div className="relative aspect-[16/10] overflow-hidden bg-muted/40">
         {imageUrl ? (
           <img
@@ -334,6 +338,16 @@ export function SearchFacilityCard({
           </span>
         ) : null}
       </div>
-    </Link>
+      </Link>
+      <div className="border-t border-border/50 px-3.5 py-2">
+        <BdContactLine
+          name={f.bd_contact_name}
+          phone={f.bd_contact_phone}
+          email={f.bd_contact_email}
+          title={f.bd_contact_title}
+          verifiedAt={f.bd_contact_verified_at}
+        />
+      </div>
+    </article>
   );
 }

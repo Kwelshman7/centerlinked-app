@@ -19,6 +19,9 @@ import {
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { ShareSheetButton } from "@/components/app/ShareSheetButton";
+import { listFacilityBdAssignments } from "@/lib/admin-bd";
+import { Card } from "@/components/ui/card";
+import { BdContactLine } from "@/components/app/search/BdContactLine";
 
 interface Facility {
   id: string;
@@ -45,6 +48,8 @@ interface Facility {
   bd_contact_name: string | null;
   bd_contact_phone: string | null;
   bd_contact_email: string | null;
+  bd_contact_title?: string | null;
+  bd_contact_verified_at?: string | null;
   contracts_verified_at: string | null;
   verification_frozen: boolean;
   treatment_focus: string | null;
@@ -55,6 +60,16 @@ interface Facility {
   updated_at: string | null;
   hidden_from_org_page?: boolean;
 }
+interface ExtraRep {
+  id: string;
+  full_name: string;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  availability_status: string | null;
+  territory: string | null;
+}
+
 interface Contract {
   id: string;
   payer_name: string;
@@ -70,6 +85,7 @@ export default function FacilityDetail() {
   const [facility, setFacility] = useState<Facility | null>(null);
   const [org, setOrg] = useState<SheetOrg | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [extraReps, setExtraReps] = useState<ExtraRep[]>([]);
   const [fixingSlug, setFixingSlug] = useState(false);
   const [loading, setLoading] = useState(true);
   const isMine = !!facility && profile?.organization_id === facility.organization_id;
@@ -115,6 +131,26 @@ export default function FacilityDetail() {
       plan_types: row.plan_types ?? [],
     }));
     setContracts(list);
+    const { data: assignments } = await listFacilityBdAssignments(id);
+    const extras: ExtraRep[] = [];
+    for (const row of assignments ?? []) {
+      if (row.is_primary) continue;
+      const rep = Array.isArray(row.bd_representatives)
+        ? row.bd_representatives[0]
+        : row.bd_representatives;
+      if (!rep || typeof rep !== "object" || !("full_name" in rep)) continue;
+      extras.push({
+        id: row.id,
+        full_name: String(rep.full_name ?? ""),
+        title: "title" in rep ? (rep.title as string | null) : null,
+        email: "email" in rep ? (rep.email as string | null) : null,
+        phone: "phone" in rep ? (rep.phone as string | null) : null,
+        availability_status:
+          "availability_status" in rep ? (rep.availability_status as string | null) : null,
+        territory: "territory" in rep ? (rep.territory as string | null) : null,
+      });
+    }
+    setExtraReps(extras);
     setLoading(false);
   };
 
@@ -288,7 +324,31 @@ export default function FacilityDetail() {
         coverImageUrl={org?.cover_image_url ?? null}
       />
 
-
+      {extraReps.length > 0 && (
+        <Card className="space-y-3 p-4">
+          <h2 className="font-heading text-sm font-semibold">Additional BD contacts</h2>
+          <p className="text-xs text-muted-foreground">
+            Shown to signed-in referral partners. Internal notes are never displayed here.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {extraReps.map((rep) => (
+              <div key={rep.id} className="rounded-lg border border-border/60 p-3">
+                <BdContactLine
+                  name={rep.full_name}
+                  phone={rep.phone}
+                  email={rep.email}
+                  title={rep.title}
+                />
+                {rep.territory || rep.availability_status ? (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    {[rep.territory, rep.availability_status].filter(Boolean).join(" · ")}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

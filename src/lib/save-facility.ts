@@ -3,6 +3,7 @@ import type { FacilityContractDraft, FacilityDraft } from "@/components/app/faci
 import { uniqueAccreditations } from "@/lib/accreditations";
 import { sanitizePlanTypes } from "@/lib/plan-types";
 import { resolveStateCode } from "@/lib/us-states";
+import { syncPrimaryBdAssignment } from "@/lib/admin-bd";
 
 export type ContractsMode = "all" | "in_network" | "none";
 
@@ -98,6 +99,13 @@ export async function saveFacilityWithContracts(args: {
   }
 
   const id = String(data);
+  await syncPrimaryBdAssignment({
+    facilityId: id,
+    organizationId,
+    name: draft.bd_contact_name || null,
+    phone: draft.bd_contact_phone || null,
+    email: draft.bd_contact_email || null,
+  });
   const { data: row } = await supabase.from("facilities").select("slug").eq("id", id).maybeSingle();
   return { ok: true, facilityId: id, slug: row?.slug ?? null };
 }
