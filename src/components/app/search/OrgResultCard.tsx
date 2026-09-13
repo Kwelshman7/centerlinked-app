@@ -11,6 +11,7 @@ export interface OrgSearchFacility {
   slug: string | null;
   city: string | null;
   state: string | null;
+  image_urls?: string[];
   matched_payer?: string;
   matched_plan_types?: string[];
   levels_of_care?: string[];
@@ -198,5 +199,116 @@ export function OrgResultGrid({
     >
       {children}
     </div>
+  );
+}
+
+/** Selectable row for the search-results organization list. */
+export function OrgListItem({
+  o,
+  selected,
+  onSelect,
+}: {
+  o: OrgSearchResult;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const matchLabel = `${o.facilities.length} ${o.facilities.length === 1 ? "match" : "matches"}`;
+  const place = [o.hq_city, o.hq_state].filter(Boolean).join(", ");
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={cn(
+        "flex w-full min-w-[16rem] shrink-0 items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors lg:min-w-0",
+        selected
+          ? "border-primary/50 bg-primary/10 shadow-sm"
+          : "border-border/60 bg-card hover:border-primary/30 hover:bg-accent/50",
+      )}
+    >
+      <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg border border-border/60 bg-muted/40">
+        {o.logo_url ? (
+          <img src={o.logo_url} alt="" className="max-h-full max-w-full object-contain p-1" />
+        ) : (
+          <Building2 className="h-5 w-5 text-muted-foreground/70" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-heading text-sm font-semibold leading-snug">{o.org_name}</p>
+        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          {place || matchLabel}
+          {place ? ` · ${matchLabel}` : ""}
+        </p>
+      </div>
+      {o.in_your_network ? (
+        <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
+          <Star className="h-2.5 w-2.5 fill-current" aria-hidden />
+          Pref
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+/** Facility tile shown after an organization is selected in search results. */
+export function SearchFacilityCard({
+  facility: f,
+  orgSlug,
+}: {
+  facility: OrgSearchFacility;
+  orgSlug: string | null;
+}) {
+  const href = f.slug ? programPublicPath(f.slug, orgSlug) : `/app/facilities/${f.id}`;
+  const place = [f.city, f.state].filter(Boolean).join(", ");
+  const imageUrl = f.image_urls?.[0] ?? null;
+  const levels = f.levels_of_care ?? [];
+  const payerLabel = f.matched_payer
+    ? f.matched_plan_types?.length
+      ? `${f.matched_payer} — ${formatPlanTypeList(f.matched_plan_types)}`
+      : f.matched_payer
+    : null;
+
+  return (
+    <Link
+      to={href}
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-primary/40 hover:shadow-md"
+    >
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted/40">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center text-muted-foreground">
+            <Building2 className="h-10 w-10" />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
+        <div className="min-w-0">
+          <h3 className="font-heading text-sm font-bold leading-snug line-clamp-2 group-hover:text-primary">
+            {f.name}
+          </h3>
+          {place ? (
+            <p className="mt-1 inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{place}</span>
+            </p>
+          ) : null}
+        </div>
+        {levels.length > 0 ? (
+          <p className="line-clamp-2 text-[11px] text-foreground/75">{levels.slice(0, 3).join(" · ")}</p>
+        ) : null}
+        {payerLabel ? (
+          <span className="mt-auto self-start truncate rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+            {payerLabel}
+          </span>
+        ) : null}
+      </div>
+    </Link>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search as SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { PLAN_TYPES, parsePlanTypeParam } from "@/lib/plan-types";
 import { US_STATES } from "@/lib/us-states";
 import { cn } from "@/lib/utils";
 
-type SearchFormVariant = "hero" | "inline";
+type SearchFormVariant = "hero" | "inline" | "toolbar";
 
 function FieldShell({
   label,
@@ -47,6 +47,15 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   const [city, setCity] = useState(params.get("city") ?? "");
   const [loc, setLoc] = useState(params.get("loc") ?? "");
 
+  useEffect(() => {
+    setPayerId(params.get("payerId"));
+    setPayerName(params.get("payerName") ?? "");
+    setPlanType(parsePlanTypeParam(params.get("planType")));
+    setState(params.get("state") ?? "");
+    setCity(params.get("city") ?? "");
+    setLoc(params.get("loc") ?? "");
+  }, [params]);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const q = new URLSearchParams();
@@ -60,20 +69,26 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   };
 
   const isHero = variant === "hero";
+  const isToolbar = variant === "toolbar";
   const control = isHero
     ? "h-12 rounded-xl border-border/80 bg-background text-base sm:text-sm shadow-none"
-    : undefined;
+    : isToolbar
+      ? "h-10 rounded-lg border-border/80 bg-background text-sm shadow-none"
+      : undefined;
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className={cn(!isToolbar && "space-y-4")}>
       <div
         className={cn(
-          isHero
-            ? "grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-4 lg:grid-cols-12 lg:gap-x-4 lg:gap-y-4"
-            : "space-y-4",
+          isHero && "grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-5 lg:grid-cols-12 lg:gap-x-5 lg:gap-y-5",
+          isToolbar && "grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-4 lg:grid-cols-12 lg:items-end",
+          !isHero && !isToolbar && "space-y-4",
         )}
       >
-        <FieldShell label="Insurance" className={cn(isHero && "col-span-2 lg:col-span-12")}>
+        <FieldShell
+          label="Insurance"
+          className={cn(isHero && "col-span-2 lg:col-span-12", isToolbar && "col-span-2 lg:col-span-6")}
+        >
           <PayerCombobox
             payerId={payerId}
             payerName={payerName}
@@ -87,7 +102,11 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           />
         </FieldShell>
 
-        <FieldShell label="Plan type" htmlFor="search-plan-type" className={cn(isHero && "col-span-1 lg:col-span-3")}>
+        <FieldShell
+          label="Plan type"
+          htmlFor="search-plan-type"
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+        >
           <Select
             value={planType || "_any"}
             onValueChange={(v) => setPlanType(v === "_any" ? "" : parsePlanTypeParam(v))}
@@ -106,7 +125,11 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           </Select>
         </FieldShell>
 
-        <FieldShell label="Level of care" htmlFor="search-loc" className={cn(isHero && "col-span-1 lg:col-span-3")}>
+        <FieldShell
+          label="Level of care"
+          htmlFor="search-loc"
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+        >
           <Select value={loc || "_any"} onValueChange={(v) => setLoc(v === "_any" ? "" : v)}>
             <SelectTrigger id="search-loc" className={control}>
               <SelectValue placeholder="Any level of care" />
@@ -122,7 +145,11 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           </Select>
         </FieldShell>
 
-        <FieldShell label="State" htmlFor="search-state" className={cn(isHero && "col-span-1 lg:col-span-2")}>
+        <FieldShell
+          label="State"
+          htmlFor="search-state"
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+        >
           <Select value={state || "_any"} onValueChange={(v) => setState(v === "_any" ? "" : v)}>
             <SelectTrigger id="search-state" className={control}>
               <SelectValue placeholder="Any state" />
@@ -138,7 +165,11 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           </Select>
         </FieldShell>
 
-        <FieldShell label="City" htmlFor="search-city" className={cn(isHero && "col-span-1 lg:col-span-2")}>
+        <FieldShell
+          label="City"
+          htmlFor="search-city"
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+        >
           <Input
             id="search-city"
             value={city}
@@ -148,13 +179,23 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           />
         </FieldShell>
 
-        {isHero ? (
-          <div className="flex items-end col-span-2 lg:col-span-2 pt-1">
+        {isHero || isToolbar ? (
+          <div
+            className={cn(
+              "flex items-end",
+              isHero && "col-span-2 pt-1 lg:col-span-12",
+              isToolbar && "col-span-2 lg:col-span-6 lg:justify-end",
+            )}
+          >
             <Button
               type="submit"
-              variant="hero"
-              size="lg"
-              className="h-12 w-full rounded-xl text-base font-semibold sm:text-sm"
+              variant={isHero ? "hero" : "default"}
+              size={isToolbar ? "sm" : "lg"}
+              className={cn(
+                "w-full font-semibold",
+                isHero && "h-12 rounded-xl text-base sm:text-sm",
+                isToolbar && "h-10 shrink-0 whitespace-nowrap px-6 lg:w-auto lg:min-w-[8.5rem]",
+              )}
             >
               <SearchIcon className="h-4 w-4" />
               Search
@@ -163,7 +204,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         ) : null}
       </div>
 
-      {!isHero ? (
+      {!isHero && !isToolbar ? (
         <Button type="submit" size="lg" className="w-full sm:w-auto">
           <SearchIcon className="h-4 w-4" /> Search
         </Button>

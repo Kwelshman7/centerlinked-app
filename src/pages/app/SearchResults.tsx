@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search as SearchIcon } from "lucide-react";
+import { ArrowUpRight, Building2, Search as SearchIcon } from "lucide-react";
 import { SearchForm } from "@/components/app/search/SearchForm";
 import {
-  OrgResultCard,
-  OrgResultGrid,
+  OrgListItem,
   OrgSearchResult,
+  SearchFacilityCard,
 } from "@/components/app/search/OrgResultCard";
 import { toast } from "sonner";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
@@ -61,7 +61,7 @@ export default function SearchResults() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [truncated, setTruncated] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const { partnerOrgIds } = useReferralNetwork();
 
   const payerId = params.get("payerId");
@@ -177,6 +177,7 @@ export default function SearchResults() {
             slug: f.slug,
             city: f.city,
             state: f.state,
+            image_urls: f.image_urls ?? [],
             matched_payer: payer?.name ?? row.payer_name,
             matched_plan_types: sanitizePlanTypes(row.plan_types),
             levels_of_care: f.levels_of_care ?? [],
@@ -211,100 +212,144 @@ export default function SearchResults() {
     [baseResults, partnerOrgIds],
   );
 
-  const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
-
-  const chips = useMemo(() => {
-    const list: string[] = [];
-    if (payerName) list.push(payerName);
-    if (planType) list.push(planTypeShortLabel(planType));
-    if (loc) list.push(loc);
-    const place = [city, state].filter(Boolean).join(", ");
-    if (place) list.push(place);
-    return list;
-  }, [payerName, planType, loc, city, state]);
-
   useEffect(() => {
-    setEditing(false);
-  }, [payerId, planType, state, city, loc]);
+    if (results.length === 0) {
+      setSelectedOrgId(null);
+      return;
+    }
+    setSelectedOrgId((current) =>
+      current && results.some((r) => r.org_id === current) ? current : results[0].org_id,
+    );
+  }, [results]);
+
+  const selectedOrg = results.find((r) => r.org_id === selectedOrgId) ?? null;
+  const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
+  const orgHref = selectedOrg?.org_slug ? `/o/${selectedOrg.org_slug}` : null;
+
+  const resultCount = loading
+    ? "Searching…"
+    : loadError
+      ? "Could not load results"
+      : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`;
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <div className="sticky top-12 lg:top-0 z-20 -mx-4 sm:-mx-6 lg:mx-0 bg-muted/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border-b border-border/60 lg:border-0 px-4 sm:px-6 lg:px-0 py-2.5 lg:py-0">
-        <div className="flex items-center justify-between gap-2">
-          <Button asChild variant="ghost" size="sm" className="shrink-0 -ml-2">
-            <Link to="/app/search">
-              <ArrowLeft className="h-4 w-4" /> New search
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" className="shrink-0" onClick={() => setEditing((v) => !v)}>
-            <SearchIcon className="h-4 w-4" /> {editing ? "Hide" : "Edit"}
-          </Button>
+    <div className="space-y-5">
+      <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="font-heading flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
+            <SearchIcon className="h-6 w-6 text-primary" />
+            Search the referral network
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {summary}
+            {loading || loadError ? "" : ` · ${resultCount}`}
+          </p>
         </div>
-        {chips.length > 0 ? (
-          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {chips.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => setEditing(true)}
-                className="shrink-0 rounded-full border border-border/70 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground"
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      </header>
 
-      {editing && (
-        <Card className="p-4 sm:p-5 max-w-3xl">
-          <SearchForm variant="inline" />
-        </Card>
-      )}
+      <Card className="p-4 shadow-sm sm:p-5">
+        <SearchForm variant="toolbar" />
+      </Card>
 
-      <div>
-        <h1 className="font-heading text-lg sm:text-xl font-semibold tracking-tight">{summary}</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          {loading
-            ? "Searching…"
-            : loadError
-              ? "Could not load results"
-              : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`}
+      {truncated && !loading && !loadError ? (
+        <p className="text-xs text-amber-700">
+          Showing a partial match. Narrow insurance, state, or level of care to see everything.
         </p>
-        {truncated && !loading && !loadError ? (
-          <p className="text-xs text-amber-700 mt-1">
-            Showing a partial match (500 contracts). Narrow insurance, state, or level of care to see everything.
-          </p>
-        ) : null}
-      </div>
+      ) : null}
 
-      {loading ? (
-        <OrgResultGrid>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[280px] sm:h-[320px] rounded-xl" />
-          ))}
-        </OrgResultGrid>
-      ) : loadError ? (
-        <Card className="p-8 text-center space-y-2">
-          <p className="font-medium">Search couldn’t load</p>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Check your connection and try again. This is not an empty result set.
-          </p>
-        </Card>
-      ) : results.length > 0 ? (
-        <OrgResultGrid>
-          {results.map((o) => (
-            <OrgResultCard key={o.org_id} o={o} collapsibleFacilities />
-          ))}
-        </OrgResultGrid>
-      ) : (
-        <Card className="p-8 text-center space-y-2">
-          <p className="font-medium">No verified organizations found</p>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Try expanding the city, changing the level of care, or checking nearby states.
-          </p>
-        </Card>
-      )}
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card lg:min-h-[36rem] lg:flex-row">
+        <aside className="shrink-0 border-b border-border/60 bg-card lg:flex lg:w-80 lg:flex-col lg:border-b-0 lg:border-r xl:w-96">
+          <div className="px-4 py-3">
+            <h2 className="font-heading text-sm font-semibold tracking-tight">Organizations</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">{resultCount}</p>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto px-4 pb-3 lg:max-h-[calc(100dvh-22rem)] lg:flex-1 lg:flex-col lg:overflow-y-auto lg:px-4 lg:pb-4">
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-[4.25rem] w-64 shrink-0 rounded-xl lg:w-full" />
+              ))
+            ) : loadError ? (
+              <Card className="w-full p-4 text-sm text-muted-foreground">Search couldn’t load. Try again.</Card>
+            ) : results.length > 0 ? (
+              results.map((o) => (
+                <OrgListItem
+                  key={o.org_id}
+                  o={o}
+                  selected={o.org_id === selectedOrgId}
+                  onSelect={() => setSelectedOrgId(o.org_id)}
+                />
+              ))
+            ) : (
+              <Card className="w-full p-4 text-sm text-muted-foreground">
+                No verified organizations match these filters.
+              </Card>
+            )}
+          </div>
+        </aside>
+
+        <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-64 rounded-xl" />
+              ))}
+            </div>
+          ) : loadError ? (
+            <Card className="p-8 text-center space-y-2">
+              <p className="font-medium">Search couldn’t load</p>
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                Check your connection and try again. This is not an empty result set.
+              </p>
+            </Card>
+          ) : selectedOrg ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-heading text-lg font-semibold tracking-tight sm:text-xl">
+                    {selectedOrg.org_name}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {selectedOrg.facilities.length} matching{" "}
+                    {selectedOrg.facilities.length === 1 ? "facility" : "facilities"}
+                    {selectedOrg.hq_city || selectedOrg.hq_state
+                      ? ` · ${[selectedOrg.hq_city, selectedOrg.hq_state].filter(Boolean).join(", ")}`
+                      : ""}
+                  </p>
+                </div>
+                {orgHref ? (
+                  <Button asChild variant="outline" size="sm" className="shrink-0">
+                    <Link to={orgHref}>
+                      View org page
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                ) : null}
+              </div>
+
+              {selectedOrg.facilities.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {selectedOrg.facilities.map((f) => (
+                    <SearchFacilityCard key={f.id} facility={f} orgSlug={selectedOrg.org_slug} />
+                  ))}
+                </div>
+              ) : (
+                <Card className="p-8 text-center text-sm text-muted-foreground">
+                  No matching facilities for this organization.
+                </Card>
+              )}
+            </div>
+          ) : (
+            <Card className="p-8 text-center space-y-2">
+              <Building2 className="mx-auto mb-2 h-10 w-10 text-muted-foreground" />
+              <p className="font-medium">No verified organizations found</p>
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                Try expanding the city, changing the level of care, or checking nearby states.
+              </p>
+            </Card>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
