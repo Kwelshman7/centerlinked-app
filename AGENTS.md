@@ -24,3 +24,12 @@ Area files: `src/CLAUDE.md`, `server/CLAUDE.md`, `api/CLAUDE.md`, `supabase/CLAU
 - Only commit when asked. Do not claim you tested something you did not run.
 
 When uncertain on security, money, privacy, or public URLs: stop and ask. Wrong-but-confident is not acceptable on this codebase.
+
+## Cursor Cloud specific instructions
+
+Dependencies are refreshed automatically by the startup update script (`npm install`). Standard commands live in `CLAUDE.md` (`npm run dev` on port 8080 strictPort, `npm run lint`, `npm test`, `npm run build`).
+
+- **The app needs Supabase env vars to render at all.** `src/integrations/supabase/client.ts` calls `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)` at import time; with both undefined it throws and the whole SPA is blank. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (browser-safe public values) before running. `vite.config.ts` uses `loadEnv(mode, cwd, "")`, so these are picked up either from Cursor-injected environment secrets **or** a repo-root `.env` (gitignored) — no `.env` file is required when the secrets are set in the environment.
+- **There is no local Supabase stack in this repo.** No `supabase/config.toml`, no Docker, and the full schema is not in-repo (only partial ops SQL + an RLS snapshot under `supabase/`). Backend flows (auth, create org, facilities, search, public sheets) run against the live/remote Supabase project, so they require that project's real anon URL + key. Do not invent schema or spin up a guessed local DB.
+- **Public/marketing routes render without a working backend** (landing `/`, `/login`, `/signup`, `/request-access`, `/privacy`, `/terms`) because they don't query Supabase on load — useful for verifying the frontend even with placeholder creds. Any action that hits the backend (login, submitting request-access, creating an org/facility, search) needs valid Supabase credentials.
+- Server/API parity in dev comes from the `vite-plugin-*.ts` plugins (email, Stripe, auth hook, OG); these only do real work when their server secrets (`STRIPE_*`, `RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE`, etc.) are set. They are optional for frontend development.
