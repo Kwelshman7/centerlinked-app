@@ -42,7 +42,7 @@ export function ProgramOrgHeader({ org, brand, logoHref, children }: Props) {
 
   return (
     <header className="print:hidden" style={{ backgroundColor: brand, color: text }}>
-      <div className="relative flex flex-col items-center gap-8 px-6 pb-10 pt-8 text-center sm:gap-10 sm:px-10 lg:pb-12 lg:pt-10">
+      <div className="relative flex flex-col items-center px-6 py-8 text-center sm:px-10 lg:gap-10 lg:px-10 lg:pb-12 lg:pt-10">
         {homeHref ? (
           <Link
             to={homeHref}
@@ -59,7 +59,7 @@ export function ProgramOrgHeader({ org, brand, logoHref, children }: Props) {
         {children ? (
           <nav
             aria-label="Organization actions"
-            className="grid grid-cols-2 justify-items-center gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center"
+            className="hidden lg:flex lg:flex-wrap lg:items-center lg:justify-center lg:gap-3"
           >
             {children}
           </nav>

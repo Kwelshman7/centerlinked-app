@@ -11,7 +11,6 @@ import {
   PanelLeftClose,
   PanelLeft,
   Menu,
-  CreditCard,
   UserRound,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,16 +20,14 @@ import { Logo } from "@/components/Logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { adminLinks } from "@/components/app/admin/SuperAdminPanel";
-import { BillingStatusBanner } from "@/components/app/BillingStatusBanner";
 
 type NavItem = { to: string; label: string; icon: typeof SearchIcon; end?: boolean };
 
 export function AppLayout() {
-  const { profile, isSuperAdmin, isFacilityAdmin, needsSuperAdminSetup, signOut, user } = useAuth();
+  const { profile, isSuperAdmin, needsSuperAdminSetup, signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
-  const canManageBilling = (isFacilityAdmin || isSuperAdmin) && !!profile?.organization_id;
   /** Free users without an organization get Search + My profile only. */
   const hasOrgAccess = isSuperAdmin || !!profile?.organization_id;
 
@@ -49,24 +46,21 @@ export function AppLayout() {
         end: true,
       });
     }
-    if (user && hasOrgAccess && !needsSuperAdminSetup) {
-      items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
-    }
-    if (canManageBilling) {
-      items.push({ to: "/app/billing", label: "Billing", icon: CreditCard });
+    if (user && !needsSuperAdminSetup) {
+      items.push({ to: "/app/network", label: "Network", icon: Users });
     }
     if (hasOrgAccess) {
       items.push({ to: "/app/settings", label: "Settings", icon: Settings });
     }
     return items;
-  }, [isSuperAdmin, canManageBilling, user, hasOrgAccess, needsSuperAdminSetup]);
+  }, [isSuperAdmin, user, hasOrgAccess, needsSuperAdminSetup]);
 
   const mobilePrimary: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       { to: "/app/search", label: "Search", icon: SearchIcon },
     ];
-    if (user && hasOrgAccess && !needsSuperAdminSetup) {
-      items.push({ to: "/app/organizations", label: "Network", icon: Building2 });
+    if (user && !needsSuperAdminSetup) {
+      items.push({ to: "/app/network", label: "Network", icon: Users });
     }
     if (hasOrgAccess) {
       items.push({ to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true });
@@ -78,6 +72,7 @@ export function AppLayout() {
   }, [user, hasOrgAccess, needsSuperAdminSetup]);
 
   const secondaryOrg: NavItem[] = [
+    { to: "/app/organizations", label: "Organizations", icon: Building2 },
     { to: "/app/members", label: "Members", icon: Users },
   ];
 
@@ -269,7 +264,6 @@ export function AppLayout() {
             !hideMobileTabBar && "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-10"
           )}
         >
-          <BillingStatusBanner />
           <Outlet />
         </div>
       </main>

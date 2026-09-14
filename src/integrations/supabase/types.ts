@@ -80,6 +80,7 @@ export type Database = {
           internal_notes: string | null
           last_verified_at: string | null
           organization_id: string | null
+          user_id: string | null
           organization_name: string | null
           payer_expertise: string[]
           phone: string | null
@@ -102,6 +103,7 @@ export type Database = {
           internal_notes?: string | null
           last_verified_at?: string | null
           organization_id?: string | null
+          user_id?: string | null
           organization_name?: string | null
           payer_expertise?: string[]
           phone?: string | null
@@ -124,6 +126,7 @@ export type Database = {
           internal_notes?: string | null
           last_verified_at?: string | null
           organization_id?: string | null
+          user_id?: string | null
           organization_name?: string | null
           payer_expertise?: string[]
           phone?: string | null
@@ -1153,6 +1156,33 @@ export type Database = {
           },
         ]
       }
+      professional_connections: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       preferred_provider_changes: {
         Row: {
           created_at: string
@@ -1190,6 +1220,9 @@ export type Database = {
           job_title: string | null
           organization_id: string | null
           phone: string | null
+          bio: string | null
+          city: string | null
+          state: string | null
           updated_at: string
           user_id: string
         }
@@ -1202,6 +1235,9 @@ export type Database = {
           job_title?: string | null
           organization_id?: string | null
           phone?: string | null
+          bio?: string | null
+          city?: string | null
+          state?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1214,6 +1250,9 @@ export type Database = {
           job_title?: string | null
           organization_id?: string | null
           phone?: string | null
+          bio?: string | null
+          city?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1526,6 +1565,25 @@ export type Database = {
       }
       get_org_setup_options: { Args: never; Returns: Json }
       get_organization_billing: { Args: { _org_id: string }; Returns: Json }
+      get_professional_profile: { Args: { _user_id: string }; Returns: Json }
+      get_public_referral_contacts: {
+        Args: { _facility_id?: string; _organization_id: string }
+        Returns: Json
+      }
+      list_my_professional_network: { Args: never; Returns: Json }
+      list_professional_connection_requests: { Args: never; Returns: Json }
+      request_professional_connection: { Args: { _addressee_id: string }; Returns: Json }
+      respond_to_professional_connection: {
+        Args: { _accept: boolean; _connection_id: string }
+        Returns: Json
+      }
+      remove_professional_connection: { Args: { _other_user_id: string }; Returns: Json }
+      block_professional_connection: { Args: { _other_user_id: string }; Returns: Json }
+      search_professionals: { Args: { _query: string }; Returns: Json }
+      professional_connection_status: {
+        Args: { _other: string; _viewer: string }
+        Returns: string
+      }
       get_public_org_sheet: { Args: { _slug: string }; Returns: Json }
       get_public_program_sheet: {
         Args: { _org_slug?: string; _slug: string }

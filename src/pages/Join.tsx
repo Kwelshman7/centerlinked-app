@@ -21,6 +21,7 @@ import {
   setJoinImportIntent,
   setPendingJoinPdf,
 } from "@/lib/join-intent";
+import { professionalPath, rememberConnectUser } from "@/lib/professional-network";
 
 const STEPS = [
   {
@@ -72,10 +73,16 @@ export default function Join() {
       setJoinImportIntent();
       setWantsImport(true);
     }
+    rememberConnectUser(searchParams.get("connect"));
   }, [searchParams]);
 
   useEffect(() => {
     if (loading) return;
+    const connectId = searchParams.get("connect");
+    if (user && connectId) {
+      navigate(professionalPath(connectId), { replace: true });
+      return;
+    }
     if (user && (profile?.organization_id || isSuperAdmin)) {
       const importPath = wantsImport ? consumeJoinImportPath() : null;
       navigate(importPath || "/app/search", { replace: true });
@@ -84,7 +91,7 @@ export default function Join() {
     if (user && !profile?.organization_id) {
       navigate("/setup-organization", { replace: true });
     }
-  }, [loading, user, profile?.organization_id, isSuperAdmin, navigate, wantsImport]);
+  }, [loading, user, profile?.organization_id, isSuperAdmin, navigate, wantsImport, searchParams]);
 
   const focusAccountForm = () => {
     document.getElementById("create-account")?.scrollIntoView({ behavior: "smooth", block: "start" });

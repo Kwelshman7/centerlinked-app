@@ -33,6 +33,7 @@ import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { displayAccreditations } from "@/lib/accreditations";
 import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
 import { formatPlanTypeList, sanitizePlanTypes } from "@/lib/plan-types";
+import { loadPublicReferralContacts } from "@/lib/load-public-referral-contacts";
 
 /** Stacked hero photo on phones. Desktop fills the image half instead. */
 const HERO_IMAGE_HEIGHT = "h-[200px] sm:h-[220px] lg:h-full";
@@ -235,7 +236,22 @@ export function FacilitySheetView({
 }: Props) {
   const brand = useOrgBrandColor(org, brandColor);
   const [footerVisible, setFooterVisible] = useState(false);
+  const [repAvatar, setRepAvatar] = useState<string | null>(null);
   const { cities: nearbyCities, loading: nearbyCitiesLoading } = useNearbyCities(facility.city, facility.state);
+
+  useEffect(() => {
+    if (!org?.id) {
+      setRepAvatar(null);
+      return;
+    }
+    let cancelled = false;
+    void loadPublicReferralContacts(org.id, facility.id).then((contacts) => {
+      if (!cancelled) setRepAvatar(contacts[0]?.avatar_url ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [org?.id, facility.id]);
 
   const address = [facility.address_line1, [facility.city, facility.state].filter(Boolean).join(", "), facility.zip]
     .filter(Boolean)
@@ -470,6 +486,7 @@ export function FacilitySheetView({
                             location: cityStateZip || null,
                             phone: repPhone,
                             email: repEmail,
+                            avatar_url: repAvatar,
                           },
                         ]}
                         organizationId={org?.id}
@@ -602,6 +619,7 @@ export function FacilitySheetView({
           repName={repName}
           repPhone={repPhone}
           repEmail={repEmail}
+          repAvatar={repAvatar}
           brand={brand}
           organizationId={org?.id}
           ctaLabel="Refer Patient"

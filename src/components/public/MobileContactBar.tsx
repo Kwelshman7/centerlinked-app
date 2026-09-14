@@ -17,6 +17,7 @@ interface Props {
   repName: string | null;
   repPhone: string | null;
   repEmail: string | null;
+  repAvatar?: string | null;
   brand: string;
   organizationId?: string;
   contextLabel?: string;
@@ -47,6 +48,7 @@ export function MobileContactBar({
   repName,
   repPhone,
   repEmail,
+  repAvatar,
   brand,
   organizationId,
   contextLabel = "Reach the business development representative.",
@@ -159,14 +161,18 @@ export function MobileContactBar({
               {repName ? (
                 <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-4 py-3">
                   <div
-                    className="h-11 w-11 rounded-full grid place-items-center shrink-0 font-heading font-bold text-sm border"
+                    className="h-11 w-11 rounded-full grid place-items-center shrink-0 font-heading font-bold text-sm border overflow-hidden"
                     style={{
                       backgroundColor: `${brand}14`,
                       color: brand,
                       borderColor: `${brand}30`,
                     }}
                   >
-                    {getInitials(repName)}
+                    {repAvatar ? (
+                      <img src={repAvatar} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      getInitials(repName)
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold truncate">{repName}</p>

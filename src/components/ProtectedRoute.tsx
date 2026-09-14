@@ -15,6 +15,7 @@ const ORG_OPTIONAL_PATHS = new Set([
   "/app/search",
   "/app/search/results",
   "/app/dashboard",
+  "/app/network",
 ]);
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -33,7 +34,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  const onOrgOptionalPath = ORG_OPTIONAL_PATHS.has(location.pathname);
+  const onOrgOptionalPath =
+    ORG_OPTIONAL_PATHS.has(location.pathname) ||
+    location.pathname.startsWith("/app/people/");
   if (!isSuperAdmin && !profile?.organization_id && !onOrgOptionalPath) {
     return <Navigate to="/setup-organization" replace />;
   }

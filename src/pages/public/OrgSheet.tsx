@@ -23,6 +23,7 @@ import {
 } from "@/lib/org-shared-footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { loadPublicReferralContacts } from "@/lib/load-public-referral-contacts";
 
 function uniqueFacilityStates(facilities: ShowcaseFacility[]) {
   const states = new Set<string>();
@@ -128,7 +129,19 @@ export default function OrgSheet() {
       }
       setFacilityPayersById(map);
 
-      if (orgData.bd_contact_name && (orgData.bd_contact_phone || orgData.bd_contact_email)) {
+      const publicContacts = await loadPublicReferralContacts(orgData.id);
+      const featured = publicContacts[0];
+      if (featured) {
+        setHeroContact({
+          name: featured.name,
+          title: featured.title || "Director of Business Development",
+          location: loc || null,
+          phone: featured.phone,
+          email: featured.email,
+          avatar_url: featured.avatar_url,
+          user_id: featured.user_id,
+        });
+      } else if (orgData.bd_contact_name && (orgData.bd_contact_phone || orgData.bd_contact_email)) {
         setHeroContact({
           name: orgData.bd_contact_name,
           title: "Director of Business Development",

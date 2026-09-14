@@ -7,6 +7,7 @@ import { checkBootstrapAdminCandidate } from "@/lib/bootstrap-admin";
 import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { toast } from "sonner";
 import { notifyAuthEvent } from "@/lib/transactional-email";
+import { consumeConnectUser, professionalPath } from "@/lib/professional-network";
 
 function isLikelyNewUser(createdAt: string | undefined) {
   if (!createdAt) return false;
@@ -117,23 +118,29 @@ export default function AuthCallback() {
         null;
       notifyAuthEvent(isLikelyNewUser(user.created_at) ? "signup" : "login", fullName);
 
+      const connectPath = (() => {
+        const connectId = consumeConnectUser();
+        return connectId ? professionalPath(connectId) : null;
+      })();
+
       if (isSuperAdmin || bootstrapAdmin) {
-        navigate(consumePostLoginPath() || "/app", { replace: true });
+        navigate(connectPath || consumePostLoginPath() || "/app", { replace: true });
         return;
       }
 
       if (!profile?.organization_id) {
         // New accounts get the claim/create step (skippable); returning free users go straight to Search.
         navigate(
-          isLikelyNewUser(user.created_at)
+          connectPath ||
+            (isLikelyNewUser(user.created_at)
             ? "/setup-organization"
-            : consumePostLoginPath() || "/app/search",
+            : consumePostLoginPath() || "/app/search"),
           { replace: true },
         );
         return;
       }
 
-      navigate(consumePostLoginPath() || "/app", { replace: true });
+      navigate(connectPath || consumePostLoginPath() || "/app", { replace: true });
     })();
   }, [loading, user, profile?.organization_id, isSuperAdmin, navigate]);
 

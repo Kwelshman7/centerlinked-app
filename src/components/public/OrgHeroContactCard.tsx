@@ -11,6 +11,8 @@ export interface HeroContact {
   location?: string | null;
   phone?: string | null;
   email?: string | null;
+  avatar_url?: string | null;
+  user_id?: string | null;
 }
 
 interface Props {
@@ -111,7 +113,7 @@ export function OrgHeroContactCard({
               <div className={cn("flex items-center", lg ? "gap-4" : "gap-3.5")}>
                 <div
                   className={cn(
-                    "rounded-full grid place-items-center font-bold shrink-0 border",
+                    "rounded-full grid place-items-center font-bold shrink-0 border overflow-hidden",
                     lg ? "h-14 w-14 text-base" : "h-12 w-12 text-sm",
                   )}
                   style={{
@@ -120,7 +122,11 @@ export function OrgHeroContactCard({
                     borderColor: `${brand}28`,
                   }}
                 >
-                  {initials(c.name)}
+                  {c.avatar_url ? (
+                    <img src={c.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    initials(c.name)
+                  )}
                 </div>
                 <div className="min-w-0 flex-1 text-left">
                   <p

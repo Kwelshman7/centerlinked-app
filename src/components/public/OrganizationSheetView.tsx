@@ -250,6 +250,7 @@ export function OrganizationSheetView({
           repName={heroContact.name}
           repPhone={heroContact.phone ?? null}
           repEmail={heroContact.email ?? null}
+          repAvatar={heroContact.avatar_url ?? null}
           brand={brand}
           organizationId={org.id}
           ctaLabel="Refer Patient"

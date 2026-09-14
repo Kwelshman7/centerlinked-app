@@ -20,6 +20,8 @@ import Dashboard from "./pages/app/Dashboard";
 import Search from "./pages/app/Search";
 import Facilities from "./pages/app/Facilities";
 import Organizations from "./pages/app/Organizations";
+import Network from "./pages/app/Network";
+import ProfessionalProfile from "./pages/app/ProfessionalProfile";
 import FacilityDetail from "./pages/app/FacilityDetail";
 import Onboarding from "./pages/app/Onboarding";
 import PdfFacilityUpload from "./pages/app/PdfFacilityUpload";
@@ -83,7 +85,8 @@ const App = () => (
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="search" element={<Search />} />
               <Route path="search/results" element={<SearchResults />} />
-              <Route path="network" element={<Navigate to="/app/organizations" replace />} />
+              <Route path="network" element={<Network />} />
+              <Route path="people/:userId" element={<ProfessionalProfile />} />
               <Route path="admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
               <Route path="admin/insurance" element={<AdminRoute><InsuranceDatabase /></AdminRoute>} />
               <Route path="admin/insurance-queue" element={<AdminRoute><InsuranceQueue /></AdminRoute>} />

@@ -169,6 +169,7 @@ export default function SearchResults() {
         options?: { skipMatchBadge?: boolean },
       ) => {
         if (!f.organizations || f.verification_status !== "approved") return;
+        if (f.verification_frozen) return;
         if (state && !stateMatchesFilter(f.state, state)) return;
         if (zip && (f.zip ?? "").replace(/\D/g, "").slice(0, 5) !== zip) return;
         if (specialty) {
@@ -217,6 +218,7 @@ export default function SearchResults() {
         if (payer) q = q.or(buildPayerOrFilter(payer));
         else if (payerId) q = q.eq("payer_id", payerId);
 
+        q = q.eq("in_network", true);
         q = q.eq("facilities.verification_status", "approved");
         if (stateCode && stateName && stateName.toUpperCase() !== stateCode) {
           q = q.or(`state.eq.${stateCode},state.ilike.${stateName}`, { referencedTable: "facilities" });
