@@ -363,13 +363,12 @@ export default function SearchResults() {
 
   return (
     <div className="space-y-4">
-      <div className="sticky top-12 z-20 -mx-4 border-b border-border/60 bg-muted/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-16 lg:-mx-8 lg:px-8">
+      <div className="sticky top-12 z-20 -mx-4 border-b border-border/60 bg-muted/95 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <h1 className="sr-only">Search the referral network</h1>
         <SearchForm variant="toolbar" />
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-1 truncate text-[11px] text-muted-foreground">
           {summary}
           {canSearch && !loading && !loadError ? ` · ${resultCount}` : null}
-          {canSearch ? " · A match is not a benefits or admission confirmation — still verify with the facility." : null}
         </p>
       </div>
 
@@ -386,7 +385,7 @@ export default function SearchResults() {
             <p className="mt-0.5 text-xs text-muted-foreground">{resultCount}</p>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto px-4 pb-3 lg:max-h-[calc(100dvh-22rem)] lg:flex-1 lg:flex-col lg:overflow-y-auto lg:px-4 lg:pb-4">
+          <div className="flex gap-2 overflow-x-auto px-4 pb-3 lg:max-h-[calc(100dvh-12rem)] lg:flex-1 lg:flex-col lg:overflow-y-auto lg:px-4 lg:pb-4">
             {!canSearch ? (
               <Card className="w-full p-4 text-sm text-muted-foreground">
                 Choose insurance or a state to see approved programs.

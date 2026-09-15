@@ -116,7 +116,7 @@ function AppHeaderSearch() {
   };
 
   return (
-    <div className="relative min-w-0 flex-1 max-w-xl">
+    <div className="relative min-w-0 w-full">
       <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={q}
@@ -129,7 +129,7 @@ function AppHeaderSearch() {
         type="search"
         autoComplete="off"
         placeholder="Search contacts, facilities, or organizations..."
-        className="h-10 pl-9 bg-muted/50 border-border/70"
+        className="h-8 pl-9 bg-muted/50 border-border/70"
         aria-label="Search contacts, facilities, or organizations"
       />
       {showPanel ? (
@@ -464,30 +464,44 @@ export function AppLayout() {
       </header>
 
       <div className={cn("transition-[padding] duration-200", mainPad)}>
-        <header className="hidden lg:flex sticky top-0 z-20 h-16 items-center gap-4 border-b border-border/60 bg-card/90 px-6 backdrop-blur-xl">
-          <AppHeaderSearch />
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link to="/app/search">
-              <SearchIcon className="h-4 w-4" />
-              Find in-network care
-            </Link>
-          </Button>
-          {user ? (
-            <Link
-              to={professionalPath(user.id)}
-              className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-semibold"
-              aria-label="My profile"
-            >
-              {initials}
-            </Link>
-          ) : null}
+        <header className="hidden lg:flex sticky top-0 z-20 h-12 items-center gap-3 border-b border-border/60 bg-card/90 px-4 backdrop-blur-xl">
+          {location.pathname.startsWith("/app/search") ? (
+            <p className="min-w-0 flex-1 truncate text-sm font-medium">In-network search</p>
+          ) : (
+            <div className="min-w-0 flex-1">
+              <AppHeaderSearch />
+            </div>
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {!location.pathname.startsWith("/app/search") ? (
+              <Button asChild variant="outline" size="sm" className="h-8">
+                <Link to="/app/search">
+                  <SearchIcon className="h-4 w-4" />
+                  Find in-network care
+                </Link>
+              </Button>
+            ) : null}
+            {user ? (
+              <Link
+                to={professionalPath(user.id)}
+                className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-primary text-primary-foreground grid place-items-center text-[11px] font-semibold"
+                aria-label="My profile"
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials
+                )}
+              </Link>
+            ) : null}
+          </div>
         </header>
 
         <main>
           <div
             className={cn(
-              "w-full px-4 sm:px-6 lg:px-8 py-5 lg:py-8",
-              !hideMobileTabBar && "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-10",
+              "w-full px-4 sm:px-6 lg:px-8 py-3 lg:py-4",
+              !hideMobileTabBar && "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6",
             )}
           >
             <Outlet />

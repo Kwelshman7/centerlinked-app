@@ -27,10 +27,10 @@ function FieldShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("min-w-0 space-y-2", className)}>
+    <div className={cn("min-w-0 space-y-1", className)}>
       <Label
         htmlFor={htmlFor}
-        className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+        className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
       >
         {label}
       </Label>
@@ -55,7 +55,13 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   const [citiesByState, setCitiesByState] = useState<Record<string, string[]>>({});
   const [listedStateCodes, setListedStateCodes] = useState<string[]>([]);
   const [moreOpen, setMoreOpen] = useState(
-    () => !!(params.get("zip") || params.get("specialty") || params.get("accreditation")),
+    () =>
+      !!(
+        params.get("zip") ||
+        params.get("specialty") ||
+        params.get("accreditation") ||
+        params.get("planType")
+      ),
   );
   const zipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accredTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -164,7 +170,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   const control = isHero
     ? "h-12 rounded-xl border-border/80 bg-background text-base sm:text-sm shadow-none"
     : isToolbar
-      ? "h-10 rounded-lg border-border/80 bg-background text-sm shadow-none"
+      ? "h-8 rounded-md border-border/80 bg-background text-sm shadow-none"
       : undefined;
 
   return (
@@ -172,13 +178,13 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
       <div
         className={cn(
           isHero && "grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-5 lg:grid-cols-12 lg:gap-x-5 lg:gap-y-5",
-          isToolbar && "grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-4 lg:grid-cols-12 lg:items-end",
+          isToolbar && "grid grid-cols-2 gap-x-2 gap-y-2 lg:grid-cols-12 lg:items-end",
           !isHero && !isToolbar && "space-y-4",
         )}
       >
         <FieldShell
           label="Insurance"
-          className={cn(isHero && "col-span-2 lg:col-span-12", isToolbar && "col-span-2 lg:col-span-6")}
+          className={cn(isHero && "col-span-2 lg:col-span-12", isToolbar && "col-span-2 lg:col-span-4")}
         >
           <PayerCombobox
             payerId={payerId}
@@ -194,6 +200,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           />
         </FieldShell>
 
+        {isHero || moreOpen ? (
         <FieldShell
           label="Plan type"
           htmlFor="search-plan-type"
@@ -220,11 +227,12 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
             </SelectContent>
           </Select>
         </FieldShell>
+        ) : null}
 
         <FieldShell
           label="Level of care"
           htmlFor="search-loc"
-          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-2")}
         >
           <Select
             value={loc || "_any"}
@@ -251,7 +259,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         <FieldShell
           label="State"
           htmlFor="search-state"
-          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-2")}
         >
           <Select
             value={state || "_any"}
@@ -286,7 +294,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         <FieldShell
           label="City"
           htmlFor="search-city"
-          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
+          className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-2")}
         >
           <Select
             value={city || "_any"}
@@ -384,14 +392,14 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
             className={cn(
               "flex items-end gap-2",
               isHero && "col-span-2 pt-1 lg:col-span-12",
-              isToolbar && "col-span-2 lg:col-span-6 lg:justify-end",
+              isToolbar && "col-span-2 lg:col-span-2 lg:justify-end",
             )}
           >
             <Button
               type="button"
               variant="ghost"
               size={isToolbar ? "sm" : "lg"}
-              className={cn("shrink-0 text-muted-foreground", isHero && "h-12", isToolbar && "h-10")}
+              className={cn("shrink-0 text-muted-foreground", isHero && "h-12", isToolbar && "h-8 px-2")}
               onClick={() => setMoreOpen((open) => !open)}
             >
               {moreOpen ? "Fewer filters" : "More filters"}
@@ -404,7 +412,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
               className={cn(
                 "w-full font-semibold",
                 isHero && "h-12 rounded-xl text-base sm:text-sm",
-                isToolbar && "h-10 shrink-0 whitespace-nowrap px-6 lg:w-auto lg:min-w-[8.5rem]",
+                isToolbar && "h-8 shrink-0 whitespace-nowrap px-4 lg:w-auto",
               )}
             >
               <SearchIcon className="h-4 w-4" />

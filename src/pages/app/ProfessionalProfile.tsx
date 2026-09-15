@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ConnectButton } from "@/components/app/network/ConnectButton";
 import {
   FacilityGridCard,
@@ -117,8 +116,8 @@ export default function ProfessionalProfile() {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center space-y-2">
         <p className="font-semibold">Professional not found</p>
-        <Link to="/app/network" className="text-sm text-primary hover:underline">
-          Back to Network
+        <Link to="/app/contacts" className="text-sm text-primary hover:underline">
+          Back to Contacts
         </Link>
       </div>
     );
@@ -169,12 +168,12 @@ export default function ProfessionalProfile() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
-      <Link to="/app/network" className="text-sm text-primary hover:underline">
-        Back to Network
+      <Link to="/app/contacts" className="text-sm text-primary hover:underline">
+        Back to Contacts
       </Link>
 
       <article className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="relative h-36 sm:h-48 overflow-hidden bg-secondary">
+        <div className="relative h-24 overflow-hidden bg-secondary sm:h-28">
           <div
             className="absolute -right-10 -top-20 h-[160%] w-[75%] rounded-full blur-3xl"
             style={{
@@ -186,8 +185,8 @@ export default function ProfessionalProfile() {
         </div>
 
         <div className="px-5 sm:px-8">
-          <div className="-mt-16 sm:-mt-[4.5rem]">
-            <div className="h-28 w-28 sm:h-36 sm:w-36 rounded-full overflow-hidden bg-primary/10 text-primary grid place-items-center text-2xl font-semibold ring-4 ring-card shadow-md">
+          <div className="-mt-12 sm:-mt-14">
+            <div className="grid h-24 w-24 place-items-center overflow-hidden rounded-full bg-primary/10 text-xl font-semibold text-primary shadow-md ring-4 ring-card sm:h-28 sm:w-28">
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -219,6 +218,9 @@ export default function ProfessionalProfile() {
                     )}
                   </p>
                 ) : null}
+                {profile.bio ? (
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
+                ) : null}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -236,7 +238,7 @@ export default function ProfessionalProfile() {
                     className={cn(actionClass, "h-10 px-5 text-sm")}
                   />
                 )}
-                <GetInTouchButton name={name} email={profile.email} phone={tel} displayPhone={profile.phone} />
+                <ContactCtas email={profile.email} phone={tel} displayPhone={profile.phone} />
                 {!isSelf ? (
                   <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => void copyLink()} aria-label="Copy profile link">
                     <Share2 className="h-4 w-4" />
@@ -275,7 +277,7 @@ export default function ProfessionalProfile() {
                 <div className="flex justify-center">
                   {profile.organization.logo_url ? (
                     <Link
-                      to={profile.organization.slug ? orgPublicPath(profile.organization.slug) : "/app/network"}
+                      to={profile.organization.slug ? orgPublicPath(profile.organization.slug) : "/app/contacts"}
                       className="block"
                       aria-label={`${profile.organization.name} profile`}
                     >
@@ -389,58 +391,46 @@ function TabButton({
   );
 }
 
-function GetInTouchButton({
-  name,
+function ContactCtas({
   email,
   phone,
   displayPhone,
 }: {
-  name: string;
   email?: string | null;
   phone?: string | null;
   displayPhone?: string | null;
 }) {
   const mail = email?.trim() || "";
   const tel = phone || "";
+  const shown = formatPhoneDisplay(displayPhone) || formatPhoneDisplay(tel);
   if (!mail && !tel) return null;
-
-  if (mail && tel) {
-    return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="hero-outline" className="h-10 rounded-full px-5 text-sm font-semibold">
-            Get in touch
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-56 p-2" align="start">
-          <Button asChild variant="ghost" className="w-full justify-start font-normal h-10">
-            <a href={`mailto:${mail}`}>
-              <Mail className="h-4 w-4" />
-              Email
-            </a>
-          </Button>
-          <Button asChild variant="ghost" className="w-full justify-start font-normal h-10">
-            <a href={`tel:${tel}`}>
-              <Phone className="h-4 w-4" />
-              Call{displayPhone ? ` · ${formatPhoneDisplay(displayPhone)}` : ""}
-            </a>
-          </Button>
-          <Button asChild variant="ghost" className="w-full justify-start font-normal h-10">
-            <a href={`sms:${tel}`}>
-              <MessageSquare className="h-4 w-4" />
-              Text
-            </a>
-          </Button>
-        </PopoverContent>
-      </Popover>
-    );
-  }
-
+  const btn = "h-10 rounded-full px-5 text-sm font-semibold";
   return (
-    <Button asChild variant="hero-outline" className="h-10 rounded-full px-5 text-sm font-semibold">
-      <a href={mail ? `mailto:${mail}` : `tel:${tel}`} aria-label={`Get in touch with ${name}`}>
-        Get in touch
-      </a>
-    </Button>
+    <>
+      {tel ? (
+        <Button asChild variant="hero" className={btn}>
+          <a href={`tel:${tel}`}>
+            <Phone className="h-4 w-4" />
+            Call{shown ? ` ${shown}` : ""}
+          </a>
+        </Button>
+      ) : null}
+      {mail ? (
+        <Button asChild variant="hero-outline" className={btn}>
+          <a href={`mailto:${mail}`}>
+            <Mail className="h-4 w-4" />
+            Email
+          </a>
+        </Button>
+      ) : null}
+      {tel ? (
+        <Button asChild variant="hero-outline" className={btn}>
+          <a href={`sms:${tel}`}>
+            <MessageSquare className="h-4 w-4" />
+            Text
+          </a>
+        </Button>
+      ) : null}
+    </>
   );
 }

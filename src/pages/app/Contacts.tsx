@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Plus, Search, Share2, Users, Building2, Shield, UserRound, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronDown, Plus, Search, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,20 +17,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ConnectButton } from "@/components/app/network/ConnectButton";
 import { ProfessionalRow } from "@/components/app/network/ProfessionalRow";
-import { ContactDetailPanel, ContactTypeBadge } from "@/components/app/contacts/ContactDetailPanel";
 import {
   applyOrgPayers,
   CONTACT_TYPE_LABELS,
   CONTACT_TYPES,
   contactWorkspaceStats,
   filterWorkspaceContacts,
-  formatConnectedDate,
-  formatPayerCell,
   mergeWorkspaceContacts,
   uniqueContactStates,
   type ContactType,
@@ -43,13 +40,14 @@ import {
   connectShareUrl,
   compareNameSearch,
   initialsFromName,
-  locationLine,
+  professionalPath,
   type ProfessionalCard,
 } from "@/lib/professional-network";
+import { orgPublicPath } from "@/lib/public-urls";
+import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
-import { cn } from "@/lib/utils";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 const FETCH_PAGE = 1000;
 const ANY = "all";
 
@@ -89,6 +87,7 @@ function asOrg(value: unknown): WorkspaceContactOrg | null {
 }
 
 export default function Contacts() {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { connections, requests, loading: networkLoading, requestConnection, respondToRequest, reload } =
     useProfessionalNetwork();
@@ -101,22 +100,12 @@ export default function Contacts() {
   const [state, setState] = useState(ANY);
   const [insurance, setInsurance] = useState(ANY);
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [payerByOrg, setPayerByOrg] = useState<Record<string, string[]>>({});
   const [addOpen, setAddOpen] = useState(false);
   const [findQ, setFindQ] = useState("");
   const [directory, setDirectory] = useState<ProfessionalCard[]>([]);
   const [searching, setSearching] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [widePanel, setWidePanel] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1280px)");
-    const sync = () => setWidePanel(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -266,8 +255,6 @@ export default function Contacts() {
     };
   }, [missingOrgKey]);
 
-  const selected = contacts.find((row) => row.id === selectedId) ?? pageRows.find((row) => row.id === selectedId) ?? null;
-
   useEffect(() => {
     const needle = findQ.trim();
     if (!addOpen || needle.length < 1) {
@@ -333,19 +320,48 @@ export default function Contacts() {
     setInsurance(ANY);
   };
 
+  const openContact = async (contact: WorkspaceContact) => {
+    let userId = contact.userId;
+    if (!userId) {
+      const needle = contact.email || contact.fullName;
+      if (needle) {
+        const { data } = await supabase.rpc("search_professionals", { _query: needle });
+        const match = asProfessionalCards(data).find((person) => {
+          const email = person.email?.trim().toLowerCase();
+          if (contact.email && email && email === contact.email) return true;
+          return (person.full_name || "").trim().toLowerCase() === contact.fullName.trim().toLowerCase();
+        });
+        userId = match?.user_id ?? null;
+      }
+    }
+    if (userId) {
+      navigate(professionalPath(userId));
+      return;
+    }
+    if (contact.organization?.slug) {
+      navigate(orgPublicPath(contact.organization.slug));
+      return;
+    }
+    if (contact.facilityId) {
+      navigate(`/app/facilities/${contact.facilityId}`);
+      return;
+    }
+    toast.message("This contact does not have a CenterLinked profile yet.");
+  };
+
   return (
-    <div className={cn("flex w-full min-w-0 gap-6 overflow-x-hidden", selected ? "xl:pr-0" : "")}>
-      <div className="min-w-0 flex-1 space-y-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="font-heading text-2xl sm:text-3xl font-bold">Contacts</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Stay close to referral partners, BD reps, and facility contacts already on CenterLinked.
+    <div className="min-w-0 space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="font-heading text-xl font-bold">Contacts</h1>
+            <p className="text-xs text-muted-foreground">
+              {stats.total.toLocaleString("en-US")} contacts · {stats.bdReps.toLocaleString("en-US")} BD reps ·{" "}
+              {stats.treatmentCenters.toLocaleString("en-US")} treatment centers
             </p>
           </div>
           <Popover>
             <PopoverTrigger asChild>
-              <Button className="shrink-0">
+              <Button size="sm" className="shrink-0">
                 <Plus className="h-4 w-4" /> Add Contact
                 <ChevronDown className="h-4 w-4 opacity-70" />
               </Button>
@@ -370,7 +386,7 @@ export default function Contacts() {
         </div>
 
         {requests.length > 0 ? (
-          <Card className="p-3 sm:p-4">
+          <Card className="p-3">
             <p className="text-sm font-medium">
               {requests.length} connection {requests.length === 1 ? "request" : "requests"}
             </p>
@@ -393,34 +409,26 @@ export default function Contacts() {
         ) : null}
 
         {catalogError ? (
-          <Card className="p-4 text-sm text-destructive">{catalogError} Showing whatever loaded.</Card>
+          <Card className="p-3 text-sm text-destructive">{catalogError} Showing whatever loaded.</Card>
         ) : null}
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard icon={Users} label="Total Contacts" value={stats.total} tone="sky" />
-          <StatCard icon={UserRound} label="BD Representatives" value={stats.bdReps} tone="blue" />
-          <StatCard icon={Building2} label="Treatment Centers" value={stats.treatmentCenters} tone="teal" />
-          <StatCard icon={Shield} label="Insurance Contacts" value={stats.insurance} tone="emerald" />
-        </div>
-
-        <Card className="p-3 sm:p-4">
-          <div className="flex flex-col gap-2">
-            <div className="relative min-w-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search contacts by name, title, organization..."
-                className="h-10 pl-9"
+                placeholder="Search by name, organization, phone, or email"
+                className="h-8 pl-9"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Select value={type} onValueChange={(value) => setType(value as ContactType | typeof ANY)}>
-              <SelectTrigger className="h-10 w-[11.5rem]">
-                <SelectValue placeholder="All Contact Types" />
+              <SelectTrigger className="h-8 w-[9.5rem]">
+                <SelectValue placeholder="All types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY}>All Contact Types</SelectItem>
+                <SelectItem value={ANY}>All types</SelectItem>
                 {CONTACT_TYPES.map((value) => (
                   <SelectItem key={value} value={value}>
                     {CONTACT_TYPE_LABELS[value]}
@@ -429,11 +437,11 @@ export default function Contacts() {
               </SelectContent>
             </Select>
             <Select value={state} onValueChange={setState}>
-              <SelectTrigger className="h-10 w-[8.5rem]">
-                <SelectValue placeholder="All States" />
+              <SelectTrigger className="h-8 w-[7.5rem]">
+                <SelectValue placeholder="All states" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY}>All States</SelectItem>
+                <SelectItem value={ANY}>All states</SelectItem>
                 {states.map((code) => (
                   <SelectItem key={code} value={code}>
                     {code}
@@ -442,11 +450,11 @@ export default function Contacts() {
               </SelectContent>
             </Select>
             <Select value={insurance} onValueChange={setInsurance}>
-              <SelectTrigger className="h-10 w-[11rem]">
-                <SelectValue placeholder="All Insurance" />
+              <SelectTrigger className="h-8 w-[10rem]">
+                <SelectValue placeholder="All insurance" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ANY}>All Insurance</SelectItem>
+                <SelectItem value={ANY}>All insurance</SelectItem>
                 {payerOptions.map((name) => (
                   <SelectItem key={name} value={name}>
                     {name}
@@ -454,12 +462,11 @@ export default function Contacts() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="shrink-0">
-              Clear All
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 shrink-0 px-2">
+              Clear
             </Button>
             </div>
-          </div>
-        </Card>
+        </div>
 
         <Card className="min-w-0 overflow-hidden">
           {loading ? (
@@ -476,16 +483,13 @@ export default function Contacts() {
             </div>
           ) : (
             <>
-              <Table className="table-fixed">
+              <Table className="min-w-[44rem]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden md:table-cell">Title</TableHead>
-                    <TableHead className="hidden lg:table-cell">Organization</TableHead>
-                    <TableHead>Contact Type</TableHead>
-                    <TableHead className="hidden md:table-cell">Location</TableHead>
-                    <TableHead className="hidden xl:table-cell">Insurance</TableHead>
-                    <TableHead className="hidden sm:table-cell">Connected</TableHead>
+                    <TableHead className="min-w-[14rem]">Name</TableHead>
+                    <TableHead className="min-w-[12rem]">Organization</TableHead>
+                    <TableHead className="min-w-[9rem]">Phone</TableHead>
+                    <TableHead className="min-w-[12rem]">Email</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -493,40 +497,38 @@ export default function Contacts() {
                     <TableRow
                       key={contact.id}
                       tabIndex={0}
-                      className={cn("cursor-pointer", selectedId === contact.id && "bg-primary/5")}
-                      onClick={() => setSelectedId(contact.id)}
+                      className="group cursor-pointer"
+                      onClick={() => openContact(contact)}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
-                          setSelectedId(contact.id);
+                          openContact(contact);
                         }
                       }}
                     >
                       <TableCell>
-                        <div className="flex items-center gap-3 min-w-0">
-                          {contact.avatarUrl ? (
-                            <img src={contact.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-muted text-muted-foreground grid place-items-center text-[11px] font-semibold">
-                              {initialsFromName(contact.fullName)}
-                            </div>
-                          )}
-                          <span className="font-medium truncate">{contact.fullName}</span>
+                        <div className="flex items-center gap-3">
+                          <ContactAvatar contact={contact} />
+                          <div className="min-w-0">
+                            <p className="font-medium leading-snug whitespace-normal break-words group-hover:text-primary">
+                              {contact.fullName}
+                            </p>
+                            {contact.title ? (
+                              <p className="text-xs text-muted-foreground whitespace-normal break-words">
+                                {contact.title}
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {contact.title || "—"}
+                      <TableCell className="whitespace-normal break-words">
+                        {contact.organization?.name || "—"}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">{contact.organization?.name || "—"}</TableCell>
                       <TableCell>
-                        <ContactTypeBadge type={contact.contactType} />
+                        <ContactPhone contact={contact} />
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {locationLine(contact.city, contact.state) || "—"}
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell">{formatPayerCell(contact.payers)}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
-                        {formatConnectedDate(contact.connectedAt)}
+                      <TableCell>
+                        <ContactEmail contact={contact} />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -562,23 +564,6 @@ export default function Contacts() {
             </>
           )}
         </Card>
-      </div>
-
-      {selected ? (
-        <>
-          <aside className="hidden xl:block w-[360px] shrink-0 min-w-[360px]">
-            <Card className="sticky top-24 p-5 max-h-[calc(100dvh-8rem)] overflow-y-auto">
-              <ContactDetailPanel contact={selected} onClose={() => setSelectedId(null)} />
-            </Card>
-          </aside>
-          <Sheet open={Boolean(selected) && !widePanel} onOpenChange={(open) => !open && setSelectedId(null)}>
-            <SheetContent side="right" className="w-[min(100vw-1.5rem,24rem)] overflow-y-auto">
-              <SheetTitle className="sr-only">{selected.fullName}</SheetTitle>
-              <ContactDetailPanel contact={selected} onClose={() => setSelectedId(null)} />
-            </SheetContent>
-          </Sheet>
-        </>
-      ) : null}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-w-lg">
@@ -634,34 +619,49 @@ export default function Contacts() {
   );
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Users;
-  label: string;
-  value: number;
-  tone: "sky" | "blue" | "teal" | "emerald";
-}) {
-  const toneClass = {
-    sky: "bg-sky-50 text-sky-700",
-    blue: "bg-blue-50 text-blue-700",
-    teal: "bg-teal-50 text-teal-700",
-    emerald: "bg-emerald-50 text-emerald-700",
-  }[tone];
+function ContactAvatar({ contact }: { contact: WorkspaceContact }) {
+  const src = contact.avatarUrl || contact.organization?.logo_url;
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-border"
+      />
+    );
+  }
   return (
-    <Card className="p-4">
-      <div className="flex items-start gap-3">
-        <div className={cn("h-10 w-10 rounded-xl grid place-items-center", toneClass)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="font-heading text-2xl font-bold leading-none">{value.toLocaleString("en-US")}</p>
-          <p className="mt-1 text-xs font-medium text-muted-foreground">{label}</p>
-        </div>
-      </div>
-    </Card>
+    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+      {initialsFromName(contact.fullName)}
+    </div>
+  );
+}
+
+function ContactPhone({ contact }: { contact: WorkspaceContact }) {
+  const tel = sanitizePhone(contact.phone);
+  const display = formatPhoneDisplay(contact.phone) || contact.phone;
+  if (!tel) return <span className="text-muted-foreground">—</span>;
+  return (
+    <a
+      href={`tel:${tel}`}
+      className="whitespace-nowrap text-primary hover:underline"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {display}
+    </a>
+  );
+}
+
+function ContactEmail({ contact }: { contact: WorkspaceContact }) {
+  const email = contact.email?.trim();
+  if (!email) return <span className="text-muted-foreground">—</span>;
+  return (
+    <a
+      href={`mailto:${email}`}
+      className="break-all text-primary hover:underline"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {email}
+    </a>
   );
 }
