@@ -43,6 +43,10 @@ export interface ProfessionalFacility {
   state: string | null;
   levels_of_care: string[];
   payers: string[];
+  image_urls?: string[];
+  short_description?: string | null;
+  tagline?: string | null;
+  description?: string | null;
 }
 
 export interface ProfessionalProfileData extends ProfessionalCard {
@@ -272,11 +276,36 @@ export function asProfessionalProfile(value: unknown): ProfessionalProfileData |
             payers: Array.isArray(row.payers)
               ? row.payers.filter((item): item is string => typeof item === "string")
               : [],
+            image_urls: Array.isArray(row.image_urls)
+              ? row.image_urls.filter((item): item is string => typeof item === "string")
+              : undefined,
+            short_description: typeof row.short_description === "string" ? row.short_description : null,
+            tagline: typeof row.tagline === "string" ? row.tagline : null,
+            description: typeof row.description === "string" ? row.description : null,
           } satisfies ProfessionalFacility;
         })
         .filter((row): row is ProfessionalFacility => Boolean(row))
     : [];
   return { ...card, facilities };
+}
+
+/** Counts a BD profile can show without extra tracking tables. */
+export function bdProfileMetrics(profile: Pick<ProfessionalProfileData, "facilities">) {
+  const payers = new Set<string>();
+  const states = new Set<string>();
+  for (const facility of profile.facilities) {
+    for (const payer of facility.payers) {
+      const name = payer.trim();
+      if (name) payers.add(name);
+    }
+    const state = facility.state?.trim();
+    if (state) states.add(state.toUpperCase());
+  }
+  return {
+    facilities: profile.facilities.length,
+    inNetwork: payers.size,
+    states: states.size,
+  };
 }
 
 export function asPublicReferralContacts(value: unknown): PublicReferralContact[] {

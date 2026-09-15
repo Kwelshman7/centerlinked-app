@@ -5,6 +5,7 @@ import {
   asProfessionalCards,
   asProfessionalProfile,
   asPublicReferralContacts,
+  bdProfileMetrics,
   connectSharePath,
   groupByLetter,
   groupByOrganization,
@@ -53,6 +54,18 @@ describe("professional-network helpers", () => {
       ],
     });
     assert.equal(profile?.facilities[0]?.payers[0], "Aetna");
+  });
+
+  it("counts BD profile metrics from listed facilities", () => {
+    const metrics = bdProfileMetrics({
+      facilities: [
+        { id: "1", name: "A", slug: "a", city: "Tampa", state: "FL", levels_of_care: [], payers: ["Aetna", "Cigna"] },
+        { id: "2", name: "B", slug: "b", city: "Austin", state: "TX", levels_of_care: [], payers: ["Aetna"] },
+      ],
+    });
+    assert.equal(metrics.facilities, 2);
+    assert.equal(metrics.inNetwork, 2);
+    assert.equal(metrics.states, 2);
   });
 
   it("parses public referral contacts", () => {
