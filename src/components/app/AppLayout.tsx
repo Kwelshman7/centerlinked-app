@@ -20,6 +20,7 @@ import { Logo } from "@/components/Logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { adminLinks } from "@/components/app/admin/SuperAdminPanel";
+import { professionalPath } from "@/lib/professional-network";
 
 type NavItem = { to: string; label: string; icon: typeof SearchIcon; end?: boolean };
 
@@ -38,6 +39,9 @@ export function AppLayout() {
         ? { to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true }
         : { to: "/app/dashboard", label: "My profile", icon: UserRound, end: true },
     ];
+    if (hasOrgAccess && user) {
+      items.push({ to: professionalPath(user.id), label: "My profile", icon: UserRound });
+    }
     if (isSuperAdmin) {
       items.push({
         to: "/app/admin",
@@ -64,6 +68,9 @@ export function AppLayout() {
     }
     if (hasOrgAccess) {
       items.push({ to: "/app/dashboard", label: "My org", icon: LayoutDashboard, end: true });
+      if (user) {
+        items.push({ to: professionalPath(user.id), label: "My profile", icon: UserRound });
+      }
       items.push({ to: "/app/settings", label: "Settings", icon: Settings });
     } else {
       items.push({ to: "/app/dashboard", label: "My profile", icon: UserRound, end: true });
@@ -165,8 +172,17 @@ export function AppLayout() {
       <div className={cn("border-t border-border/50 space-y-3 pb-safe", collapsed ? "px-1 py-3" : "px-3 py-4")}>
         {!collapsed && (
           <div className="px-3 text-xs">
-            <p className="font-medium text-foreground truncate">{profile?.full_name || user?.email}</p>
-            <p className="text-muted-foreground truncate">{user?.email}</p>
+            {user ? (
+              <NavLink to={professionalPath(user.id)} className="block group">
+                <p className="font-medium text-foreground truncate group-hover:text-primary">{profile?.full_name || user.email}</p>
+                <p className="text-muted-foreground truncate">{user.email}</p>
+              </NavLink>
+            ) : (
+              <>
+                <p className="font-medium text-foreground truncate">{profile?.full_name}</p>
+                <p className="text-muted-foreground truncate">{user?.email}</p>
+              </>
+            )}
             {isSuperAdmin && (
               <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
                 <Shield className="h-3 w-3" /> Super Admin
