@@ -42,7 +42,7 @@ test("facility count maps to the right membership and DFY package", () => {
   assert.equal(dfyPackageForFacilityCount(20), "enterprise");
 });
 
-test("slider quote starts at free and rises with each facility", () => {
+test("slider quote starts at 1 facility and rises with each added location", () => {
   const listed = membershipQuoteForFacilityCount(0);
   assert.equal(listed.isListed, true);
   assert.equal(listed.monthlyCents, 0);

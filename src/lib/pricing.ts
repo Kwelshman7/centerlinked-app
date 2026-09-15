@@ -67,12 +67,8 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
 ];
 
 /**
- * Free slider position ($0). Not a Stripe plan.
- *
- * Deliberately NOT part of `MEMBERSHIP_TIERS` — that array is the purchasable
- * catalog and drives checkout, tier matching, and the server mirror in
- * `server/stripe/pricing.mjs`. A $0 entry there would break
- * `assertTierMatchesFacilityCount`.
+ * Free listing is not a Stripe plan and is not a slider stop.
+ * Shown as a note above the membership table.
  */
 export const LISTED_TIER = {
   id: "listed",
@@ -82,6 +78,7 @@ export const LISTED_TIER = {
   cta: "Start for free",
   description:
     "Search for free and provide the in-network providers you work with.",
+  tableNote: "BD representative accounts are free.",
 } as const;
 
 export type DfyPackage = {
@@ -174,8 +171,8 @@ export function suggestedTierForFacilityCount(count: number): MembershipTierId |
   return "enterprise";
 }
 
-/** Landing slider: 0 = free, 1–15 self-serve, 16 means 16+ (quoted). */
-export const PRICING_SLIDER_MIN = 0;
+/** Landing slider: 1–15 self-serve, 16 means 16+ (quoted). Free is not a slider stop. */
+export const PRICING_SLIDER_MIN = 1;
 export const PRICING_SLIDER_MAX = 16;
 
 export type MembershipQuote =

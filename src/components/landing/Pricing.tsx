@@ -28,7 +28,6 @@ const YEARLY_SAVE_PERCENT = 20;
 const SLIDER_END = 15;
 
 const SLIDER_TICKS = [
-  { value: 0, label: "Free" },
   { value: 1, label: "1" },
   { value: 5, label: "5" },
   { value: 10, label: "10" },
@@ -97,7 +96,11 @@ export function Pricing() {
           </p>
         </div>
 
-        <div className="mt-10 sm:mt-12 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <p className="mt-10 sm:mt-12 text-center text-sm sm:text-base text-muted-foreground">
+          {LISTED_TIER.tableNote}
+        </p>
+
+        <div className="mt-4 sm:mt-5 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex justify-center border-b border-border/70 px-6 py-4 sm:py-5">
             <div className="flex items-center gap-2.5">
               <div className="inline-flex rounded-full border border-border bg-background p-1">
@@ -149,7 +152,7 @@ export function Pricing() {
               <div className="text-center lg:text-left">
                 <p className="text-sm font-semibold text-muted-foreground">How many facilities?</p>
                 <p className="mt-2 font-display text-3xl sm:text-4xl text-foreground">
-                  {quote.isListed ? LISTED_TIER.name : facilityCount >= SLIDER_END ? "15+" : quote.facilityLabel}
+                  {facilityCount >= SLIDER_END ? "15+" : quote.facilityLabel}
                 </p>
               </div>
 
@@ -169,10 +172,10 @@ export function Pricing() {
                   aria-valuemax={SLIDER_END}
                   aria-valuenow={facilityCount}
                   aria-valuetext={
-                    quote.isListed
-                      ? `${LISTED_TIER.name}, ${LISTED_TIER.priceLabel}`
-                      : quote.isEnterprise
-                        ? "16 or more facilities, custom pricing"
+                    quote.isEnterprise
+                      ? "16 or more facilities, custom pricing"
+                      : quote.isListed
+                        ? quote.facilityLabel
                         : `${quote.facilityLabel}, ${formatUsdFromCents(interval === "year" ? quote.annualCents : quote.monthlyCents)} ${interval === "year" ? "per year" : "per month"}`
                   }
                   className="facility-count-slider w-full cursor-pointer appearance-none bg-transparent"
@@ -208,21 +211,7 @@ export function Pricing() {
               </div>
 
               <div className="mt-8 text-center lg:text-left">
-                {quote.isListed ? (
-                  <>
-                    <div className="flex items-baseline justify-center lg:justify-start gap-1.5">
-                      <span className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
-                        {LISTED_TIER.priceLabel}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-sm font-medium text-foreground/80">
-                      {LISTED_TIER.priceNote}
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {LISTED_TIER.description}
-                    </p>
-                  </>
-                ) : quote.isEnterprise ? (
+                {quote.isEnterprise ? (
                   <>
                     <p className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
                       Custom
@@ -232,7 +221,7 @@ export function Pricing() {
                       We’ll quote Done For You for your footprint.
                     </p>
                   </>
-                ) : (
+                ) : quote.isListed ? null : (
                   <>
                     <div className="flex items-baseline justify-center lg:justify-start gap-1.5">
                       <span className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
@@ -256,21 +245,14 @@ export function Pricing() {
                 )}
               </div>
 
-              {quote.isListed ? (
-                <Button asChild variant="hero" size="lg" className="mt-8 w-full group rounded-full">
-                  <Link to="/signup">
-                    {LISTED_TIER.cta}
-                    <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </Button>
-              ) : quote.isEnterprise ? (
+              {quote.isEnterprise ? (
                 <Button asChild variant="hero" size="lg" className="mt-8 w-full rounded-full">
                   <Link to="/signup">
                     Create your account
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
-              ) : (
+              ) : quote.isListed ? null : (
                 <>
                   <Button
                     type="button"
