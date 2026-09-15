@@ -26,7 +26,7 @@ import {
 } from "@/lib/plan-types";
 import { insuranceMatchFromContract } from "@/lib/insurance-contract-status";
 import type { OrgSearchFacility } from "@/components/app/search/OrgResultCard";
-import { rememberSearchSession } from "@/lib/search-session";
+import { rememberSearchSession, hasSearchCriteria, searchWorkHref } from "@/lib/search-session";
 
 type OrgFields = {
   id: string;
@@ -112,7 +112,7 @@ type OrgSearchBase = Omit<OrgSearchResult, "in_your_network">;
 export default function SearchResults() {
   const [params] = useSearchParams();
   const [baseResults, setBaseResults] = useState<OrgSearchBase[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => hasSearchCriteria(params));
   const [loadError, setLoadError] = useState<string | null>(null);
   const [truncated, setTruncated] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
@@ -127,6 +127,7 @@ export default function SearchResults() {
   const specialty = params.get("specialty") ?? "";
   const accreditation = params.get("accreditation") ?? "";
   const loc = params.get("loc") ?? "";
+  const canSearch = hasSearchCriteria(params);
 
   const summary = useMemo(() => {
     const parts: string[] = [];
@@ -137,12 +138,21 @@ export default function SearchResults() {
     if (accreditation) parts.push(accreditation);
     const place = [city, state, zip].filter(Boolean).join(", ");
     if (place) parts.push(`in ${place}`);
-    return parts.length ? parts.join(" · ") : "All verified organizations";
-  }, [payerName, planType, loc, specialty, accreditation, city, state, zip]);
+    if (!canSearch && parts.length === 0) return "Start with insurance or a state";
+    return parts.length ? parts.join(" · ") : "Matching programs";
+  }, [payerName, planType, loc, specialty, accreditation, city, state, zip, canSearch]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!canSearch) {
+        setBaseResults([]);
+        setLoadError(null);
+        setTruncated(false);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setLoadError(null);
       setTruncated(false);
@@ -294,7 +304,7 @@ export default function SearchResults() {
     return () => {
       cancelled = true;
     };
-  }, [payerId, planType, state, city, zip, loc, specialty, accreditation]);
+  }, [canSearch, payerId, planType, state, city, zip, loc, specialty, accreditation]);
 
   const results = useMemo(
     () =>
@@ -328,7 +338,7 @@ export default function SearchResults() {
       ? `/o/${selectedOrg.org_slug}/p/${onlyFacility.slug}`
       : `/o/${selectedOrg.org_slug}`
     : null;
-  const resultsPath = `/app/search/results${params.toString() ? `?${params.toString()}` : ""}`;
+  const resultsPath = searchWorkHref(params);
 
   useEffect(() => {
     if (loading || loadError) return;
@@ -343,33 +353,25 @@ export default function SearchResults() {
     });
   }, [loading, loadError, results, resultsPath, summary]);
 
-  const resultCount = loading
-    ? "Searching…"
-    : loadError
-      ? "Could not load results"
-      : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`;
+  const resultCount = !canSearch
+    ? "Choose insurance or a state"
+    : loading
+      ? "Searching…"
+      : loadError
+        ? "Could not load results"
+        : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`;
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <h1 className="font-heading flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            <SearchIcon className="h-6 w-6 text-primary" />
-            Search the referral network
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {summary}
-            {loading || loadError ? "" : ` · ${resultCount}`}
-          </p>
-          <p className="mt-2 max-w-3xl text-xs text-muted-foreground">
-            A match is not a benefits or admission confirmation — still verify with the facility.
-          </p>
-        </div>
-      </header>
-
-      <Card className="p-4 shadow-sm sm:p-5">
+    <div className="space-y-4">
+      <div className="sticky top-12 z-20 -mx-4 border-b border-border/60 bg-muted/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-16 lg:-mx-8 lg:px-8">
+        <h1 className="sr-only">Search the referral network</h1>
         <SearchForm variant="toolbar" />
-      </Card>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {summary}
+          {canSearch && !loading && !loadError ? ` · ${resultCount}` : null}
+          {canSearch ? " · A match is not a benefits or admission confirmation — still verify with the facility." : null}
+        </p>
+      </div>
 
       {truncated && !loading && !loadError ? (
         <p className="text-xs text-amber-700">
@@ -385,7 +387,11 @@ export default function SearchResults() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto px-4 pb-3 lg:max-h-[calc(100dvh-22rem)] lg:flex-1 lg:flex-col lg:overflow-y-auto lg:px-4 lg:pb-4">
-            {loading ? (
+            {!canSearch ? (
+              <Card className="w-full p-4 text-sm text-muted-foreground">
+                Choose insurance or a state to see approved programs.
+              </Card>
+            ) : loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-[4.25rem] w-64 shrink-0 rounded-xl lg:w-full" />
               ))
@@ -409,7 +415,15 @@ export default function SearchResults() {
         </aside>
 
         <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
-          {loading ? (
+          {!canSearch ? (
+            <Card className="p-8 text-center space-y-2">
+              <SearchIcon className="mx-auto mb-2 h-10 w-10 text-muted-foreground" />
+              <p className="font-medium">Start with insurance or a state</p>
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                Results appear here as you choose filters. A referral search starts with who pays and where.
+              </p>
+            </Card>
+          ) : loading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-64 rounded-xl" />

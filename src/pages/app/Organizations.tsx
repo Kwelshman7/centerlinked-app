@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -103,7 +104,13 @@ export default function Organizations() {
   const { isSuperAdmin } = useAuth();
   const { partners, partnerOrgIds, loading: partnersLoading, addPartner, removePartner } =
     useReferralNetwork();
-  const [view, setView] = useState<View>("network");
+  const [params, setParams] = useSearchParams();
+  const view: View = params.get("view") === "all" ? "all" : "network";
+  const setView = (next: View) => {
+    const copy = new URLSearchParams(params);
+    copy.set("view", next);
+    setParams(copy, { replace: true });
+  };
   const [allOrgs, setAllOrgs] = useState<OrgRow[]>([]);
   const [allLoading, setAllLoading] = useState(false);
   const [allLoaded, setAllLoaded] = useState(false);
@@ -210,7 +217,7 @@ export default function Organizations() {
   );
 
   const sourceRows = view === "network" ? preferredRows : allOrgs;
-  const loading = view === "network" ? partnersLoading : allLoading;
+  const loading = view === "network" ? partnersLoading : allLoading || !allLoaded;
 
   const facilitiesByOrg = useMemo(() => {
     const map = new Map<string, FacilityRow[]>();
@@ -364,10 +371,20 @@ export default function Organizations() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" /> Referral Network
+            {view === "all" ? (
+              <>
+                <Building2 className="h-6 w-6 text-primary" /> Organizations
+              </>
+            ) : (
+              <>
+                <Users className="h-6 w-6 text-primary" /> Referral Network
+              </>
+            )}
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Find in-network facilities by insurance, then browse the organizations behind them.
+            {view === "all"
+              ? "Browse treatment organizations and open their live referral profiles."
+              : "Your preferred partner organizations — the orgs you actually work with."}
           </p>
         </div>
         <AddPartnerOrgDialog excludeIds={partnerOrgIds} onAdd={handleAddOrg} />

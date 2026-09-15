@@ -1,5 +1,71 @@
 const KEY = "cl_search_session";
 const MAX_AGE_MS = 4 * 60 * 60 * 1000;
+export const SEARCH_WORK_PATH = "/app/search";
+
+export type SearchFilterValues = {
+  payerId: string | null;
+  payerName: string;
+  planType: string;
+  state: string;
+  city: string;
+  zip: string;
+  specialty: string;
+  accreditation: string;
+  loc: string;
+};
+
+/** Enough to run a search: insurance or a place/level. Plan type alone is not. */
+export function hasSearchCriteria(params: URLSearchParams): boolean {
+  return Boolean(
+    params.get("payerId")?.trim() ||
+      params.get("state")?.trim() ||
+      params.get("city")?.trim() ||
+      params.get("zip")?.trim() ||
+      params.get("loc")?.trim(),
+  );
+}
+
+export function searchParamsFromFilters(filters: SearchFilterValues): URLSearchParams {
+  const q = new URLSearchParams();
+  if (filters.payerId) q.set("payerId", filters.payerId);
+  if (filters.payerName) q.set("payerName", filters.payerName);
+  if (filters.planType) q.set("planType", filters.planType);
+  if (filters.state) q.set("state", filters.state);
+  if (filters.city) q.set("city", filters.city);
+  if (filters.zip.trim()) q.set("zip", filters.zip.trim());
+  if (filters.specialty) q.set("specialty", filters.specialty);
+  if (filters.accreditation.trim()) q.set("accreditation", filters.accreditation.trim());
+  if (filters.loc) q.set("loc", filters.loc);
+  return q;
+}
+
+export function searchWorkHref(query: string | URLSearchParams): string {
+  const encoded = typeof query === "string" ? query.replace(/^\?/, "") : query.toString();
+  return encoded ? `${SEARCH_WORK_PATH}?${encoded}` : SEARCH_WORK_PATH;
+}
+
+export function searchWorkHrefFromFilters(filters: SearchFilterValues): string {
+  return searchWorkHref(searchParamsFromFilters(filters));
+}
+
+/** Map a stored returnTo (work page or legacy /results) onto the current search URL. */
+export function toSearchWorkHref(returnTo: string): string | null {
+  if (!returnTo.startsWith(SEARCH_WORK_PATH)) return null;
+  let params: URLSearchParams;
+  try {
+    params = new URL(returnTo, "https://centerlinked.local").searchParams;
+  } catch {
+    return null;
+  }
+  if (!hasSearchCriteria(params)) return null;
+  return searchWorkHref(params);
+}
+
+export function restoreSearchHref(): string | null {
+  const session = readSearchSession();
+  if (!session) return null;
+  return toSearchWorkHref(session.returnTo);
+}
 
 export type SearchSessionOrg = {
   slug: string;

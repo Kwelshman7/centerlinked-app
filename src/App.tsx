@@ -3,7 +3,7 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute, AdminRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/app/AppLayout";
 import { FEATURES } from "@/config/features";
@@ -17,10 +17,11 @@ import SetupOrganization from "./pages/SetupOrganization";
 import NotFound from "./pages/NotFound";
 import JoinRequests from "./pages/app/admin/JoinRequests";
 import Dashboard from "./pages/app/Dashboard";
-import Search from "./pages/app/Search";
+import Search, { SearchResultsRedirect } from "./pages/app/Search";
 import Facilities from "./pages/app/Facilities";
 import Organizations from "./pages/app/Organizations";
-import Network from "./pages/app/Network";
+import Contacts from "./pages/app/Contacts";
+import Insurance from "./pages/app/Insurance";
 import ProfessionalProfile from "./pages/app/ProfessionalProfile";
 import FacilityDetail from "./pages/app/FacilityDetail";
 import Onboarding from "./pages/app/Onboarding";
@@ -31,7 +32,6 @@ import Settings from "./pages/app/Settings";
 import Billing from "./pages/app/Billing";
 import Feed from "./pages/app/Feed";
 import Messenger from "./pages/app/Messenger";
-import SearchResults from "./pages/app/SearchResults";
 import InsuranceDatabase from "./pages/app/admin/InsuranceDatabase";
 import InsuranceQueue from "./pages/app/admin/InsuranceQueue";
 import NormalizationQueue from "./pages/app/admin/NormalizationQueue";
@@ -53,6 +53,12 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import OrgOnePagerPreview from "./pages/dev/OrgOnePagerPreview";
 import LaunchImport from "./pages/LaunchImport";
+
+function AppIndexRedirect() {
+  const { profile, isSuperAdmin } = useAuth();
+  const hasOrg = isSuperAdmin || !!profile?.organization_id;
+  return <Navigate to={hasOrg ? "/app/contacts" : "/app/search"} replace />;
+}
 
 const App = () => (
   <AppErrorBoundary>
@@ -81,11 +87,13 @@ const App = () => (
             <Route path="/setup-organization" element={<ProtectedRoute><SetupOrganization /></ProtectedRoute>} />
             <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
             <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route index element={<Navigate to="/app/search" replace />} />
+              <Route index element={<AppIndexRedirect />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="search" element={<Search />} />
-              <Route path="search/results" element={<SearchResults />} />
-              <Route path="network" element={<Network />} />
+              <Route path="search/results" element={<SearchResultsRedirect />} />
+              <Route path="contacts" element={<Contacts />} />
+              <Route path="insurance" element={<Insurance />} />
+              <Route path="network" element={<Navigate to="/app/contacts" replace />} />
               <Route path="people/:userId" element={<ProfessionalProfile />} />
               <Route path="admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
               <Route path="admin/insurance" element={<AdminRoute><InsuranceDatabase /></AdminRoute>} />

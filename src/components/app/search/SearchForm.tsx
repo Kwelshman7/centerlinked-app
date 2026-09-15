@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronDown, Search as SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { PLAN_TYPES, parsePlanTypeParam } from "@/lib/plan-types";
 import { resolveStateCode, US_STATES } from "@/lib/us-states";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { searchWorkHrefFromFilters, type SearchFilterValues } from "@/lib/search-session";
 
 type SearchFormVariant = "hero" | "inline" | "toolbar";
 
@@ -40,6 +41,7 @@ function FieldShell({
 
 export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
   const [payerId, setPayerId] = useState<string | null>(params.get("payerId"));
   const [payerName, setPayerName] = useState(params.get("payerName") ?? "");
@@ -55,6 +57,30 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   const [moreOpen, setMoreOpen] = useState(
     () => !!(params.get("zip") || params.get("specialty") || params.get("accreditation")),
   );
+  const zipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const accredTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const filtersRef = useRef<SearchFilterValues>({
+    payerId,
+    payerName,
+    planType,
+    state,
+    city,
+    zip,
+    specialty,
+    accreditation,
+    loc,
+  });
+  filtersRef.current = {
+    payerId,
+    payerName,
+    planType,
+    state,
+    city,
+    zip,
+    specialty,
+    accreditation,
+    loc,
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -110,19 +136,27 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
     setLoc(params.get("loc") ?? "");
   }, [params]);
 
+  useEffect(() => {
+    return () => {
+      if (zipTimer.current) clearTimeout(zipTimer.current);
+      if (accredTimer.current) clearTimeout(accredTimer.current);
+    };
+  }, []);
+
+  const currentFilters = (): SearchFilterValues => filtersRef.current;
+
+  const commit = (patch: Partial<SearchFilterValues>) => {
+    const href = searchWorkHrefFromFilters({ ...currentFilters(), ...patch });
+    const here = `${location.pathname}${location.search}`;
+    if (href === here) return;
+    navigate(href, { replace: true });
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = new URLSearchParams();
-    if (payerId) q.set("payerId", payerId);
-    if (payerName) q.set("payerName", payerName);
-    if (planType) q.set("planType", planType);
-    if (state) q.set("state", state);
-    if (city) q.set("city", city);
-    if (zip.trim()) q.set("zip", zip.trim());
-    if (specialty) q.set("specialty", specialty);
-    if (accreditation.trim()) q.set("accreditation", accreditation.trim());
-    if (loc) q.set("loc", loc);
-    navigate(`/app/search/results?${q.toString()}`);
+    if (zipTimer.current) clearTimeout(zipTimer.current);
+    if (accredTimer.current) clearTimeout(accredTimer.current);
+    commit({});
   };
 
   const isHero = variant === "hero";
@@ -152,6 +186,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
             onSelect={(p) => {
               setPayerId(p.id);
               setPayerName(p.name);
+              commit({ payerId: p.id, payerName: p.name });
             }}
             placeholder="Any insurance"
             triggerClassName={cn("w-full font-normal", control)}
@@ -166,7 +201,11 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         >
           <Select
             value={planType || "_any"}
-            onValueChange={(v) => setPlanType(v === "_any" ? "" : parsePlanTypeParam(v))}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : parsePlanTypeParam(v);
+              setPlanType(next);
+              commit({ planType: next });
+            }}
           >
             <SelectTrigger id="search-plan-type" className={control}>
               <SelectValue placeholder="Any plan type" />
@@ -187,7 +226,14 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
           htmlFor="search-loc"
           className={cn(isHero && "col-span-1 lg:col-span-3", isToolbar && "col-span-1 lg:col-span-3")}
         >
-          <Select value={loc || "_any"} onValueChange={(v) => setLoc(v === "_any" ? "" : v)}>
+          <Select
+            value={loc || "_any"}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : v;
+              setLoc(next);
+              commit({ loc: next });
+            }}
+          >
             <SelectTrigger id="search-loc" className={control}>
               <SelectValue placeholder="Any level of care" />
             </SelectTrigger>
@@ -214,10 +260,11 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
               setState(next);
               const code = resolveStateCode(next);
               const allowed = code ? citiesByState[code] ?? [] : [];
-              if (city && !allowed.some((name) => name.toLowerCase() === city.toLowerCase())) {
-                setCity("");
-              }
+              const nextCity =
+                city && allowed.some((name) => name.toLowerCase() === city.toLowerCase()) ? city : "";
+              if (nextCity !== city) setCity(nextCity);
               if (!next) setCity("");
+              commit({ state: next, city: next ? nextCity : "" });
             }}
           >
             <SelectTrigger id="search-state" className={control}>
@@ -243,7 +290,11 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         >
           <Select
             value={city || "_any"}
-            onValueChange={(v) => setCity(v === "_any" ? "" : v)}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : v;
+              setCity(next);
+              commit({ city: next });
+            }}
             disabled={!state}
           >
             <SelectTrigger id="search-city" className={control}>
@@ -270,7 +321,12 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
               <Input
                 id="search-zip"
                 value={zip}
-                onChange={(e) => setZip(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setZip(next);
+                  if (zipTimer.current) clearTimeout(zipTimer.current);
+                  zipTimer.current = setTimeout(() => commit({ zip: next }), 300);
+                }}
                 placeholder="Exact ZIP"
                 inputMode="numeric"
                 className={control}
@@ -281,7 +337,14 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
               htmlFor="search-specialty"
               className={cn(isHero && "col-span-1 lg:col-span-4", isToolbar && "col-span-1 lg:col-span-3")}
             >
-              <Select value={specialty || "_any"} onValueChange={(v) => setSpecialty(v === "_any" ? "" : v)}>
+              <Select
+                value={specialty || "_any"}
+                onValueChange={(v) => {
+                  const next = v === "_any" ? "" : v;
+                  setSpecialty(next);
+                  commit({ specialty: next });
+                }}
+              >
                 <SelectTrigger id="search-specialty" className={control}>
                   <SelectValue placeholder="Any specialty" />
                 </SelectTrigger>
@@ -303,7 +366,12 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
               <Input
                 id="search-accreditation"
                 value={accreditation}
-                onChange={(e) => setAccreditation(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setAccreditation(next);
+                  if (accredTimer.current) clearTimeout(accredTimer.current);
+                  accredTimer.current = setTimeout(() => commit({ accreditation: next }), 300);
+                }}
                 placeholder="e.g. Joint Commission"
                 className={control}
               />
