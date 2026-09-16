@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, Building2, Search as SearchIcon } from "lucide-react";
+import { ArrowUpRight, Building2, Search as SearchIcon, Star } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { SearchForm } from "@/components/app/search/SearchForm";
 import {
   OrgListItem,
@@ -12,6 +13,7 @@ import {
   SearchFacilityCard,
 } from "@/components/app/search/OrgResultCard";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import {
   buildPayerOrFilter,
@@ -25,6 +27,7 @@ import {
   planTypeShortLabel,
 } from "@/lib/plan-types";
 import { insuranceMatchFromContract } from "@/lib/insurance-contract-status";
+import { hasAssignedBdContact, normalizeBdEmail } from "@/lib/bd-contact";
 import type { OrgSearchFacility } from "@/components/app/search/OrgResultCard";
 import { rememberSearchSession, hasSearchCriteria, searchWorkHref } from "@/lib/search-session";
 
@@ -116,7 +119,10 @@ export default function SearchResults() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [truncated, setTruncated] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { partnerOrgIds } = useReferralNetwork();
+  const { profile } = useAuth();
+  const { partners, partnerOrgIds, addPartner, removePartner } = useReferralNetwork();
+  const [preferredBusyId, setPreferredBusyId] = useState<string | null>(null);
+  const canStar = Boolean(profile?.organization_id);
 
   const payerId = params.get("payerId");
   const payerName = params.get("payerName") ?? "";
@@ -320,6 +326,107 @@ export default function SearchResults() {
     [baseResults, partnerOrgIds],
   );
 
+  const [avatarByFacility, setAvatarByFacility] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const assigned = results.flatMap((org) =>
+      org.facilities.filter((facility) =>
+        hasAssignedBdContact({
+          bd_contact_name: facility.bd_contact_name,
+          bd_contact_phone: facility.bd_contact_phone,
+          bd_contact_email: facility.bd_contact_email,
+        }),
+      ),
+    );
+    if (!assigned.length) {
+      setAvatarByFacility({});
+      return;
+    }
+
+    let cancelled = false;
+    const facilityIds = assigned.map((facility) => facility.id);
+
+    void (async () => {
+      const next: Record<string, string> = {};
+      const { data: assignments } = await supabase
+        .from("facility_bd_assignments")
+        .select("facility_id,representative_id")
+        .in("facility_id", facilityIds)
+        .eq("is_primary", true);
+      const assignmentRows = assignments ?? [];
+      const repIds = Array.from(new Set(assignmentRows.map((row) => row.representative_id)));
+
+      if (repIds.length) {
+        const { data: reps } = await supabase
+          .from("bd_representatives")
+          .select("id,avatar_url,user_id")
+          .in("id", repIds);
+        const userIds = (reps ?? []).map((row) => row.user_id).filter((id): id is string => Boolean(id));
+        const profileByUser = new Map<string, string>();
+        if (userIds.length) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("user_id,avatar_url")
+            .in("user_id", userIds);
+          for (const profile of profiles ?? []) {
+            if (profile.avatar_url) profileByUser.set(profile.user_id, profile.avatar_url);
+          }
+        }
+        const avatarByRep = new Map(
+          (reps ?? []).map((row) => [
+            row.id,
+            row.avatar_url || (row.user_id ? profileByUser.get(row.user_id) ?? null : null),
+          ]),
+        );
+        for (const row of assignmentRows) {
+          const url = avatarByRep.get(row.representative_id);
+          if (url) next[row.facility_id] = url;
+        }
+      }
+
+      const missingEmails = assigned
+        .filter((facility) => !next[facility.id])
+        .map((facility) => normalizeBdEmail(facility.bd_contact_email))
+        .filter((email): email is string => Boolean(email));
+      if (missingEmails.length) {
+        const uniqueEmails = Array.from(new Set(missingEmails));
+        const { data: reps } = await supabase
+          .from("bd_representatives")
+          .select("email,avatar_url,user_id")
+          .in("email", uniqueEmails)
+          .eq("active", true);
+        const userIds = (reps ?? []).map((row) => row.user_id).filter((id): id is string => Boolean(id));
+        const profileByUser = new Map<string, string>();
+        if (userIds.length) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("user_id,avatar_url")
+            .in("user_id", userIds);
+          for (const profile of profiles ?? []) {
+            if (profile.avatar_url) profileByUser.set(profile.user_id, profile.avatar_url);
+          }
+        }
+        const avatarByEmail = new Map<string, string>();
+        for (const row of reps ?? []) {
+          const email = normalizeBdEmail(row.email);
+          const url = row.avatar_url || (row.user_id ? profileByUser.get(row.user_id) ?? null : null);
+          if (email && url) avatarByEmail.set(email, url);
+        }
+        for (const facility of assigned) {
+          const email = normalizeBdEmail(facility.bd_contact_email);
+          const url = email ? avatarByEmail.get(email) : null;
+          if (url && !next[facility.id]) next[facility.id] = url;
+        }
+      }
+
+      if (!cancelled) setAvatarByFacility(next);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [results]);
+
   useEffect(() => {
     if (results.length === 0) {
       setSelectedOrgId(null);
@@ -331,6 +438,24 @@ export default function SearchResults() {
   }, [results]);
 
   const selectedOrg = results.find((r) => r.org_id === selectedOrgId) ?? null;
+
+  const togglePreferred = async (orgId: string, name: string) => {
+    if (!canStar) return;
+    setPreferredBusyId(orgId);
+    if (partnerOrgIds.has(orgId)) {
+      const row = partners.find((partner) => partner.id === orgId);
+      const { error } = row
+        ? await removePartner(row.rowId)
+        : { error: "Could not update preferred providers." };
+      if (error) toast.error(error);
+      else toast.success(`${name} removed from preferred providers`);
+    } else {
+      const { error } = await addPartner(orgId);
+      if (error) toast.error(error);
+      else toast.success(`${name} marked as a preferred provider`);
+    }
+    setPreferredBusyId(null);
+  };
   const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
   const onlyFacility = selectedOrg?.facilities.length === 1 ? selectedOrg.facilities[0] : null;
   const orgHref = selectedOrg?.org_slug
@@ -403,6 +528,10 @@ export default function SearchResults() {
                   o={o}
                   selected={o.org_id === selectedOrgId}
                   onSelect={() => setSelectedOrgId(o.org_id)}
+                  onTogglePreferred={
+                    canStar ? () => void togglePreferred(o.org_id, o.org_name) : undefined
+                  }
+                  preferredBusy={preferredBusyId === o.org_id}
                 />
               ))
             ) : (
@@ -439,9 +568,17 @@ export default function SearchResults() {
             <div className="space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="font-heading text-lg font-semibold tracking-tight sm:text-xl">
-                    {selectedOrg.org_name}
-                  </h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="font-heading text-lg font-semibold tracking-tight sm:text-xl">
+                      {selectedOrg.org_name}
+                    </h2>
+                    {selectedOrg.in_your_network ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+                        <Star className="h-3 w-3 fill-current" aria-hidden />
+                        Preferred
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {selectedOrg.facilities.length} matching{" "}
                     {selectedOrg.facilities.length === 1 ? "facility" : "facilities"}
@@ -450,20 +587,38 @@ export default function SearchResults() {
                       : ""}
                   </p>
                 </div>
-                {orgHref ? (
-                  <Button asChild variant="outline" size="sm" className="shrink-0">
-                    <Link to={orgHref}>
-                      View org page
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                ) : null}
+                <div className="flex shrink-0 items-center gap-2">
+                  {canStar ? (
+                    <Button
+                      type="button"
+                      variant={selectedOrg.in_your_network ? "default" : "outline"}
+                      size="sm"
+                      disabled={preferredBusyId === selectedOrg.org_id}
+                      onClick={() => void togglePreferred(selectedOrg.org_id, selectedOrg.org_name)}
+                    >
+                      <Star className={cn("h-3.5 w-3.5", selectedOrg.in_your_network && "fill-current")} />
+                      {selectedOrg.in_your_network ? "Preferred" : "Mark preferred"}
+                    </Button>
+                  ) : null}
+                  {orgHref ? (
+                    <Button asChild variant="outline" size="sm">
+                      <Link to={orgHref}>
+                        View org page
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
               </div>
 
               {selectedOrg.facilities.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {selectedOrg.facilities.map((f) => (
-                    <SearchFacilityCard key={f.id} facility={f} orgSlug={selectedOrg.org_slug} />
+                    <SearchFacilityCard
+                      key={f.id}
+                      facility={{ ...f, bd_contact_avatar: avatarByFacility[f.id] ?? f.bd_contact_avatar }}
+                      orgSlug={selectedOrg.org_slug}
+                    />
                   ))}
                 </div>
               ) : (

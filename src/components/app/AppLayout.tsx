@@ -242,7 +242,6 @@ export function AppLayout() {
       { to: "/app/organizations?view=all", label: "Organizations", icon: Building2, orgView: "all" },
       { to: "/app/facilities", label: "Facilities", icon: Building },
       { to: "/app/contacts", label: "Contacts", icon: Users },
-      { to: "/app/insurance", label: "Insurance", icon: Shield },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ];
     return items;

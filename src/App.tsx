@@ -21,7 +21,6 @@ import Search, { SearchResultsRedirect } from "./pages/app/Search";
 import Facilities from "./pages/app/Facilities";
 import Organizations from "./pages/app/Organizations";
 import Contacts from "./pages/app/Contacts";
-import Insurance from "./pages/app/Insurance";
 import ProfessionalProfile from "./pages/app/ProfessionalProfile";
 import FacilityDetail from "./pages/app/FacilityDetail";
 import Onboarding from "./pages/app/Onboarding";
@@ -92,7 +91,7 @@ const App = () => (
               <Route path="search" element={<Search />} />
               <Route path="search/results" element={<SearchResultsRedirect />} />
               <Route path="contacts" element={<Contacts />} />
-              <Route path="insurance" element={<Insurance />} />
+              <Route path="insurance" element={<Navigate to="/app/search" replace />} />
               <Route path="network" element={<Navigate to="/app/contacts" replace />} />
               <Route path="people/:userId" element={<ProfessionalProfile />} />
               <Route path="admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />

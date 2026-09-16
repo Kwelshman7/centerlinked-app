@@ -25,6 +25,7 @@ export interface OrgSearchFacility {
   bd_contact_email?: string | null;
   bd_contact_title?: string | null;
   bd_contact_verified_at?: string | null;
+  bd_contact_avatar?: string | null;
 }
 
 export interface OrgSearchResult {
@@ -88,7 +89,7 @@ export function OrgResultCard({
           {o.in_your_network && (
             <span className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-0.5">
               <Star className="h-2.5 w-2.5 fill-current" aria-hidden />
-              Pref
+              Preferred
             </span>
           )}
           {o.logo_url ? (
@@ -232,10 +233,14 @@ export function OrgListItem({
   o,
   selected,
   onSelect,
+  onTogglePreferred,
+  preferredBusy,
 }: {
   o: OrgSearchResult;
   selected: boolean;
   onSelect: () => void;
+  onTogglePreferred?: () => void;
+  preferredBusy?: boolean;
 }) {
   const matchLabel = `${o.facilities.length} ${o.facilities.length === 1 ? "match" : "matches"}`;
   const place = [o.hq_city, o.hq_state].filter(Boolean).join(", ");
@@ -266,10 +271,27 @@ export function OrgListItem({
           {place ? ` · ${matchLabel}` : ""}
         </p>
       </div>
-      {o.in_your_network ? (
+      {onTogglePreferred ? (
+        <button
+          type="button"
+          disabled={preferredBusy}
+          onClick={(event) => {
+            event.stopPropagation();
+            onTogglePreferred();
+          }}
+          aria-label={o.in_your_network ? "Remove preferred provider" : "Mark as preferred provider"}
+          title={o.in_your_network ? "Preferred provider" : "Mark as preferred"}
+          className={cn(
+            "grid h-8 w-8 shrink-0 place-items-center rounded-md",
+            o.in_your_network ? "text-primary" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Star className={cn("h-4 w-4", o.in_your_network && "fill-current")} />
+        </button>
+      ) : o.in_your_network ? (
         <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
           <Star className="h-2.5 w-2.5 fill-current" aria-hidden />
-          Pref
+          Preferred
         </span>
       ) : null}
     </button>
@@ -352,6 +374,7 @@ export function SearchFacilityCard({
           email={f.bd_contact_email}
           title={f.bd_contact_title}
           verifiedAt={f.bd_contact_verified_at}
+          avatarUrl={f.bd_contact_avatar}
         />
       </div>
     </article>
