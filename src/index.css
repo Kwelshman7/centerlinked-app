@@ -410,6 +410,7 @@ html {
   max-width: 100%;
 }
 body, #root {
+  overflow-x: clip;
   width: 100%;
   max-width: 100%;
 }

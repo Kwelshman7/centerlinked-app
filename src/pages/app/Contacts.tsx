@@ -459,7 +459,7 @@ export default function Contacts() {
           <Card className="p-3 text-sm text-destructive">{catalogError} Showing whatever loaded.</Card>
         ) : null}
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-2">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -469,9 +469,9 @@ export default function Contacts() {
                 className="h-8 pl-9"
               />
             </div>
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="grid min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
             <Select value={type} onValueChange={(value) => setType(value as ContactType | typeof ANY)}>
-              <SelectTrigger className="h-8 w-[9.5rem]">
+              <SelectTrigger className="h-8 w-full min-w-0 sm:w-[9.5rem]">
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
               <SelectContent>
@@ -484,7 +484,7 @@ export default function Contacts() {
               </SelectContent>
             </Select>
             <Select value={state} onValueChange={setState}>
-              <SelectTrigger className="h-8 w-[7.5rem]">
+              <SelectTrigger className="h-8 w-full min-w-0 sm:w-[7.5rem]">
                 <SelectValue placeholder="All states" />
               </SelectTrigger>
               <SelectContent>
@@ -497,7 +497,7 @@ export default function Contacts() {
               </SelectContent>
             </Select>
             <Select value={insurance} onValueChange={setInsurance}>
-              <SelectTrigger className="h-8 w-[10rem]">
+              <SelectTrigger className="h-8 w-full min-w-0 sm:w-[10rem]">
                 <SelectValue placeholder="All insurance" />
               </SelectTrigger>
               <SelectContent>
@@ -509,7 +509,7 @@ export default function Contacts() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 shrink-0 px-2">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 shrink-0 justify-self-start px-2">
               Clear
             </Button>
             </div>
@@ -537,6 +537,30 @@ export default function Contacts() {
             </div>
           ) : (
             <>
+              <div className="divide-y divide-border/60 lg:hidden">
+                {pageRows.map((contact) => (
+                  <button
+                    key={contact.id}
+                    type="button"
+                    className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left active:bg-accent/60"
+                    onClick={() => openContact(contact)}
+                  >
+                    <ContactAvatar contact={contact} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium leading-snug">{contact.fullName}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {contact.organization?.name || "—"}
+                      </p>
+                      {contact.phone || contact.email ? (
+                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                          {[formatPhoneDisplay(contact.phone) || contact.phone, contact.email].filter(Boolean).join(" · ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="hidden min-w-0 overflow-x-auto lg:block">
               <Table className="min-w-[44rem]">
                 <TableHeader>
                   <TableRow>
@@ -588,6 +612,7 @@ export default function Contacts() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
               <div className="flex flex-col gap-2 border-t border-border/60 px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <p>
                   Showing {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filtered.length)} of{" "}

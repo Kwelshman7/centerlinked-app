@@ -219,7 +219,7 @@ export function OrgResultGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4",
+        "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4",
         className,
       )}
     >
@@ -251,7 +251,7 @@ export function OrgListItem({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        "flex w-full min-w-[16rem] shrink-0 items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors lg:min-w-0",
+        "flex w-[min(16rem,calc(100vw-3rem))] shrink-0 items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors lg:w-full lg:min-w-0",
         selected
           ? "border-primary/50 bg-primary/10 shadow-sm"
           : "border-border/60 bg-card hover:border-primary/30 hover:bg-accent/50",
@@ -317,7 +317,7 @@ export function SearchFacilityCard({
     : null;
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-primary/40 hover:shadow-md">
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-primary/40 hover:shadow-md">
       <Link to={href} className="flex min-h-0 flex-1 flex-col">
       <div className="relative aspect-[16/10] overflow-hidden bg-muted/40">
         {imageUrl ? (

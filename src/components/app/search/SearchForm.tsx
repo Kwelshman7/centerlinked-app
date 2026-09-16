@@ -390,7 +390,7 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         {isHero || isToolbar ? (
           <div
             className={cn(
-              "flex items-end gap-2",
+              "flex min-w-0 flex-wrap items-end gap-2",
               isHero && "col-span-2 pt-1 lg:col-span-12",
               isToolbar && "col-span-2 lg:col-span-2 lg:justify-end",
             )}
@@ -410,9 +410,9 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
               variant={isHero ? "hero" : "default"}
               size={isToolbar ? "sm" : "lg"}
               className={cn(
-                "w-full font-semibold",
+                "min-w-0 flex-1 font-semibold lg:flex-none",
                 isHero && "h-12 rounded-xl text-base sm:text-sm",
-                isToolbar && "h-8 shrink-0 whitespace-nowrap px-4 lg:w-auto",
+                isToolbar && "h-8 whitespace-nowrap px-4 lg:w-auto",
               )}
             >
               <SearchIcon className="h-4 w-4" />

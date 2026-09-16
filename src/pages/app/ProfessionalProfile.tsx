@@ -166,7 +166,7 @@ export default function ProfessionalProfile() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div className="mx-auto min-w-0 max-w-6xl space-y-5">
       <Link
         to="/app/contacts"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -177,8 +177,8 @@ export default function ProfessionalProfile() {
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.04)]">
         <div className="h-1.5 bg-gradient-to-r from-primary via-primary/70 to-[hsl(var(--brand-purple))]" />
-        <div className="flex items-start gap-4 p-5 sm:p-6">
-          <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/10 text-lg font-semibold text-primary ring-1 ring-border sm:h-[4.5rem] sm:w-[4.5rem] sm:text-xl">
+        <div className="flex min-w-0 items-start gap-3 p-4 sm:gap-4 sm:p-6">
+          <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/10 text-base font-semibold text-primary ring-1 ring-border sm:h-[4.5rem] sm:w-[4.5rem] sm:text-xl">
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -187,7 +187,7 @@ export default function ProfessionalProfile() {
           </div>
           <div className="min-w-0 flex-1 space-y-3">
             <div className="space-y-1">
-              <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-[1.75rem]">{name}</h1>
+              <h1 className="break-words font-heading text-xl font-bold tracking-tight sm:text-[1.75rem]">{name}</h1>
               {profile.job_title ? (
                 <p className="text-sm font-medium text-foreground/80">{profile.job_title}</p>
               ) : null}
@@ -267,17 +267,17 @@ export default function ProfessionalProfile() {
           </div>
         </div>
         {email || displayPhone ? (
-          <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-border/70 bg-muted/30 px-5 py-3 text-sm sm:px-6">
+          <div className="flex min-w-0 flex-wrap gap-x-5 gap-y-1 border-t border-border/70 bg-muted/30 px-4 py-3 text-sm sm:px-6">
             {displayPhone && tel ? (
-              <a href={`tel:${tel}`} className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
-                <Phone className="h-3.5 w-3.5" aria-hidden />
-                {displayPhone}
+              <a href={`tel:${tel}`} className="inline-flex min-w-0 items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="truncate">{displayPhone}</span>
               </a>
             ) : null}
             {email ? (
-              <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
-                <Mail className="h-3.5 w-3.5" aria-hidden />
-                {email}
+              <a href={`mailto:${email}`} className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="truncate">{email}</span>
               </a>
             ) : null}
           </div>

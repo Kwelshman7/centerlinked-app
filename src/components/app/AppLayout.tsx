@@ -407,7 +407,7 @@ export function AppLayout() {
   const initials = initialsFromName(profile?.full_name || user?.email || "CL");
 
   return (
-    <div className="min-h-dvh bg-muted/30">
+    <div className="min-h-dvh max-w-[100vw] overflow-x-clip bg-muted/30">
       <aside
         className={cn(
           "hidden lg:flex fixed inset-y-0 left-0 flex-col z-30 transition-[width] duration-200 text-white",
@@ -460,7 +460,7 @@ export function AppLayout() {
         </div>
       </header>
 
-      <div className={cn("transition-[padding] duration-200", mainPad)}>
+      <div className={cn("min-w-0 max-w-full overflow-x-clip transition-[padding] duration-200", mainPad)}>
         <header className="hidden lg:flex sticky top-0 z-20 h-12 items-center gap-3 border-b border-border/60 bg-card/90 px-4 backdrop-blur-xl">
           {location.pathname.startsWith("/app/search") ? (
             <p className="min-w-0 flex-1 truncate text-sm font-medium">In-network search</p>
@@ -494,10 +494,10 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main>
+        <main className="min-w-0 max-w-full">
           <div
             className={cn(
-              "w-full px-4 sm:px-6 lg:px-8 py-3 lg:py-4",
+              "w-full min-w-0 max-w-full px-4 sm:px-6 lg:px-8 py-3 lg:py-4",
               !hideMobileTabBar && "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6",
             )}
           >
@@ -525,12 +525,12 @@ export function AppLayout() {
                   <Link
                     to={item.to}
                     className={cn(
-                      "h-full flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors active:bg-accent/60",
+                      "h-full min-w-0 flex flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium transition-colors active:bg-accent/60",
                       active ? "text-primary" : "text-muted-foreground",
                     )}
                   >
-                    <Icon className="h-[22px] w-[22px]" strokeWidth={2.2} />
-                    <span className="leading-none">{item.label}</span>
+                    <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={2.2} />
+                    <span className="max-w-full truncate leading-none">{item.label}</span>
                   </Link>
                 </li>
               );

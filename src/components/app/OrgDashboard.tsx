@@ -272,7 +272,7 @@ export function OrgDashboard({
             </h1>
             {org?.name && <p className="text-sm text-muted-foreground mt-1 truncate">{org.name}</p>}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleShare} disabled={!org?.slug}>
               <Share2 className="h-4 w-4" /> Share
             </Button>
@@ -289,7 +289,7 @@ export function OrgDashboard({
           <h2 className="font-heading text-sm font-bold">At a glance</h2>
           <span className="text-[11px] text-muted-foreground">Organization activity</span>
         </div>
-        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 sm:gap-3">
         <KpiTile
           label="Facilities"
           value={facilityCount}
@@ -333,7 +333,7 @@ export function OrgDashboard({
               {org && !publicLive ? " · Public page stays off until the organization is approved." : ""}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             {canManageFacilityVisibility && (
               <Button asChild variant="outline" size="sm">
                 <Link to={uploadPdfHref}>

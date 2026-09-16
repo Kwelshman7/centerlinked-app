@@ -487,8 +487,8 @@ export default function SearchResults() {
         : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`;
 
   return (
-    <div className="space-y-4">
-      <div className="sticky top-12 z-20 -mx-4 border-b border-border/60 bg-muted/95 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="min-w-0 overflow-x-clip space-y-4">
+      <div className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-20 -mx-4 border-b border-border/60 bg-muted/95 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-12 lg:-mx-8 lg:px-8">
         <h1 className="sr-only">Search the referral network</h1>
         <SearchForm variant="toolbar" />
         <p className="mt-1 truncate text-[11px] text-muted-foreground">
@@ -503,21 +503,21 @@ export default function SearchResults() {
         </p>
       ) : null}
 
-      <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card lg:min-h-[36rem] lg:flex-row">
-        <aside className="shrink-0 border-b border-border/60 bg-card lg:flex lg:w-80 lg:flex-col lg:border-b-0 lg:border-r xl:w-96">
+      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card lg:min-h-[36rem] lg:flex-row">
+        <aside className="min-w-0 w-full shrink-0 border-b border-border/60 bg-card lg:flex lg:w-80 lg:flex-col lg:border-b-0 lg:border-r xl:w-96">
           <div className="px-4 py-3">
             <h2 className="font-heading text-sm font-semibold tracking-tight">Organizations</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">{resultCount}</p>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto px-4 pb-3 lg:max-h-[calc(100dvh-12rem)] lg:flex-1 lg:flex-col lg:overflow-y-auto lg:px-4 lg:pb-4">
+          <div className="flex gap-2 overflow-x-auto px-4 pb-3 lg:max-h-[calc(100dvh-12rem)] lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:px-4 lg:pb-4">
             {!canSearch ? (
               <Card className="w-full p-4 text-sm text-muted-foreground">
                 Choose insurance or a state to see approved programs.
               </Card>
             ) : loading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-[4.25rem] w-64 shrink-0 rounded-xl lg:w-full" />
+                <Skeleton key={i} className="h-[4.25rem] w-[min(16rem,calc(100vw-3rem))] shrink-0 rounded-xl lg:w-full" />
               ))
             ) : loadError ? (
               <Card className="w-full p-4 text-sm text-muted-foreground">Search couldn’t load. Try again.</Card>
@@ -587,7 +587,7 @@ export default function SearchResults() {
                       : ""}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
                   {canStar ? (
                     <Button
                       type="button"
