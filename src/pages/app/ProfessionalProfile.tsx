@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, Mail, Phone, Share2, MapPin, MessageSquare } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, MapPin, MessageSquare, Phone, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,10 +35,10 @@ function formatCount(value: number) {
   return value.toLocaleString("en-US");
 }
 
-function gridClassForCount(count: number) {
-  if (count <= 1) return "grid grid-cols-1 gap-4";
-  if (count === 2) return "grid grid-cols-1 sm:grid-cols-2 gap-4";
-  return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
+function facilityGridClass(count: number) {
+  if (count <= 1) return "grid grid-cols-1";
+  if (count === 2) return "grid grid-cols-1 gap-4 sm:grid-cols-2";
+  return "grid grid-cols-1 gap-4 sm:grid-cols-2";
 }
 
 export default function ProfessionalProfile() {
@@ -49,7 +49,6 @@ export default function ProfessionalProfile() {
   const [facilities, setFacilities] = useState<FacilityVisual[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"facilities" | "about">("facilities");
 
   const load = async () => {
     if (!userId) return;
@@ -106,7 +105,7 @@ export default function ProfessionalProfile() {
 
   if (loading) {
     return (
-      <div className="py-20 grid place-items-center">
+      <div className="grid place-items-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
@@ -114,7 +113,7 @@ export default function ProfessionalProfile() {
 
   if (!profile) {
     return (
-      <div className="max-w-2xl mx-auto py-16 text-center space-y-2">
+      <div className="mx-auto max-w-lg space-y-3 py-16 text-center">
         <p className="font-semibold">Professional not found</p>
         <Link to="/app/contacts" className="text-sm text-primary hover:underline">
           Back to Contacts
@@ -126,8 +125,11 @@ export default function ProfessionalProfile() {
   const name = profile.full_name || "CenterLinked professional";
   const place = locationLine(profile.city || profile.organization?.hq_city, profile.state || profile.organization?.hq_state);
   const tel = sanitizePhone(profile.phone);
+  const displayPhone = formatPhoneDisplay(profile.phone) || formatPhoneDisplay(tel);
+  const email = profile.email?.trim() || "";
   const isSelf = profile.connection_status === "self" || user?.id === profile.user_id;
-  const titleLine = [profile.job_title, place ? `based in ${place}` : null].filter(Boolean).join(" ");
+  const orgHref = profile.organization?.slug ? orgPublicPath(profile.organization.slug) : null;
+  const hasSidebar = Boolean(profile.bio || payers.length || profile.organization);
 
   const connect = async () => {
     setBusy(true);
@@ -163,274 +165,228 @@ export default function ProfessionalProfile() {
     }
   };
 
-  const actionClass =
-    "h-10 rounded-full px-5 text-sm font-semibold";
-
   return (
-    <div className="max-w-6xl mx-auto space-y-4">
-      <Link to="/app/contacts" className="text-sm text-primary hover:underline">
+    <div className="mx-auto max-w-6xl space-y-5">
+      <Link
+        to="/app/contacts"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
         Back to Contacts
       </Link>
 
-      <article className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="relative h-24 overflow-hidden bg-secondary sm:h-28">
-          <div
-            className="absolute -right-10 -top-20 h-[160%] w-[75%] rounded-full blur-3xl"
-            style={{
-              background:
-                "radial-gradient(circle at 38% 42%, hsl(var(--brand-purple) / 0.42) 0%, hsl(var(--primary) / 0.22) 38%, transparent 72%)",
-            }}
-            aria-hidden
-          />
-        </div>
-
-        <div className="px-5 sm:px-8">
-          <div className="-mt-12 sm:-mt-14">
-            <div className="grid h-24 w-24 place-items-center overflow-hidden rounded-full bg-primary/10 text-xl font-semibold text-primary shadow-md ring-4 ring-card sm:h-28 sm:w-28">
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initialsFromName(name)
-              )}
-            </div>
+      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.04)]">
+        <div className="h-1.5 bg-gradient-to-r from-primary via-primary/70 to-[hsl(var(--brand-purple))]" />
+        <div className="flex items-start gap-4 p-5 sm:p-6">
+          <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/10 text-lg font-semibold text-primary ring-1 ring-border sm:h-[4.5rem] sm:w-[4.5rem] sm:text-xl">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              initialsFromName(name)
+            )}
           </div>
-
-          <div className="pt-4 pb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            <div className="min-w-0 space-y-3">
-              <div>
-                <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
-                  {name}
-                </h1>
-                {titleLine ? (
-                  <p className="text-sm sm:text-base text-muted-foreground mt-1">{titleLine}</p>
-                ) : null}
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="space-y-1">
+              <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-[1.75rem]">{name}</h1>
+              {profile.job_title ? (
+                <p className="text-sm font-medium text-foreground/80">{profile.job_title}</p>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 {profile.organization ? (
-                  <p className="text-sm mt-1">
-                    {profile.organization.slug ? (
-                      <Link
-                        to={orgPublicPath(profile.organization.slug)}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {profile.organization.name}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">{profile.organization.name}</span>
-                    )}
-                  </p>
-                ) : null}
-                {profile.bio ? (
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
-                ) : null}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {isSelf ? (
-                  <Button variant="hero" className={actionClass} onClick={() => void copyLink()}>
-                    <Share2 className="h-4 w-4" />
-                    Share profile
-                  </Button>
-                ) : (
-                  <ConnectButton
-                    status={profile.connection_status}
-                    busy={busy}
-                    onConnect={connect}
-                    onAccept={accept}
-                    className={cn(actionClass, "h-10 px-5 text-sm")}
-                  />
-                )}
-                <ContactCtas email={profile.email} phone={tel} displayPhone={profile.phone} />
-                {!isSelf ? (
-                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => void copyLink()} aria-label="Copy profile link">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-
-            {metrics ? (
-              <dl className="flex items-start gap-8 sm:gap-10 shrink-0">
-                <Metric value={metrics.facilities} label="Facilities" />
-                <Metric value={metrics.inNetwork} label="In-network" />
-                <Metric value={metrics.states} label="States" />
-              </dl>
-            ) : null}
-          </div>
-
-          <div className="border-b border-border/70 flex items-center gap-6">
-            <TabButton
-              active={tab === "facilities"}
-              onClick={() => setTab("facilities")}
-              count={facilities.length}
-            >
-              Facilities
-            </TabButton>
-            <TabButton active={tab === "about"} onClick={() => setTab("about")}>
-              About
-            </TabButton>
-          </div>
-        </div>
-
-        <div className="px-5 sm:px-8 py-6 sm:py-8">
-          {tab === "facilities" ? (
-            <div className="space-y-6">
-              {profile.organization ? (
-                <div className="flex justify-center">
-                  {profile.organization.logo_url ? (
-                    <Link
-                      to={profile.organization.slug ? orgPublicPath(profile.organization.slug) : "/app/contacts"}
-                      className="block"
-                      aria-label={`${profile.organization.name} profile`}
-                    >
-                      <img
-                        src={profile.organization.logo_url}
-                        alt={`${profile.organization.name} logo`}
-                        className="h-16 sm:h-20 w-auto max-w-[14rem] object-contain"
-                      />
+                  orgHref ? (
+                    <Link to={orgHref} className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline">
+                      {profile.organization.logo_url ? (
+                        <img
+                          src={profile.organization.logo_url}
+                          alt=""
+                          className="h-5 w-5 rounded-md bg-background object-contain ring-1 ring-border"
+                        />
+                      ) : null}
+                      {profile.organization.name}
                     </Link>
                   ) : (
-                    <p className="font-heading text-lg font-bold text-center">{profile.organization.name}</p>
-                  )}
-                </div>
-              ) : null}
-
-              {facilities.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-10">
-                  No facilities listed for this representative yet.
-                </p>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                      {profile.organization.name}
+                    </span>
+                  )
+                ) : null}
+                {place ? (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" aria-hidden />
+                    {place}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            {metrics ? (
+              <dl className="flex flex-wrap gap-2">
+                <MetricChip value={metrics.facilities} label={metrics.facilities === 1 ? "facility" : "facilities"} />
+                <MetricChip value={metrics.inNetwork} label="in-network" />
+                <MetricChip value={metrics.states} label={metrics.states === 1 ? "state" : "states"} />
+              </dl>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {isSelf ? (
+                <Button size="sm" onClick={() => void copyLink()}>
+                  <Share2 className="h-4 w-4" />
+                  Share profile
+                </Button>
               ) : (
-                <div className={gridClassForCount(facilities.length)}>
-                  {facilities.map((facility) => (
-                    <FacilityGridCard
-                      key={facility.id}
-                      facility={facility}
-                      href={
-                        facility.slug && profile.organization?.slug
-                          ? programPublicPath(facility.slug, profile.organization.slug)
-                          : null
-                      }
-                      density={facilityGridDensityForCount(facilities.length)}
-                      elevated
-                    />
-                  ))}
-                </div>
+                <ConnectButton status={profile.connection_status} busy={busy} onConnect={connect} onAccept={accept} />
               )}
+              {tel ? (
+                <Button asChild variant="outline" size="sm">
+                  <a href={`tel:${tel}`}>
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
+                </Button>
+              ) : null}
+              {email ? (
+                <Button asChild variant="outline" size="sm">
+                  <a href={`mailto:${email}`}>
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </a>
+                </Button>
+              ) : null}
+              {tel ? (
+                <Button asChild variant="outline" size="sm">
+                  <a href={`sms:${tel}`}>
+                    <MessageSquare className="h-4 w-4" />
+                    Text
+                  </a>
+                </Button>
+              ) : null}
+              {!isSelf ? (
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => void copyLink()} aria-label="Copy profile link">
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        {email || displayPhone ? (
+          <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-border/70 bg-muted/30 px-5 py-3 text-sm sm:px-6">
+            {displayPhone && tel ? (
+              <a href={`tel:${tel}`} className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                <Phone className="h-3.5 w-3.5" aria-hidden />
+                {displayPhone}
+              </a>
+            ) : null}
+            {email ? (
+              <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                <Mail className="h-3.5 w-3.5" aria-hidden />
+                {email}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      <div className={cn("grid gap-5", hasSidebar && "xl:grid-cols-[minmax(0,1fr)_19rem]")}>
+        <section className="min-w-0 space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Facilities
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {facilities.length} {facilities.length === 1 ? "location" : "locations"}
+            </p>
+          </div>
+          {facilities.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
+              No facilities listed for this representative yet.
             </div>
           ) : (
-            <div className="max-w-3xl space-y-6">
-              {profile.bio ? (
-                <p className="text-sm sm:text-base leading-relaxed">{profile.bio}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">No bio yet.</p>
-              )}
-              {place ? (
-                <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
-                  {place}
-                </p>
-              ) : null}
-              {payers.length ? (
-                <div className="space-y-2">
-                  <h2 className="font-heading font-semibold">In-network</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {payers.map((payer) => (
-                      <span
-                        key={payer}
-                        className="rounded-full bg-primary/8 text-foreground px-2.5 py-1 text-xs font-medium ring-1 ring-primary/15"
-                      >
-                        {payer}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+            <div className={cn(facilityGridClass(facilities.length), facilities.length === 1 && "max-w-3xl")}>
+              {facilities.map((facility) => (
+                <FacilityGridCard
+                  key={facility.id}
+                  facility={facility}
+                  href={
+                    facility.slug && profile.organization?.slug
+                      ? programPublicPath(facility.slug, profile.organization.slug)
+                      : null
+                  }
+                  density={facilities.length === 1 ? "comfortable" : facilityGridDensityForCount(facilities.length)}
+                  elevated
+                />
+              ))}
             </div>
           )}
-        </div>
-      </article>
+        </section>
+
+        {hasSidebar ? (
+          <aside className="space-y-4">
+            {profile.bio ? (
+              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  About
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-foreground/85">{profile.bio}</p>
+              </div>
+            ) : null}
+
+            {profile.organization ? (
+              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Organization
+                </h2>
+                {orgHref ? (
+                  <Link to={orgHref} className="mt-3 flex items-center gap-3 rounded-xl p-1 -mx-1 transition-colors hover:bg-muted/60">
+                    {profile.organization.logo_url ? (
+                      <img
+                        src={profile.organization.logo_url}
+                        alt=""
+                        className="h-11 w-11 rounded-xl bg-background object-contain p-1 ring-1 ring-border"
+                      />
+                    ) : (
+                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-xs font-semibold text-primary">
+                        {initialsFromName(profile.organization.name)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{profile.organization.name}</p>
+                      <p className="text-xs text-muted-foreground">View organization</p>
+                    </div>
+                  </Link>
+                ) : (
+                  <p className="mt-3 font-medium">{profile.organization.name}</p>
+                )}
+              </div>
+            ) : null}
+
+            {payers.length ? (
+              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  In-network
+                </h2>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {payers.map((payer) => (
+                    <span
+                      key={payer}
+                      className="rounded-full bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-foreground ring-1 ring-primary/15"
+                    >
+                      {payer}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 }
 
-function Metric({ value, label }: { value: number; label: string }) {
+function MetricChip({ value, label }: { value: number; label: string }) {
   return (
-    <div className="text-center min-w-[4.5rem]">
-      <dt className="text-[11px] sm:text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums">
-        {formatCount(value)}
-      </dd>
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/80 px-2.5 py-1 text-xs ring-1 ring-border/70">
+      <dt className="sr-only">{label}</dt>
+      <dd className="font-heading font-bold tabular-nums text-foreground">{formatCount(value)}</dd>
+      <span className="text-muted-foreground">{label}</span>
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  count,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  count?: number;
-  children: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative -mb-px pb-3 text-sm font-semibold transition-colors",
-        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {children}
-      {typeof count === "number" ? (
-        <span className="ml-1 text-[11px] font-medium text-muted-foreground">{count}</span>
-      ) : null}
-      {active ? <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-foreground" /> : null}
-    </button>
-  );
-}
-
-function ContactCtas({
-  email,
-  phone,
-  displayPhone,
-}: {
-  email?: string | null;
-  phone?: string | null;
-  displayPhone?: string | null;
-}) {
-  const mail = email?.trim() || "";
-  const tel = phone || "";
-  const shown = formatPhoneDisplay(displayPhone) || formatPhoneDisplay(tel);
-  if (!mail && !tel) return null;
-  const btn = "h-10 rounded-full px-5 text-sm font-semibold";
-  return (
-    <>
-      {tel ? (
-        <Button asChild variant="hero" className={btn}>
-          <a href={`tel:${tel}`}>
-            <Phone className="h-4 w-4" />
-            Call{shown ? ` ${shown}` : ""}
-          </a>
-        </Button>
-      ) : null}
-      {mail ? (
-        <Button asChild variant="hero-outline" className={btn}>
-          <a href={`mailto:${mail}`}>
-            <Mail className="h-4 w-4" />
-            Email
-          </a>
-        </Button>
-      ) : null}
-      {tel ? (
-        <Button asChild variant="hero-outline" className={btn}>
-          <a href={`sms:${tel}`}>
-            <MessageSquare className="h-4 w-4" />
-            Text
-          </a>
-        </Button>
-      ) : null}
-    </>
   );
 }
