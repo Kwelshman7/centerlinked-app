@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, Plus, Search, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfessionalNetwork } from "@/hooks/useProfessionalNetwork";
+import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -91,6 +92,8 @@ export default function Contacts() {
   const { user, profile } = useAuth();
   const { connections, requests, loading: networkLoading, requestConnection, respondToRequest, reload } =
     useProfessionalNetwork();
+  const { partners, partnerOrgIds, loading: partnersLoading } = useReferralNetwork();
+  const partnerKey = useMemo(() => [...partnerOrgIds].sort().join(","), [partnerOrgIds]);
   const [reps, setReps] = useState<RepresentativeInput[]>([]);
   const [facilities, setFacilities] = useState<FacilityBdInput[]>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -111,6 +114,16 @@ export default function Contacts() {
     let cancelled = false;
     (async () => {
       setCatalogLoading(true);
+      const ids = partnerKey ? partnerKey.split(",") : [];
+      if (!ids.length) {
+        if (!cancelled) {
+          setReps([]);
+          setFacilities([]);
+          setCatalogError(null);
+          setCatalogLoading(false);
+        }
+        return;
+      }
       const [repRes, facRes] = await Promise.all([
         fetchAllRows<RepresentativeInput>((from, to) =>
           supabase
@@ -120,6 +133,7 @@ export default function Contacts() {
               { count: "exact" },
             )
             .eq("active", true)
+            .in("organization_id", ids)
             .order("full_name")
             .range(from, to),
         ),
@@ -130,6 +144,7 @@ export default function Contacts() {
               "id,name,organization_id,city,state,bd_contact_name,bd_contact_phone,bd_contact_email,bd_contact_title,verification_status,verification_frozen,organizations(id,name,slug,logo_url)",
               { count: "exact" },
             )
+            .in("organization_id", ids)
             .eq("verification_status", "approved")
             .eq("verification_frozen", false)
             .not("bd_contact_name", "is", null)
@@ -162,20 +177,52 @@ export default function Contacts() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [partnerKey]);
+
+  const partnerReps = useMemo<RepresentativeInput[]>(
+    () =>
+      partners
+        .filter((partner) => partner.bd_contact_name)
+        .map((partner) => ({
+          id: partner.rowId,
+          full_name: partner.bd_contact_name as string,
+          email: partner.bd_contact_email,
+          phone: partner.bd_contact_phone,
+          organization_id: partner.id,
+          organization_name: partner.name,
+          active: true,
+        })),
+    [partners],
+  );
 
   const merged = useMemo(
     () =>
       mergeWorkspaceContacts({
         connections,
-        representatives: reps,
+        representatives: [...reps, ...partnerReps],
         facilities,
         viewerOrgId: profile?.organization_id ?? null,
       }),
-    [connections, reps, facilities, profile?.organization_id],
+    [connections, reps, partnerReps, facilities, profile?.organization_id],
   );
 
-  const contacts = useMemo(() => applyOrgPayers(merged, payerByOrg), [merged, payerByOrg]);
+  const contacts = useMemo(() => {
+    const withPayers = applyOrgPayers(merged, payerByOrg);
+    if (!partners.length) return withPayers;
+    const byOrg = new Map(partners.map((partner) => [partner.id, partner]));
+    return withPayers.map((contact) => {
+      const partner = contact.organization?.id ? byOrg.get(contact.organization.id) : undefined;
+      if (!partner || !contact.organization) return contact;
+      return {
+        ...contact,
+        organization: {
+          ...contact.organization,
+          slug: contact.organization.slug || partner.slug,
+          logo_url: contact.organization.logo_url || partner.logo_url,
+        },
+      };
+    });
+  }, [merged, payerByOrg, partners]);
 
   const filtered = useMemo(
     () =>
@@ -309,7 +356,7 @@ export default function Contacts() {
     else toast.success("Connected");
   };
 
-  const loading = networkLoading || catalogLoading;
+  const loading = networkLoading || catalogLoading || partnersLoading;
   const connectedIds = useMemo(() => new Set(connections.map((person) => person.user_id)), [connections]);
   const findMatches = directory.filter((person) => person.user_id !== user?.id);
 
@@ -355,8 +402,8 @@ export default function Contacts() {
           <div className="min-w-0">
             <h1 className="font-heading text-xl font-bold">Contacts</h1>
             <p className="text-xs text-muted-foreground">
-              {stats.total.toLocaleString("en-US")} contacts · {stats.bdReps.toLocaleString("en-US")} BD reps ·{" "}
-              {stats.treatmentCenters.toLocaleString("en-US")} treatment centers
+              {stats.total.toLocaleString("en-US")}{" "}
+              {stats.total === 1 ? "person" : "people"} you work with
             </p>
           </div>
           <Popover>
@@ -476,10 +523,17 @@ export default function Contacts() {
               ))}
             </div>
           ) : pageRows.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              {contacts.length === 0
-                ? "No contacts yet. Find a professional or share your connect link."
-                : "No contacts match these filters."}
+            <div className="p-8 text-center text-sm text-muted-foreground space-y-3">
+              {contacts.length === 0 ? (
+                <>
+                  <p>Your list is empty. Find a professional, or add a partner organization so their BD contacts show up here.</p>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/app/organizations?view=network">Partner organizations</Link>
+                  </Button>
+                </>
+              ) : (
+                <p>No contacts match these filters.</p>
+              )}
             </div>
           ) : (
             <>

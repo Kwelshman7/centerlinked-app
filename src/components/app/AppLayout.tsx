@@ -13,7 +13,6 @@ import {
   PanelLeft,
   Menu,
   UserRound,
-  Handshake,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -244,7 +243,6 @@ export function AppLayout() {
       { to: "/app/facilities", label: "Facilities", icon: Building },
       { to: "/app/contacts", label: "Contacts", icon: Users },
       { to: "/app/insurance", label: "Insurance", icon: Shield },
-      { to: "/app/organizations?view=network", label: "Referral Network", icon: Handshake, orgView: "network" },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ];
     return items;
