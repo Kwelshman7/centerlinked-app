@@ -6,7 +6,8 @@ Do **not** guess schema. Read `DATABASE.md`, `src/integrations/supabase/types.ts
 
 ## Layout
 
-- `*.sql` — operational scripts (billing, RLS, joins, facility save, allowlists)
+- `*.sql` — operational scripts (billing, RLS, joins, facility save, allowlists, professional network)
+- `professional-network-20260914.sql` — `professional_connections`, Connect RPCs, `bd_representatives.user_id`, profile bio/city/state. Confirm applied before assuming live.
 - `migrations/20260802120000_production_security_bundle.sql` — ordered apply checklist
 - `migrations/00000000000000_rls_policy_snapshot.json` — captured policy inventory (~75 policies)
 
@@ -15,6 +16,7 @@ Do **not** guess schema. Read `DATABASE.md`, `src/integrations/supabase/types.ts
 - Do not add/alter tables, columns, enums, indexes, triggers, RLS, or RPCs unless the user explicitly asked.
 - Prefer extending an existing SECURITY DEFINER RPC over a new client-side multi-step write.
 - Critical write path: `save-facility-with-contracts.sql`. Do not change its arguments or transaction assumptions casually.
+- Connect / BD profiles: use the professional-network RPCs already in `professional-network-20260914.sql`. Do not invent a second graph or treat `conversations` / `posts` as the people network.
 - Authz helpers used in policies: `has_role`, `is_org_member`, `is_org_facility_admin`. Weakening these is a cross-tenant leak.
 - Billing columns on `organizations` are protected by trigger; only service role / webhook should write them.
 - `run_sql` and client EXECUTE on `link_user_to_organization` are revoked on purpose (`revoke-dangerous-grants.sql`).

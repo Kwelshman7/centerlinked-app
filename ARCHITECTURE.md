@@ -4,14 +4,16 @@ Senior-engineer onboarding document for the production CenterLinked application 
 
 **Stack summary:** Vite + React 18 SPA · React Router 6 · Supabase (Auth, Postgres, RLS, Storage, Realtime, Edge Functions) · Stripe Billing · Resend email · Sentry (optional via `VITE_SENTRY_DSN`) · Vercel (static SPA + serverless `api/` + middleware + weekly cron). There are **no Next.js Server Actions**.
 
-**Feature flags:** `FEATURES.community = false` in `src/config/features.ts` — Feed and Messenger routes exist but redirect to `/app`. **Billing soft-gate:** listing is free; inactive memberships show a dismissible banner; the app remains usable without a paid plan.
+**Product direction:** BD reps are the weekly users (profiles, Contacts, insurance-fit Search). Org/program sheets are the listing leave-behind. See `PRINCIPLES.md`.
+
+**Feature flags:** `FEATURES.community = false` in `src/config/features.ts` — Feed and Messenger routes exist but redirect to `/app`. Contacts / Connect / people profiles are **not** this flag. **Billing soft-gate:** listing is free; inactive memberships show a dismissible banner; the app remains usable without a paid plan.
 
 ---
 
 ## 1. Application Structure
 
 ### Purpose
-Organize a multi-tenant behavioral-health referral platform: organizations own facilities and insurance contracts; authenticated users search verified in-network capacity; public org/program sheets act as shareable referral profiles.
+Organize a multi-tenant behavioral-health referral platform: BD reps have profiles and a Contacts workspace; they Search verified in-network capacity (who accepts what insurance); organizations own facilities and contracts; public org/program sheets are the shareable listing.
 
 ### Top-level layout
 
@@ -59,7 +61,7 @@ Map public marketing, auth, public share URLs, org onboarding, and the authentic
 
 **Public / marketing**
 - `/` — landing (`pages/Index.tsx`)
-- `/login`, `/signup` (redirects to `/join`), `/join`, `/auth/callback`
+- `/login`, `/signup` (redirects to `/join`), `/join`, `/start` (home-screen login), `/auth/callback`
 - `/request-access`
 - `/privacy`, `/terms`
 - `/o/:orgSlug/p/:programSlug`, `/p/:slug` — program (facility) sheets
@@ -71,10 +73,13 @@ Map public marketing, auth, public share URLs, org onboarding, and the authentic
 - `/setup-organization`, `/create-organization` — `ProtectedRoute` only
 
 **Authenticated app (`/app` → `AppLayout`)**
-- `/app` index → `/app/search`; `/app/dashboard` — dashboard
+- `/app` index → `/app/search`
+- `/app/dashboard` — org dashboard, or **My profile** when the user has no org
 - `/app/search`, `/app/search/results`
-- `/app/network` → redirect to `/app/organizations`
-- `/app/organizations` — referral network + directory
+- `/app/contacts`, `/app/contacts/:contactId` — Contacts workspace + contact profile
+- `/app/people/:userId` — BD / professional profile
+- `/app/network` → redirect to `/app/contacts`
+- `/app/organizations` — org directory + preferred-partner (`referral_network`) view
 - `/app/facilities`, `/app/facilities/:id`, `/app/facilities/:id/verify`
 - `/app/facilities/new` → onboarding; `/app/facilities/upload-pdf`
 - `/app/onboarding`, `/app/members`, `/app/settings`, `/app/billing`
@@ -83,7 +88,7 @@ Map public marketing, auth, public share URLs, org onboarding, and the authentic
 - **Community (flagged):** when `FEATURES.community` is true → `/app/feed`, `/app/messages`; when false → both redirect to `/app`
 
 ### Guards
-- `ProtectedRoute` — requires session; non–super-admins without `profile.organization_id` redirect to `/setup-organization` (except org-optional paths).
+- `ProtectedRoute` — requires session; non–super-admins without `profile.organization_id` redirect to `/setup-organization` except org-optional paths (Search, dashboard / My profile, Contacts including `/app/contacts/:id`, `/app/people/*`, setup/create/onboarding, `/app/network`).
 - `AdminRoute` — requires `super_admin` role; otherwise `SuperAdminAccessDenied`.
 
 ### Primary files
@@ -100,7 +105,7 @@ Route order matters: `/:slug` must stay after `/app` and reserved paths. Changin
 ## 3. Database Architecture
 
 ### Purpose
-Postgres (Supabase) is the system of record for tenants, facilities, insurance contracts, authz roles, messaging/posts (dormant UI), billing columns, and intake leads. Access is enforced primarily via **RLS** and **SECURITY DEFINER RPCs**.
+Postgres (Supabase) is the system of record for tenants, facilities, insurance contracts, BD representatives, professional connections, authz roles, messaging/posts (dormant UI), billing columns, and intake leads. Access is enforced primarily via **RLS** and **SECURITY DEFINER RPCs**.
 
 ### Tables (from `src/integrations/supabase/types.ts`)
 
@@ -116,6 +121,9 @@ Postgres (Supabase) is the system of record for tenants, facilities, insurance c
 | `org_invites` | Pending email invites |
 | `organization_join_requests` | Domain-matched join workflow |
 | `organization_claims` | Public claim-of-ownership requests |
+| `bd_representatives` | Org BD catalog rows; optional `user_id` link to a login |
+| `facility_bd_assignments` | Facility ↔ representative |
+| `professional_connections` | User-to-user Connect (pending / accepted / declined / blocked) |
 | `referral_network` | Owner org → partner org preferences |
 | `contract_verifications` | Verification audit actions |
 | `verification_reminders` | Stale-contract reminder records |
@@ -137,7 +145,8 @@ Enums: `app_role`, `org_role`, `payer_status`, `verification_status`.
 - Authz helpers: `has_role`, `is_org_member`, `is_org_facility_admin`, `get_user_org`, `get_networked_org_ids`
 - Facilities: `save_facility_with_contracts`, `freeze_stale_facilities`, `list_facilities_due_for_verification`
 - Orgs: `update_organization_profile`, `get_org_engagement_stats`, `slugify`
-- Messaging: `get_or_create_direct_conversation`, `is_conversation_participant`
+- Professional network: `get_professional_profile`, `search_professionals`, `list_my_professional_network`, `list_professional_connection_requests`, `request_professional_connection`, `respond_to_professional_connection`, `remove_professional_connection`, `block_professional_connection`, `professional_connection_status`, `get_public_referral_contacts`
+- Messaging (community, UI gated): `get_or_create_direct_conversation`, `is_conversation_participant`
 - Email/access: `approve_personal_email`, `consume_access_request_rate_limit`
 
 ### SQL script inventory (`supabase/`)
@@ -146,6 +155,7 @@ Applied operationally (not always via a single migration runner):
 - `rls-tenant-hardening.sql`, `security-hardening.sql`, `revoke-dangerous-grants.sql`
 - `save-facility-with-contracts.sql`, `org-billing.sql`, `stripe-webhook-events.sql`
 - `approved-personal-emails.sql`, `bootstrap-super-admin.sql`, `org-join-requests.sql`
+- `professional-network-20260914.sql` — `professional_connections`, profile bio/city/state, `bd_representatives.user_id`, Connect RPCs. Confirm applied before assuming live.
 - `access-request-intake-hardening.sql`, facility visibility / social / footer image scripts
 - `migrations/00000000000000_rls_policy_snapshot.json` — live policy inventory (~75 policies)
 
@@ -867,5 +877,6 @@ These systems should rarely be modified because they affect large portions of th
 8. **Stripe billing handlers + webhook idempotency + org subscription columns** — Revenue state; incorrect updates corrupt every org’s billing status.
 9. **Vercel `api/` + `server/` shared handlers + Vite API plugins** — Production/local parity for auth hook, email, Stripe, OG; drift breaks deploys or local testing.
 10. **Service-role usage boundaries** — Any broadening of service-role calls or accidental `VITE_` exposure is a full-database compromise risk.
-11. **`FEATURES.community` gating for Feed/Messenger** — Routes and Realtime code paths are dormant but present; careless enablement without RLS review is high risk.
-12. **Access-request intake + rate limiting** — Public unauthenticated write path into leads; primary abuse surface outside Auth.
+11. **`FEATURES.community` gating for Feed/Messenger** — Routes and Realtime code paths are dormant but present; careless enablement without RLS review is high risk. Contacts / Connect / people profiles are a separate, in-product surface (`professional_connections` RPCs).
+12. **Professional connections + BD profiles** — User-to-user Connect and `get_professional_profile` are core product paths; do not weaken RLS or invent a second social graph.
+13. **Access-request intake + rate limiting** — Public unauthenticated write path into leads; primary abuse surface outside Auth.

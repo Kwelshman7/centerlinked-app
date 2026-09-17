@@ -47,7 +47,7 @@ function uniqueFacilityLevels(facilities: ShowcaseFacility[]) {
 
 export default function OrgSheet() {
   const { slug } = useParams<{ slug: string }>();
-  const { profile, isSuperAdmin } = useAuth();
+  const { user, profile, isSuperAdmin } = useAuth();
   const [org, setOrg] = useState<OrgSheetData | null>(null);
   const [facilities, setFacilities] = useState<ShowcaseFacility[]>([]);
   const [facilityPayersById, setFacilityPayersById] = useState<Map<string, string[]>>(new Map());
@@ -214,14 +214,15 @@ export default function OrgSheet() {
               : "This link may have been rotated, or the organization isn’t public yet."}
           </p>
           <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
-            {ownPending && (
+            {ownPending ? (
               <Button asChild>
                 <Link to="/app">Back to Home</Link>
               </Button>
+            ) : (
+              <Button asChild>
+                <Link to={user ? "/app" : "/"}>Back to CenterLinked</Link>
+              </Button>
             )}
-            <Button asChild variant={ownPending ? "outline" : "default"}>
-              <Link to="/">Back to CenterLinked</Link>
-            </Button>
           </div>
         </div>
       </div>

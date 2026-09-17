@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 /**
  * Signed-in users without an organization (free accounts) may use these paths.
  * Search reads are still limited by RLS to approved facilities; /app/dashboard renders My profile.
+ * /app/network redirects to Contacts; keep it optional so the redirect is not intercepted.
  */
 const ORG_OPTIONAL_PATHS = new Set([
   "/setup-organization",
@@ -16,6 +17,7 @@ const ORG_OPTIONAL_PATHS = new Set([
   "/app/search/results",
   "/app/dashboard",
   "/app/network",
+  "/app/contacts",
 ]);
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -36,7 +38,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   const onOrgOptionalPath =
     ORG_OPTIONAL_PATHS.has(location.pathname) ||
-    location.pathname.startsWith("/app/people/");
+    location.pathname.startsWith("/app/people/") ||
+    location.pathname.startsWith("/app/contacts/");
   if (!isSuperAdmin && !profile?.organization_id && !onOrgOptionalPath) {
     return <Navigate to="/setup-organization" replace />;
   }

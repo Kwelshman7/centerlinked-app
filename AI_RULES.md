@@ -2,7 +2,7 @@
 
 **Status: MANDATORY.** Every AI assistant working on the CenterLinked production app MUST follow these rules. Violations risk auth breakage, data leaks, billing failures, and public sheet regressions.
 
-Companion docs: `AGENTS.md` / `CLAUDE.md` (entry), `PRINCIPLES.md` (product intent — never guess), `CODING_STANDARDS.md` (how to write code here).
+Companion docs: `AGENTS.md` (always), `PRINCIPLES.md` (product intent — never guess), `CLAUDE.md` + `CODING_STANDARDS.md` when coding. Do not load every markdown file at session start.
 
 Stack context (for orientation only): Vite React SPA, Supabase (Auth + Postgres + RLS/RPCs), Stripe (Checkout/Portal/webhooks), Vercel serverless `api/`, feature flags in `src/config/features.ts`.
 
@@ -26,8 +26,9 @@ Stack context (for orientation only): Vite React SPA, Supabase (Auth + Postgres 
     - Stripe webhooks and billing APIs (`api/stripe-webhook.js`, checkout/portal/billing-overview)
     - Email domain gates (`src/lib/email-domains.ts`, auth hooks)
     - Public sheet routes and views (`components/public/*`, public org/facility sheets)
+    - Professional-connection RPCs and BD profile loaders (`professional_connections`, `get_professional_profile`)
     - Vercel `middleware.js` and OG (`api/og.js`)
-    - `FEATURES` flags (`src/config/features.ts`)
+    - `FEATURES` flags (`src/config/features.ts`) — Feed/Messenger only; do not use this flag to hide Contacts
 
 ---
 
@@ -40,7 +41,7 @@ Before writing or editing code, you MUST:
 3. Read existing implementations in the relevant area (do not redesign from scratch by default).
 4. State architectural impact (data flow, auth, RLS, billing, public routes, feature flags).
 5. List affected files.
-6. Identify possible regressions (auth, saves, billing, public sheets, community gates, mobile UI).
+6. Identify possible regressions (auth, saves, billing, public sheets, Search insurance answers, Contacts / BD profiles, community gates, mobile UI).
 7. If more than five files would change, STOP and ask for approval before proceeding.
 8. If the task touches a critical system listed above, call that out explicitly and confirm scope with the user when ambiguous.
 
@@ -59,8 +60,8 @@ Before writing or editing code, you MUST:
 5. You MUST keep changes scoped to the task. No drive-by refactors, formatting-only churn, or unrelated cleanup.
 6. You MUST preserve the existing design language (tokens, typography, spacing, component APIs, motion patterns).
 7. You MUST use existing feature flags (`FEATURES`) rather than inventing new gating mechanisms unless requested.
-8. Community features (Feed, Messages, Posts) MUST remain gated by `FEATURES.community`. Do not enable, bypass, or hardcode community routes without an explicit request.
-9. Billing UX MUST remain soft-gated (banners/CTAs) unless the user explicitly asks for hard gates that block product usage.
+8. Community features (Feed, Messages, Posts) MUST remain gated by `FEATURES.community`. Do not enable, bypass, or hardcode community routes without an explicit request. Contacts, Connect, and BD / people profiles are **core product** — do not gate them with that flag or treat them as a social network to refuse.
+9. Billing UX MUST remain soft-gated (banners/CTAs) unless the user explicitly asks for hard gates that block product usage. Listing is free.
 10. Serverless handlers live in `api/`. You MUST keep request validation, auth checks, and secret usage consistent with neighboring handlers.
 
 ---
@@ -92,7 +93,7 @@ You MUST NOT:
 8. Disable, weaken, or bypass RLS, email domain gates, or admin checks.
 9. Commit, print, or embed secrets; or move server secrets into `VITE_` vars.
 10. Hard-block core product flows behind billing unless explicitly asked.
-11. Flip `FEATURES.community` (or add ungated community surfaces) unless explicitly asked.
+11. Flip `FEATURES.community` (or add ungated Feed/Messenger) unless explicitly asked. Do not remove or hide Contacts / Connect / BD profiles as if they were community.
 12. Change public sheet URL contracts, OG/middleware behavior, or Stripe webhook idempotency unless specifically requested.
 13. Make speculative “improvements” that expand scope beyond the request.
 
@@ -228,7 +229,7 @@ You MUST NOT:
 2. NEVER assume auth can be “simplified.”
 3. NEVER assume schema/RLS can be changed to make the UI easier.
 4. NEVER assume billing should hard-gate product access.
-5. NEVER assume community features should be enabled.
+5. NEVER assume community features (Feed / Messenger) should be enabled. NEVER assume Contacts / Connect / BD profiles should be hidden or treated as community.
 6. NEVER assume public sheets can expose additional fields.
 7. NEVER assume a new dependency is acceptable.
 8. NEVER assume multi-file refactors are OK without approval (>5 files REQUIRES approval).
@@ -258,8 +259,9 @@ You MUST NOT:
 - [ ] No unintended auth/RLS/billing/public-sheet edits
 - [ ] No new duplicate components or unjustified dependencies
 - [ ] Existing design language preserved
-- [ ] Feature flags respected (`FEATURES.community` still correct)
+- [ ] Feature flags respected (`FEATURES.community` still correct; Contacts not gated by it)
 - [ ] Soft billing behavior preserved unless hard-gating was requested
+- [ ] Search still answers insurance fit; BD profiles / Contacts still reachable
 - [ ] Errors handled without leaking secrets
 - [ ] Affected files and architectural impact reported to the user
 - [ ] Possible regressions called out with verification steps
@@ -275,6 +277,8 @@ Verify as applicable to the change:
 - [ ] Org admin vs member vs superadmin permissions unchanged
 - [ ] Facility create/update via `save_facility_with_contracts` still succeeds
 - [ ] Public org/facility sheets still render and share correctly
+- [ ] Search still returns approved, non-frozen in-network facilities for an insurance query
+- [ ] Contacts / Connect / people profiles still load; `/app` home is Search
 - [ ] OG/middleware behavior for public links still works
 - [ ] Stripe checkout/portal/webhook path still idempotent and signature-safe
 - [ ] Billing remains soft-gated (no accidental hard lockout)

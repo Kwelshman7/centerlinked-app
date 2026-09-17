@@ -9,9 +9,11 @@
 
 ## What CenterLinked Is
 
-CenterLinked is a **B2B professional referral platform** for behavioral health and addiction treatment organizations. It is **not** a patient-facing treatment directory (unlike Rehabs.com, Recovery.com, or Psychology Today).
+CenterLinked is a **B2B professional tool for behavioral-health BD reps**, with a live organization listing behind it. It is **not** a patient-facing treatment directory (unlike Rehabs.com, Recovery.com, or Psychology Today).
 
-The product replaces outdated PDFs, brochures, and business cards with **one live, shareable organization link**. That link shows referral partners who the organization is, where facilities are located, what they treat, what insurance they are in network with, and who to contact.
+BD reps must use the app every week. Their job is **insurance fit**: who accepts what insurance, at what level of care, in what geography — and who to call. **BD profiles**, Contacts, and Connect are how the product is theirs. Public org/program sheets remain the shareable leave-behind so a listed organization is worth paying for.
+
+Without BD reps in the app, organizations will not pay to be listed.
 
 Legal entity referenced in site metadata: **CenterLinked Inc.**
 
@@ -19,15 +21,16 @@ Legal entity referenced in site metadata: **CenterLinked Inc.**
 
 ## Business Purpose
 
-Treatment organizations lose referral opportunities when partners rely on stale one-pagers. Insurance networks change, BD contacts rotate, locations open, and levels of care shift — but shared PDFs do not.
+BD reps lose time (and placements) when they cannot tell which facilities are in-network. Treatment organizations lose referrals when partners rely on stale one-pagers. Insurance networks change, BD contacts rotate, locations open, and levels of care shift — but shared PDFs do not.
 
-CenterLinked’s purpose is to give BD (business development) teams a **single source of truth** that:
+CenterLinked’s purpose:
 
-1. Organizations maintain in a dashboard
-2. Partners reopen via one persistent URL
-3. Stays trustworthy through **monthly verification**
+1. Give a BD rep a profile and a Contacts workspace so they have a reason to be in the app
+2. Answer **who accepts this insurance** via authenticated Search (approved, non-frozen facilities with in-network contracts)
+3. Keep a live org/program sheet that partners can reopen, maintained through **monthly verification**
+4. Let organizations list for free and pay later, once reps are already searching
 
-The platform is invite-oriented / work-email gated. It is designed for professional referral relationships, not consumer lead generation, medical advice, or PHI storage.
+The platform is work-email gated. It is designed for professional referral relationships, not consumer lead generation, medical advice, or PHI storage.
 
 ---
 
@@ -35,9 +38,10 @@ The platform is invite-oriented / work-email gated. It is designed for professio
 
 | Audience | Role in the product |
 |----------|---------------------|
-| **Treatment-org BD teams** | Primary operators — claim/build the org profile, keep facilities and insurance current, share the link |
+| **BD reps** | Primary *users* — join with a work email, keep a profile, Search insurance fit, manage Contacts / Connect. Org claim can wait. |
+| **Treatment-org admins** | Claim/build the org listing, keep facilities and insurance current, share the public link. They pay if listing is worth it. |
 | **Admissions / marketing** | Help maintain program details and contacts |
-| **Referral partners** | Consumers of the public link — hospitals, discharge planners, case managers, therapists, other BD reps, probation officers |
+| **Referral partners** | May also Search; also consume the public link — hospitals, discharge planners, case managers, therapists, other BD reps, probation officers |
 | **CenterLinked super admins** | Platform operators — approve access, manage orgs, insurance database, claims, verifications |
 
 ---
@@ -53,16 +57,19 @@ The platform is invite-oriented / work-email gated. It is designed for professio
 - Downloadable **one-pager PDFs** from public org/facility sheets (Letter layout + `/api/one-pager-copy` polish)
 
 ### Authenticated product
+- Work-email signup at `/join`; `/start` for home-screen login. Org claim is optional — skip and Search, claim later from My profile.
+- **BD profiles** — My profile (`/app/dashboard` when the user has no org), `/app/people/:userId`, `/app/contacts/:contactId`
+- **Contacts + Connect** (`/app/contacts`) — people workspace and connection requests. `/app/network` redirects here. This is core product, not community.
+- In-app **Search** by insurance, plan type, state, city, ZIP, level of care, specialty, accreditation (approved + not frozen). This is the insurance-fit job. `/app` index → `/app/search`.
 - Organization setup, create, claim, and domain-based join requests
 - Organization dashboard (profile, engagement stats, shared links)
-- Multi-facility management (create/edit, photos, BD contacts, levels of care, specializations, etc.)
+- Multi-facility management (create/edit, photos, BD contacts / `bd_representatives`, levels of care, specializations, etc.)
 - Insurance contracts per facility (linked to a curated payer database)
-- In-app **Search** by insurance, state, city, level of care (approved + not frozen; state CA/California normalized). `/app` index redirects to `/app/search`.
-- **Referral network** (preferred partner orgs; surfaced in search)
+- **Referral network** (preferred partner orgs; surfaced in search) — separate from people Connect
 - Team members and email invites
 - Monthly **contract verification** workflow (fresh / recent / stale / frozen)
 - PDF facility upload + parse review flow (via Supabase Edge Functions)
-- Stripe billing: free **Listed** tier (`LISTED_TIER`) plus facility-banded membership (Profile $99/mo, Network $249/mo, Group $499/mo; annual = 2 months free) and optional Done For You setup ($499 / $1,200 / $2,500). 16+ is quoted.
+- Stripe billing: free **Listed** tier (`LISTED_TIER`) plus membership priced by **live facility count** (bookends $99 / $249 / $499 for 1 / 5 / 15; annual = 2 months free) and optional Done For You ($499–$2,500). 16+ is quoted.
 - Settings and org branding (logo, colors, cover/footer images, social links, CTAs)
 
 ### Super-admin tooling
@@ -74,7 +81,7 @@ The platform is invite-oriented / work-email gated. It is designed for professio
 - Insurance (payers) database
 
 ### Present but gated
-- Community **Feed** and **Messenger** (UI and DB tables exist; `FEATURES.community === false` redirects those routes)
+- Community **Feed** and **Messenger** (UI and DB tables exist; `FEATURES.community === false` redirects those routes). Contacts / Connect / people profiles are **not** this flag.
 
 ---
 
@@ -126,13 +133,11 @@ Data fetching is ad-hoc `useState` / `useEffect` plus a few hooks. There is no R
 
 ## Project Goals
 
-As expressed by product copy, schema FAQ, and current Phase-1 feature flag:
-
-1. Replace stale referral handoffs (PDFs / brochures / cards) with one live org link
-2. Make insurance, levels of care, locations, and contacts easy for partners to reopen
-3. Keep profiles trustworthy via monthly verification (stale/frozen facilities lose search prominence)
-4. Monetize via facility-banded org membership (Profile $99/mo, Network $249/mo, Group $499/mo; annual option) with optional Done For You setup scaled to facility count
-5. Ship core Search + Program/Org Sheet flows first; keep community (feed/messages) behind a flag
+1. Get BD reps into the app (profile + Contacts) so organizations have a reason to be listed
+2. Solve the weekly BD job: **who accepts what insurance** (authenticated Search)
+3. Keep org/program sheets as the professional leave-behind, trustworthy via monthly verification
+4. Monetize via optional per-facility membership once Search is a habit; listing stays free
+5. Keep community (Feed / Messenger) behind a flag. Contacts / Connect are not that flag.
 
 ---
 
@@ -241,7 +246,7 @@ app/
 
 ### Typical flows
 
-1. **Signup / login** → `/signup` redirects to `/join` → AuthCallback → email allowlist checks → ensure profile → optional bootstrap admin / claim invite → `/setup-organization` or `/app` (index → `/app/search`)
+1. **Signup / login** → `/signup` redirects to `/join` → AuthCallback → email allowlist checks → ensure profile → optional bootstrap admin / claim invite → `/setup-organization` (skippable) or `/app` (index → `/app/search`)
 2. **Facility save** → client `saveFacilityWithContracts` → RPC `save_facility_with_contracts` (atomic facility + contracts)
 3. **Public share** → partner opens `/o/:slug` or program URL → approved facilities + contracts → `track-org-event` Edge Function (page views / contact clicks)
 4. **Search** → filters → query contracts joined to approved, non-frozen facilities → group by org → prioritize network partners. Public sheets use the same approved + not-frozen rule (`src/lib/facility-visibility.ts`).
@@ -258,7 +263,7 @@ app/
 - **Enforcement layers:**
   1. Client checks via RPC `is_email_auth_allowed` (Login, Signup, AuthContext)
   2. Supabase **Before User Created** HTTPS hook → `/api/auth-before-user-created` (signed with `BEFORE_USER_CREATED_HOOK_SECRET`)
-- **Route protection:** Unauthenticated users redirected to `/login`; authenticated users without `organization_id` redirected to `/setup-organization` (with limited exceptions); admin pages require `super_admin`
+- **Route protection:** Unauthenticated users redirected to `/login`; authenticated users without `organization_id` redirected to `/setup-organization` except org-optional paths (Search, My profile, Contacts, `/app/people/*`, setup/create/onboarding). Admin pages require `super_admin`.
 
 ---
 
@@ -269,8 +274,9 @@ app/
 Key tables include:
 
 - Identity / access: `profiles`, `user_roles`, `organization_members`, `org_invites`, `organization_join_requests`, `approved_personal_emails`, `bootstrap_admin_emails`, `early_access_leads`, `access_request_rate_limits`
-- Core domain: `organizations`, `facilities`, `insurance_contracts`, `payers`, `facility_pdf_uploads`
-- Network / community: `referral_network`, `posts`, `post_likes`, `conversations`, `conversation_participants`, `messages`
+- Core domain: `organizations`, `facilities`, `insurance_contracts`, `payers`, `facility_pdf_uploads`, `bd_representatives`, `facility_bd_assignments`
+- Professional network: `professional_connections` (Connect). Org favorites: `referral_network`.
+- Community (UI gated off): `posts`, `post_likes`, `conversations`, `conversation_participants`, `messages`
 - Ops: `organization_claims`, `contract_verifications`, `verification_reminders`, `preferred_provider_changes`, `org_analytics_events`, `stripe_webhook_events`
 
 Enums of note: `app_role`, `verification_status` (`pending|approved|rejected`), `payer_status` (`pending|approved|rejected`).
@@ -370,7 +376,7 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 - Auth (email, Google, callback, work-email gates, auth hook)
 - Access request intake + admin review
 - Org setup / create / join / claim flows
-- Authenticated shell with dashboard, facilities, search (`/app` → `/app/search`), network, members, settings, billing
+- Authenticated shell: Search, Contacts / Connect / people profiles, dashboard (My profile when no org), facilities, members, settings, billing. `/app` → Contacts if org, else Search.
 - Public org and program sheets with analytics events and one-pager PDF export
 - Stripe checkout, portal, webhook idempotency, billing UI
 - GitHub Actions CI (`lint` / `test` / `build` on PR and push to main)
@@ -398,7 +404,7 @@ Documented in `.env.example`. **Never commit real secrets.** Purposes only:
 
 ## Known Limitations (as discovered)
 
-1. **Community features are disabled** while older messaging (`public/llms.txt`) still describes a BD peer network / census-post product narrative.
+1. **Community Feed / Messenger are disabled.** Contacts / Connect / BD profiles are a separate, in-product surface. Older copy (`public/llms.txt`) may still describe a census-post narrative.
 2. **Subscription status does not hard-lock product features** — only UI banners/CTAs.
 3. **TypeScript strictness is loose**, so many null/any issues will not fail the build.
 4. **Social OG for public sheets** depends on middleware + `/api/og` + crawler detection; normal browsers still receive the SPA shell. Default `index.html` OG image is `/og-image.png` on the production domain.
@@ -432,13 +438,14 @@ These are architectural facts that will matter as usage grows — not a roadmap.
 | Path | Purpose |
 |------|---------|
 | `/` | Marketing landing |
-| `/login`, `/signup`, `/join`, `/auth/callback` | Authentication (`/signup` redirects to `/join`) |
+| `/login`, `/signup`, `/join`, `/start`, `/auth/callback` | Authentication (`/signup` redirects to `/join`; `/start` is home-screen login) |
 | `/request-access` | Early access form |
 | `/privacy`, `/terms` | Legal |
-| `/setup-organization`, `/create-organization` | Org onboarding |
+| `/setup-organization`, `/create-organization` | Org onboarding (skippable → Search) |
 | `/o/:slug`, `/:slug` | Public org sheet |
 | `/o/:org/p/:program`, `/p/:slug` | Public facility/program sheet |
-| `/app/*` | Authenticated application (`/app` index → `/app/search`) |
+| `/app/*` | Authenticated application (`/app` → `/app/search`) |
+| `/app/contacts`, `/app/contacts/:contactId`, `/app/people/:userId` | Contacts workspace + BD / people profiles |
 | `/app/admin/*`, `/app/verifications` | Super-admin tools |
 | `/api/*` | Serverless APIs (Stripe, email, auth hook, OG) |
 
@@ -449,7 +456,7 @@ These are architectural facts that will matter as usage grows — not a roadmap.
 1. Read `.env.example` and set local env (never commit secrets).
 2. Run `npm install` and `npm run dev` (Vite on port 8080). `npm test` covers checkout rules, visibility, payer matching, and the insurance plan-types catalog.
 3. Confirm Supabase URL/anon key, and that the security-bundle SQL files have been applied to your project (see `DATABASE.md` repository SQL map). Deploy SPA/API only after those RPCs exist, or stamp/invite calls 404.
-4. Trace a happy path: login → setup org → add facility → open public `/o/:slug` → run search → verify contracts → open billing.
+4. Trace a happy path: join → skip org → Search an insurance query → open My profile → (optional) claim org → Contacts → public `/o/:slug` → verify contracts → billing.
 5. For server behavior, start from thin `api/*.js` files and follow into `server/**`.
 6. Treat `src/integrations/supabase/types.ts` + `supabase/*.sql` as the schema contract; verify live DB before assuming a one-off SQL file has been applied.
 

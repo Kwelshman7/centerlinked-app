@@ -70,7 +70,7 @@ export default function ProgramSheet() {
     programSlug?: string;
   }>();
   const navigate = useNavigate();
-  const { profile, isSuperAdmin, isFacilityAdmin } = useAuth();
+  const { user, profile, isSuperAdmin, isFacilityAdmin } = useAuth();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [org, setOrg] = useState<OrgRow | null>(null);
   const [fullContracts, setFullContracts] = useState<FullContract[]>([]);
@@ -188,7 +188,7 @@ export default function ProgramSheet() {
             This link may have been rotated or the facility is not yet verified.
           </p>
           <Button asChild className="mt-4">
-            <Link to="/">Back to CenterLinked</Link>
+            <Link to={user ? "/app" : "/"}>Back to CenterLinked</Link>
           </Button>
         </div>
       </div>

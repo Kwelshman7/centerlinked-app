@@ -1,26 +1,32 @@
 # CenterLinked — Agent entry
 
-Production B2B referral platform for behavioral-health treatment organizations. Not a patient directory. No PHI.
+B2B tool for behavioral-health **BD reps**. Not a patient directory. No PHI.
 
-Read in this order when the task is non-trivial:
+**Read first (do not load the rest until you need it):**
 
-1. `PRINCIPLES.md` — what we are building, what we are not, never guess
-2. `CLAUDE.md` — stack, commands, invariants, critical systems
-3. `CODING_STANDARDS.md` — how code is written in this repo
-4. `AI_RULES.md` — mandatory safety / scope checklists
-5. Then `PROJECT.md`, `ARCHITECTURE.md`, `DATABASE.md` as needed
+1. This file — always
+2. `PRINCIPLES.md` — what to build, refuse, and not invent
+3. `CLAUDE.md` — stack, commands, invariants — **when writing code**
+4. `CODING_STANDARDS.md` — **when writing code**
+5. `AI_RULES.md` — **non-trivial or critical-system work**
+6. `PROJECT.md` / `ARCHITECTURE.md` / `DATABASE.md` — as needed for facts
+7. `BUSINESS_PLAN.md` — commercial / positioning only
 
-Area files: `src/CLAUDE.md`, `server/CLAUDE.md`, `api/CLAUDE.md`, `supabase/CLAUDE.md`.
+Area files when you are in that tree: `src/CLAUDE.md`, `server/CLAUDE.md`, `api/CLAUDE.md`, `supabase/CLAUDE.md`.
+
+## Optimize for
+
+BD reps using the app. Their weekly job is **who accepts what insurance**. BD profiles, Contacts, and Connect are how the product is *theirs*. Org/program sheets stay necessary so a listed organization is worth paying for. Without BD reps in the app, orgs will not pay to be listed.
 
 ## Non-negotiable
 
-- **Never guess.** Read the source, types, and SQL. If a table, RPC, route, env var, or product rule is not in the repo, ask. Do not invent it.
-- **Best interest of the product:** trustworthy live org/facility/insurance/contact pages for BD teams and referral partners. Do not turn this into consumer lead-gen, a patient portal, or a social network.
+- **Never guess.** Read the source, types, and SQL. If a table, RPC, route, env var, or product rule is not in the repo, ask.
 - Smallest correct change. Match existing patterns. No drive-by refactors.
 - **>5 files requires explicit user approval.**
 - Do not alter auth, RLS/RPCs, Stripe, OG/middleware, or `FEATURES` unless the user named that work.
 - Client never gets `SUPABASE_SERVICE_ROLE` or other secrets. No secrets in `VITE_*`.
-- `FEATURES.community === false`. Billing is soft-gated. Keep both unless asked otherwise.
+- `FEATURES.community === false` (Feed / Messenger). Contacts / Connect / people profiles are **core**, not community.
+- Billing is soft-gated. Listing is free. Keep both unless asked otherwise.
 - Only commit when asked. Do not claim you tested something you did not run.
 
-When uncertain on security, money, privacy, or public URLs: stop and ask. Wrong-but-confident is not acceptable on this codebase.
+When uncertain on security, money, privacy, or public URLs: stop and ask.

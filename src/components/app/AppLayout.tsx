@@ -226,7 +226,7 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const hasOrgAccess = isSuperAdmin || !!profile?.organization_id;
-  const homeTo = hasOrgAccess ? "/app/contacts" : "/app/search";
+  const homeTo = "/app/search";
 
   const primary: NavItem[] = useMemo(() => {
     if (!hasOrgAccess) {
@@ -238,10 +238,11 @@ export function AppLayout() {
       return items;
     }
     const items: NavItem[] = [
-      { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
+      { to: "/app/search", label: "Search", icon: SearchIcon },
+      { to: "/app/contacts", label: "Contacts", icon: Users },
       { to: "/app/organizations?view=all", label: "Organizations", icon: Building2, orgView: "all" },
       { to: "/app/facilities", label: "Facilities", icon: Building },
-      { to: "/app/contacts", label: "Contacts", icon: Users },
+      { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ];
     return items;
@@ -255,8 +256,8 @@ export function AppLayout() {
       return items;
     }
     return [
-      { to: "/app/contacts", label: "Contacts", icon: Users },
       { to: "/app/search", label: "Search", icon: SearchIcon },
+      { to: "/app/contacts", label: "Contacts", icon: Users },
       { to: "/app/organizations?view=all", label: "Orgs", icon: Building2, orgView: "all" },
       { to: "/app/dashboard", label: "Home", icon: LayoutDashboard, end: true },
       { to: "/app/settings", label: "Settings", icon: Settings },

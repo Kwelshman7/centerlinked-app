@@ -14,6 +14,7 @@ This document describes the **existing** production-oriented data model as evide
 - Many core tables were created outside the tracked migration history (dashboard / earlier one-offs). For those, **column inventories come from `types.ts`**; Postgres-level defaults/CHECK/UNIQUE beyond what appears in SQL are marked when unknown.
 - `types.ts` Relationships[] lists PostgREST foreign keys that were present when types were generated. Some logical FKs used by the app are missing from that list; those are noted as logical relationships.
 - Several tables appear in SQL / RLS / app code but are **absent from `types.ts`**: `bootstrap_admin_emails`, `facility_pdf_uploads`, `access_request_rate_limits`.
+- Professional-network objects (`professional_connections`, Connect RPCs, `bd_representatives.user_id`, `profiles.bio` / `city` / `state`) are defined in `supabase/professional-network-20260914.sql` and present in `types.ts`. Confirm the SQL was applied before assuming they exist in production.
 - The RLS snapshot may lag hardening SQL that is intended to be applied next (notably `rls-tenant-hardening.sql` and `access-request-intake-hardening.sql`). Both the snapshot and the hardening SQL are documented as facts.
 - Indexes: only indexes found in repository SQL are listed. Otherwise: **Not specified in repository SQL**.
 
@@ -92,6 +93,12 @@ Definitions live partly in `supabase/*.sql`; others exist in the live DB and app
 | `freeze_stale_facilities()` / `list_facilities_due_for_verification(_days)` | Monthly verification ops. SQL in `supabase/freeze-stale-facilities.sql`. Freeze EXECUTE is **service_role only**; due-list is super_admin or service_role. Freezes approved facilities whose last stamp is older than 90 days |
 | `get_organization_billing(_org_id)` | Org member / super_admin billing snapshot. Billing columns are revoked from anon/authenticated (`supabase/security-followup-20260823.sql`) |
 | `slugify(_input)` | Public program slug helper |
+| `get_professional_profile(_user_id)` | BD / people profile payload for `/app/people/:userId` |
+| `search_professionals(_query)` | Authenticated people search |
+| `list_my_professional_network` / `list_professional_connection_requests` | Connect workspace |
+| `request_professional_connection` / `respond_to_professional_connection` / `remove_professional_connection` / `block_professional_connection` | Connect mutations |
+| `professional_connection_status(_other, _viewer)` | Pair status helper |
+| `get_public_referral_contacts(_organization_id, _facility_id?)` | Named BD contacts for public sheets |
 | `run_sql(query)` | Dangerous; **EXECUTE revoked from anon/authenticated** in `revoke-dangerous-grants.sql` |
 | `protect_organization_billing_columns` (trigger fn) | Blocks client writes to Stripe billing columns on INSERT or UPDATE |
 | `protect_facility_privileged_columns` (trigger fn) | Blocks client writes to approval columns, `verification_frozen`, and `preferred_provider` / `preferred_until` (`supabase/column-write-locks.sql`) |
@@ -135,7 +142,9 @@ App-level user profile linked 1:1 (by `user_id`) to Supabase Auth. Holds display
 | `avatar_url` | `string \| null` | Often Storage `avatars` public URL |
 | `job_title` | `string \| null` | |
 | `phone` | `string \| null` | |
-| `organization_id` | `string \| null` (uuid) | Current org |
+| `bio` | `string \| null` | BD profile; added in `professional-network-20260914.sql` |
+| `city` / `state` | `string \| null` | BD profile location |
+| `organization_id` | `string \| null` (uuid) | Current org — nullable; Search / My profile do not require it |
 | `created_at` | `string` (timestamptz) | |
 | `updated_at` | `string` (timestamptz) | |
 
@@ -157,10 +166,10 @@ Not specified in repository SQL.
 - Hardening SQL (`rls-tenant-hardening.sql`) intends SELECT limited to self, same-org members, or super admin (snapshot still shows older broad `auth users view profiles` with `USING true` if not applied)
 
 ### Where used / files
-- `src/contexts/AuthContext.tsx`, `src/lib/ensure-profile.ts`, `src/pages/app/Settings.tsx`, `src/pages/app/Members.tsx`, `src/pages/app/Messenger.tsx`, `src/hooks/useOrgTeamMembers.ts`, `src/components/app/feed/FeedSection.tsx`, `src/lib/track-org-event.ts`, `server/email/handlers/send-welcome.mjs`, `server/stripe/supabase.mjs`
+- `src/contexts/AuthContext.tsx`, `src/lib/ensure-profile.ts`, `src/pages/app/Settings.tsx`, `src/pages/app/Members.tsx`, `src/pages/app/ProfessionalProfile.tsx`, `src/lib/professional-network.ts`, `src/pages/app/Messenger.tsx`, `src/hooks/useOrgTeamMembers.ts`, `src/components/app/feed/FeedSection.tsx`, `src/lib/track-org-event.ts`, `server/email/handlers/send-welcome.mjs`, `server/stripe/supabase.mjs`
 
 ### Potential risks if modified
-Breaking auth session hydration, org setup redirects (`organization_id` null → `/setup-organization`), member/messenger enrichment, and join/invite linkage that writes `profiles.organization_id`.
+Breaking auth session hydration, org setup redirects (`organization_id` null still allows Search / My profile / people pages), BD profile fields, member/messenger enrichment, and join/invite linkage that writes `profiles.organization_id`.
 
 ---
 
@@ -949,6 +958,100 @@ Asymmetric edges and duplicate partners; search ranking side effects.
 
 ---
 
+## `bd_representatives`
+
+### Purpose
+Organization BD catalog (named reps). Optional `user_id` links a catalog row to a login so Contacts / people profiles can resolve a person. Distinct from facility `bd_contact_*` columns.
+
+### Columns / data types (from `types.ts`)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | |
+| `full_name` | text | Required |
+| `organization_id` | uuid \| null | |
+| `organization_name` | text \| null | |
+| `user_id` | uuid \| null | Login link; `professional-network-20260914.sql` |
+| `title` / `email` / `phone` | text \| null | |
+| `avatar_url` | text \| null | |
+| `territory` | text \| null | |
+| `states_covered` / `payer_expertise` | text[] | |
+| `preferred_contact_method` | text \| null | |
+| `availability_status` | text | |
+| `active` | boolean | |
+| `internal_notes` | text \| null | Do not expose on public sheets |
+| `last_verified_at` / `verification_method` / `verified_by` | | |
+| `created_at` / `updated_at` | timestamptz | |
+
+### Relationships
+- Logical: `organization_id` → `organizations.id`; `user_id` → `auth.users.id`
+- Child: `facility_bd_assignments.representative_id`
+
+### Indexes (repository SQL)
+- Unique `(organization_id, user_id)` where both are set
+- `user_id` where not null
+
+### Where used / files
+- `src/pages/app/Contacts.tsx`, `src/pages/app/ProfessionalProfile.tsx`, `src/lib/contact-workspace.ts`, `src/lib/professional-network.ts`
+
+### Potential risks if modified
+Orphaning facility assignments; leaking `internal_notes`; breaking profile resolution when `user_id` is unset.
+
+---
+
+## `facility_bd_assignments`
+
+### Purpose
+Links a facility to a `bd_representatives` row (`is_primary` marks the default contact).
+
+### Columns / data types
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | |
+| `facility_id` | uuid | FK → `facilities` |
+| `representative_id` | uuid | FK → `bd_representatives` |
+| `is_primary` | boolean | |
+| `created_at` | timestamptz | |
+
+### Where used / files
+- Contact workspace / facility BD assignment UI (`src/lib/contact-workspace.ts`)
+
+### Potential risks if modified
+Wrong “who to call” on program sheets if primary assignment drifts from facility `bd_contact_*` fields.
+
+---
+
+## `professional_connections`
+
+### Purpose
+User-to-user Connect graph for BD profiles. **Not** org favorites (`referral_network`) and **not** community DMs (`conversations` / `messages`).
+
+### Columns / data types (from `types.ts` + `professional-network-20260914.sql`)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | |
+| `requester_id` / `addressee_id` | uuid | → `auth.users.id`; not self |
+| `status` | text | `pending` \| `accepted` \| `declined` \| `blocked` |
+| `created_at` / `responded_at` | timestamptz | |
+
+### Indexes (repository SQL)
+- Unique pair on `LEAST/GREATEST(requester_id, addressee_id)`
+- `(requester_id, status)`, `(addressee_id, status)`
+
+### Constraints / RLS
+- Participants (or super_admin) can SELECT. Writes go through SECURITY DEFINER RPCs; authenticated has SELECT only.
+
+### Business logic
+- Client: `src/hooks/useProfessionalNetwork.ts`, `src/lib/professional-network.ts`
+- RPCs listed under Important RPCs above
+
+### Potential risks if modified
+Cross-user graph leaks; duplicate edges if the pair unique index is dropped; confusing this table with Feed/Messenger.
+
+---
+
 ## `org_analytics_events`
 
 ### Purpose
@@ -1214,6 +1317,7 @@ auth.users
     ├── org_invites (email match)                │
     ├── organization_join_requests               │
     ├── organization_claims                      │
+    ├── professional_connections                 │
     ├── conversation_participants / messages     │
     ├── posts / post_likes                       │
     └── approved_personal_emails.approved_by     │
@@ -1228,6 +1332,7 @@ auth.users
                     ├── contract_verifications
                     ├── verification_reminders
                     ├── preferred_provider_changes
+                    ├── facility_bd_assignments → bd_representatives
                     └── facility_pdf_uploads (org-scoped; untyped)
 
 bootstrap_admin_emails ──RPC──► user_roles.super_admin
@@ -1240,8 +1345,10 @@ conversations ←── conversation_participants / messages
 - One user profile; many role rows
 - One org has many members, facilities, posts, analytics events
 - One facility has many insurance contracts
-- Referral network is directed owner→partner
-- Messaging is conversation-centric with N participants
+- Referral network is directed owner→partner (org favorites)
+- Professional connections are user↔user (Connect)
+- Messaging is conversation-centric with N participants (community UI gated off)
+- `bd_representatives` may link to a login via `user_id`
 
 ---
 
@@ -1274,7 +1381,8 @@ conversations ←── conversation_participants / messages
 - **Claim path:** `organization_claims` + `claim-proofs` storage → super-admin review
 - **Branding/public:** slug, verified flag, colors, images, socials, `why_refer`
 - **Billing:** Stripe columns protected by trigger; ledger in `stripe_webhook_events`
-- **Network:** `referral_network` preferred partners
+- **Org network:** `referral_network` preferred partners
+- **People network:** `professional_connections` + `bd_representatives`
 - **Analytics:** `org_analytics_events` via Edge Function
 
 ---

@@ -22,6 +22,7 @@ export interface FacilityGridCardData {
   highlights?: string[] | null;
   insurance_status?: string | null;
   featured_payer?: string | null;
+  payers?: string[] | null;
 }
 
 interface FacilityGridCardProps {
@@ -67,6 +68,7 @@ export function FacilityGridCard({
   const levelLimit = density === "showcase" ? 8 : density === "comfortable" ? 5 : 3;
   const metaLimit = density === "showcase" ? 4 : 2;
 
+  const payers = (f.payers ?? []).filter(Boolean);
   const className = cn(
     "group rounded-xl border border-border/60 bg-card overflow-hidden hover:border-primary/40 hover:shadow-md transition-all h-full",
     density === "showcase" && "sm:rounded-2xl",
@@ -89,6 +91,7 @@ export function FacilityGridCard({
         metaLimit={metaLimit}
         insuranceStatus={f.insurance_status}
         featuredPayer={f.featured_payer}
+        payers={payers}
         split={layout === "split"}
         imageLoading={imageLoading}
       />
@@ -104,6 +107,7 @@ export function FacilityGridCard({
         population={population}
         metaLimit={metaLimit}
         featuredPayer={f.featured_payer}
+        payers={payers}
         imageLoading={imageLoading}
       />
     ) : (
@@ -113,6 +117,7 @@ export function FacilityGridCard({
         locationLine={locationLine}
         levels={levels}
         levelLimit={levelLimit}
+        payers={payers}
         imageLoading={imageLoading}
       />
     );
@@ -134,6 +139,7 @@ function CompactBody({
   locationLine,
   levels,
   levelLimit,
+  payers,
   imageLoading,
 }: {
   name: string;
@@ -141,6 +147,7 @@ function CompactBody({
   locationLine: string;
   levels: string[];
   levelLimit: number;
+  payers: string[];
   imageLoading: "lazy" | "eager";
 }) {
   return (
@@ -162,6 +169,7 @@ function CompactBody({
           )}
         </div>
         <LevelChips levels={levels} limit={levelLimit} size="sm" />
+        <PayerChips payers={payers} limit={3} />
       </div>
     </div>
   );
@@ -178,6 +186,7 @@ function ComfortableBody({
   population,
   metaLimit,
   featuredPayer,
+  payers,
   imageLoading,
 }: {
   name: string;
@@ -190,6 +199,7 @@ function ComfortableBody({
   population: string[];
   metaLimit: number;
   featuredPayer?: string | null;
+  payers: string[];
   imageLoading: "lazy" | "eager";
 }) {
   return (
@@ -232,9 +242,11 @@ function ComfortableBody({
               overflow={Math.max(0, population.length - metaLimit)}
             />
           )}
-          {featuredPayer && (
+          {payers.length > 0 ? (
+            <PayerChips payers={payers} limit={4} />
+          ) : featuredPayer ? (
             <MetaRow icon={Shield} items={[`Featured: ${featuredPayer}`]} overflow={0} />
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -255,6 +267,7 @@ function ShowcaseBody({
   metaLimit,
   insuranceStatus,
   featuredPayer,
+  payers,
   split,
   imageLoading,
 }: {
@@ -271,6 +284,7 @@ function ShowcaseBody({
   metaLimit: number;
   insuranceStatus?: string | null;
   featuredPayer?: string | null;
+  payers: string[];
   split?: boolean;
   imageLoading: "lazy" | "eager";
 }) {
@@ -347,7 +361,14 @@ function ShowcaseBody({
           </div>
         )}
 
-        {(featuredPayer || insuranceStatus) && (
+        {payers.length > 0 ? (
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              In-network
+            </p>
+            <PayerChips payers={payers} limit={6} />
+          </div>
+        ) : (featuredPayer || insuranceStatus) ? (
           <div className="rounded-lg border border-border/70 bg-muted/40 px-3 py-2 flex items-start gap-2">
             <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" aria-hidden />
             <div className="min-w-0 text-xs leading-snug">
@@ -361,7 +382,7 @@ function ShowcaseBody({
               )}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -423,6 +444,26 @@ function FacilityImage({
           <Building2 className={cn(iconClass, "text-muted-foreground")} />
         </div>
       )}
+    </div>
+  );
+}
+
+function PayerChips({ payers, limit }: { payers: string[]; limit: number }) {
+  if (payers.length === 0) return null;
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-1">
+      <Shield className="h-3 w-3 shrink-0 text-primary/70" aria-hidden />
+      {payers.slice(0, limit).map((payer) => (
+        <span
+          key={payer}
+          className="max-w-full truncate rounded bg-primary/8 px-1.5 py-0.5 text-[9px] font-medium text-foreground ring-1 ring-primary/15"
+        >
+          {payer}
+        </span>
+      ))}
+      {payers.length > limit ? (
+        <span className="text-[9px] font-semibold text-muted-foreground">+{payers.length - limit}</span>
+      ) : null}
     </div>
   );
 }

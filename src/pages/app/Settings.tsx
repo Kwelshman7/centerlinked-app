@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/app/ImageUploader";
-import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck, Share2 } from "lucide-react";
+import { BdProfileForm } from "@/components/app/BdProfileForm";
+import { Loader2, Wand2, Building2, ShieldCheck, Users, BadgeCheck } from "lucide-react";
 import { SuperAdminSettingsCard } from "@/components/app/admin/SuperAdminPanel";
 import { OrgPdfLibrary } from "@/components/app/OrgPdfLibrary";
 import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
@@ -17,19 +18,10 @@ import { mergeOrgImages } from "@/lib/org-hero";
 import { isMissingOptionalOrgColumn, orgDashboardSelect, orgDashboardSelectFallback } from "@/lib/org-public-select";
 import { toast } from "sonner";
 import { verificationState } from "@/lib/verification";
-import { connectShareUrl } from "@/lib/professional-network";
 
 export default function Settings() {
-  const { profile, user, isFacilityAdmin, isSuperAdmin, needsSuperAdminSetup, refresh } = useAuth();
+  const { profile, isFacilityAdmin, isSuperAdmin, needsSuperAdminSetup } = useAuth();
   const canManageOrganization = isFacilityAdmin || isSuperAdmin;
-  const [fullName, setFullName] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("");
-  const [stateCode, setStateCode] = useState("");
-  const [avatar, setAvatar] = useState<string[]>([]);
-  const [savingProfile, setSavingProfile] = useState(false);
-
   const [orgName, setOrgName] = useState("");
   const [orgDesc, setOrgDesc] = useState("");
   const [orgWebsite, setOrgWebsite] = useState("");
@@ -64,27 +56,6 @@ export default function Settings() {
   const [payersCount, setPayersCount] = useState(0);
   const [contractsCount, setContractsCount] = useState(0);
   const [membersCount, setMembersCount] = useState(0);
-
-  useEffect(() => {
-    if (profile) {
-      setFullName(profile.full_name || "");
-      setJobTitle(profile.job_title || "");
-      setAvatar(profile.avatar_url ? [profile.avatar_url] : []);
-    }
-    if (!user?.id) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.from("profiles").select("phone, city, state").eq("user_id", user.id).maybeSingle();
-      if (!cancelled && data) {
-        setPhone(data.phone || "");
-        setCity(data.city || "");
-        setStateCode(data.state || "");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [profile, user?.id]);
 
   useEffect(() => {
     if (!profile?.organization_id) return;
@@ -168,24 +139,6 @@ export default function Settings() {
       setMembersCount(memCount ?? 0);
     })();
   }, [profile?.organization_id]);
-
-  const saveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setSavingProfile(true);
-    const { error } = await supabase.from("profiles").update({
-      full_name: fullName,
-      job_title: jobTitle,
-      phone,
-      city: city.trim() || null,
-      state: stateCode.trim() || null,
-      avatar_url: avatar[0] || null,
-    }).eq("user_id", user.id);
-    setSavingProfile(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Profile saved");
-    refresh();
-  };
 
   const saveOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,38 +251,7 @@ export default function Settings() {
 
       <Card className="p-6">
         <h2 className="font-heading text-lg font-semibold mb-4">Your Profile</h2>
-        <form onSubmit={saveProfile} className="space-y-4">
-          <div className="space-y-2"><Label>Avatar</Label><ImageUploader bucket="avatars" value={avatar} onChange={setAvatar} max={1} label="Upload" /></div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2"><Label htmlFor="fn">Full name</Label><Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>
-            <div className="space-y-2"><Label htmlFor="jt">Job title</Label><Input id="jt" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
-          </div>
-          <div className="space-y-2"><Label htmlFor="ph">Phone</Label><Input id="ph" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2"><Label htmlFor="ct">City</Label><Input id="ct" value={city} onChange={(e) => setCity(e.target.value)} placeholder="West Palm Beach" /></div>
-            <div className="space-y-2"><Label htmlFor="st">State</Label><Input id="st" value={stateCode} onChange={(e) => setStateCode(e.target.value)} placeholder="FL" /></div>
-          </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
-            {user ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(connectShareUrl(window.location.origin, user.id));
-                    toast.success("Connect link copied");
-                  } catch {
-                    toast.error("Could not copy link");
-                  }
-                }}
-              >
-                <Share2 className="h-4 w-4" />
-                Copy connect link
-              </Button>
-            ) : null}
-            <Button type="submit" disabled={savingProfile}>{savingProfile && <Loader2 className="h-4 w-4 animate-spin" />} Save profile</Button>
-          </div>
-        </form>
+        <BdProfileForm />
       </Card>
 
       {profile?.organization_id && canManageOrganization && (

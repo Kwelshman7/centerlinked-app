@@ -34,8 +34,8 @@ Colocate by domain: `src/pages/` routes, `src/components/{ui,app,public,landing,
 - Auth: `useAuth()` from `AuthContext`. Do not read session ad-hoc in new screens if context already has it.
 - Data: local `useState` / `useEffect` / small hooks (`useReferralNetwork`, `useOrgTeamMembers`). Keep fetch logic next to the screen unless a second caller exists.
 - Forms: follow the nearest dialog (facility, settings, admin). Do not add a form library.
-- Routing: React Router 6. Protected app under `/app`. Do not reorder `/:slug` ahead of reserved paths.
-- Feature flags: `FEATURES` in `src/config/features.ts` only. Community routes stay gated.
+- Routing: React Router 6. Protected app under `/app`. `/app` home is Search. Do not reorder `/:slug` ahead of reserved paths.
+- Feature flags: `FEATURES` in `src/config/features.ts` only. Community routes (Feed / Messenger) stay gated. Contacts / Connect / people profiles are core — do not hide them behind `FEATURES.community`.
 
 ### Design language
 
@@ -82,5 +82,6 @@ Tokens live in `src/index.css` (HSL CSS variables). Primary is the teal-blue wor
 - Next.js, Server Actions, Redux, React Query wiring, new CSS frameworks
 - Hard billing gates on Search/Facilities
 - Ungated Feed/Messenger
+- Treating Contacts / Connect as community, or burying BD profiles under org-admin chrome
 - New public URL schemes that break `/o/:slug` or `/o/:org/p/:program`
 - Duplicate components that already exist in `ui/`, `app/`, `public/`, or `landing/`

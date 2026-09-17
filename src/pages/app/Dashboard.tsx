@@ -1,12 +1,16 @@
+import { Link } from "react-router-dom";
+import { Search as SearchIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRound } from "lucide-react";
 import { OrgDashboard } from "@/components/app/OrgDashboard";
 import { OrgClaimOptions } from "@/components/app/OrgClaimOptions";
+import { BdProfileForm } from "@/components/app/BdProfileForm";
 import { SuperAdminSetupAlert } from "@/components/app/admin/SuperAdminSetupAlert";
 import { AdminOverview } from "@/pages/app/admin/AdminOverview";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export default function Dashboard() {
-  const { user, profile, isSuperAdmin, needsSuperAdminSetup } = useAuth();
+  const { profile, isSuperAdmin, needsSuperAdminSetup } = useAuth();
   const orgId = profile?.organization_id ?? null;
 
   if (isSuperAdmin) {
@@ -36,29 +40,33 @@ export default function Dashboard() {
     );
   }
 
-  // Free account with no organization yet: My profile.
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {needsSuperAdminSetup && <SuperAdminSetupAlert />}
-      <div>
-        <h1 className="font-heading text-2xl font-bold">My profile</h1>
-        <p className="text-muted-foreground mt-1">
-          Your free account can search the full in-network database.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="font-heading text-2xl font-bold">My profile</h1>
+            <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success ring-1 ring-success/20">
+              Free
+            </span>
+          </div>
+          <p className="text-muted-foreground mt-1">
+            This is how other BD reps see you. You can search who accepts what insurance without claiming an organization.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="shrink-0">
+          <Link to="/app/search">
+            <SearchIcon className="h-4 w-4" />
+            Search insurance
+          </Link>
+        </Button>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6 flex items-center gap-4">
-        <div className="h-12 w-12 rounded-full bg-primary/10 text-primary grid place-items-center shrink-0">
-          <UserRound className="h-6 w-6" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold truncate">{profile?.full_name || user?.email}</p>
-          <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
-        </div>
-        <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success ring-1 ring-success/20">
-          Free
-        </span>
-      </div>
+      <Card className="p-5 sm:p-6">
+        <h2 className="font-heading text-lg font-semibold mb-4">Your profile</h2>
+        <BdProfileForm />
+      </Card>
 
       <OrgClaimOptions />
     </div>

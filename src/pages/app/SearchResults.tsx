@@ -581,7 +581,7 @@ export default function SearchResults() {
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {selectedOrg.facilities.length} matching{" "}
-                    {selectedOrg.facilities.length === 1 ? "facility" : "facilities"}
+                    {selectedOrg.facilities.length === 1 ? "program" : "programs"} — call the referral contact on a card below
                     {selectedOrg.hq_city || selectedOrg.hq_state
                       ? ` · ${[selectedOrg.hq_city, selectedOrg.hq_state].filter(Boolean).join(", ")}`
                       : ""}
@@ -601,9 +601,9 @@ export default function SearchResults() {
                     </Button>
                   ) : null}
                   {orgHref ? (
-                    <Button asChild variant="outline" size="sm">
+                    <Button asChild variant="ghost" size="sm">
                       <Link to={orgHref}>
-                        View org page
+                        Org page
                         <ArrowUpRight className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
@@ -618,6 +618,7 @@ export default function SearchResults() {
                       key={f.id}
                       facility={{ ...f, bd_contact_avatar: avatarByFacility[f.id] ?? f.bd_contact_avatar }}
                       orgSlug={selectedOrg.org_slug}
+                      organizationId={selectedOrg.org_id}
                     />
                   ))}
                 </div>

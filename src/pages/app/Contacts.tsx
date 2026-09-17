@@ -44,7 +44,6 @@ import {
   professionalPath,
   type ProfessionalCard,
 } from "@/lib/professional-network";
-import { orgPublicPath } from "@/lib/public-urls";
 import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
 
@@ -90,6 +89,7 @@ function asOrg(value: unknown): WorkspaceContactOrg | null {
 export default function Contacts() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const hasOrg = Boolean(profile?.organization_id);
   const { connections, requests, loading: networkLoading, requestConnection, respondToRequest, reload } =
     useProfessionalNetwork();
   const { partners, partnerOrgIds, loading: partnersLoading } = useReferralNetwork();
@@ -375,7 +375,7 @@ export default function Contacts() {
         const { data } = await supabase.rpc("search_professionals", { _query: needle });
         const match = asProfessionalCards(data).find((person) => {
           const email = person.email?.trim().toLowerCase();
-          if (contact.email && email && email === contact.email) return true;
+          if (contact.email && email && email === contact.email.trim().toLowerCase()) return true;
           return (person.full_name || "").trim().toLowerCase() === contact.fullName.trim().toLowerCase();
         });
         userId = match?.user_id ?? null;
@@ -385,15 +385,7 @@ export default function Contacts() {
       navigate(professionalPath(userId));
       return;
     }
-    if (contact.organization?.slug) {
-      navigate(orgPublicPath(contact.organization.slug));
-      return;
-    }
-    if (contact.facilityId) {
-      navigate(`/app/facilities/${contact.facilityId}`);
-      return;
-    }
-    toast.message("This contact does not have a CenterLinked profile yet.");
+    navigate(`/app/contacts/${encodeURIComponent(contact.id)}`);
   };
 
   return (
@@ -526,10 +518,25 @@ export default function Contacts() {
             <div className="p-8 text-center text-sm text-muted-foreground space-y-3">
               {contacts.length === 0 ? (
                 <>
-                  <p>Your list is empty. Find a professional, or add a partner organization so their BD contacts show up here.</p>
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/app/organizations?view=network">Partner organizations</Link>
-                  </Button>
+                  <p>
+                    {hasOrg
+                      ? "Your list is empty. Find a professional, or add a partner organization so their BD contacts show up here."
+                      : "Your list is empty. Find a professional to connect — you can search who accepts what insurance anytime."}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                      Find a professional
+                    </Button>
+                    {hasOrg ? (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/app/organizations?view=network">Partner organizations</Link>
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/app/search">Search insurance</Link>
+                      </Button>
+                    )}
+                  </div>
                 </>
               ) : (
                 <p>No contacts match these filters.</p>

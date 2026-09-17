@@ -82,10 +82,12 @@ async function countPublishedFacilities(organizationId: string): Promise<number>
   return count ?? 0;
 }
 
-export async function fetchPublicOrgSheet(slug: string): Promise<PublicOrgSheetPayload | null> {
-  const { data, error } = await supabase.rpc("get_public_org_sheet", { _slug: slug });
-  if (error && isMissingRpc(error)) return fetchPublicOrgSheetLegacy(slug);
-  if (error || data == null) return null;
+async function hasAuthSession() {
+  const { data } = await supabase.auth.getSession();
+  return Boolean(data.session);
+}
+
+function parseOrgSheetRpc(data: unknown): PublicOrgSheetPayload | null {
   const root = asRecord(data);
   const orgRow = asRecord(root?.org);
   if (!orgRow?.id || !orgRow.name) return null;
@@ -160,6 +162,19 @@ export async function fetchPublicOrgSheet(slug: string): Promise<PublicOrgSheetP
   return { org, facilities, contracts };
 }
 
+export async function fetchPublicOrgSheet(slug: string): Promise<PublicOrgSheetPayload | null> {
+  const { data, error } = await supabase.rpc("get_public_org_sheet", { _slug: slug });
+  if (error && isMissingRpc(error)) return fetchPublicOrgSheetLegacy(slug);
+  if (!error && data != null) {
+    const parsed = parseOrgSheetRpc(data);
+    if (parsed) return parsed;
+  }
+  // Directory cards in the app include unpublished orgs. Signed-in members
+  // already see those rows via RLS; reuse that path instead of a public 404.
+  if (await hasAuthSession()) return fetchPublicOrgSheetLegacy(slug);
+  return null;
+}
+
 export async function fetchPublicProgramSheet(
   slug: string,
   orgSlug?: string | null,
@@ -169,10 +184,16 @@ export async function fetchPublicProgramSheet(
     _org_slug: orgSlug ?? undefined,
   });
   if (error && isMissingRpc(error)) return fetchPublicProgramSheetLegacy(slug);
-  if (error || data == null) return null;
+  if (error || data == null) {
+    if (await hasAuthSession()) return fetchPublicProgramSheetLegacy(slug);
+    return null;
+  }
   const root = asRecord(data);
   const facRow = asRecord(root?.facility);
-  if (!facRow?.id || !facRow.name || !facRow.organization_id) return null;
+  if (!facRow?.id || !facRow.name || !facRow.organization_id) {
+    if (await hasAuthSession()) return fetchPublicProgramSheetLegacy(slug);
+    return null;
+  }
 
   const orgRow = asRecord(root?.org);
   const org = orgRow?.id

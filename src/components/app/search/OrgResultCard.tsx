@@ -5,7 +5,9 @@ import { cn } from "@/lib/utils";
 import { programPublicPath } from "@/lib/public-urls";
 import { formatPlanTypeList } from "@/lib/plan-types";
 import { InsuranceMatchBadge } from "@/components/app/search/InsuranceMatchBadge";
-import { BdContactLine } from "@/components/app/search/BdContactLine";
+import { MakeReferralButton } from "@/components/public/MakeReferralButton";
+import { Button } from "@/components/ui/button";
+import { sanitizePhone } from "@/lib/phone";
 import type { InsuranceMatchStatus } from "@/lib/insurance-contract-status";
 
 export interface OrgSearchFacility {
@@ -302,9 +304,11 @@ export function OrgListItem({
 export function SearchFacilityCard({
   facility: f,
   orgSlug,
+  organizationId,
 }: {
   facility: OrgSearchFacility;
   orgSlug: string | null;
+  organizationId?: string;
 }) {
   const href = f.slug ? programPublicPath(f.slug, orgSlug) : `/app/facilities/${f.id}`;
   const place = [f.city, f.state].filter(Boolean).join(", ");
@@ -315,6 +319,9 @@ export function SearchFacilityCard({
       ? `${f.matched_payer} — ${formatPlanTypeList(f.matched_plan_types)}`
       : f.matched_payer
     : null;
+  const hasReferralContact = Boolean(sanitizePhone(f.bd_contact_phone) || f.bd_contact_email?.trim());
+  const contactName = f.bd_contact_name?.trim() || null;
+  const contactTitle = f.bd_contact_title?.trim() || null;
 
   return (
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-primary/40 hover:shadow-md">
@@ -367,15 +374,36 @@ export function SearchFacilityCard({
         ) : null}
       </div>
       </Link>
-      <div className="border-t border-border/50 px-3.5 py-2">
-        <BdContactLine
-          name={f.bd_contact_name}
-          phone={f.bd_contact_phone}
-          email={f.bd_contact_email}
-          title={f.bd_contact_title}
-          verifiedAt={f.bd_contact_verified_at}
-          avatarUrl={f.bd_contact_avatar}
-        />
+      <div className="space-y-2 border-t border-border/50 px-3.5 py-2.5">
+        {hasReferralContact ? (
+          <>
+            {contactName ? (
+              <p className="truncate text-xs font-medium leading-snug">
+                {contactName}
+                {contactTitle ? <span className="font-normal text-muted-foreground"> · {contactTitle}</span> : null}
+              </p>
+            ) : null}
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <MakeReferralButton
+                name={f.bd_contact_name}
+                phone={f.bd_contact_phone}
+                email={f.bd_contact_email}
+                organizationId={organizationId}
+                variant="default"
+              />
+              <Button asChild variant="outline" size="sm">
+                <Link to={href}>Program page</Link>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground">No referral contact listed</p>
+            <Button asChild variant="outline" size="sm">
+              <Link to={href}>Program page</Link>
+            </Button>
+          </>
+        )}
       </div>
     </article>
   );

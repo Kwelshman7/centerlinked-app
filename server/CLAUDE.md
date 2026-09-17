@@ -2,6 +2,8 @@
 
 This directory is the source of truth for Stripe, email, auth-hook, OG, and ops scripts. Vercel `api/*.js` and Vite plugins must call these handlers — do not duplicate logic in only one environment.
 
+Product filter: `PRINCIPLES.md` (BD reps first; insurance-fit Search; org sheets still required). This tree does not own Contacts UI.
+
 ## Layout
 
 | Path | Role |

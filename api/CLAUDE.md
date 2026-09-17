@@ -2,6 +2,8 @@
 
 Thin HTTP wrappers. **Do not put business logic here.** Import from `server/**` so production matches `npm run dev` (Vite plugins).
 
+Product filter: `PRINCIPLES.md`. Do not add new `/api` routes for Contacts / Connect — those are SPA + RLS / RPCs.
+
 ## Endpoints
 
 | File | Handler |

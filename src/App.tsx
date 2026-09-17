@@ -3,7 +3,7 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute, AdminRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/app/AppLayout";
 import { FEATURES } from "@/config/features";
@@ -54,9 +54,7 @@ import OrgOnePagerPreview from "./pages/dev/OrgOnePagerPreview";
 import LaunchImport from "./pages/LaunchImport";
 
 function AppIndexRedirect() {
-  const { profile, isSuperAdmin } = useAuth();
-  const hasOrg = isSuperAdmin || !!profile?.organization_id;
-  return <Navigate to={hasOrg ? "/app/contacts" : "/app/search"} replace />;
+  return <Navigate to="/app/search" replace />;
 }
 
 const App = () => (
@@ -91,6 +89,7 @@ const App = () => (
               <Route path="search" element={<Search />} />
               <Route path="search/results" element={<SearchResultsRedirect />} />
               <Route path="contacts" element={<Contacts />} />
+              <Route path="contacts/:contactId" element={<ProfessionalProfile />} />
               <Route path="insurance" element={<Navigate to="/app/search" replace />} />
               <Route path="network" element={<Navigate to="/app/contacts" replace />} />
               <Route path="people/:userId" element={<ProfessionalProfile />} />

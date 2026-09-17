@@ -1,22 +1,20 @@
 # CenterLinked — Agent Instructions
 
-Production B2B referral platform for behavioral-health / addiction-treatment organizations. Domain: https://www.centerlinked.com. Not a patient-facing directory. No PHI.
+B2B tool for behavioral-health **BD reps** (insurance-fit Search + profiles/Contacts), with live org/program listings behind it. Domain: https://www.centerlinked.com. Not a patient-facing directory. No PHI.
 
-This file is the session entry point. Full product/architecture/schema live in the docs below — do not duplicate them into new markdown unless asked.
+This file is the **coding** entry point. Product filter: `PRINCIPLES.md`. Do not duplicate those docs here.
 
-**Never guess. Never invent schema, routes, env, or product policy.** If it is not in the repo or the user message, ask. Optimize for the product: a trustworthy live referral link for treatment-org BD teams — not a consumer directory, patient portal, or social network. Details: `PRINCIPLES.md`.
+**Never guess. Never invent schema, routes, env, or product policy.** If it is not in the repo or the user message, ask.
 
 ## Read first
 
-| Doc | Use it for |
-|-----|------------|
-| `AGENTS.md` | Short always-on agent contract (Cursor and other tools) |
-| `PRINCIPLES.md` | Product intent, what we are not, never-guess rules |
-| `CODING_STANDARDS.md` | How to write code in this repo |
-| `AI_RULES.md` | Mandatory working rules (scope, safety, checklists) |
-| `PROJECT.md` | Product, users, stack, env, status, limitations |
-| `ARCHITECTURE.md` | Systems, routes, data flow, blast radius |
-| `DATABASE.md` | Tables, RPCs, RLS, storage, schema drift notes |
+| When | Doc |
+|------|-----|
+| Always | `AGENTS.md`, then `PRINCIPLES.md` |
+| Writing code | This file, then `CODING_STANDARDS.md` |
+| Non-trivial / critical systems | `AI_RULES.md` |
+| Need facts | `PROJECT.md`, `ARCHITECTURE.md`, `DATABASE.md` |
+| Commercial / positioning | `BUSINESS_PLAN.md` |
 
 Area guides (read when working in that tree): `src/CLAUDE.md`, `server/CLAUDE.md`, `api/CLAUDE.md`, `supabase/CLAUDE.md`.
 
@@ -74,9 +72,12 @@ Data fetching is ad-hoc `useState`/`useEffect` plus a few hooks. Do not add a Qu
 
 - **Work-email gated.** Personal domains blocked unless in `approved_personal_emails` or `bootstrap_admin_emails`. Enforced client-side (`is_email_auth_allowed`) and via `/api/auth-before-user-created`.
 - **Roles:** `super_admin` | `facility_admin` | `bd_rep`. `isFacilityAdmin` = facility_admin OR super_admin. UI gates are not security — RLS / SECURITY DEFINER RPCs are.
+- **Org is optional for Search, BD profile, and Contacts.** A work-email account can skip claim, land on Search, and claim later from My profile.
+- **`/app` home:** `/app/search` for everyone. Contacts stays a first-class tab.
+- **Contacts / Connect / people profiles are core.** `/app/network` redirects to `/app/contacts`. Do not treat this as the gated community.
 - **`FEATURES.community === false`.** Feed and Messenger routes redirect to `/app`. Do not enable or bypass without an explicit request.
-- **Billing is soft-gated.** Inactive orgs see a dismissible banner; do not hard-lock Search/Facilities unless asked.
-- **Search** surfaces approved, non-frozen facilities with in-network contracts. Monthly verification: fresh / recent / stale / frozen (`src/lib/verification.ts`).
+- **Billing is soft-gated.** Listing is free. Inactive orgs see a dismissible banner; do not hard-lock Search/Facilities unless asked.
+- **Search** surfaces approved, non-frozen facilities with in-network contracts. This is the insurance-fit job. Monthly verification: fresh / recent / stale / frozen (`src/lib/verification.ts`).
 - Public share URLs: `/o/:slug`, `/:slug`, `/o/:org/p/:program`, `/p/:slug`. Route order matters — `/:slug` is a catch-all after reserved paths.
 - Facility writes go through `saveFacilityWithContracts` → RPC `save_facility_with_contracts`. Prefer that over ad-hoc multi-step writes.
 
@@ -85,7 +86,7 @@ Data fetching is ad-hoc `useState`/`useEffect` plus a few hooks. Do not add a Qu
 Do not modify these unless the user explicitly asked, and call the risk out first:
 
 - `AuthContext`, `ProtectedRoute`, `AdminRoute`, email-domain gates, auth hook
-- RLS policies and RPCs, especially `save_facility_with_contracts`
+- RLS policies and RPCs, especially `save_facility_with_contracts` and professional-connection RPCs
 - Stripe webhook/checkout/portal/billing-overview and `stripe_webhook_events` idempotency
 - Public sheets (`src/components/public/*`, `src/pages/public/*`) and OG/`middleware.js`
 - `FEATURES` flags
@@ -103,6 +104,6 @@ Teal-blue primary (`#2088b8` family), HSL tokens in `src/index.css`. Montserrat 
 
 ## Verify before claiming done
 
-At least: happy path + one failure/regression path for what you touched. For auth, RLS/RPC, Stripe, public sheets, or facility save, include an explicit checklist. If you cannot run it (missing env), say so.
+At least: happy path + one failure/regression path for what you touched. For auth, RLS/RPC, Stripe, public sheets, facility save, Search, or Contacts/profiles, include an explicit checklist. If you cannot run it (missing env), say so.
 
 Do not claim tests passed unless you ran them. Automated tests are sparse; `npm run lint` and `npm run build` are the usual local checks.
