@@ -51,6 +51,12 @@ export interface ProfessionalFacility {
 
 export interface ProfessionalProfileData extends ProfessionalCard {
   facilities: ProfessionalFacility[];
+  years_in_bh?: number | null;
+}
+
+export interface SharedProfessionalConnections {
+  count: number;
+  people: ProfessionalCard[];
 }
 
 export interface PublicReferralContact {
@@ -286,7 +292,34 @@ export function asProfessionalProfile(value: unknown): ProfessionalProfileData |
         })
         .filter((row): row is ProfessionalFacility => Boolean(row))
     : [];
-  return { ...card, facilities };
+  return { ...card, facilities, years_in_bh: asYearsInBh(value.years_in_bh) };
+}
+
+export function asSharedProfessionalConnections(value: unknown): SharedProfessionalConnections {
+  if (!isRecord(value)) return { count: 0, people: [] };
+  const people = asProfessionalCards(value.people);
+  const count = typeof value.count === "number" && Number.isFinite(value.count) ? value.count : people.length;
+  return { count, people };
+}
+
+export function primaryTerritory(
+  profile: Pick<ProfessionalProfileData, "city" | "state" | "organization">,
+  facilities: Pick<ProfessionalFacility, "city" | "state">[] = [],
+): string | null {
+  return (
+    locationLine(profile.city, profile.state) ||
+    locationLine(profile.organization?.hq_city, profile.organization?.hq_state) ||
+    locationLine(facilities[0]?.city, facilities[0]?.state)
+  );
+}
+
+function asYearsInBh(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
 }
 
 /** Counts a BD profile can show without extra tracking tables. */

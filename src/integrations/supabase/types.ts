@@ -1183,6 +1183,24 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_professionals: {
+        Row: {
+          created_at: string
+          target_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          target_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          target_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       preferred_provider_changes: {
         Row: {
           created_at: string
@@ -1223,6 +1241,7 @@ export type Database = {
           bio: string | null
           city: string | null
           state: string | null
+          years_in_bh: number | null
           updated_at: string
           user_id: string
         }
@@ -1238,6 +1257,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           state?: string | null
+          years_in_bh?: number | null
           updated_at?: string
           user_id: string
         }
@@ -1253,6 +1273,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           state?: string | null
+          years_in_bh?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -1571,6 +1592,7 @@ export type Database = {
         Returns: Json
       }
       list_my_professional_network: { Args: never; Returns: Json }
+      list_shared_professional_connections: { Args: { _user_id: string }; Returns: Json }
       list_professional_connection_requests: { Args: never; Returns: Json }
       request_professional_connection: { Args: { _addressee_id: string }; Returns: Json }
       respond_to_professional_connection: {

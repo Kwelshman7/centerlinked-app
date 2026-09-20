@@ -1,53 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, Mail, MapPin, MessageSquare, Phone, Share2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { ConnectButton } from "@/components/app/network/ConnectButton";
-import {
-  FacilityGridCard,
-  facilityGridDensityForCount,
-} from "@/components/FacilityGridCard";
-import { orgPublicPath, programPublicPath } from "@/lib/public-urls";
-import { sanitizePhone, formatPhoneDisplay } from "@/lib/phone";
+import { BdProfileView, type ProfileFacility } from "@/components/app/BdProfileView";
 import {
   asProfessionalProfile,
+  asSharedProfessionalConnections,
   bdProfileMetrics,
   connectShareUrl,
-  initialsFromName,
   locationLine,
-  type ProfessionalFacility,
   type ProfessionalProfileData,
+  type SharedProfessionalConnections,
 } from "@/lib/professional-network";
 import { useProfessionalNetwork } from "@/hooks/useProfessionalNetwork";
+import { useSavedProfessionals } from "@/hooks/useSavedProfessionals";
 import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
-import { cn } from "@/lib/utils";
-
-type FacilityVisual = ProfessionalFacility & {
-  image_urls?: string[];
-  short_description?: string | null;
-  tagline?: string | null;
-  description?: string | null;
-};
-
-function formatCount(value: number) {
-  return value.toLocaleString("en-US");
-}
-
-function facilityGridClass(count: number) {
-  if (count <= 1) return "grid grid-cols-1";
-  if (count === 2) return "grid grid-cols-1 gap-4 sm:grid-cols-2";
-  return "grid grid-cols-1 gap-4 sm:grid-cols-2";
-}
 
 export default function ProfessionalProfile() {
   const { userId, contactId } = useParams<{ userId?: string; contactId?: string }>();
   const { user } = useAuth();
   const { requestConnection, respondToRequest, reload } = useProfessionalNetwork();
+  const { isSaved, toggle: toggleSaved, busyId: saveBusyId } = useSavedProfessionals();
   const [profile, setProfile] = useState<ProfessionalProfileData | null>(null);
-  const [facilities, setFacilities] = useState<FacilityVisual[]>([]);
+  const [facilities, setFacilities] = useState<ProfileFacility[]>([]);
+  const [shared, setShared] = useState<SharedProfessionalConnections>({ count: 0, people: [] });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -93,17 +71,21 @@ export default function ProfessionalProfile() {
       a.localeCompare(b),
     );
   }, [profile]);
-  const locations = useMemo(() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const facility of facilities) {
-      const line = locationLine(facility.city, facility.state);
-      if (!line || seen.has(line)) continue;
-      seen.add(line);
-      out.push(line);
+  useEffect(() => {
+    const subjectId = profile?.user_id;
+    if (!subjectId || !user?.id || subjectId === user.id) {
+      setShared({ count: 0, people: [] });
+      return;
     }
-    return out;
-  }, [facilities]);
+    let cancelled = false;
+    void supabase.rpc("list_shared_professional_connections", { _user_id: subjectId }).then(({ data }) => {
+      if (cancelled) return;
+      setShared(asSharedProfessionalConnections(data));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.user_id, user?.id]);
 
   if (loading) {
     return (
@@ -124,16 +106,9 @@ export default function ProfessionalProfile() {
     );
   }
 
-  const name = profile.full_name || "CenterLinked professional";
-  const place = locationLine(profile.city || profile.organization?.hq_city, profile.state || profile.organization?.hq_state);
-  const tel = sanitizePhone(profile.phone);
-  const displayPhone = formatPhoneDisplay(profile.phone) || formatPhoneDisplay(tel);
-  const email = profile.email?.trim() || "";
   const isSelf = Boolean(profile.user_id) && (profile.connection_status === "self" || user?.id === profile.user_id);
   const canConnect = Boolean(profile.user_id) && !isSelf;
-  const orgHref = profile.organization?.slug ? orgPublicPath(profile.organization.slug) : null;
-  const hasSidebar = Boolean(profile.bio || payers.length || profile.organization || locations.length);
-
+  const canSave = Boolean(profile.user_id) && !isSelf;
   const connect = async () => {
     setBusy(true);
     const { error } = await requestConnection(profile.user_id);
@@ -168,237 +143,31 @@ export default function ProfessionalProfile() {
     }
   };
 
+  const save = async () => {
+    if (!profile.user_id) return;
+    const { error, saved } = await toggleSaved(profile.user_id);
+    if (error) toast.error(error);
+    else toast.success(saved ? "Saved to Contacts" : "Removed from Saved");
+  };
+
   return (
-    <div className="mx-auto min-w-0 max-w-6xl space-y-5">
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.04)]">
-        <div className="h-1.5 bg-gradient-to-r from-primary via-primary/70 to-[hsl(var(--brand-purple))]" />
-        <div className="flex min-w-0 items-start gap-3 p-4 sm:gap-4 sm:p-6">
-          <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/10 text-base font-semibold text-primary ring-1 ring-border sm:h-[4.5rem] sm:w-[4.5rem] sm:text-xl">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              initialsFromName(name)
-            )}
-          </div>
-          <div className="min-w-0 flex-1 space-y-3">
-            <div className="space-y-1">
-              <h1 className="break-words font-heading text-xl font-bold tracking-tight sm:text-[1.75rem]">{name}</h1>
-              {profile.job_title ? (
-                <p className="text-sm font-medium text-foreground/80">{profile.job_title}</p>
-              ) : null}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                {profile.organization ? (
-                  orgHref ? (
-                    <Link to={orgHref} className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline">
-                      {profile.organization.logo_url ? (
-                        <img
-                          src={profile.organization.logo_url}
-                          alt=""
-                          className="h-5 w-5 rounded-md bg-background object-contain ring-1 ring-border"
-                        />
-                      ) : null}
-                      {profile.organization.name}
-                    </Link>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                      {profile.organization.name}
-                    </span>
-                  )
-                ) : null}
-                {place ? (
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" aria-hidden />
-                    {place}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            {metrics ? (
-              <dl className="flex flex-wrap gap-2">
-                <MetricChip value={metrics.facilities} label={metrics.facilities === 1 ? "facility" : "facilities"} />
-                <MetricChip value={metrics.inNetwork} label="in-network" />
-                <MetricChip value={metrics.states} label={metrics.states === 1 ? "state" : "states"} />
-              </dl>
-            ) : null}
-            <div className="flex flex-wrap items-center gap-2">
-            {isSelf ? (
-              <Button size="sm" onClick={() => void copyLink()}>
-                <Share2 className="h-4 w-4" />
-                Share profile
-              </Button>
-            ) : canConnect ? (
-              <ConnectButton status={profile.connection_status} busy={busy} onConnect={connect} onAccept={accept} />
-            ) : null}
-              {tel ? (
-                <Button asChild variant="outline" size="sm">
-                  <a href={`tel:${tel}`}>
-                    <Phone className="h-4 w-4" />
-                    Call
-                  </a>
-                </Button>
-              ) : null}
-              {email ? (
-                <Button asChild variant="outline" size="sm">
-                  <a href={`mailto:${email}`}>
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </a>
-                </Button>
-              ) : null}
-              {tel ? (
-                <Button asChild variant="outline" size="sm">
-                  <a href={`sms:${tel}`}>
-                    <MessageSquare className="h-4 w-4" />
-                    Text
-                  </a>
-                </Button>
-              ) : null}
-              {!isSelf && canConnect ? (
-                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => void copyLink()} aria-label="Copy profile link">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        </div>
-        {email || displayPhone ? (
-          <div className="flex min-w-0 flex-wrap gap-x-5 gap-y-1 border-t border-border/70 bg-muted/30 px-4 py-3 text-sm sm:px-6">
-            {displayPhone && tel ? (
-              <a href={`tel:${tel}`} className="inline-flex min-w-0 items-center gap-1.5 text-muted-foreground hover:text-foreground">
-                <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span className="truncate">{displayPhone}</span>
-              </a>
-            ) : null}
-            {email ? (
-              <a href={`mailto:${email}`} className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-muted-foreground hover:text-foreground">
-                <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span className="truncate">{email}</span>
-              </a>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
-
-      <div className={cn("grid gap-5", hasSidebar && "xl:grid-cols-[minmax(0,1fr)_19rem]")}>
-        <section className="min-w-0 space-y-3">
-          <div className="flex items-end justify-between gap-3">
-            <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Facilities
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {facilities.length} {facilities.length === 1 ? "location" : "locations"}
-            </p>
-          </div>
-          {facilities.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
-              No facilities listed for this representative yet.
-            </div>
-          ) : (
-            <div className={cn(facilityGridClass(facilities.length), facilities.length === 1 && "max-w-3xl")}>
-              {facilities.map((facility) => (
-                <FacilityGridCard
-                  key={facility.id}
-                  facility={facility}
-                  href={
-                    facility.slug && profile.organization?.slug
-                      ? programPublicPath(facility.slug, profile.organization.slug)
-                      : null
-                  }
-                  density={facilities.length === 1 ? "comfortable" : facilityGridDensityForCount(facilities.length)}
-                  elevated
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {hasSidebar ? (
-          <aside className="space-y-4">
-            {profile.bio ? (
-              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  About
-                </h2>
-                <p className="mt-3 text-sm leading-relaxed text-foreground/85">{profile.bio}</p>
-              </div>
-            ) : null}
-
-            {profile.organization ? (
-              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  Organization
-                </h2>
-                {orgHref ? (
-                  <Link to={orgHref} className="mt-3 flex items-center gap-3 rounded-xl p-1 -mx-1 transition-colors hover:bg-muted/60">
-                    {profile.organization.logo_url ? (
-                      <img
-                        src={profile.organization.logo_url}
-                        alt=""
-                        className="h-11 w-11 rounded-xl bg-background object-contain p-1 ring-1 ring-border"
-                      />
-                    ) : (
-                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-xs font-semibold text-primary">
-                        {initialsFromName(profile.organization.name)}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{profile.organization.name}</p>
-                      <p className="text-xs text-muted-foreground">View organization</p>
-                    </div>
-                  </Link>
-                ) : (
-                  <p className="mt-3 font-medium">{profile.organization.name}</p>
-                )}
-              </div>
-            ) : null}
-
-            {locations.length ? (
-              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  Locations
-                </h2>
-                <ul className="mt-3 space-y-1.5 text-sm">
-                  {locations.map((line) => (
-                    <li key={line} className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      <span className="truncate">{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {payers.length ? (
-              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  In-network
-                </h2>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {payers.map((payer) => (
-                    <span
-                      key={payer}
-                      className="rounded-full bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-foreground ring-1 ring-primary/15"
-                    >
-                      {payer}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </aside>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function MetricChip({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/80 px-2.5 py-1 text-xs ring-1 ring-border/70">
-      <dt className="sr-only">{label}</dt>
-      <dd className="font-heading font-bold tabular-nums text-foreground">{formatCount(value)}</dd>
-      <span className="text-muted-foreground">{label}</span>
-    </div>
+    <BdProfileView
+      profile={profile}
+      facilities={facilities}
+      payers={payers}
+      metrics={metrics ?? { facilities: 0, inNetwork: 0 }}
+      isSelf={isSelf}
+      canConnect={canConnect}
+      canSave={canSave}
+      saved={isSaved(profile.user_id)}
+      saveBusy={saveBusyId === profile.user_id}
+      connectBusy={busy}
+      shared={shared}
+      onConnect={() => void connect()}
+      onAccept={() => void accept()}
+      onCopyLink={() => void copyLink()}
+      onToggleSave={() => void save()}
+    />
   );
 }
 
@@ -431,6 +200,7 @@ function emptyProfile(partial: Partial<ProfessionalProfileData> & Pick<Professio
     connection_status: "none",
     connection_id: null,
     facilities: [],
+    years_in_bh: null,
     ...partial,
   };
 }
@@ -531,7 +301,7 @@ async function loadFacilityContactProfile(id: string): Promise<{ profile: Profes
   };
 }
 
-async function loadOrgFacilities(orgId: string, existing: FacilityVisual[]): Promise<FacilityVisual[]> {
+async function loadOrgFacilities(orgId: string, existing: ProfileFacility[]): Promise<ProfileFacility[]> {
   const { data: rows } = await supabase
     .from("facilities")
     .select(
@@ -575,7 +345,7 @@ async function loadOrgFacilities(orgId: string, existing: FacilityVisual[]): Pro
       short_description: row.short_description ?? prev?.short_description ?? null,
       tagline: row.tagline ?? prev?.tagline ?? null,
       description: row.description ?? prev?.description ?? null,
-    } satisfies FacilityVisual;
+    } satisfies ProfileFacility;
   });
   merged.sort((a, b) => {
     const loc = (locationLine(a.city, a.state) || "").localeCompare(locationLine(b.city, b.state) || "");

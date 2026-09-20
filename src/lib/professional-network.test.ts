@@ -5,8 +5,10 @@ import {
   asProfessionalCards,
   asProfessionalProfile,
   asPublicReferralContacts,
+  asSharedProfessionalConnections,
   bdProfileMetrics,
   connectSharePath,
+  primaryTerritory,
   groupByLetter,
   groupByOrganization,
   initialsFromName,
@@ -54,6 +56,23 @@ describe("professional-network helpers", () => {
       ],
     });
     assert.equal(profile?.facilities[0]?.payers[0], "Aetna");
+    assert.equal(profile?.years_in_bh ?? null, null);
+
+    const withYears = asProfessionalProfile({ ...card, years_in_bh: 5, facilities: [] });
+    assert.equal(withYears?.years_in_bh, 5);
+  });
+
+  it("parses shared connections and primary territory", () => {
+    const shared = asSharedProfessionalConnections({
+      count: 3,
+      people: [{ user_id: "u2", full_name: "Alex", organization: { id: "o1", name: "ABC", slug: "abc", logo_url: null } }],
+    });
+    assert.equal(shared.count, 3);
+    assert.equal(shared.people[0]?.full_name, "Alex");
+    assert.equal(
+      primaryTerritory({ city: null, state: null, organization: { id: "o", name: "Org", slug: null, logo_url: null, hq_city: "Tampa", hq_state: "FL" } }),
+      "Tampa, FL",
+    );
   });
 
   it("counts BD profile metrics from listed facilities", () => {
