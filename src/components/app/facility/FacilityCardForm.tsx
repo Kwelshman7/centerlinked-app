@@ -147,6 +147,76 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
             <Label>Facility name</Label>
             <Input value={value.name} onChange={(e) => set("name", e.target.value)} placeholder="Facility name" />
           </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <Label className="text-sm">In-network insurance</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Add who you accept now. Everything else on this form can wait.
+              </p>
+            </div>
+            {!contractsDisabled && value.contracts.length > 0 && (
+              <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
+                {value.contracts.length} selected
+              </span>
+            )}
+          </div>
+          {contractsDisabled ? (
+            <p className="text-xs text-muted-foreground py-1">
+              Insurance is locked until the current contracts finish loading. A failed load leaves
+              existing payers unchanged.
+            </p>
+          ) : (
+            <PayerCombobox
+              payerId={null}
+              payerName=""
+              onSelect={addContract}
+              placeholder="Search and add payer"
+              keepOpenOnSelect
+              triggerClassName="w-full bg-background"
+            />
+          )}
+          {contractsDisabled ? null : value.contracts.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-1">No in-network payers selected yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {value.contracts.map((c, i) => (
+                <li
+                  key={`${c.payer_id ?? c.payer_name}-${i}`}
+                  className="rounded-lg border border-success/20 bg-background px-3 py-2.5 space-y-2"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-success">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate flex-1 min-w-0">{c.payer_name}</span>
+                    {c.pending && <span className="text-warning">pending</span>}
+                    <button
+                      type="button"
+                      onClick={() => removeContract(i)}
+                      className="rounded-full p-0.5 text-success/80 transition-colors hover:bg-success/15 hover:text-success"
+                      aria-label={`Remove ${c.payer_name}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <PlanTypeChecklist
+                    value={sanitizePlanTypes(c.plan_types)}
+                    onChange={(plan_types) => setContractPlanTypes(i, plan_types)}
+                    showHelper={i === 0}
+                    allowedPlanTypeIds={
+                      payerNameToInsurerId(c.payer_name)
+                        ? getDropdownPlanTypeIds(payerNameToInsurerId(c.payer_name)!)
+                        : []
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Tagline</Label>
             <Input value={value.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Luxury oceanfront residential treatment" />
@@ -157,11 +227,10 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
           </div>
           <div className="space-y-1.5">
             <Label>Website</Label>
-            <Input type="url" placeholder="https://" value={value.website} onChange={(e) => set("website", e.target.value)} />
+            <Input type="text" inputMode="url" placeholder="https://" value={value.website} onChange={(e) => set("website", e.target.value)} />
           </div>
         </div>
 
-        {/* Address */}
         <div className="space-y-2.5">
           <Input placeholder="Street address" value={value.address_line1} onChange={(e) => set("address_line1", e.target.value)} />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -339,89 +408,22 @@ export function FacilityCardForm({ value, onChange, onRemove, index, organizatio
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-4">
-          {/* Insurance contracts — full width so plan-type checklists stay readable */}
-          <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3 lg:col-span-2">
-            <div className="flex items-center justify-between gap-3">
-              <Label className="text-sm">In-network insurance</Label>
-              {!contractsDisabled && value.contracts.length > 0 && (
-                <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-                  {value.contracts.length} selected
-                </span>
-              )}
-            </div>
-            {contractsDisabled ? (
-              <p className="text-xs text-muted-foreground py-1">
-                Insurance is locked until the current contracts finish loading. A failed load leaves
-                existing payers unchanged.
-              </p>
-            ) : (
-              <PayerCombobox
-                payerId={null}
-                payerName=""
-                onSelect={addContract}
-                placeholder="Search and add payer"
-                keepOpenOnSelect
-                triggerClassName="w-full bg-background"
-              />
-            )}
-            {contractsDisabled ? null : value.contracts.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-1">No in-network payers selected yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {value.contracts.map((c, i) => (
-                  <li
-                    key={`${c.payer_id ?? c.payer_name}-${i}`}
-                    className="rounded-lg border border-success/20 bg-background px-3 py-2.5 space-y-2"
-                  >
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-success">
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate flex-1 min-w-0">{c.payer_name}</span>
-                      {c.pending && <span className="text-warning">pending</span>}
-                      <button
-                        type="button"
-                        onClick={() => removeContract(i)}
-                        className="rounded-full p-0.5 text-success/80 transition-colors hover:bg-success/15 hover:text-success"
-                        aria-label={`Remove ${c.payer_name}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                    <PlanTypeChecklist
-                      value={sanitizePlanTypes(c.plan_types)}
-                      onChange={(plan_types) => setContractPlanTypes(i, plan_types)}
-                      showHelper={i === 0}
-                      allowedPlanTypeIds={
-                        payerNameToInsurerId(c.payer_name)
-                          ? getDropdownPlanTypeIds(payerNameToInsurerId(c.payer_name)!)
-                          : []
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="lg:col-span-2">
-            <FacilityBdRepFields
-              organizationId={organizationId}
-              value={{
-                bd_contact_name: value.bd_contact_name,
-                bd_contact_phone: value.bd_contact_phone,
-                bd_contact_email: value.bd_contact_email,
-              }}
-              onChange={(next) =>
-                onChange({
-                  ...value,
-                  bd_contact_name: next.bd_contact_name,
-                  bd_contact_phone: next.bd_contact_phone,
-                  bd_contact_email: next.bd_contact_email,
-                })
-              }
-            />
-          </div>
-        </div>
+        <FacilityBdRepFields
+          organizationId={organizationId}
+          value={{
+            bd_contact_name: value.bd_contact_name,
+            bd_contact_phone: value.bd_contact_phone,
+            bd_contact_email: value.bd_contact_email,
+          }}
+          onChange={(next) =>
+            onChange({
+              ...value,
+              bd_contact_name: next.bd_contact_name,
+              bd_contact_phone: next.bd_contact_phone,
+              bd_contact_email: next.bd_contact_email,
+            })
+          }
+        />
       </div>
     </div>
   );

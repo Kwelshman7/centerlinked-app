@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Building2,
   Clock,
@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { ClaimOrganizationDialog } from "@/components/ClaimOrganizationDialog";
 import {
+  claimPendingOrgInvite,
   getOrgSetupOptions,
   requestToJoinOrganization,
   type OrgSetupOptions,
@@ -35,6 +36,12 @@ type PendingClaim = {
   organizations: { name: string } | null;
 };
 
+type PendingInvite = {
+  id: string;
+  organization_id: string;
+  organizations: { name: string } | null;
+};
+
 const cardClass =
   "rounded-2xl border border-border/60 bg-card/90 backdrop-blur-md shadow-sm p-5 sm:p-6";
 
@@ -48,48 +55,63 @@ function likePattern(term: string) {
  * Shared by post-signup setup and the My profile page for users without an organization.
  */
 export function OrgClaimOptions() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
+  const navigate = useNavigate();
+  const claimingInviteRef = useRef(false);
+  const requestingRef = useRef(false);
   const [options, setOptions] = useState<OrgSetupOptions | null>(null);
   const [claims, setClaims] = useState<PendingClaim[]>([]);
+  const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
+  const [claimingInvite, setClaimingInvite] = useState(false);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<OrgHit[]>([]);
   const [searching, setSearching] = useState(false);
 
   const loadClaims = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("organization_claims")
-      .select("id, organization_id, organizations(name)")
-      .eq("claimant_user_id", user.id)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false });
-    if (error) {
-      toast.error(error.message);
+    const [{ data, error }, { data: inviteRows, error: inviteError }] = await Promise.all([
+      supabase
+        .from("organization_claims")
+        .select("id, organization_id, organizations(name)")
+        .eq("claimant_user_id", user.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("org_invites")
+        .select("id, organization_id, organizations(name)")
+        .eq("status", "pending")
+        .eq("email", (user.email || "").trim().toLowerCase())
+        .order("created_at", { ascending: true }),
+    ]);
+    if (error) toast.error(error.message);
+    else setClaims((data as unknown as PendingClaim[]) ?? []);
+    if (inviteError) toast.error(inviteError.message);
+    else setInvites((inviteRows as unknown as PendingInvite[]) ?? []);
+  }, [user]);
+
+  const loadSetup = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
       return;
     }
-    setClaims((data as unknown as PendingClaim[]) ?? []);
+    setLoading(true);
+    try {
+      const next = await getOrgSetupOptions();
+      setOptions(next);
+    } catch (err) {
+      setOptions(null);
+      toast.error(err instanceof Error ? err.message : "Couldn't load organization options");
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [next] = await Promise.all([getOrgSetupOptions(), loadClaims()]);
-        if (!cancelled) setOptions(next);
-      } catch (err) {
-        if (!cancelled) {
-          toast.error(err instanceof Error ? err.message : "Couldn't load organization options");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadClaims]);
+    void loadSetup();
+    void loadClaims();
+  }, [loadSetup, loadClaims]);
 
   useEffect(() => {
     const term = query.trim();
@@ -118,9 +140,61 @@ export function OrgClaimOptions() {
     };
   }, [query]);
 
+  const handleAcceptInvite = async () => {
+    if (claimingInviteRef.current) {
+      toast.message("Still joining", {
+        description: "Wait for this attempt to finish before accepting again.",
+      });
+      return;
+    }
+    claimingInviteRef.current = true;
+    setClaimingInvite(true);
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
+      setClaimingInvite(false);
+      toast.error("Taking too long to accept that invite", {
+        description: "Leave this page open — it may still finish. Don't tap Accept again until you see a result.",
+      });
+    }, 20_000);
+    try {
+      const claimed = await claimPendingOrgInvite();
+      if (claimed.joined) {
+        await refresh();
+        toast.success("You've joined your organization", {
+          description: "Add facilities and insurance next.",
+        });
+        // Don't wait for profile.organization_id — a stale refresh left
+        // invitees on setup with Accept still showing.
+        navigate("/app/search", { replace: true });
+        return;
+      }
+      if (!timedOut) {
+        toast.error("Couldn't accept that invite", {
+          description: "Try signing out and back in with the invited work email.",
+        });
+      }
+    } catch (err) {
+      if (!timedOut) {
+        toast.error(err instanceof Error ? err.message : "Couldn't accept that invite");
+      }
+    } finally {
+      window.clearTimeout(fallbackTimer);
+      claimingInviteRef.current = false;
+      if (!timedOut) setClaimingInvite(false);
+    }
+  };
+
   const handleJoin = async () => {
     const match = options?.matching_org;
     if (!match) return;
+    if (requestingRef.current) {
+      toast.message("Still submitting your join request", {
+        description: "Wait for this attempt to finish.",
+      });
+      return;
+    }
+    requestingRef.current = true;
     setRequesting(true);
     try {
       await requestToJoinOrganization(match.id);
@@ -133,6 +207,7 @@ export function OrgClaimOptions() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't submit join request");
     } finally {
+      requestingRef.current = false;
       setRequesting(false);
     }
   };
@@ -147,12 +222,47 @@ export function OrgClaimOptions() {
 
   const pendingJoin = options?.pending_join_request;
   const matching = options?.matching_org;
-  const domain = options?.email_domain || "your company";
+  const domain = options?.email_domain || user?.email?.split("@")[1] || "your company";
   const claimedIds = new Set(claims.map((c) => c.organization_id));
   const term = query.trim();
 
   return (
     <div className="grid gap-4">
+      {invites.map((invite) => (
+        <button
+          key={invite.id}
+          type="button"
+          onClick={() => void handleAcceptInvite()}
+          disabled={claimingInvite}
+          className={`${cardClass} text-left transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60`}
+        >
+          <div className="flex items-start gap-4">
+            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground grid place-items-center shadow-md shrink-0">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-heading text-base font-bold">
+                Join {invite.organizations?.name || "your organization"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                You have a pending invite. Accept to add facilities, insurance, and teammates.
+              </p>
+              <div className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary">
+                {claimingInvite ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Joining…
+                  </>
+                ) : (
+                  <>
+                    Accept invite <UserPlus className="h-4 w-4" />
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </button>
+      ))}
+
       {pendingJoin || claims.length > 0 ? (
         <div className={cardClass}>
           <div className="flex items-center gap-2">
@@ -183,7 +293,7 @@ export function OrgClaimOptions() {
         </div>
       ) : null}
 
-      {matching && !pendingJoin ? (
+      {matching && !pendingJoin && !invites.some((invite) => invite.organization_id === matching.id) ? (
         <button
           type="button"
           onClick={handleJoin}
@@ -311,12 +421,39 @@ export function OrgClaimOptions() {
             </div>
           </div>
         </Link>
-      ) : (
+      ) : options ? (
         <div className="rounded-2xl border border-border/60 bg-muted/40 p-5 flex items-start gap-3">
           <Shield className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           <p className="text-sm text-muted-foreground">
             An organization already exists for @{domain}. Join or claim it instead of creating a duplicate.
           </p>
+        </div>
+      ) : (
+        <div className={cardClass}>
+          <div className="flex items-start gap-4">
+            <div className="h-11 w-11 rounded-xl bg-muted text-foreground grid place-items-center shrink-0">
+              <Plus className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-heading text-base font-bold">Create a new organization</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                We couldn&apos;t check whether @{domain} already has one. Try again, or create it — a duplicate
+                domain will be refused.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => void loadSetup()}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  Try again
+                </button>
+                <Link to="/create-organization" className="text-sm font-medium text-primary hover:underline">
+                  Create organization
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Search, MapPin, Shield, BadgeCheck, X, SlidersHorizontal, Plus, Clock } from "lucide-react";
+import { Building2, Search, MapPin, Shield, BadgeCheck, X, SlidersHorizontal, Clock } from "lucide-react";
 import { LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
 import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
 import { useAuth } from "@/contexts/AuthContext";
+import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
+import { toast } from "sonner";
 
 interface FacilityRow {
   id: string;
@@ -49,11 +51,13 @@ function ownStatusLabel(f: FacilityRow) {
 }
 
 export default function Facilities() {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [facilities, setFacilities] = useState<FacilityRow[]>([]);
   const [ownUnlisted, setOwnUnlisted] = useState<FacilityRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
+  const [contractsFailed, setContractsFailed] = useState(false);
 
   const [q, setQ] = useState("");
   const [city, setCity] = useState("");
@@ -63,36 +67,57 @@ export default function Facilities() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [{ data: f }, { data: c }] = await Promise.all([
-        supabase
-          .from("facilities")
-          .select("id,name,tagline,city,state,image_urls,levels_of_care,highlights,organization_id,verification_status,verification_frozen")
-          .eq("verification_status", "approved")
-          .eq("verification_frozen", false)
-          .order("name"),
-        supabase
-          .from("insurance_contracts")
-          .select("facility_id,payer_name,in_network"),
-      ]);
-      const visible = ((f as FacilityRow[]) ?? []).filter((row) => isPartnerVisibleFacility(row));
-      setFacilities(visible);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data: f, error: facilitiesError }, { data: c, error: contractsError }] = await Promise.all([
+      supabase
+        .from("facilities")
+        .select("id,name,tagline,city,state,image_urls,levels_of_care,highlights,organization_id,verification_status,verification_frozen")
+        .eq("verification_status", "approved")
+        .eq("verification_frozen", false)
+        .order("name"),
+      supabase
+        .from("insurance_contracts")
+        .select("facility_id,payer_name,in_network"),
+    ]);
+    if (facilitiesError) {
+      toast.error("Couldn't load programs", { description: facilitiesError.message });
+    }
+    if (contractsError) {
+      toast.error("Couldn't load insurance contracts", { description: contractsError.message });
+      setContractsFailed(true);
+    } else {
+      setContractsFailed(false);
       setContracts((c as ContractRow[]) ?? []);
-      if (profile?.organization_id) {
-        const { data: mine } = await supabase
-          .from("facilities")
-          .select("id,name,tagline,city,state,image_urls,levels_of_care,highlights,organization_id,verification_status,verification_frozen")
-          .eq("organization_id", profile.organization_id);
+    }
+    const visible = ((f as FacilityRow[]) ?? []).filter((row) => isPartnerVisibleFacility(row));
+    setFacilities(visible);
+    if (profile?.organization_id) {
+      const { data: mine, error: mineError } = await supabase
+        .from("facilities")
+        .select("id,name,tagline,city,state,image_urls,levels_of_care,highlights,organization_id,verification_status,verification_frozen")
+        .eq("organization_id", profile.organization_id);
+      if (mineError) {
+        toast.error("Couldn't load your facilities", { description: mineError.message });
+        setOwnUnlisted([]);
+      } else {
         const visibleIds = new Set(visible.map((row) => row.id));
         setOwnUnlisted(((mine as FacilityRow[]) ?? []).filter((row) => !visibleIds.has(row.id)));
-      } else {
-        setOwnUnlisted([]);
       }
-      setLoading(false);
-    })();
+    } else {
+      setOwnUnlisted([]);
+    }
+    setLoading(false);
   }, [profile?.organization_id]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleFacilityCreated = (facilityId?: string) => {
+    void load();
+    if (facilityId) navigate(`/app/facilities/${facilityId}`);
+  };
 
   const contractsByFacility = useMemo(() => {
     const m = new Map<string, ContractRow[]>();
@@ -157,9 +182,16 @@ export default function Facilities() {
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-bold">Find a Program</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Search the network to find the right placement for your patient.
+            Search the network for in-network programs, then add yours and keep insurance current.
           </p>
         </div>
+        {profile?.organization_id ? (
+          <AddFacilityDialog
+            organizationId={profile.organization_id}
+            onCreated={handleFacilityCreated}
+            triggerLabel="Add your facility"
+          />
+        ) : null}
       </div>
 
 
@@ -252,7 +284,9 @@ export default function Facilities() {
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {ownUnlistedMatch.map((f) => (
+                {ownUnlistedMatch.map((f) => {
+                  const inNet = (contractsByFacility.get(f.id) ?? []).filter((c) => c.in_network).length;
+                  return (
                   <Link
                     key={f.id}
                     to={`/app/facilities/${f.id}`}
@@ -285,9 +319,17 @@ export default function Facilities() {
                           </p>
                         )}
                       </div>
+                      <p className="text-xs font-medium text-primary">
+                        {contractsFailed
+                          ? "Insurance didn't load"
+                          : inNet > 0
+                            ? `${inNet} in-network · Edit insurance`
+                            : "Add insurance"}
+                      </p>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -305,12 +347,14 @@ export default function Facilities() {
                       ? "Partner search only lists approved programs. Yours are listed above for your team."
                       : "Programs appear here once they've been submitted and verified. Add your own facilities to get started."}
                   </p>
-                  {ownUnlistedMatch.length === 0 && (
-                    <Button asChild size="sm" className="mt-4">
-                      <Link to="/app/onboarding?add=1">
-                        <Plus className="h-4 w-4" /> Add a facility
-                      </Link>
-                    </Button>
+                  {ownUnlistedMatch.length === 0 && profile?.organization_id && (
+                    <div className="mt-4 flex justify-center">
+                      <AddFacilityDialog
+                        organizationId={profile.organization_id}
+                        onCreated={handleFacilityCreated}
+                        triggerLabel="Add a facility"
+                      />
+                    </div>
                   )}
                 </>
               ) : (
@@ -383,7 +427,9 @@ export default function Facilities() {
                         <div className="mt-auto pt-2 border-t border-border/60">
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Shield className="h-3.5 w-3.5 text-primary" />
-                            {inNet.length > 0 ? (
+                            {contractsFailed ? (
+                              <span>Insurance didn't load</span>
+                            ) : inNet.length > 0 ? (
                               <span className="truncate">
                                 <span className="font-medium text-foreground">{inNet.length}</span> in-network {inNet.length === 1 ? "contract" : "contracts"}
                               </span>

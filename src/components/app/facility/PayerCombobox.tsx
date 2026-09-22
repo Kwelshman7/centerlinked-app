@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2, Clock } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -47,12 +47,18 @@ export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Sel
   const [payers, setPayers] = useState<PayerOption[]>([]);
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   const load = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("payers")
       .select("id,name,category,status,aliases,active")
       .order("name");
+    if (error) {
+      toast.error("Could not load insurers", { description: error.message });
+      setPayers([]);
+      return;
+    }
     setPayers((data as PayerOption[]) ?? []);
   };
 
@@ -76,27 +82,50 @@ export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Sel
   }, [payers, search, approvedOnly]);
 
   const trimmed = search.trim();
-  const exactMatch = payers.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
-  const showSuggest = trimmed.length >= 2 && !exactMatch;
+  const exactSelectable = payers.find(
+    (p) => p.name.toLowerCase() === trimmed.toLowerCase() && p.status !== "rejected",
+  );
+  const exactRejected =
+    !exactSelectable &&
+    payers.some((p) => p.name.toLowerCase() === trimmed.toLowerCase() && p.status === "rejected");
+  const showSuggest = trimmed.length >= 2 && !exactSelectable && !exactRejected;
 
   const suggestNew = async () => {
-    if (!user || !trimmed) return;
-    setSubmitting(true);
-    const { data, error } = await supabase
-      .from("payers")
-      .insert({ name: trimmed, category: "other", status: "pending", created_by: user.id })
-      .select("id,name,category,status")
-      .single();
-    setSubmitting(false);
-    if (error) {
-      toast.error(error.message);
+    if (!trimmed) return;
+    if (submittingRef.current) return;
+    if (!user) {
+      toast.error("Sign in again to suggest a payer");
       return;
     }
-    toast.success("Payer suggested — pending super admin approval");
-    setPayers((p) => [...p, data as PayerOption]);
-    onSelect({ id: (data as PayerOption).id, name: (data as PayerOption).name, pending: true });
-    if (!keepOpenOnSelect) setOpen(false);
-    setSearch("");
+    submittingRef.current = true;
+    setSubmitting(true);
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
+      setSubmitting(false);
+      toast.error("Taking too long to suggest that payer", { description: "Try again." });
+    }, 12_000);
+    try {
+      const { data, error } = await supabase
+        .from("payers")
+        .insert({ name: trimmed, category: "other", status: "pending", created_by: user.id })
+        .select("id,name,category,status")
+        .single();
+      if (timedOut) return;
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Payer suggested — pending super admin approval");
+      setPayers((p) => [...p, data as PayerOption]);
+      onSelect({ id: (data as PayerOption).id, name: (data as PayerOption).name, pending: true });
+      if (!keepOpenOnSelect) setOpen(false);
+      setSearch("");
+    } finally {
+      window.clearTimeout(fallbackTimer);
+      submittingRef.current = false;
+      if (!timedOut) setSubmitting(false);
+    }
   };
 
   const selectedLabel = payerName || placeholder;
@@ -185,6 +214,17 @@ export function PayerCombobox({ payerId, payerName, onSelect, placeholder = "Sel
                       </Badge>
                     </CommandItem>
                   ))}
+                </CommandGroup>
+              </>
+            )}
+
+            {exactRejected && !approvedOnly && (
+              <>
+                <CommandSeparator />
+                <CommandGroup heading="That name was not approved">
+                  <CommandItem disabled>
+                    Try a listed insurer, or suggest a more specific payer name.
+                  </CommandItem>
                 </CommandGroup>
               </>
             )}

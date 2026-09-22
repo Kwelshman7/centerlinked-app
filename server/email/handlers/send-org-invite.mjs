@@ -22,10 +22,12 @@ function supabaseAuthed(accessToken) {
 }
 
 /**
- * Caller must be a facility_admin of this organization (super_admin passes via
- * the same RPC). Mirrors the UI gate in Members.tsx, but enforced server-side.
+ * Caller must be able to create the invite already: an org member (BD reps
+ * included) or a facility_admin / super_admin. Mirrors `create_org_invite`
+ * and the Members invite form. Still not an open mailer — a pending
+ * `org_invites` row is required below.
  */
-async function assertOrgAdmin(accessToken, organizationId) {
+async function assertCanSendOrgInvite(accessToken, organizationId) {
   const client = supabaseAuthed(accessToken);
   if (!client) return { ok: false, error: "Auth not configured", status: 500 };
 
@@ -34,22 +36,30 @@ async function assertOrgAdmin(accessToken, organizationId) {
     return { ok: false, error: "Unauthorized", status: 401 };
   }
 
-  const { data: isAdmin, error: rpcError } = await client.rpc("is_org_facility_admin", {
+  const userId = userData.user.id;
+  const { data: isAdmin } = await client.rpc("is_org_facility_admin", {
     _org_id: organizationId,
-    _user_id: userData.user.id,
+    _user_id: userId,
   });
-
-  if (rpcError || isAdmin !== true) {
-    return { ok: false, error: "Forbidden", status: 403 };
+  if (isAdmin === true) {
+    return { ok: true, userId };
   }
 
-  return { ok: true, userId: userData.user.id };
+  const { data: isMember } = await client.rpc("is_org_member", {
+    _org_id: organizationId,
+    _user_id: userId,
+  });
+  if (isMember === true) {
+    return { ok: true, userId };
+  }
+
+  return { ok: false, error: "Forbidden", status: 403 };
 }
 
 /**
  * Email a pending organization invite.
  *
- * Auth: Bearer access token of a facility_admin (or super_admin) of the org.
+ * Auth: Bearer access token of an org member, facility_admin, or super_admin.
  * Body: { organization_id, email }
  *
  * Deliberately narrow: this will only send to an address that already has a
@@ -64,7 +74,7 @@ export async function handleSendOrgInvite(body, accessToken) {
     return { status: 400, json: { error: "organization_id and email are required" } };
   }
 
-  const auth = await assertOrgAdmin(accessToken, organizationId);
+  const auth = await assertCanSendOrgInvite(accessToken, organizationId);
   if (!auth.ok) {
     return { status: auth.status, json: { error: auth.error } };
   }
@@ -104,6 +114,7 @@ export async function handleSendOrgInvite(body, accessToken) {
     organizationName: org?.name || null,
     inviterName: inviterProfile?.full_name || null,
     roleAtOrg: invite.role_at_org,
+    email: invite.email,
   });
 
   const result = await sendEmail({

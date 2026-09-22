@@ -1,19 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, Building2, Search as SearchIcon, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search as SearchIcon, SlidersHorizontal, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchForm } from "@/components/app/search/SearchForm";
-import {
-  OrgListItem,
-  OrgSearchResult,
-  SearchFacilityCard,
-} from "@/components/app/search/OrgResultCard";
+import { InviteColleagueCard } from "@/components/app/InviteColleagueCard";
+import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
+import { SearchProgramRow } from "@/components/app/search/SearchProgramRow";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import {
   buildPayerOrFilter,
@@ -28,8 +25,8 @@ import {
 } from "@/lib/plan-types";
 import { insuranceMatchFromContract } from "@/lib/insurance-contract-status";
 import { hasAssignedBdContact, normalizeBdEmail } from "@/lib/bd-contact";
-import type { OrgSearchFacility } from "@/components/app/search/OrgResultCard";
-import { rememberSearchSession, hasSearchCriteria, searchWorkHref } from "@/lib/search-session";
+import type { OrgSearchFacility, OrgSearchResult } from "@/components/app/search/OrgResultCard";
+import { rememberSearchSession, hasSearchCriteria, searchWorkHref, searchWorkHrefFromFilters, type SearchFilterValues } from "@/lib/search-session";
 
 type OrgFields = {
   id: string;
@@ -113,16 +110,43 @@ function toFacilityCard(
 type OrgSearchBase = Omit<OrgSearchResult, "in_your_network">;
 
 export default function SearchResults() {
+  const navigate = useNavigate();
   const [params] = useSearchParams();
   const [baseResults, setBaseResults] = useState<OrgSearchBase[]>([]);
   const [loading, setLoading] = useState(() => hasSearchCriteria(params));
   const [loadError, setLoadError] = useState<string | null>(null);
   const [truncated, setTruncated] = useState(false);
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { profile } = useAuth();
+  const { profile, isSuperAdmin } = useAuth();
   const { partners, partnerOrgIds, addPartner, removePartner } = useReferralNetwork();
   const [preferredBusyId, setPreferredBusyId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(() => !hasSearchCriteria(params));
   const canStar = Boolean(profile?.organization_id);
+  const [ownFacilityCount, setOwnFacilityCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!profile?.organization_id) {
+      setOwnFacilityCount(null);
+      return;
+    }
+    let cancelled = false;
+    void supabase
+      .from("facilities")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", profile.organization_id)
+      .then(({ count, error }) => {
+        if (cancelled) return;
+        // A failed count must not hide Add facility / invite. Treat it as zero.
+        if (error) {
+          toast.error("Couldn't load your programs", { description: error.message });
+          setOwnFacilityCount(0);
+          return;
+        }
+        setOwnFacilityCount(count ?? 0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.organization_id]);
 
   const payerId = params.get("payerId");
   const payerName = params.get("payerName") ?? "";
@@ -142,7 +166,7 @@ export default function SearchResults() {
     if (loc) parts.push(loc);
     if (specialty) parts.push(specialty);
     if (accreditation) parts.push(accreditation);
-    const place = [city, state, zip].filter(Boolean).join(", ");
+    const place = [city, US_STATES.find((s) => s.code === state)?.name || state, zip].filter(Boolean).join(", ");
     if (place) parts.push(`in ${place}`);
     if (!canSearch && parts.length === 0) return "Start with insurance or a state";
     return parts.length ? parts.join(" · ") : "Matching programs";
@@ -289,8 +313,7 @@ export default function SearchResults() {
         setTruncated((data?.length ?? 0) >= 500);
         type FacilitySearchRow = FacilityFields & { insurance_contracts?: ContractFields[] | null };
         ((data as unknown as FacilitySearchRow[]) ?? []).forEach((row) => {
-          const contracts = row.insurance_contracts ?? [];
-          addFacility(row, null, { skipMatchBadge: contracts.length > 0 && !row.self_pay_only });
+          addFacility(row, null, { skipMatchBadge: !row.self_pay_only });
         });
       }
 
@@ -427,18 +450,6 @@ export default function SearchResults() {
     };
   }, [results]);
 
-  useEffect(() => {
-    if (results.length === 0) {
-      setSelectedOrgId(null);
-      return;
-    }
-    setSelectedOrgId((current) =>
-      current && results.some((r) => r.org_id === current) ? current : results[0].org_id,
-    );
-  }, [results]);
-
-  const selectedOrg = results.find((r) => r.org_id === selectedOrgId) ?? null;
-
   const togglePreferred = async (orgId: string, name: string) => {
     if (!canStar) return;
     setPreferredBusyId(orgId);
@@ -456,13 +467,21 @@ export default function SearchResults() {
     }
     setPreferredBusyId(null);
   };
-  const totalFacilities = results.reduce((n, o) => n + o.facilities.length, 0);
-  const onlyFacility = selectedOrg?.facilities.length === 1 ? selectedOrg.facilities[0] : null;
-  const orgHref = selectedOrg?.org_slug
-    ? onlyFacility?.slug
-      ? `/o/${selectedOrg.org_slug}/p/${onlyFacility.slug}`
-      : `/o/${selectedOrg.org_slug}`
-    : null;
+
+  const programs = useMemo(
+    () =>
+      results
+        .flatMap((org) => org.facilities.map((facility) => ({ facility, org })))
+        .sort((a, b) => {
+          if (a.org.in_your_network !== b.org.in_your_network) return a.org.in_your_network ? -1 : 1;
+          const va = a.facility.insurance_verified_at ?? a.org.latest_verified_at ?? "";
+          const vb = b.facility.insurance_verified_at ?? b.org.latest_verified_at ?? "";
+          if (va !== vb) return vb.localeCompare(va);
+          return a.facility.name.localeCompare(b.facility.name);
+        }),
+    [results],
+  );
+
   const resultsPath = searchWorkHref(params);
 
   useEffect(() => {
@@ -478,167 +497,224 @@ export default function SearchResults() {
     });
   }, [loading, loadError, results, resultsPath, summary]);
 
+  useEffect(() => {
+    if (!canSearch) setFiltersOpen(true);
+  }, [canSearch]);
+
   const resultCount = !canSearch
-    ? "Choose insurance or a state"
+    ? null
     : loading
       ? "Searching…"
       : loadError
         ? "Could not load results"
-        : `${results.length} ${results.length === 1 ? "organization" : "organizations"} · ${totalFacilities} matching ${totalFacilities === 1 ? "facility" : "facilities"}`;
+        : `${programs.length} ${programs.length === 1 ? "program" : "programs"}`;
+
+  const chips: Array<{ key: string; label: string; clear: Partial<SearchFilterValues> }> = [];
+  if (payerId) chips.push({ key: "payer", label: payerName || "Insurance", clear: { payerId: null, payerName: "" } });
+  if (planType) chips.push({ key: "plan", label: planTypeShortLabel(planType), clear: { planType: "" } });
+  if (loc) chips.push({ key: "loc", label: loc, clear: { loc: "" } });
+  if (state) {
+    const stateLabel = US_STATES.find((s) => s.code === state)?.name ?? state;
+    chips.push({ key: "state", label: stateLabel, clear: { state: "", city: "" } });
+  }
+  if (city) chips.push({ key: "city", label: city, clear: { city: "" } });
+  if (zip) chips.push({ key: "zip", label: zip, clear: { zip: "" } });
+  if (specialty) chips.push({ key: "specialty", label: specialty, clear: { specialty: "" } });
+  if (accreditation) chips.push({ key: "accreditation", label: accreditation, clear: { accreditation: "" } });
+
+  const currentFilters = {
+    payerId,
+    payerName,
+    planType,
+    state,
+    city,
+    zip,
+    specialty,
+    accreditation,
+    loc,
+  };
 
   return (
-    <div className="min-w-0 overflow-x-clip space-y-4">
-      <div className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-20 -mx-4 border-b border-border/60 bg-muted/95 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-12 lg:-mx-8 lg:px-8">
-        <h1 className="sr-only">Search the referral network</h1>
-        <SearchForm variant="toolbar" />
-        <p className="mt-1 truncate text-[11px] text-muted-foreground">
-          {summary}
-          {canSearch && !loading && !loadError ? ` · ${resultCount}` : null}
-        </p>
-      </div>
-
-      {truncated && !loading && !loadError ? (
-        <p className="text-xs text-amber-700">
-          Showing a partial match. Narrow insurance, state, or level of care to see everything.
-        </p>
+    <div className="min-w-0">
+      {!profile?.organization_id && !isSuperAdmin ? (
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Your free account is ready. Search now, invite other BD reps, or add your organization and contracts when you are.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link to="/setup-organization">Add organization</Link>
+            </Button>
+            <InviteColleagueCard inline />
+          </div>
+        </div>
+      ) : profile?.organization_id && (ownFacilityCount == null || ownFacilityCount === 0) ? (
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Add your first facility and in-network insurance, or invite teammates on your work email.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <AddFacilityDialog
+              organizationId={profile.organization_id}
+              onCreated={(facilityId) => {
+                setOwnFacilityCount((n) => (n == null ? 1 : n + 1));
+                if (facilityId) navigate(`/app/facilities/${facilityId}`);
+              }}
+              triggerLabel="Add facility and insurance"
+            />
+            <Button asChild size="sm" variant="outline">
+              <Link to="/app/members">Invite teammates</Link>
+            </Button>
+            <InviteColleagueCard inline />
+          </div>
+        </div>
+      ) : profile?.organization_id && ownFacilityCount != null && ownFacilityCount > 0 ? (
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Add another facility and insurance, invite teammates, or share CenterLinked with a BD rep at another org.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <AddFacilityDialog
+              organizationId={profile.organization_id}
+              onCreated={(facilityId) => {
+                setOwnFacilityCount((n) => (n == null ? 1 : n + 1));
+                if (facilityId) navigate(`/app/facilities/${facilityId}`);
+              }}
+              triggerLabel="Add facility and insurance"
+              triggerVariant="outline"
+            />
+            <Button asChild size="sm" variant="outline">
+              <Link to="/app/members">Invite teammates</Link>
+            </Button>
+            <InviteColleagueCard inline />
+          </div>
+        </div>
       ) : null}
-
-      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card lg:min-h-[36rem] lg:flex-row">
-        <aside className="min-w-0 w-full shrink-0 border-b border-border/60 bg-card lg:flex lg:w-80 lg:flex-col lg:border-b-0 lg:border-r xl:w-96">
-          <div className="px-4 py-3">
-            <h2 className="font-heading text-sm font-semibold tracking-tight">Organizations</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">{resultCount}</p>
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto px-4 pb-3 lg:max-h-[calc(100dvh-12rem)] lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:px-4 lg:pb-4">
-            {!canSearch ? (
-              <Card className="w-full p-4 text-sm text-muted-foreground">
-                Choose insurance or a state to see approved programs.
-              </Card>
-            ) : loading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-[4.25rem] w-[min(16rem,calc(100vw-3rem))] shrink-0 rounded-xl lg:w-full" />
-              ))
-            ) : loadError ? (
-              <Card className="w-full p-4 text-sm text-muted-foreground">Search couldn’t load. Try again.</Card>
-            ) : results.length > 0 ? (
-              results.map((o) => (
-                <OrgListItem
-                  key={o.org_id}
-                  o={o}
-                  selected={o.org_id === selectedOrgId}
-                  onSelect={() => setSelectedOrgId(o.org_id)}
-                  onTogglePreferred={
-                    canStar ? () => void togglePreferred(o.org_id, o.org_name) : undefined
-                  }
-                  preferredBusy={preferredBusyId === o.org_id}
-                />
-              ))
-            ) : (
-              <Card className="w-full p-4 text-sm text-muted-foreground">
-                No verified organizations match these filters.
-              </Card>
-            )}
-          </div>
-        </aside>
-
-        <section className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
-          {!canSearch ? (
-            <Card className="p-8 text-center space-y-2">
-              <SearchIcon className="mx-auto mb-2 h-10 w-10 text-muted-foreground" />
-              <p className="font-medium">Start with insurance or a state</p>
-              <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                Results appear here as you choose filters. A referral search starts with who pays and where.
+    <div className="min-w-0 lg:flex lg:items-start lg:gap-6">
+      <aside className="min-w-0 shrink-0 lg:sticky lg:top-16 lg:w-72 lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto xl:w-80">
+        <div className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="font-heading text-xl font-bold tracking-tight">Find in-network care</h1>
+              <p className={cn("mt-1 text-sm text-muted-foreground lg:mb-4", canSearch && "hidden lg:block")}>
+                Search approved programs by insurance, location, and level of care. Each result includes who to call.
               </p>
-            </Card>
+            </div>
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border/70 bg-background px-2.5 py-1.5 text-xs font-medium lg:hidden"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+              Filters
+              {chips.length > 0 ? (
+                <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                  {chips.length}
+                </span>
+              ) : null}
+            </button>
+          </div>
+          <div className={cn("mt-4", !filtersOpen && "hidden lg:block")}>
+            <SearchForm variant="panel" />
+          </div>
+        </div>
+      </aside>
+
+      <section className="min-w-0 flex-1 pt-4 lg:pt-0">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="font-heading text-lg font-semibold tracking-tight">
+              {resultCount ?? "Programs"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {canSearch ? summary : "Choose insurance or a state to see matching programs."}
+            </p>
+          </div>
+        </div>
+
+        {chips.length > 0 ? (
+          <ul className="mb-3 flex flex-wrap gap-1.5">
+            {chips.map((chip) => (
+              <li key={chip.key}>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-2.5 py-1 text-xs font-medium hover:bg-accent"
+                  onClick={() => navigate(searchWorkHrefFromFilters({ ...currentFilters, ...chip.clear }), { replace: true })}
+                >
+                  {chip.label}
+                  <X className="h-3 w-3 text-muted-foreground" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {truncated && !loading && !loadError ? (
+          <p className="mb-3 text-xs text-amber-700">
+            Showing a partial match. Narrow insurance, state, or level of care to see everything.
+          </p>
+        ) : null}
+
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
+          {!canSearch ? (
+            <div className="px-6 py-16 text-center">
+              <SearchIcon className="mx-auto mb-3 h-9 w-9 text-muted-foreground" />
+              <p className="font-heading font-semibold">Start with insurance or location</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                Results are approved programs in the network — not a public treatment directory.
+              </p>
+            </div>
           ) : loading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="divide-y divide-border/70">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-64 rounded-xl" />
+                <div key={i} className="flex gap-4 px-4 py-4">
+                  <Skeleton className="h-16 w-16 shrink-0 rounded-lg" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : loadError ? (
-            <Card className="p-8 text-center space-y-2">
-              <p className="font-medium">Search couldn’t load</p>
-              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+            <div className="px-6 py-16 text-center">
+              <p className="font-heading font-semibold">Search couldn’t load</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
                 Check your connection and try again. This is not an empty result set.
               </p>
-            </Card>
-          ) : selectedOrg ? (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-heading text-lg font-semibold tracking-tight sm:text-xl">
-                      {selectedOrg.org_name}
-                    </h2>
-                    {selectedOrg.in_your_network ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
-                        <Star className="h-3 w-3 fill-current" aria-hidden />
-                        Preferred
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {selectedOrg.facilities.length} matching{" "}
-                    {selectedOrg.facilities.length === 1 ? "program" : "programs"} — call the referral contact on a card below
-                    {selectedOrg.hq_city || selectedOrg.hq_state
-                      ? ` · ${[selectedOrg.hq_city, selectedOrg.hq_state].filter(Boolean).join(", ")}`
-                      : ""}
-                  </p>
-                </div>
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  {canStar ? (
-                    <Button
-                      type="button"
-                      variant={selectedOrg.in_your_network ? "default" : "outline"}
-                      size="sm"
-                      disabled={preferredBusyId === selectedOrg.org_id}
-                      onClick={() => void togglePreferred(selectedOrg.org_id, selectedOrg.org_name)}
-                    >
-                      <Star className={cn("h-3.5 w-3.5", selectedOrg.in_your_network && "fill-current")} />
-                      {selectedOrg.in_your_network ? "Preferred" : "Mark preferred"}
-                    </Button>
-                  ) : null}
-                  {orgHref ? (
-                    <Button asChild variant="ghost" size="sm">
-                      <Link to={orgHref}>
-                        Org page
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-
-              {selectedOrg.facilities.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {selectedOrg.facilities.map((f) => (
-                    <SearchFacilityCard
-                      key={f.id}
-                      facility={{ ...f, bd_contact_avatar: avatarByFacility[f.id] ?? f.bd_contact_avatar }}
-                      orgSlug={selectedOrg.org_slug}
-                      organizationId={selectedOrg.org_id}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <Card className="p-8 text-center text-sm text-muted-foreground">
-                  No matching facilities for this organization.
-                </Card>
-              )}
+            </div>
+          ) : programs.length > 0 ? (
+            <div className="divide-y divide-border/70">
+              {programs.map(({ facility, org }) => (
+                <SearchProgramRow
+                  key={facility.id}
+                  facility={facility}
+                  orgName={org.org_name}
+                  orgSlug={org.org_slug}
+                  orgLogo={org.logo_url}
+                  organizationId={org.org_id}
+                  preferred={org.in_your_network}
+                  onTogglePreferred={
+                    canStar ? () => void togglePreferred(org.org_id, org.org_name) : undefined
+                  }
+                  preferredBusy={preferredBusyId === org.org_id}
+                  avatarUrl={avatarByFacility[facility.id]}
+                />
+              ))}
             </div>
           ) : (
-            <Card className="p-8 text-center space-y-2">
-              <Building2 className="mx-auto mb-2 h-10 w-10 text-muted-foreground" />
-              <p className="font-medium">No verified organizations found</p>
-              <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                Try expanding the city, changing the level of care, or checking nearby states.
+            <div className="px-6 py-16 text-center">
+              <p className="font-heading font-semibold">No matching programs</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                Try a nearby state, another level of care, or clearing a filter.
               </p>
-            </Card>
+            </div>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
+    </div>
     </div>
   );
 }

@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
 import { FacilityBdRepFields, BdContactValue } from "./FacilityBdRepFields";
 import { syncPrimaryBdAssignment } from "@/lib/admin-bd";
+import { useAuth } from "@/contexts/AuthContext";
+import { bdFieldsFromUser } from "@/lib/bd-contact";
+import { fullNameFromAuthUser } from "@/lib/auth-user";
 
 interface Props {
   facilityId: string;
@@ -40,6 +43,7 @@ export function AssignFacilityBdDialog({
   triggerLabel,
   triggerClassName,
 }: Props) {
+  const { profile, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [value, setValue] = useState<BdContactValue>({
@@ -50,11 +54,26 @@ export function AssignFacilityBdDialog({
 
   const handleOpen = (next: boolean) => {
     if (next) {
-      setValue({
+      const existing = {
         bd_contact_name: bd_contact_name ?? "",
         bd_contact_phone: bd_contact_phone ?? "",
         bd_contact_email: bd_contact_email ?? "",
-      });
+      };
+      const empty =
+        !existing.bd_contact_name.trim() &&
+        !existing.bd_contact_phone.trim() &&
+        !existing.bd_contact_email.trim();
+      setValue(
+        empty
+          ? {
+              ...existing,
+              ...bdFieldsFromUser({
+                full_name: profile?.full_name || fullNameFromAuthUser(user),
+                email: profile?.email || user?.email,
+              }),
+            }
+          : existing,
+      );
     }
     setOpen(next);
   };

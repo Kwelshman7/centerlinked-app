@@ -4,6 +4,7 @@ import {
   JOIN_PDF_IMPORT_PATH,
   clearPendingJoinPdf,
   consumeJoinImportPath,
+  consumeJoinImportPathForAdmin,
   hasJoinImportIntent,
   peekJoinImportPath,
   peekPendingJoinPdfName,
@@ -34,6 +35,16 @@ test("import intent is stored and consumed once", () => {
   assert.equal(consumeJoinImportPath(), JOIN_PDF_IMPORT_PATH);
   assert.equal(hasJoinImportIntent(), false);
   assert.equal(consumeJoinImportPath(), null);
+});
+
+test("non-admin import intent is cleared without returning the PDF path", () => {
+  sessionStorage.clear();
+  setJoinImportIntent();
+  assert.equal(consumeJoinImportPathForAdmin(false), null);
+  assert.equal(hasJoinImportIntent(), false);
+  setJoinImportIntent();
+  assert.equal(consumeJoinImportPathForAdmin(true), JOIN_PDF_IMPORT_PATH);
+  assert.equal(hasJoinImportIntent(), false);
 });
 
 test("pending PDF is available once in the same tab", () => {

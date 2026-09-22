@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   bdContactStatusLabel,
+  bdFieldsFromUser,
   hasAssignedBdContact,
   isBdContactVerified,
   normalizeBdEmail,
@@ -29,4 +30,24 @@ test("verified requires an actual verification timestamp", () => {
 test("normalizeBdEmail rejects blanks and invalid values", () => {
   assert.equal(normalizeBdEmail("  Ada@Org.com "), "ada@org.com");
   assert.equal(normalizeBdEmail("not-an-email"), null);
+});
+
+test("bdFieldsFromUser trims profile fields for a first-facility prefill", () => {
+  assert.deepEqual(
+    bdFieldsFromUser({
+      full_name: "  Ada Lovelace  ",
+      email: " ada@org.com ",
+      phone: " 555-0100 ",
+    }),
+    {
+      bd_contact_name: "Ada Lovelace",
+      bd_contact_phone: "555-0100",
+      bd_contact_email: "ada@org.com",
+    },
+  );
+  assert.deepEqual(bdFieldsFromUser(null), {
+    bd_contact_name: "",
+    bd_contact_phone: "",
+    bd_contact_email: "",
+  });
 });

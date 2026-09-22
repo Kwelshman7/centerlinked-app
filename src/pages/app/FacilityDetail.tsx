@@ -22,6 +22,7 @@ import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 import { listFacilityBdAssignments } from "@/lib/admin-bd";
 import { Card } from "@/components/ui/card";
 import { BdContactLine } from "@/components/app/search/BdContactLine";
+import { isOutOfNetworkOnlyFacility } from "@/lib/insurance-contract-status";
 
 interface Facility {
   id: string;
@@ -59,6 +60,7 @@ interface Facility {
   quick_highlights: string[];
   updated_at: string | null;
   hidden_from_org_page?: boolean;
+  self_pay_only?: boolean | null;
 }
 interface ExtraRep {
   id: string;
@@ -85,6 +87,7 @@ export default function FacilityDetail() {
   const [facility, setFacility] = useState<Facility | null>(null);
   const [org, setOrg] = useState<SheetOrg | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [contractsLoadFailed, setContractsLoadFailed] = useState(false);
   const [extraReps, setExtraReps] = useState<ExtraRep[]>([]);
   const [fixingSlug, setFixingSlug] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -118,16 +121,37 @@ export default function FacilityDetail() {
     } else {
       setOrg(null);
     }
-    const { data: c } = await supabase
+    const { data: c, error: contractsError } = await supabase
       .from("insurance_contracts")
-      .select("id,payer_name,in_network,payer_id,plan_types,payers(status)")
+      .select("id,payer_name,in_network,payer_id,plan_types")
       .eq("facility_id", id);
-    const list: Contract[] = ((c as Array<{ id: string; payer_name: string; in_network: boolean; payer_id: string | null; plan_types?: string[] | null; payers: { status: "approved" | "pending" | "rejected" } | null }>) ?? []).map((row) => ({
+    if (contractsError) {
+      setContractsLoadFailed(true);
+      toast.error("Could not load insurance contracts", { description: contractsError.message });
+    } else {
+      setContractsLoadFailed(false);
+    }
+    const contractRows = (c as Array<{
+      id: string;
+      payer_name: string;
+      in_network: boolean;
+      payer_id: string | null;
+      plan_types?: string[] | null;
+    }>) ?? [];
+    const payerIds = [...new Set(contractRows.map((row) => row.payer_id).filter((id): id is string => Boolean(id)))];
+    const statusByPayer = new Map<string, Contract["payer_status"]>();
+    if (payerIds.length) {
+      const { data: payerRows } = await supabase.from("payers").select("id,status").in("id", payerIds);
+      for (const payer of payerRows ?? []) {
+        statusByPayer.set(payer.id, payer.status);
+      }
+    }
+    const list: Contract[] = contractRows.map((row) => ({
       id: row.id,
       payer_name: row.payer_name,
       in_network: row.in_network,
       payer_id: row.payer_id,
-      payer_status: row.payers?.status ?? null,
+      payer_status: (row.payer_id && statusByPayer.get(row.payer_id)) || null,
       plan_types: row.plan_types ?? [],
     }));
     setContracts(list);
@@ -255,6 +279,7 @@ export default function FacilityDetail() {
                   plan_types: c.plan_types ?? [],
                 }))}
                 organizationId={facility.organization_id}
+                contractsLoadFailed={contractsLoadFailed}
                 onSaved={loadFacility}
                 triggerClassName={actionClass}
               />
@@ -287,6 +312,50 @@ export default function FacilityDetail() {
           </>
         )}
       </div>
+
+      {facility.verification_status === "pending" && (isMine || isSuperAdmin) && (
+        <div className="rounded-lg bg-warning/10 border border-warning/30 text-sm p-3 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+          <p className="text-warning-foreground">
+            Pending review — this program is not in partner Search yet.
+            {contractsLoadFailed
+              ? " Retry loading insurance below, then add payers."
+              : " Use Edit Facility to add or change insurance anytime."}
+          </p>
+        </div>
+      )}
+
+      {canManage && contractsLoadFailed && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 text-sm p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-muted-foreground">
+            Insurance didn't load. Retry before adding payers so existing contracts are not overwritten.
+          </p>
+          <Button type="button" size="sm" variant="outline" onClick={() => void loadFacility()}>
+            Retry insurance
+          </Button>
+        </div>
+      )}
+
+      {canManage && !contractsLoadFailed && contracts.filter((c) => c.in_network).length === 0 && (
+        <div className="rounded-lg border border-border/70 bg-card text-sm p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-muted-foreground">
+            No in-network insurance yet. Partners search by who accepts what — add payers now.
+          </p>
+          <EditFacilityDialog
+            facility={facility}
+            contracts={contracts.map((c) => ({
+              id: c.id,
+              payer_id: c.payer_id,
+              payer_name: c.payer_name,
+              in_network: c.in_network,
+              plan_types: c.plan_types ?? [],
+            }))}
+            organizationId={facility.organization_id}
+            onSaved={loadFacility}
+            triggerLabel="Add insurance"
+          />
+        </div>
+      )}
 
       {!facility.slug && (isMine || isSuperAdmin) && (
         <div className="rounded-lg bg-warning/10 border border-warning/30 text-sm p-3 flex items-center justify-between gap-3 flex-wrap">
@@ -322,6 +391,10 @@ export default function FacilityDetail() {
         contracts={sheetContracts}
         mode="internal"
         coverImageUrl={org?.cover_image_url ?? null}
+        outOfNetworkOnly={
+          !contractsLoadFailed &&
+          isOutOfNetworkOnlyFacility(contracts, { selfPayOnly: facility.self_pay_only })
+        }
       />
 
       {extraReps.length > 0 && (

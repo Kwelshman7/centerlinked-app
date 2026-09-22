@@ -15,16 +15,16 @@ const stages: {
   {
     num: "01",
     icon: UserPlus,
-    title: "Claim Your Organization",
-    body: "Request access, create your account, and claim your treatment organization so your whole team has a home base on CenterLinked.",
-    details: ["Request access", "Create account", "Claim your org"],
+    title: "Create a free account",
+    body: "Sign up with your work email. No card required. Search who accepts what insurance, invite other BD reps, and add your organization when you are ready.",
+    details: ["Work email, no card", "Search insurance", "Invite your team"],
   },
   {
     num: "02",
     icon: Building2,
-    title: "Build Your Profile",
-    body: "Add the facts referral partners need — locations, insurance, levels of care, contacts, photos, and how to refer — in one place.",
-    details: ["Locations & programs", "Insurance contracts", "Contacts & photos"],
+    title: "Add your organization",
+    body: "When you are ready, claim or create your organization, then add facilities and insurance contracts so partners see current coverage.",
+    details: ["Claim or create", "Facilities & programs", "Insurance contracts"],
   },
   {
     num: "03",

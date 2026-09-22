@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   insuranceMatchFromContract,
   inNetworkFromStatus,
+  isOutOfNetworkOnlyFacility,
   parseContractStatus,
   resolvePayerStrict,
   sanitizeCoveredStates,
@@ -26,6 +27,19 @@ test("self-pay only is distinct from out of network", () => {
   const match = insuranceMatchFromContract(null, { selfPayOnly: true });
   assert.equal(match.status, "self_pay");
   assert.notEqual(match.status, "out_of_network");
+  assert.equal(isOutOfNetworkOnlyFacility([], { selfPayOnly: true }), false);
+});
+
+test("a facility with no in-network contracts is out of network only", () => {
+  assert.equal(isOutOfNetworkOnlyFacility([]), true);
+  assert.equal(
+    isOutOfNetworkOnlyFacility([{ in_network: false }, { in_network: false }]),
+    true,
+  );
+  assert.equal(
+    isOutOfNetworkOnlyFacility([{ in_network: false }, { in_network: true }]),
+    false,
+  );
 });
 
 test("active without verified_at is reported, not verified", () => {

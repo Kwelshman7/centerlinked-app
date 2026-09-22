@@ -254,8 +254,12 @@ export default function PdfFacilityUpload() {
         <h2 className="font-heading text-xl font-semibold">Admin access required</h2>
         <p className="text-sm text-muted-foreground">
           Only organization admins can import facilities and insurance from a PDF.
+          You can still add programs and contracts by hand.
         </p>
-        <Button asChild variant="outline"><Link to="/app/search">Back to search</Link></Button>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <Button asChild variant="outline"><Link to="/app/search">Back to search</Link></Button>
+          <Button asChild><Link to="/app/onboarding?add=1">Add facilities manually</Link></Button>
+        </div>
       </Card>
     );
   }

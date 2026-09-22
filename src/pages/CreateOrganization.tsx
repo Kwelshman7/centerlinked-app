@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,16 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageUploader } from "@/components/app/ImageUploader";
 import { ArrowLeft, ArrowRight, Building2, Loader2, Sparkles, Shield, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { getEmailDomain } from "@/lib/email-domains";
 import { consumeJoinImportPath } from "@/lib/join-intent";
+import { ensureProfile } from "@/lib/ensure-profile";
+import { bdFieldsFromUser, hasAssignedBdContact } from "@/lib/bd-contact";
+import { fullNameFromAuthUser } from "@/lib/auth-user";
 
 export default function CreateOrganization() {
   const { user, profile, loading, refresh } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const createdRef = useRef(false);
+  const creatingRef = useRef(false);
+  const prefilledBd = useRef(false);
   const [form, setForm] = useState({
     name: "", website: "", hq_city: "", hq_state: "",
     description: "", phone: "", num_facilities: "", logo_url: "",
@@ -25,8 +30,30 @@ export default function CreateOrganization() {
   useEffect(() => {
     if (loading) return;
     if (!user) navigate("/login", { replace: true });
-    else if (profile?.organization_id) navigate("/app", { replace: true });
-  }, [loading, user, profile?.organization_id, navigate]);
+    else if (profile?.organization_id && !createdRef.current && !saving) {
+      navigate("/app", { replace: true });
+    }
+  }, [loading, user, profile?.organization_id, saving, navigate]);
+
+  useEffect(() => {
+    const fields = bdFieldsFromUser({
+      full_name: profile?.full_name || fullNameFromAuthUser(user),
+      email: profile?.email || user?.email,
+    });
+    if (!fields.bd_contact_name && !fields.bd_contact_email) return;
+    setForm((p) => {
+      if (prefilledBd.current) {
+        return !p.bd_contact_name.trim() && fields.bd_contact_name
+          ? { ...p, bd_contact_name: fields.bd_contact_name }
+          : p;
+      }
+      if (p.bd_contact_name.trim() || p.bd_contact_phone.trim() || p.bd_contact_email.trim()) {
+        return p;
+      }
+      return { ...p, ...fields };
+    });
+    prefilledBd.current = true;
+  }, [profile?.full_name, profile?.email, user]);
 
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -43,53 +70,101 @@ export default function CreateOrganization() {
       toast.error("Organization name required");
       return;
     }
-    setSaving(true);
-    const { data: orgId, error } = await supabase.rpc("create_organization_with_owner", {
-      _name: form.name.trim(),
-      _email_domain: domain,
-      _website: form.website || null,
-      _hq_city: form.hq_city || null,
-      _hq_state: form.hq_state || null,
-      _description: form.description || null,
-      _phone: form.phone || null,
-      _num_facilities: form.num_facilities ? parseInt(form.num_facilities) : null,
-      _logo_url: form.logo_url || null,
-    });
-    if (error) {
-      setSaving(false);
-      const isDuplicate = error.message.toLowerCase().includes("already") || error.message.toLowerCase().includes("duplicate") || error.message.toLowerCase().includes("unique");
-      toast.error(
-        isDuplicate
-          ? "Someone from your domain already created an organization"
-          : error.message,
-        isDuplicate
-          ? { description: "Request to join the existing organization for your email domain." }
-          : undefined,
-      );
-      if (isDuplicate) navigate("/setup-organization", { replace: true });
+    if (creatingRef.current) {
+      toast.message("Still creating your organization", {
+        description: "Wait for this attempt to finish before submitting again.",
+      });
       return;
     }
-
-    if (orgId && (form.bd_contact_name || form.bd_contact_phone || form.bd_contact_email)) {
-      const { error: bdError } = await supabase.from("organizations").update({
-        bd_contact_name: form.bd_contact_name || null,
-        bd_contact_phone: form.bd_contact_phone || null,
-        bd_contact_email: form.bd_contact_email || null,
-      }).eq("id", orgId);
-      if (bdError) {
-        toast.error("Organization created, but referral contact didn't save", {
-          description: bdError.message,
-        });
-        await refresh();
-        setSaving(false);
-        navigate(consumeJoinImportPath() || "/app/onboarding", { replace: true });
+    creatingRef.current = true;
+    setSaving(true);
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
+      setSaving(false);
+      toast.error("Taking too long to create your organization", {
+        description: "Leave this page open — it may still finish. Don't submit again until you see a result.",
+      });
+    }, 20_000);
+    try {
+      const profileReady = await ensureProfile(user);
+      if (!profileReady.ok) {
+        toast.error(profileReady.error);
         return;
       }
+      const { data: orgId, error } = await supabase.rpc("create_organization_with_owner", {
+        _name: form.name.trim(),
+        _email_domain: domain,
+        _website: form.website || null,
+        _hq_city: form.hq_city || null,
+        _hq_state: form.hq_state || null,
+        _description: form.description || null,
+        _phone: form.phone || null,
+        _num_facilities: form.num_facilities ? parseInt(form.num_facilities) : null,
+        _logo_url: form.logo_url || null,
+      });
+      if (error) {
+        const isDuplicate = error.message.toLowerCase().includes("already") || error.message.toLowerCase().includes("duplicate") || error.message.toLowerCase().includes("unique");
+        toast.error(
+          isDuplicate
+            ? "Someone from your domain already created an organization"
+            : error.message,
+          isDuplicate
+            ? { description: "Request to join the existing organization for your email domain." }
+            : undefined,
+        );
+        if (isDuplicate) navigate("/setup-organization", { replace: true });
+        return;
+      }
+
+      createdRef.current = true;
+      if (orgId && (form.bd_contact_name || form.bd_contact_phone || form.bd_contact_email)) {
+        const { error: bdError } = await supabase.from("organizations").update({
+          bd_contact_name: form.bd_contact_name || null,
+          bd_contact_phone: form.bd_contact_phone || null,
+          bd_contact_email: form.bd_contact_email || null,
+        }).eq("id", orgId);
+        if (bdError) {
+          toast.error("Organization created, but referral contact didn't save", {
+            description: bdError.message,
+          });
+        }
+      }
+      await refresh();
+      const { data: linked } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (orgId && !linked?.organization_id) {
+        const { error: linkError } = await supabase
+          .from("profiles")
+          .update({ organization_id: orgId })
+          .eq("user_id", user.id);
+        if (linkError) {
+          toast.error("Organization created, but your account didn't link", {
+            description: linkError.message,
+          });
+        }
+        await refresh();
+      }
+      let next = "/app/onboarding";
+      if (orgId) {
+        const { data: isAdmin } = await supabase.rpc("is_org_facility_admin", {
+          _org_id: orgId,
+          _user_id: user.id,
+        });
+        // PDF import is admin-only. Consume only after the creator role is confirmed.
+        // If the admin check has not landed yet, keep the intent and go add facilities by hand.
+        next = isAdmin ? consumeJoinImportPath() || "/app/onboarding" : "/app/onboarding";
+      }
+      toast.success("Organization created!", { description: "Now let's add your facilities." });
+      navigate(next, { replace: true });
+    } finally {
+      window.clearTimeout(fallbackTimer);
+      creatingRef.current = false;
+      if (!timedOut) setSaving(false);
     }
-    await refresh();
-    setSaving(false);
-    toast.success("Organization created!", { description: "Now let's add your facilities." });
-    navigate(consumeJoinImportPath() || "/app/onboarding", { replace: true });
   };
 
   return (
@@ -98,9 +173,14 @@ export default function CreateOrganization() {
       <div className="absolute bottom-0 -left-10 h-80 w-80 rounded-full bg-accent/40 blur-3xl -z-10" />
 
       <div className="max-w-2xl mx-auto">
-        <Link to="/setup-organization" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <Link to="/setup-organization" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Link>
+          <Link to="/app/search" className="text-sm font-medium text-primary hover:underline">
+            Skip and search
+          </Link>
+        </div>
 
         <div className="text-center mb-8 animate-fade-up">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary mb-4">
@@ -108,8 +188,8 @@ export default function CreateOrganization() {
           </div>
           <h1 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">Create your organization</h1>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">
-            Set up the organization for <span className="font-semibold text-foreground">@{domain || "your company"}</span>.
-            Teammates with the same work email domain can request to join after — you&apos;ll approve them.
+            Name is enough to start for <span className="font-semibold text-foreground">@{domain || "your company"}</span>.
+            Then add facilities, insurance contracts, and invite other BD reps.
           </p>
         </div>
 
@@ -128,6 +208,7 @@ export default function CreateOrganization() {
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="name">Organization name *</Label>
               <Input id="name" autoFocus value={form.name} onChange={update("name")} placeholder="Flyland Recovery Network" required />
+              <p className="text-xs text-muted-foreground">Required. Everything else on this page can wait.</p>
             </div>
             <div className="space-y-2">
               <Label>Email domain</Label>
@@ -139,7 +220,7 @@ export default function CreateOrganization() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
-              <Input id="website" type="url" placeholder="https://" value={form.website} onChange={update("website")} />
+              <Input id="website" type="text" inputMode="url" placeholder="https://" value={form.website} onChange={update("website")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="num"># of facilities</Label>
@@ -187,6 +268,11 @@ export default function CreateOrganization() {
                 <Input id="bde" type="email" value={form.bd_contact_email} onChange={update("bd_contact_email")} placeholder="referrals@org.com" />
               </div>
             </div>
+            {form.bd_contact_name.trim() && !hasAssignedBdContact(form) ? (
+              <p className="text-xs text-warning-foreground mt-3">
+                Partners only see this contact when you add a phone or email.
+              </p>
+            ) : null}
           </div>
 
           <div className="rounded-lg bg-accent/40 border border-border/60 p-3 flex items-start gap-3">

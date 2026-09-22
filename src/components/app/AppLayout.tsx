@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
   PanelLeft,
   Menu,
   UserRound,
+  UserPlus,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +26,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { adminLinks } from "@/components/app/admin/SuperAdminPanel";
 import { initialsFromName, professionalPath, asProfessionalCards } from "@/lib/professional-network";
 import { supabase } from "@/integrations/supabase/client";
+import { claimPendingOrgInvite } from "@/lib/org-setup";
+import { toast } from "sonner";
 
 type NavItem = {
   to: string;
@@ -84,6 +87,11 @@ function AppHeaderSearch() {
           .limit(5),
       ]);
       if (cancelled) return;
+      if (peopleRes.error || orgRes.error || facRes.error) {
+        toast.error("Couldn't finish that search", {
+          description: peopleRes.error?.message || orgRes.error?.message || facRes.error?.message,
+        });
+      }
       setPeople(
         asProfessionalCards(peopleRes.data)
           .slice(0, 5)
@@ -220,12 +228,47 @@ function AppHeaderSearch() {
 }
 
 export function AppLayout() {
-  const { profile, isSuperAdmin, needsSuperAdminSetup, signOut, user } = useAuth();
+  const { profile, isSuperAdmin, needsSuperAdminSetup, signOut, user, refresh } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const hasOrgAccess = isSuperAdmin || !!profile?.organization_id;
+  const joinedToastForUserId = useRef<string | null>(null);
+  const claimErrorForUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user || profile?.organization_id || isSuperAdmin) return;
+    let cancelled = false;
+    const tryClaim = () => {
+      if (joinedToastForUserId.current === user.id) return;
+      void claimPendingOrgInvite()
+        .then(async (claimed) => {
+          if (cancelled || !claimed.joined) return;
+          joinedToastForUserId.current = user.id;
+          await refresh();
+          toast.success("You've joined your organization");
+        })
+        .catch((err) => {
+          if (cancelled || claimErrorForUserId.current === user.id) return;
+          claimErrorForUserId.current = user.id;
+          toast.error(err instanceof Error ? err.message : "Couldn't join your organization", {
+            description: "Open My profile to accept the invite, or refresh and try again.",
+          });
+        });
+    };
+    tryClaim();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tryClaim();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", tryClaim);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", tryClaim);
+    };
+  }, [user, profile?.organization_id, isSuperAdmin, refresh]);
   const homeTo = "/app/search";
 
   const primary: NavItem[] = useMemo(() => {
@@ -240,13 +283,18 @@ export function AppLayout() {
     const items: NavItem[] = [
       { to: "/app/search", label: "Search", icon: SearchIcon },
       { to: "/app/contacts", label: "Contacts", icon: Users },
+    ];
+    if (profile?.organization_id) {
+      items.push({ to: "/app/members", label: "Members", icon: UserPlus });
+    }
+    items.push(
       { to: "/app/organizations?view=all", label: "Organizations", icon: Building2, orgView: "all" },
       { to: "/app/facilities", label: "Facilities", icon: Building },
       { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
       { to: "/app/settings", label: "Settings", icon: Settings },
-    ];
+    );
     return items;
-  }, [hasOrgAccess, user, needsSuperAdminSetup]);
+  }, [hasOrgAccess, user, needsSuperAdminSetup, profile?.organization_id]);
 
   const mobilePrimary: NavItem[] = useMemo(() => {
     if (!hasOrgAccess) {
@@ -255,14 +303,19 @@ export function AppLayout() {
       items.push({ to: "/app/dashboard", label: "Profile", icon: UserRound, end: true });
       return items;
     }
-    return [
+    const items: NavItem[] = [
       { to: "/app/search", label: "Search", icon: SearchIcon },
       { to: "/app/contacts", label: "Contacts", icon: Users },
-      { to: "/app/organizations?view=all", label: "Orgs", icon: Building2, orgView: "all" },
-      { to: "/app/dashboard", label: "Home", icon: LayoutDashboard, end: true },
-      { to: "/app/settings", label: "Settings", icon: Settings },
     ];
-  }, [hasOrgAccess, user, needsSuperAdminSetup]);
+    if (profile?.organization_id) {
+      items.push({ to: "/app/facilities", label: "Facilities", icon: Building });
+      items.push({ to: "/app/members", label: "Members", icon: UserPlus });
+    } else {
+      items.push({ to: "/app/organizations?view=all", label: "Orgs", icon: Building2, orgView: "all" });
+    }
+    items.push({ to: "/app/dashboard", label: "Home", icon: LayoutDashboard, end: true });
+    return items;
+  }, [hasOrgAccess, user, needsSuperAdminSetup, profile?.organization_id]);
 
   const secondaryAdmin: NavItem[] = adminLinks.map(({ to, label, icon, end }) => ({
     to,
@@ -464,21 +517,13 @@ export function AppLayout() {
       <div className={cn("min-w-0 max-w-full overflow-x-clip transition-[padding] duration-200", mainPad)}>
         <header className="hidden lg:flex sticky top-0 z-20 h-12 items-center gap-3 border-b border-border/60 bg-card/90 px-4 backdrop-blur-xl">
           {location.pathname.startsWith("/app/search") ? (
-            <p className="min-w-0 flex-1 truncate text-sm font-medium">In-network search</p>
+            <div className="min-w-0 flex-1" />
           ) : (
             <div className="min-w-0 flex-1">
               <AppHeaderSearch />
             </div>
           )}
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            {!location.pathname.startsWith("/app/search") ? (
-              <Button asChild variant="outline" size="sm" className="h-8">
-                <Link to="/app/search">
-                  <SearchIcon className="h-4 w-4" />
-                  Find in-network care
-                </Link>
-              </Button>
-            ) : null}
             {user ? (
               <Link
                 to={professionalPath(user.id)}

@@ -6,10 +6,10 @@ import { ArrowRight, Building2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { claimPendingOrgInvite } from "@/lib/org-setup";
 import { OrgClaimOptions } from "@/components/app/OrgClaimOptions";
-import { consumeJoinImportPath, peekJoinImportPath } from "@/lib/join-intent";
+import { consumeJoinImportPathForAdmin, peekJoinImportPath } from "@/lib/join-intent";
 
 export default function SetupOrganization() {
-  const { user, profile, loading, refresh, isSuperAdmin } = useAuth();
+  const { user, profile, loading, refresh, isSuperAdmin, isFacilityAdmin } = useAuth();
   const navigate = useNavigate();
   const [checkingInvite, setCheckingInvite] = useState(true);
 
@@ -20,7 +20,7 @@ export default function SetupOrganization() {
       return;
     }
     if (profile?.organization_id || isSuperAdmin) {
-      navigate(consumeJoinImportPath() || "/app/search", { replace: true });
+      navigate(consumeJoinImportPathForAdmin(isFacilityAdmin || isSuperAdmin) || "/app/search", { replace: true });
       return;
     }
     try {
@@ -28,12 +28,19 @@ export default function SetupOrganization() {
     } catch {
       /* private mode */
     }
-  }, [loading, user, profile?.organization_id, isSuperAdmin, navigate]);
+  }, [loading, user, profile?.organization_id, isSuperAdmin, isFacilityAdmin, navigate]);
 
   useEffect(() => {
     if (loading || !user || profile?.organization_id || isSuperAdmin) return;
 
     let cancelled = false;
+    const fallbackTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      setCheckingInvite(false);
+      toast.error("Taking too long to check for an invite", {
+        description: "You can accept an invite below, create your organization, or skip to Search.",
+      });
+    }, 20_000);
     (async () => {
       try {
         const claimed = await claimPendingOrgInvite();
@@ -41,7 +48,7 @@ export default function SetupOrganization() {
         if (claimed.joined) {
           await refresh();
           toast.success("You've joined your organization");
-          navigate(consumeJoinImportPath() || "/app/search", { replace: true });
+          navigate(consumeJoinImportPathForAdmin(isFacilityAdmin || isSuperAdmin) || "/app/search", { replace: true });
           return;
         }
       } catch (err) {
@@ -49,14 +56,16 @@ export default function SetupOrganization() {
           toast.error(err instanceof Error ? err.message : "Couldn't check for an organization invite");
         }
       } finally {
+        window.clearTimeout(fallbackTimer);
         if (!cancelled) setCheckingInvite(false);
       }
     })();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(fallbackTimer);
     };
-  }, [loading, user, profile?.organization_id, isSuperAdmin, refresh, navigate]);
+  }, [loading, user, profile?.organization_id, isSuperAdmin, isFacilityAdmin, refresh, navigate]);
 
   if (loading || checkingInvite || !user || profile?.organization_id) {
     return (
@@ -81,7 +90,7 @@ export default function SetupOrganization() {
           </h1>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">
             Claim or create your organization to manage your profile, insurance, and programs.
-            {peekJoinImportPath()
+            {peekJoinImportPath() && (isFacilityAdmin || isSuperAdmin)
               ? " Next you’ll upload a facilities PDF, review the extract, and confirm before anything is saved."
               : " Or skip for now and start searching — you can do this anytime from My profile."}
           </p>

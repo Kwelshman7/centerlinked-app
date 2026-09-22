@@ -28,3 +28,20 @@ export function normalizeBdEmail(value: string | null | undefined): string | nul
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return null;
   return email;
 }
+
+/** Prefill a facility referral card from the signed-in rep. */
+export function bdFieldsFromUser(user: {
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+} | null | undefined): {
+  bd_contact_name: string;
+  bd_contact_phone: string;
+  bd_contact_email: string;
+} {
+  return {
+    bd_contact_name: user?.full_name?.trim() || "",
+    bd_contact_phone: user?.phone?.trim() || "",
+    bd_contact_email: user?.email?.trim() || "",
+  };
+}

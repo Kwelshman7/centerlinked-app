@@ -13,17 +13,23 @@ import { programPublicPath } from "@/lib/public-urls";
 import { toast } from "sonner";
 import {
   ArrowLeft, ArrowRight, Building2, Loader2, Lock, Upload, Wand2,
-  Plus, Trash2, CheckCircle2, AlertTriangle,
+  Plus, Trash2, CheckCircle2, AlertTriangle, X,
 } from "lucide-react";
 import {
   LEVELS_OF_CARE, HIGHLIGHT_OPTIONS, POPULATION_OPTIONS,
   SPECIALIZATION_OPTIONS, ACCREDITATION_OPTIONS,
 } from "@/components/app/facility/facility-types";
-import { assertImageFile } from "@/lib/upload-guards";
+import { assertImageFile, assertPdfFile } from "@/lib/upload-guards";
 import { buildFacilityContractDrafts } from "@/lib/match-payer";
 import { loadApprovedPayers } from "@/lib/load-approved-payers";
 import { sendOrgWelcomeEmail } from "@/lib/transactional-email";
 import { saveFacilityWithContracts } from "@/lib/save-facility";
+import { parsedFacilityContractDrafts, type ParsedFacility, type ParsedPdfPayload } from "@/lib/pdf-import";
+import {
+  extractEmbeddedPdfImages,
+  suggestLogoImageId,
+  type EmbeddedPdfImage,
+} from "@/lib/pdf-embedded-images";
 
 type Stage = "create-org" | "add-facilities" | "done";
 
@@ -60,10 +66,160 @@ const emptyFacility = (): ManualFacility => ({
   image_urls: [], payers_in_network: "", payers_out_of_network: "",
 });
 
+type PdfImageAssignment = "logo" | "none" | number;
+
+interface StagedPdfImage {
+  id: string;
+  width: number;
+  height: number;
+  mime: EmbeddedPdfImage["mime"];
+  bytes: Uint8Array;
+  previewUrl: string;
+  assignment: PdfImageAssignment;
+}
+
+const LEVEL_ALIASES: Record<string, string> = {
+  detoxification: "Detox",
+  "medical detox": "Detox",
+  "residential treatment": "Residential",
+  rtc: "Residential",
+  "partial hospitalization": "PHP",
+  "partial hospitalization program": "PHP",
+  "intensive outpatient": "IOP",
+  "intensive outpatient program": "IOP",
+  "sober living home": "Sober Living",
+  "medication-assisted treatment": "MAT",
+  "medication assisted treatment": "MAT",
+};
+
+function splitLabels(raw: string[] | undefined): string[] {
+  return (raw ?? []).flatMap((item) =>
+    item.split(/[,;/|•]/).map((part) => part.trim()).filter(Boolean),
+  );
+}
+
+function matchLabels(
+  raw: string[] | undefined,
+  allowed: readonly string[],
+  aliases: Record<string, string> = {},
+): string[] {
+  const out: string[] = [];
+  for (const item of splitLabels(raw)) {
+    const key = item.toLowerCase();
+    const exact = allowed.find((label) => label.toLowerCase() === key);
+    const mapped = exact ?? aliases[key];
+    if (mapped && !out.includes(mapped)) out.push(mapped);
+  }
+  return out;
+}
+
+function websiteValue(value: string | null | undefined): string {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^[\w.-]+\.[a-z]{2,}/i.test(trimmed)) return `https://${trimmed}`;
+  return trimmed;
+}
+
+function imageExt(mime: string): string {
+  return mime === "image/png" ? "png" : "jpg";
+}
+
+function facilitiesFromParsed(rows: ParsedFacility[]): ManualFacility[] {
+  return rows.map((row) => ({
+    ...emptyFacility(),
+    name: row.name ?? "",
+    tagline: row.tagline ?? "",
+    address_line1: row.address_line1 ?? "",
+    city: row.city ?? "",
+    state: row.state ?? "",
+    zip: row.zip ?? "",
+    phone: row.phone ?? "",
+    website: websiteValue(row.website),
+    description: row.description ?? "",
+    capacity: row.capacity != null ? String(row.capacity) : "",
+    levels_of_care: matchLabels(row.levels_of_care, LEVELS_OF_CARE, LEVEL_ALIASES),
+    highlights: matchLabels(row.highlights, HIGHLIGHT_OPTIONS),
+    bd_contact_name: row.bd_contact_name ?? "",
+    bd_contact_phone: row.bd_contact_phone ?? "",
+    bd_contact_email: row.bd_contact_email ?? "",
+    payers_in_network: (row.payers_in_network ?? []).join(", "),
+    payers_out_of_network: (row.payers_out_of_network ?? []).join(", "),
+  }));
+}
+
+function stagePdfImages(images: EmbeddedPdfImage[], facilityCount: number): StagedPdfImage[] {
+  const logoId = suggestLogoImageId(images);
+  let photoSlot = 0;
+  return images.map((img) => {
+    let assignment: PdfImageAssignment = "none";
+    if (img.id === logoId) assignment = "logo";
+    else if (facilityCount > 0) {
+      assignment = photoSlot % facilityCount;
+      photoSlot += 1;
+    }
+    return {
+      ...img,
+      previewUrl: URL.createObjectURL(new Blob([img.bytes], { type: img.mime })),
+      assignment,
+    };
+  });
+}
+
+function releasePdfImages(images: StagedPdfImage[]) {
+  for (const img of images) URL.revokeObjectURL(img.previewUrl);
+}
+
+async function uploadImageBytes(
+  bucket: "org-logos" | "facility-images",
+  bytes: Uint8Array,
+  mime: string,
+  path: string,
+): Promise<string | null> {
+  const { error } = await supabase.storage.from(bucket).upload(path, new Blob([bytes], { type: mime }), {
+    contentType: mime,
+    upsert: false,
+  });
+  if (error) return null;
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl || null;
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunk = 0x2000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function edgeFunctionMessage(error: unknown, data: unknown): Promise<string> {
+  if (data && typeof data === "object") {
+    const rec = data as { error?: unknown; message?: unknown };
+    if (typeof rec.error === "string" && rec.error.trim()) return rec.error;
+    if (typeof rec.message === "string" && rec.message.trim()) return rec.message;
+  }
+  const ctx = (error as { context?: Response } | null)?.context;
+  if (ctx && typeof ctx.json === "function") {
+    try {
+      const body = await (typeof ctx.clone === "function" ? ctx.clone() : ctx).json();
+      if (typeof body?.error === "string" && body.error.trim()) return body.error;
+      if (typeof body?.message === "string" && body.message.trim()) return body.message;
+    } catch {
+      /* ignore */
+    }
+  }
+  return error instanceof Error ? error.message : "Parse failed";
+}
+
 export default function AdminCreateOrganization() {
   const navigate = useNavigate();
   const { user, isSuperAdmin, loading } = useAuth();
   const logoRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const [stage, setStage] = useState<Stage>("create-org");
   const [creating, setCreating] = useState(false);
@@ -101,6 +257,13 @@ export default function AdminCreateOrganization() {
   const [manualFacilities, setManualFacilities] = useState<ManualFacility[]>([emptyFacility()]);
   const [savingManual, setSavingManual] = useState(false);
   const [createdFacilityUrls, setCreatedFacilityUrls] = useState<string[]>([]);
+  const [importingPdf, setImportingPdf] = useState(false);
+  const [pdfImported, setPdfImported] = useState(false);
+  const [pdfImages, setPdfImages] = useState<StagedPdfImage[]>([]);
+  const pdfImagesRef = useRef<StagedPdfImage[]>([]);
+  pdfImagesRef.current = pdfImages;
+
+  useEffect(() => () => releasePdfImages(pdfImagesRef.current), []);
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
   if (!user) {
@@ -134,6 +297,20 @@ export default function AdminCreateOrganization() {
       return;
     }
     setCreating(true);
+    let logoUrl = orgForm.logo_url;
+    if (!logoUrl) {
+      const logo = pdfImages.find((img) => img.assignment === "logo");
+      if (logo) {
+        const uploaded = await uploadImageBytes(
+          "org-logos",
+          logo.bytes,
+          logo.mime,
+          `admin-staged/${crypto.randomUUID()}.${imageExt(logo.mime)}`,
+        );
+        if (uploaded) logoUrl = uploaded;
+        else toast.error("Couldn't upload the logo from the PDF. You can add it after the organization is created.");
+      }
+    }
     const { data, error } = await supabase.rpc("admin_create_organization", {
       _name: orgForm.name.trim(),
       _email_domain: orgForm.email_domain.trim() || null,
@@ -143,7 +320,7 @@ export default function AdminCreateOrganization() {
       _description: orgForm.description.trim() || null,
       _phone: orgForm.phone.trim() || null,
       _num_facilities: null,
-      _logo_url: orgForm.logo_url || null,
+      _logo_url: logoUrl || null,
       _bd_contact_name: orgForm.bd_contact_name.trim() || null,
       _bd_contact_phone: orgForm.bd_contact_phone.trim() || null,
       _bd_contact_email: orgForm.bd_contact_email.trim() || null,
@@ -203,6 +380,93 @@ export default function AdminCreateOrganization() {
     const { data } = supabase.storage.from("org-logos").getPublicUrl(path);
     setOrgForm((p) => ({ ...p, logo_url: data.publicUrl }));
     toast.success("Logo uploaded");
+    setPdfImages((prev) => prev.map((img) => (img.assignment === "logo" ? { ...img, assignment: "none" } : img)));
+  };
+
+  const assignPdfImage = (id: string, assignment: PdfImageAssignment) => {
+    setPdfImages((prev) => prev.map((img) => {
+      if (img.id === id) return { ...img, assignment };
+      if (assignment === "logo" && img.assignment === "logo") return { ...img, assignment: "none" };
+      return img;
+    }));
+    if (assignment === "logo") setOrgForm((p) => ({ ...p, logo_url: "" }));
+  };
+
+  const importPdf = async (file: File) => {
+    const pdfCheck = await assertPdfFile(file);
+    if (!pdfCheck.ok) {
+      toast.error(pdfCheck.error);
+      return;
+    }
+    setImportingPdf(true);
+    try {
+      const pdfBytes = new Uint8Array(await file.arrayBuffer());
+      const pdf_base64 = await fileToBase64(file);
+      let data: unknown;
+      let error: unknown;
+      ({ data, error } = await supabase.functions.invoke("parse-facility-pdf", {
+        body: { pdf_base64, filename: file.name },
+      }));
+      let message = await edgeFunctionMessage(error, data);
+      const parsedError = data && typeof data === "object" ? (data as { error?: string }).error : undefined;
+      if ((error || parsedError) && /storage_path is required/i.test(message)) {
+        const path = `${crypto.randomUUID()}/${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error: upErr } = await supabase.storage
+          .from("facility-pdfs")
+          .upload(path, file, { contentType: "application/pdf", upsert: false });
+        if (upErr) throw new Error(upErr.message);
+        ({ data, error } = await supabase.functions.invoke("parse-facility-pdf", {
+          body: { storage_path: path, filename: file.name },
+        }));
+        message = await edgeFunctionMessage(error, data);
+      }
+      const parseResult = data as (ParsedPdfPayload & { error?: string }) | null;
+      if (error || parseResult?.error) throw new Error(message);
+      if (!parseResult?.facilities?.length) throw new Error("No facilities detected in the PDF");
+
+      const nextFacilities = facilitiesFromParsed(parseResult.facilities);
+      const org = parseResult.organization;
+      const firstBd = nextFacilities.find((row) => row.bd_contact_name || row.bd_contact_email || row.bd_contact_phone);
+      setOrgForm((prev) => ({
+        ...prev,
+        name: org?.name?.trim() || prev.name,
+        website: websiteValue(org?.website) || prev.website,
+        description: org?.description?.trim() || prev.description,
+        phone: org?.phone?.trim() || prev.phone,
+        hq_city: org?.hq_city?.trim() || prev.hq_city,
+        hq_state: org?.hq_state?.trim() || prev.hq_state,
+        bd_contact_name: firstBd?.bd_contact_name || prev.bd_contact_name,
+        bd_contact_phone: firstBd?.bd_contact_phone || prev.bd_contact_phone,
+        bd_contact_email: firstBd?.bd_contact_email || prev.bd_contact_email,
+        logo_url: "",
+      }));
+      setManualFacilities(nextFacilities.length ? nextFacilities : [emptyFacility()]);
+      setPdfImported(true);
+      const staged = stagePdfImages(await extractEmbeddedPdfImages(pdfBytes), nextFacilities.length);
+      setPdfImages((prev) => {
+        releasePdfImages(prev);
+        return staged;
+      });
+      const logo = staged.find((img) => img.assignment === "logo");
+      const photoCount = staged.filter((img) => typeof img.assignment === "number").length;
+      toast.success(
+        `Read ${nextFacilities.length} location${nextFacilities.length === 1 ? "" : "s"} from ${file.name}`,
+        {
+          description: [
+            logo ? "Logo selected — confirm it below." : "No logo image found. Upload one if the PDF has it as a separate file.",
+            photoCount ? `${photoCount} photo${photoCount === 1 ? "" : "s"} ready for the facilities.` : "No facility photos found in the PDF.",
+            "Nothing is saved until you create the organization.",
+          ].join(" "),
+        },
+      );
+    } catch (err) {
+      toast.error("Couldn't read that PDF", {
+        description: err instanceof Error ? err.message : "Try a clearer one-pager.",
+      });
+    } finally {
+      setImportingPdf(false);
+      if (pdfInputRef.current) pdfInputRef.current.value = "";
+    }
   };
 
   /* ---------- STAGE 2: add facilities ---------- */
@@ -220,8 +484,15 @@ export default function AdminCreateOrganization() {
     }));
   };
   const addManual = () => setManualFacilities((p) => [...p, emptyFacility()]);
-  const removeManual = (idx: number) =>
+  const removeManual = (idx: number) => {
     setManualFacilities((p) => p.filter((_, i) => i !== idx));
+    setPdfImages((prev) => prev.map((img) => {
+      if (typeof img.assignment !== "number") return img;
+      if (img.assignment === idx) return { ...img, assignment: "none" };
+      if (img.assignment > idx) return { ...img, assignment: img.assignment - 1 };
+      return img;
+    }));
+  };
 
   const saveManual = async () => {
     if (!orgId || !user) return;
@@ -232,11 +503,34 @@ export default function AdminCreateOrganization() {
     setSavingManual(true);
     const urls: string[] = [];
     const failed: { name: string; error: string }[] = [];
+    let photoFailures = 0;
     try {
       const payers = await loadApprovedPayers();
-      for (const f of manualFacilities) {
+      for (let idx = 0; idx < manualFacilities.length; idx++) {
+        const f = manualFacilities[idx];
         const ins = f.payers_in_network.split(",").map((s) => s.trim()).filter(Boolean);
         const oon = f.payers_out_of_network.split(",").map((s) => s.trim()).filter(Boolean);
+        const imageUrls = [...f.image_urls];
+        for (const img of pdfImages) {
+          if (img.assignment !== idx) continue;
+          const uploaded = await uploadImageBytes(
+            "facility-images",
+            img.bytes,
+            img.mime,
+            `${user.id}/${Date.now()}-${img.id}.${imageExt(img.mime)}`,
+          );
+          if (uploaded && !imageUrls.includes(uploaded)) imageUrls.push(uploaded);
+          else if (!uploaded) photoFailures += 1;
+        }
+        const contracts = pdfImported
+          ? parsedFacilityContractDrafts(
+              { name: f.name, payers_in_network: ins, payers_out_of_network: oon },
+              payers,
+            )
+          : [
+              ...buildFacilityContractDrafts(ins, true, payers),
+              ...buildFacilityContractDrafts(oon, false, payers),
+            ];
         const draft = {
           ...emptyFacility(),
           name: f.name.trim(),
@@ -257,11 +551,8 @@ export default function AdminCreateOrganization() {
           bd_contact_name: f.bd_contact_name.trim(),
           bd_contact_phone: f.bd_contact_phone.trim(),
           bd_contact_email: f.bd_contact_email.trim(),
-          image_urls: f.image_urls,
-          contracts: [
-            ...buildFacilityContractDrafts(ins, true, payers),
-            ...buildFacilityContractDrafts(oon, false, payers),
-          ],
+          image_urls: imageUrls,
+          contracts,
         };
         const result = await saveFacilityWithContracts({
           organizationId: orgId,
@@ -283,7 +574,9 @@ export default function AdminCreateOrganization() {
       }
       setCreatedFacilityUrls(urls);
       setStage("done");
-      toast.success(`${manualFacilities.length} facility${manualFacilities.length === 1 ? "" : "s"} created`);
+      toast.success(`${manualFacilities.length} facility${manualFacilities.length === 1 ? "" : "s"} created`, photoFailures
+        ? { description: `${photoFailures} photo${photoFailures === 1 ? "" : "s"} from the PDF could not be uploaded.` }
+        : undefined);
     } catch (e: unknown) {
       console.error(e);
       toast.error(e instanceof Error ? e.message : "Couldn't save facilities");
@@ -305,7 +598,7 @@ export default function AdminCreateOrganization() {
             Add an organization
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Super-admin tool. Create a new organization, then add its facilities by PDF or by hand.
+            Super-admin tool. Import a one-pager to fill the organization, locations, insurance, levels of care, logo, and photos — or enter them by hand.
           </p>
         </div>
       </div>
@@ -339,6 +632,45 @@ export default function AdminCreateOrganization() {
       {stage === "create-org" && (
         <Card className="p-6 sm:p-8">
           <form onSubmit={handleCreateOrg} className="space-y-5">
+            <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1">
+                <p className="font-semibold text-sm">Import PDF</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reads locations, insurance, levels of care, the logo, and photos. You confirm every field before anything is saved.
+                </p>
+              </div>
+              <Button type="button" variant="outline" disabled={importingPdf || creating} onClick={() => pdfInputRef.current?.click()}>
+                {importingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                {importingPdf ? "Reading PDF…" : "Import PDF"}
+              </Button>
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void importPdf(file);
+                }}
+              />
+            </div>
+            {pdfImported && (
+              <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
+                <p className="font-medium">
+                  {manualFacilities.length} location{manualFacilities.length === 1 ? "" : "s"} ready after you create the organization
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  {manualFacilities.map((facility, idx) => (
+                    <li key={`${facility.name}-${idx}`}>
+                      {facility.name || `Facility ${idx + 1}`}
+                      {facility.city || facility.state ? ` — ${[facility.city, facility.state].filter(Boolean).join(", ")}` : ""}
+                      {facility.levels_of_care.length ? ` · ${facility.levels_of_care.join(", ")}` : ""}
+                      {facility.payers_in_network ? ` · ${facility.payers_in_network}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2 space-y-2">
                 <Label htmlFor="name">Organization name *</Label>
@@ -419,11 +751,18 @@ export default function AdminCreateOrganization() {
               <div className="sm:col-span-2 space-y-2">
                 <Label>Logo</Label>
                 <div className="flex items-center gap-3">
-                  {orgForm.logo_url ? (
+                  {(orgForm.logo_url || pdfImages.some((img) => img.assignment === "logo")) ? (
                     <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-white border">
-                      <img src={orgForm.logo_url} alt="" className="h-full w-full object-contain" />
+                      <img
+                        src={orgForm.logo_url || pdfImages.find((img) => img.assignment === "logo")?.previewUrl}
+                        alt=""
+                        className="h-full w-full object-contain"
+                      />
                       <button type="button"
-                        onClick={() => setOrgForm((p) => ({ ...p, logo_url: "" }))}
+                        onClick={() => {
+                          setOrgForm((p) => ({ ...p, logo_url: "" }));
+                          setPdfImages((prev) => prev.map((img) => (img.assignment === "logo" ? { ...img, assignment: "none" } : img)));
+                        }}
                         className="absolute top-1 right-1 p-1 rounded-full bg-foreground/70 text-background">
                         <X className="h-3 w-3" />
                       </button>
@@ -439,6 +778,38 @@ export default function AdminCreateOrganization() {
                   <input ref={logoRef} type="file" accept="image/*" hidden
                     onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
                 </div>
+                {pdfImages.length > 0 && (
+                  <div className="pt-2 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Images from the PDF. Choose the logo, or assign a photo to a location. Wide photos are left as facility images.
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {pdfImages.map((img) => (
+                        <div key={img.id} className="space-y-1.5">
+                          <div className="aspect-square rounded-lg border bg-white overflow-hidden">
+                            <img src={img.previewUrl} alt="" className="h-full w-full object-contain" />
+                          </div>
+                          <select
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-xs"
+                            value={img.assignment === "logo" || img.assignment === "none" ? img.assignment : String(img.assignment)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              assignPdfImage(img.id, value === "logo" || value === "none" ? value : Number(value));
+                            }}
+                          >
+                            <option value="logo">Organization logo</option>
+                            <option value="none">Skip</option>
+                            {manualFacilities.map((facility, idx) => (
+                              <option key={idx} value={idx}>
+                                Photo: {facility.name || `Facility ${idx + 1}`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="sm:col-span-2 pt-3 border-t">
@@ -469,7 +840,7 @@ export default function AdminCreateOrganization() {
               </label>
             </div>
 
-            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={creating}>
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={creating || importingPdf}>
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4" /> Create organization <ArrowRight className="h-4 w-4" /></>}
             </Button>
           </form>
@@ -483,14 +854,18 @@ export default function AdminCreateOrganization() {
             <CheckCircle2 className="h-5 w-5 text-primary" />
             <div className="flex-1">
               <p className="font-semibold text-sm">{orgName} created</p>
-              <p className="text-xs text-muted-foreground">Now add facilities — by PDF (fast) or by hand.</p>
+              <p className="text-xs text-muted-foreground">
+                {pdfImported
+                  ? "Review the locations, insurance, levels of care, and photos from the PDF, then save."
+                  : "Now add facilities — by PDF (fast) or by hand."}
+              </p>
             </div>
             <Button size="sm" variant="outline" onClick={() => { setStage("done"); setCreatedFacilityUrls([]); }}>
               Skip for now
             </Button>
           </div>
 
-          <Tabs defaultValue="pdf">
+          <Tabs defaultValue={pdfImported ? "manual" : "pdf"}>
             <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-2">
               <TabsTrigger value="pdf"><Wand2 className="h-3.5 w-3.5" /> Upload PDF</TabsTrigger>
               <TabsTrigger value="manual"><Plus className="h-3.5 w-3.5" /> Add manually</TabsTrigger>
@@ -651,6 +1026,9 @@ export default function AdminCreateOrganization() {
                 bd_contact_email: "", logo_url: "", verified: false,
               });
               setManualFacilities([emptyFacility()]); setCreatedFacilityUrls([]);
+              releasePdfImages(pdfImages);
+              setPdfImages([]);
+              setPdfImported(false);
             }}>
               Add another organization
             </Button>

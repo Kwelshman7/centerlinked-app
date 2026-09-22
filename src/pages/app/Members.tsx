@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Check, Loader2, Mail, Trash2, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
-import { isEmailAuthAllowed, isPersonalEmail, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
+import { emailAuthGate, EMAIL_AUTH_UNAVAILABLE_MESSAGE, isPersonalEmail, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { reviewJoinRequest } from "@/lib/org-setup";
 import { sendOrgInvite } from "@/lib/transactional-email";
+import { InviteColleagueCard } from "@/components/app/InviteColleagueCard";
 
 interface MemberRow { id: string; user_id: string; role_at_org: string; created_at: string; }
 interface ProfileLite { user_id: string; full_name: string | null; avatar_url: string | null; job_title: string | null; email: string | null; }
@@ -39,6 +40,7 @@ export default function Members() {
   const [orgDomain, setOrgDomain] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
+  const invitingRef = useRef(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [removeTarget, setRemoveTarget] = useState<MemberRow | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -46,20 +48,32 @@ export default function Members() {
 
   const load = async () => {
     if (!profile?.organization_id) return;
-    const [{ data: org }, { data: mems }, { data: invs }] = await Promise.all([
+    const [{ data: org, error: orgError }, { data: mems, error: memError }, { data: invs, error: invError }] = await Promise.all([
       supabase.from("organizations").select("email_domain").eq("id", profile.organization_id).maybeSingle(),
       supabase.from("organization_members").select("*").eq("organization_id", profile.organization_id),
       supabase.from("org_invites").select("id,email,role_at_org,status,created_at").eq("organization_id", profile.organization_id).eq("status", "pending").order("created_at", { ascending: false }),
     ]);
-    setOrgDomain((org as { email_domain?: string } | null)?.email_domain ?? null);
+    if (orgError || memError || invError) {
+      toast.error("Couldn't load your team", {
+        description: orgError?.message || memError?.message || invError?.message,
+      });
+    }
+    setOrgDomain((org as { email_domain?: string } | null)?.email_domain?.trim().toLowerCase() ?? null);
     const list = (mems as MemberRow[]) ?? [];
     setMembers(list);
     setInvites((invs as InviteRow[]) ?? []);
     if (list.length) {
-      const { data: profs } = await supabase.from("profiles").select("user_id,full_name,avatar_url,job_title,email").in("user_id", list.map((x) => x.user_id));
-      const map: Record<string, ProfileLite> = {};
-      (profs ?? []).forEach((p) => { map[(p as ProfileLite).user_id] = p as ProfileLite; });
-      setProfiles(map);
+      const { data: profs, error: profError } = await supabase.from("profiles").select("user_id,full_name,avatar_url,job_title,email").in("user_id", list.map((x) => x.user_id));
+      if (profError) {
+        toast.error("Couldn't load teammate names", { description: profError.message });
+        setProfiles({});
+      } else {
+        const map: Record<string, ProfileLite> = {};
+        (profs ?? []).forEach((p) => { map[(p as ProfileLite).user_id] = p as ProfileLite; });
+        setProfiles(map);
+      }
+    } else {
+      setProfiles({});
     }
     if (isFacilityAdmin) {
       const { data: reqs, error } = await supabase.rpc("list_org_join_requests", {
@@ -67,6 +81,7 @@ export default function Members() {
       });
       if (error) {
         setJoinRequests([]);
+        toast.error("Couldn't load join requests", { description: error.message });
       } else {
         setJoinRequests((reqs as JoinRequestRow[]) ?? []);
       }
@@ -98,8 +113,22 @@ export default function Members() {
     e.preventDefault();
     const email = inviteEmail.trim().toLowerCase();
     if (!email || !profile?.organization_id) return;
-    const allowed = await isEmailAuthAllowed(email);
-    if (!allowed) {
+    if (invitingRef.current) {
+      toast.message("Still sending this invite", {
+        description: "Wait for this attempt to finish. They can also sign up with this work email.",
+      });
+      return;
+    }
+    invitingRef.current = true;
+    const emailGate = await emailAuthGate(email);
+    if (emailGate !== "allowed") {
+      invitingRef.current = false;
+      if (emailGate === "unavailable") {
+        toast.error(EMAIL_AUTH_UNAVAILABLE_MESSAGE.title, {
+          description: EMAIL_AUTH_UNAVAILABLE_MESSAGE.description,
+        });
+        return;
+      }
       toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
         description: isPersonalEmail(email)
           ? "Invite a company email, or ask a super admin to approve this personal address first."
@@ -107,41 +136,60 @@ export default function Members() {
       });
       return;
     }
-    if (orgDomain && email.split("@")[1] !== orgDomain.toLowerCase()) {
-      toast.error(`Email must be on @${orgDomain}`);
+    if (orgDomain && email.split("@")[1] !== orgDomain) {
+      invitingRef.current = false;
+      toast.error(`Teammates must use @${orgDomain}`, {
+        description: "To invite a BD rep at another organization, copy the CenterLinked join link below.",
+      });
       return;
     }
     setInviting(true);
-    const { error } = await supabase.rpc("create_org_invite", {
-      _organization_id: profile.organization_id,
-      _email: email,
-      _role_at_org: "bd_rep",
-    });
-    if (error) {
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
       setInviting(false);
-      toast.error(error.message.includes("duplicate") ? "Already invited" : error.message);
-      return;
-    }
-
-    // The invite row is what grants access — a failed email must never undo it.
-    let emailed = true;
-    try {
-      await sendOrgInvite({ organization_id: profile.organization_id, email });
-    } catch (err) {
-      emailed = false;
-      console.warn("[send-org-invite]", err);
-    }
-    setInviting(false);
-
-    if (emailed) {
-      toast.success("Invite sent", { description: `We emailed ${email} with a link to join.` });
-    } else {
-      toast.warning("Invite added, but the email didn't send", {
-        description: "They'll still be added automatically when they sign up with this email.",
+      toast.warning("Invite may still be sending", {
+        description: "They can still join by signing up with this work email. Resend if they appear under pending invites.",
       });
+      void load();
+    }, 20_000);
+    try {
+      const { error } = await supabase.rpc("create_org_invite", {
+        _organization_id: profile.organization_id,
+        _email: email,
+        _role_at_org: "bd_rep",
+      });
+      if (error) {
+        if (!timedOut) {
+          toast.error(error.message.includes("duplicate") ? "Already invited" : error.message);
+        }
+        return;
+      }
+
+      // The invite row is what grants access — a failed email must never undo it.
+      let emailed = true;
+      try {
+        await sendOrgInvite({ organization_id: profile.organization_id, email });
+      } catch (err) {
+        emailed = false;
+        console.warn("[send-org-invite]", err);
+      }
+      if (timedOut) return;
+
+      if (emailed) {
+        toast.success("Invite sent", { description: `We emailed ${email} with a link to join.` });
+      } else {
+        toast.warning("Invite added, but the email didn't send", {
+          description: "They'll still be added automatically when they sign up with this email.",
+        });
+      }
+      setInviteEmail("");
+      void load();
+    } finally {
+      window.clearTimeout(fallbackTimer);
+      invitingRef.current = false;
+      if (!timedOut) setInviting(false);
     }
-    setInviteEmail("");
-    load();
   };
 
   const resendInvite = async (id: string, email: string) => {
@@ -185,7 +233,7 @@ export default function Members() {
         <h1 className="font-heading text-2xl font-bold">Members</h1>
         <p className="text-sm text-muted-foreground">
           {profile?.organization_id
-            ? `Invite BD reps with a work email${orgDomain ? ` (@${orgDomain})` : ""}. ${
+            ? `Invite teammates${orgDomain ? ` on @${orgDomain}` : " with a work email"} to this organization, or share CenterLinked with a BD rep at another org. ${
                 isFacilityAdmin
                   ? "Organization admins can also approve join requests and remove members."
                   : "Organization admins approve join requests and remove members."
@@ -237,16 +285,19 @@ export default function Members() {
 
       {profile?.organization_id && (
         <Card className="p-5">
-          <h2 className="font-heading text-base font-semibold mb-3 flex items-center gap-2"><UserPlus className="h-4 w-4" /> Invite a BD Rep</h2>
+          <h2 className="font-heading text-base font-semibold mb-3 flex items-center gap-2"><UserPlus className="h-4 w-4" /> Invite to your organization</h2>
           <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3 sm:items-end">
             <div className="flex-1 space-y-1.5">
               <Label htmlFor="invite-email">Work email</Label>
               <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder={orgDomain ? `name@${orgDomain}` : "name@company.com"} />
             </div>
             <Button type="submit" disabled={inviting}>
-              {inviting ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending</> : <>Add invite</>}
+              {inviting ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending</> : <>Send invite</>}
             </Button>
           </form>
+          <p className="text-xs text-muted-foreground mt-2">
+            They must create their free account with this exact work email — that is how they join your organization.
+          </p>
           {invites.length > 0 && (
             <div className="mt-4 space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pending invites</p>
@@ -274,6 +325,11 @@ export default function Members() {
         </Card>
       )}
 
+      <InviteColleagueCard
+        title="Invite a BD rep at another organization"
+        description="Share this link. They sign up free and can add their own organization, facilities, and insurance contracts."
+      />
+
       {members.length === 0 ? (
         <Card className="p-10 text-center space-y-3">
           <Users className="h-10 w-10 text-muted-foreground mx-auto" />
@@ -295,7 +351,8 @@ export default function Members() {
         <Card className="divide-y divide-border">
           {members.map((m) => {
             const p = profiles[m.user_id];
-            const initials = (p?.full_name ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
+            const displayName = p?.full_name?.trim() || p?.email || "Team member";
+            const initials = displayName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
             const isSelf = m.user_id === user?.id;
             return (
               <div key={m.id} className="p-4 flex items-center gap-3">
@@ -303,8 +360,10 @@ export default function Members() {
                   {p?.avatar_url ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : initials || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p?.full_name || "Member"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{p?.email}</p>
+                  <p className="text-sm font-medium truncate">{displayName}</p>
+                  {p?.email && p.email !== displayName ? (
+                    <p className="text-xs text-muted-foreground truncate">{p.email}</p>
+                  ) : null}
                 </div>
                 <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground capitalize">{m.role_at_org.replace("_", " ")}</span>
                 {isFacilityAdmin && !isSelf && m.role_at_org !== "facility_admin" && (

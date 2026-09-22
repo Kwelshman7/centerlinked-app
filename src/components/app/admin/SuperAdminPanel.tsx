@@ -1,6 +1,5 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Building2, LayoutDashboard, Shield, CheckSquare, Database, Gauge } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -11,29 +10,6 @@ const adminLinks = [
   { to: "/app/admin/insurance", label: "Insurance", icon: Database },
   { to: "/app/admin/data-quality", label: "Data quality", icon: Gauge },
 ] as const;
-
-export function SuperAdminBanner() {
-  return (
-    <Card className="p-4 border-primary/20 bg-primary/5">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-        <div className="flex items-start gap-3 min-w-0">
-          <Shield className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <p className="font-semibold text-sm">Super admin</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Review signups, pending requests, problems, and recent completed work.
-            </p>
-          </div>
-        </div>
-        <Button asChild size="sm" className="shrink-0 w-full sm:w-auto">
-          <Link to="/app/admin">
-            <Shield className="h-4 w-4" /> Admin overview
-          </Link>
-        </Button>
-      </div>
-    </Card>
-  );
-}
 
 export function SuperAdminSettingsCard() {
   return (

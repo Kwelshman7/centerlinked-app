@@ -11,9 +11,10 @@ import { PLAN_TYPES, parsePlanTypeParam } from "@/lib/plan-types";
 import { resolveStateCode, US_STATES } from "@/lib/us-states";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { searchWorkHrefFromFilters, type SearchFilterValues } from "@/lib/search-session";
+import { toast } from "sonner";
+import { SEARCH_WORK_PATH, searchWorkHrefFromFilters, type SearchFilterValues } from "@/lib/search-session";
 
-type SearchFormVariant = "hero" | "inline" | "toolbar";
+type SearchFormVariant = "hero" | "inline" | "toolbar" | "panel";
 
 function FieldShell({
   label,
@@ -91,12 +92,15 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("facilities")
         .select("city,state")
         .eq("verification_status", "approved")
         .not("city", "is", null);
       if (cancelled) return;
+      if (error) {
+        toast.error("Couldn't load listed locations", { description: error.message });
+      }
       const grouped = new Map<string, Map<string, string>>();
       for (const row of data ?? []) {
         const code = resolveStateCode(row.state);
@@ -167,11 +171,217 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
 
   const isHero = variant === "hero";
   const isToolbar = variant === "toolbar";
+  const isPanel = variant === "panel";
   const control = isHero
     ? "h-12 rounded-xl border-border/80 bg-background text-base sm:text-sm shadow-none"
     : isToolbar
       ? "h-8 rounded-md border-border/80 bg-background text-sm shadow-none"
-      : undefined;
+      : isPanel
+        ? "h-9 rounded-md border-border/80 bg-background text-sm shadow-none"
+        : undefined;
+  const hasFilters = Boolean(
+    payerId || planType || state || city || zip.trim() || specialty || accreditation.trim() || loc,
+  );
+
+  if (isPanel) {
+    return (
+      <form onSubmit={submit} className="space-y-3">
+        <FieldShell label="Insurance">
+          <PayerCombobox
+            payerId={payerId}
+            payerName={payerName}
+            onSelect={(p) => {
+              setPayerId(p.id);
+              setPayerName(p.name);
+              commit({ payerId: p.id, payerName: p.name });
+            }}
+            placeholder="Any insurance"
+            triggerClassName={cn("w-full font-normal", control)}
+            approvedOnly
+          />
+        </FieldShell>
+        <FieldShell label="Plan type" htmlFor="search-plan-type">
+          <Select
+            value={planType || "_any"}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : parsePlanTypeParam(v);
+              setPlanType(next);
+              commit({ planType: next });
+            }}
+          >
+            <SelectTrigger id="search-plan-type" className={control}>
+              <SelectValue placeholder="Any plan type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_any">Any plan type</SelectItem>
+              {PLAN_TYPES.map((pt) => (
+                <SelectItem key={pt.slug} value={pt.slug}>
+                  {pt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FieldShell>
+        <FieldShell label="Level of care" htmlFor="search-loc">
+          <Select
+            value={loc || "_any"}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : v;
+              setLoc(next);
+              commit({ loc: next });
+            }}
+          >
+            <SelectTrigger id="search-loc" className={control}>
+              <SelectValue placeholder="Any level of care" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_any">Any level of care</SelectItem>
+              {LEVELS_OF_CARE.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FieldShell>
+        <FieldShell label="State" htmlFor="search-state">
+          <Select
+            value={state || "_any"}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : v;
+              setState(next);
+              const code = resolveStateCode(next);
+              const allowed = code ? citiesByState[code] ?? [] : [];
+              const nextCity =
+                city && allowed.some((name) => name.toLowerCase() === city.toLowerCase()) ? city : "";
+              if (nextCity !== city) setCity(nextCity);
+              if (!next) setCity("");
+              commit({ state: next, city: next ? nextCity : "" });
+            }}
+          >
+            <SelectTrigger id="search-state" className={control}>
+              <SelectValue placeholder="Any state" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="_any">Any state</SelectItem>
+              {(listedStateCodes.length ? US_STATES.filter((s) => listedStateCodes.includes(s.code)) : US_STATES).map(
+                (s) => (
+                  <SelectItem key={s.code} value={s.code}>
+                    {s.name}
+                  </SelectItem>
+                ),
+              )}
+            </SelectContent>
+          </Select>
+        </FieldShell>
+        <FieldShell label="City" htmlFor="search-city">
+          <Select
+            value={city || "_any"}
+            onValueChange={(v) => {
+              const next = v === "_any" ? "" : v;
+              setCity(next);
+              commit({ city: next });
+            }}
+            disabled={!state}
+          >
+            <SelectTrigger id="search-city" className={control}>
+              <SelectValue placeholder={state ? "Any city" : "Select a state first"} />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="_any">Any city</SelectItem>
+              {stateCities.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FieldShell>
+        {moreOpen ? (
+          <>
+            <FieldShell label="ZIP" htmlFor="search-zip">
+              <Input
+                id="search-zip"
+                value={zip}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setZip(next);
+                  if (zipTimer.current) clearTimeout(zipTimer.current);
+                  zipTimer.current = setTimeout(() => commit({ zip: next }), 300);
+                }}
+                placeholder="Exact ZIP"
+                inputMode="numeric"
+                className={control}
+              />
+            </FieldShell>
+            <FieldShell label="Specialty" htmlFor="search-specialty">
+              <Select
+                value={specialty || "_any"}
+                onValueChange={(v) => {
+                  const next = v === "_any" ? "" : v;
+                  setSpecialty(next);
+                  commit({ specialty: next });
+                }}
+              >
+                <SelectTrigger id="search-specialty" className={control}>
+                  <SelectValue placeholder="Any specialty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_any">Any specialty</SelectItem>
+                  {CONDITION_OPTIONS.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FieldShell>
+            <FieldShell label="Accreditation" htmlFor="search-accreditation">
+              <Input
+                id="search-accreditation"
+                value={accreditation}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setAccreditation(next);
+                  if (accredTimer.current) clearTimeout(accredTimer.current);
+                  accredTimer.current = setTimeout(() => commit({ accreditation: next }), 300);
+                }}
+                placeholder="e.g. Joint Commission"
+                className={control}
+              />
+            </FieldShell>
+          </>
+        ) : null}
+        <div className="flex flex-col gap-2 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 justify-between px-2 text-muted-foreground"
+            onClick={() => setMoreOpen((open) => !open)}
+          >
+            {moreOpen ? "Fewer filters" : "More filters"}
+            <ChevronDown className={cn("h-4 w-4 transition-transform", moreOpen && "rotate-180")} />
+          </Button>
+          <Button type="submit" className="w-full">
+            <SearchIcon className="h-4 w-4" />
+            Search
+          </Button>
+          {hasFilters ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => navigate(SEARCH_WORK_PATH, { replace: true })}
+            >
+              Clear all
+            </Button>
+          ) : null}
+        </div>
+      </form>
+    );
+  }
 
   return (
     <form onSubmit={submit} className={cn(!isToolbar && "space-y-4")}>

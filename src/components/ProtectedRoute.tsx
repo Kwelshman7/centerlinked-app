@@ -12,13 +12,21 @@ import { Loader2 } from "lucide-react";
 const ORG_OPTIONAL_PATHS = new Set([
   "/setup-organization",
   "/create-organization",
+  "/app",
   "/app/onboarding",
   "/app/search",
   "/app/search/results",
   "/app/dashboard",
   "/app/network",
   "/app/contacts",
+  "/app/organizations",
 ]);
+
+function isFacilityReadPath(pathname: string) {
+  const match = pathname.match(/^\/app\/facilities\/([^/]+)$/);
+  if (!match) return false;
+  return match[1] !== "new" && match[1] !== "upload-pdf";
+}
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, profile, loading, isSuperAdmin } = useAuth();
@@ -39,7 +47,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const onOrgOptionalPath =
     ORG_OPTIONAL_PATHS.has(location.pathname) ||
     location.pathname.startsWith("/app/people/") ||
-    location.pathname.startsWith("/app/contacts/");
+    location.pathname.startsWith("/app/contacts/") ||
+    isFacilityReadPath(location.pathname);
   if (!isSuperAdmin && !profile?.organization_id && !onOrgOptionalPath) {
     return <Navigate to="/setup-organization" replace />;
   }

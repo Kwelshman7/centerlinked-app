@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ import {
 import { US_STATES, resolveStateCode } from "@/lib/us-states";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import { AddPartnerOrgDialog } from "@/components/app/network/AddPartnerOrgDialog";
-import { SuperAdminBanner } from "@/components/app/admin/SuperAdminPanel";
 import { PayerCombobox } from "@/components/app/facility/PayerCombobox";
 import { LEVELS_OF_CARE } from "@/components/app/facility/facility-types";
 import {
@@ -85,23 +83,23 @@ async function fetchAllRows<T>(
     count: number | null;
     error: { message?: string } | null;
   }>,
-): Promise<T[]> {
+): Promise<{ rows: T[]; error?: string }> {
   const { data, count, error } = await run(0, FETCH_PAGE - 1);
-  if (error) return [];
+  if (error) return { rows: [], error: error.message };
   const first = data ?? [];
   const total = count ?? first.length;
-  if (first.length >= total) return first;
+  if (first.length >= total) return { rows: first };
   const pageSize = Math.max(first.length, 1);
   const out = [...first];
   for (let from = first.length; from < total; from += pageSize) {
     const next = await run(from, from + pageSize - 1);
+    if (next.error) return { rows: out, error: next.error.message };
     out.push(...(next.data ?? []));
   }
-  return out;
+  return { rows: out };
 }
 
 export default function Organizations() {
-  const { isSuperAdmin } = useAuth();
   const { partners, partnerOrgIds, loading: partnersLoading, addPartner, removePartner } =
     useReferralNetwork();
   const [params, setParams] = useSearchParams();
@@ -152,8 +150,10 @@ export default function Organizations() {
             .range(from, to),
         ),
       ]);
-      setFacilities(facs.filter((row) => isPartnerVisibleFacility(row)));
-      setContracts(cons);
+      if (facs.error) toast.error("Couldn't load programs", { description: facs.error });
+      if (cons.error) toast.error("Couldn't load insurance contracts", { description: cons.error });
+      setFacilities(facs.rows.filter((row) => isPartnerVisibleFacility(row)));
+      setContracts(cons.rows);
     })();
   }, []);
 
@@ -192,7 +192,8 @@ export default function Organizations() {
           .order("name")
           .range(from, to),
       );
-      setAllOrgs(data);
+      if (data.error) toast.error("Couldn't load organizations", { description: data.error });
+      else setAllOrgs(data.rows);
       setAllLoading(false);
       setAllLoaded(true);
     })();
@@ -367,7 +368,6 @@ export default function Organizations() {
 
   return (
     <div className="min-w-0 space-y-6">
-      {isSuperAdmin && <SuperAdminBanner />}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2">

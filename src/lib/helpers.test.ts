@@ -1,6 +1,27 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import {
+  consumeFirstRunSignup,
+  fullNameFromAuthUser,
+  isFirstRunUser,
+  isLikelyNewUser,
+  setFirstRunSignup,
+} from "./auth-user.ts";
 import { isPartnerVisibleFacility } from "./facility-visibility.ts";
+
+const memory = new Map<string, string>();
+const storage = {
+  getItem: (key: string) => memory.get(key) ?? null,
+  setItem: (key: string, value: string) => {
+    memory.set(key, value);
+  },
+  removeItem: (key: string) => {
+    memory.delete(key);
+  },
+  clear: () => memory.clear(),
+};
+Object.defineProperty(globalThis, "localStorage", { configurable: true, value: storage });
+Object.defineProperty(globalThis, "sessionStorage", { configurable: true, value: storage });
 import { resolveStateCode, stateMatchesFilter } from "./us-states.ts";
 import { buildPayerOrFilter, contractMatchesPayer } from "./match-payer.ts";
 
@@ -48,4 +69,41 @@ test("contractMatchesPayer matches by id", () => {
     ),
     true,
   );
+});
+
+test("isLikelyNewUser is true only for accounts created in the last two minutes", () => {
+  assert.equal(isLikelyNewUser(undefined), false);
+  assert.equal(isLikelyNewUser("not-a-date"), false);
+  assert.equal(isLikelyNewUser(new Date(Date.now() - 30_000).toISOString()), true);
+  assert.equal(isLikelyNewUser(new Date(Date.now() - 5 * 60_000).toISOString()), false);
+});
+
+test("first-run flag survives a delayed email confirm in another tab", () => {
+  localStorage.clear();
+  const older = new Date(Date.now() - 10 * 60_000).toISOString();
+  assert.equal(isFirstRunUser(older), false);
+  setFirstRunSignup();
+  assert.equal(isFirstRunUser(older), true);
+  assert.equal(consumeFirstRunSignup(), true);
+  assert.equal(isFirstRunUser(older), false);
+  assert.equal(consumeFirstRunSignup(), false);
+});
+
+test("first-run flag expires after 24 hours", () => {
+  localStorage.clear();
+  const older = new Date(Date.now() - 10 * 60_000).toISOString();
+  localStorage.setItem("cl_first_run", String(Date.now() - 25 * 60 * 60 * 1000));
+  assert.equal(isFirstRunUser(older), false);
+  assert.equal(consumeFirstRunSignup(), false);
+});
+
+test("fullNameFromAuthUser prefers signup full_name then Google name", () => {
+  assert.equal(fullNameFromAuthUser(null), null);
+  assert.equal(fullNameFromAuthUser({ user_metadata: { full_name: "  Ada Lovelace  " } }), "Ada Lovelace");
+  assert.equal(fullNameFromAuthUser({ user_metadata: { name: " Ada " } }), "Ada");
+  assert.equal(
+    fullNameFromAuthUser({ user_metadata: { full_name: "Ada Lovelace", name: "Ada" } }),
+    "Ada Lovelace",
+  );
+  assert.equal(fullNameFromAuthUser({ user_metadata: { full_name: "   " } }), null);
 });

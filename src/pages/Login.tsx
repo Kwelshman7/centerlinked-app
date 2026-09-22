@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,10 @@ import { applySocialMeta } from "@/lib/social-meta";
 import { useAuth } from "@/contexts/AuthContext";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { notifyAuthEvent } from "@/lib/transactional-email";
-import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
-import { hasJoinImportIntent, peekJoinImportPath } from "@/lib/join-intent";
+import { emailAuthGate, EMAIL_AUTH_UNAVAILABLE_MESSAGE, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
+import { consumeJoinImportPathForAdmin, hasJoinImportIntent } from "@/lib/join-intent";
+import { consumeFirstRunSignup, isFirstRunUser, setFirstRunSignup } from "@/lib/auth-user";
+import { claimPendingOrgInvite } from "@/lib/org-setup";
 
 /** sessionStorage key shared with AuthCallback for PWA / Google sign-in. */
 const POST_LOGIN_PATH_KEY = "cl_post_login";
@@ -58,10 +60,17 @@ function applyAppLoginHead() {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const { user, profile, loading: authLoading, refresh, isFacilityAdmin, isSuperAdmin } = useAuth();
+  const claimingInvite = useRef(false);
+  const claimedForUserId = useRef<string | null>(null);
+  const joinedForUserId = useRef<string | null>(null);
+  const signingInRef = useRef(false);
+  const [email, setEmail] = useState(() => (searchParams.get("email") || "").trim());
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState("");
+  const [resending, setResending] = useState(false);
 
   const isAppLogin = location.pathname === "/start";
   const from = safeInternalPath((location.state as { from?: string } | null)?.from);
@@ -93,37 +102,163 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return;
-    // Users without an organization land on Search too; ProtectedRoute sends org-only paths back there.
-    if (from) {
-      navigate(from, { replace: true });
-      return;
+    // Only follow PDF import after the user already has an org. Clearing it
+    // here for first-run users would drop the file before they create one.
+    if (profile?.organization_id || isSuperAdmin) {
+      const importPath = consumeJoinImportPathForAdmin(isFacilityAdmin || isSuperAdmin);
+      if (importPath) {
+        navigate(importPath, { replace: true });
+        return;
+      }
     }
-    const importPath = peekJoinImportPath();
-    if (importPath) {
-      navigate(importPath, { replace: true });
-      return;
+
+    let cancelled = false;
+    const routeAfterLogin = () => {
+      if (cancelled) return;
+      if (joinedForUserId.current === user.id) {
+        consumeFirstRunSignup();
+        navigate(afterLogin, { replace: true });
+        return;
+      }
+      const firstRun = isFirstRunUser(user.created_at);
+      if (profile?.organization_id && firstRun) {
+        consumeFirstRunSignup();
+        // Invitees who just claimed should add facilities/insurance, not follow
+        // a leftover people/connect path. Keep mid-setup / facility routes.
+        const keepFrom =
+          from &&
+          (from.startsWith("/setup-organization") ||
+            from.startsWith("/create-organization") ||
+            from.startsWith("/app/onboarding") ||
+            from.startsWith("/app/members") ||
+            from.startsWith("/app/facilities") ||
+            from.startsWith("/app/search"));
+        const pdfImportFrom = from?.startsWith("/app/facilities/upload-pdf");
+        if (keepFrom && !(pdfImportFrom && !isFacilityAdmin && !isSuperAdmin)) {
+          navigate(from, { replace: true });
+          return;
+        }
+        navigate(afterLogin, { replace: true });
+        return;
+      }
+      const keepFrom =
+        from &&
+        (from.startsWith("/setup-organization") ||
+          from.startsWith("/create-organization"));
+      if (!profile?.organization_id && firstRun && !keepFrom) {
+        consumeFirstRunSignup();
+        navigate("/setup-organization", { replace: true });
+        return;
+      }
+      const pdfImportFrom = from?.startsWith("/app/facilities/upload-pdf");
+      if (from && !(pdfImportFrom && !isFacilityAdmin && !isSuperAdmin)) {
+        navigate(from, { replace: true });
+        return;
+      }
+      navigate(afterLogin, { replace: true });
+    };
+
+    const fallbackTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      claimedForUserId.current = user.id;
+      toast.error("Taking too long to check for an invite", {
+        description: "Opening organization setup. You can accept the invite there.",
+      });
+      routeAfterLogin();
+    }, 20_000);
+
+    if (!profile?.organization_id && !claimingInvite.current && claimedForUserId.current !== user.id) {
+      claimingInvite.current = true;
+      void (async () => {
+        try {
+          const claimed = await claimPendingOrgInvite();
+          if (cancelled) return;
+          claimedForUserId.current = user.id;
+          if (claimed.joined) {
+            joinedForUserId.current = user.id;
+            await refresh();
+            if (cancelled) return;
+            toast.success("You've joined your organization", {
+              description: "Add facilities and insurance next.",
+            });
+            // Do not wait for profile.organization_id to land — a stale
+            // refresh left invitees on this spinner with the 20s timer already cleared.
+            navigate(afterLogin, { replace: true });
+            return;
+          }
+        } catch (err) {
+          if (cancelled) return;
+          claimedForUserId.current = user.id;
+          toast.error(err instanceof Error ? err.message : "Couldn't join your organization", {
+            description: "You can accept the invite from organization setup.",
+          });
+        } finally {
+          window.clearTimeout(fallbackTimer);
+        }
+        routeAfterLogin();
+      })();
+      return () => {
+        cancelled = true;
+        window.clearTimeout(fallbackTimer);
+        claimingInvite.current = false;
+      };
     }
-    navigate(afterLogin, { replace: true });
-  }, [authLoading, user, from, afterLogin, navigate]);
+
+    window.clearTimeout(fallbackTimer);
+    routeAfterLogin();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(fallbackTimer);
+    };
+  }, [authLoading, user, profile?.organization_id, from, afterLogin, navigate, refresh, isFacilityAdmin, isSuperAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    const workEmail = email.trim().toLowerCase();
+    if (!workEmail || !password) {
       toast.error("Please enter your email and password");
       return;
     }
-    setLoading(true);
-    const allowed = await isEmailAuthAllowed(email);
-    if (!allowed) {
-      setLoading(false);
-      toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
-        description: PERSONAL_EMAIL_BLOCKED_MESSAGE.description,
+    if (signingInRef.current) {
+      toast.message("Still signing in", {
+        description: "Wait for this attempt to finish.",
       });
       return;
     }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    signingInRef.current = true;
+    setLoading(true);
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
+      setLoading(false);
+      toast.error("Taking too long to sign in", {
+        description: "Try again. If you just created this account, confirm your work email first.",
+      });
+    }, 20_000);
+    const emailGate = await emailAuthGate(workEmail);
+    if (emailGate !== "allowed") {
+      window.clearTimeout(fallbackTimer);
+      signingInRef.current = false;
+      setLoading(false);
+      const message = emailGate === "unavailable"
+        ? EMAIL_AUTH_UNAVAILABLE_MESSAGE
+        : PERSONAL_EMAIL_BLOCKED_MESSAGE;
+      toast.error(message.title, { description: message.description });
+      return;
+    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email: workEmail, password });
+    window.clearTimeout(fallbackTimer);
+    signingInRef.current = false;
+    if (!timedOut) setLoading(false);
+    if (timedOut) return;
     if (error) {
+      if (/not confirmed/i.test(error.message)) {
+        setUnconfirmedEmail(workEmail);
+        toast.error("Confirm your work email first", {
+          description: `Open the link we sent to ${workEmail} to finish creating your free account, then sign in with that exact address.`,
+        });
+        return;
+      }
       toast.error(error.message);
       return;
     }
@@ -199,16 +334,55 @@ export default function Login() {
             </Button>
           </form>
 
+          {unconfirmedEmail ? (
+            <div className="mt-3 rounded-xl border border-border/70 bg-muted/40 p-3 text-center space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Waiting on confirmation for <span className="font-medium text-foreground">{unconfirmedEmail}</span>.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={resending}
+                onClick={async () => {
+                  setResending(true);
+                  const { error } = await supabase.auth.resend({
+                    type: "signup",
+                    email: unconfirmedEmail,
+                    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+                  });
+                  setResending(false);
+                  if (error) toast.error(error.message);
+                  else toast.success("Confirmation sent", { description: `Check ${unconfirmedEmail}.` });
+                }}
+              >
+                {resending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : "Resend confirmation"}
+              </Button>
+            </div>
+          ) : null}
+
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
             <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
           </div>
 
-          <GoogleSignInButton className="w-full" />
+          <GoogleSignInButton
+            className="w-full"
+            onBeforeSignIn={() => {
+              // Invite emails link here. Google consent can take longer than
+              // the 2-minute created_at window — keep skippable org setup.
+              setFirstRunSignup();
+            }}
+          />
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-primary font-medium hover:underline">Sign up</Link>
+            <Link
+              to={email.trim() ? `/join?email=${encodeURIComponent(email.trim())}` : "/join"}
+              className="text-primary font-medium hover:underline"
+            >
+              Sign up
+            </Link>
           </p>
 
           <p className="text-center text-xs text-muted-foreground mt-4">

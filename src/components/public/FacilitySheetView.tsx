@@ -33,6 +33,7 @@ import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
 import { displayAccreditations } from "@/lib/accreditations";
 import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program-tags";
 import { formatPlanTypeList, sanitizePlanTypes } from "@/lib/plan-types";
+import { OUT_OF_NETWORK_ONLY_LABEL } from "@/lib/insurance-contract-status";
 import { loadPublicReferralContacts } from "@/lib/load-public-referral-contacts";
 
 /** Stacked hero photo on phones. Desktop fills the image half instead. */
@@ -114,6 +115,8 @@ interface Props {
   onPhotosUpdated?: (images: string[]) => void;
   brandColor?: string;
   coverImageUrl?: string | null;
+  /** Record page only. Set when this facility has no in-network contract. */
+  outOfNetworkOnly?: boolean;
 }
 
 function fmtDate(d: string | null | undefined) {
@@ -233,6 +236,7 @@ export function FacilitySheetView({
   onPhotosUpdated,
   brandColor,
   coverImageUrl,
+  outOfNetworkOnly = false,
 }: Props) {
   const brand = useOrgBrandColor(org, brandColor);
   const [footerVisible, setFooterVisible] = useState(false);
@@ -357,9 +361,14 @@ export function FacilitySheetView({
               <ExpandableText text={programText} brand={brand} clampLines={3} className="mt-3 min-w-0" />
             ) : null}
 
-            {facility.levels_of_care?.length > 0 && (
+            {(outOfNetworkOnly || (facility.levels_of_care?.length ?? 0) > 0) && (
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {facility.levels_of_care.map((level) => (
+                {outOfNetworkOnly ? (
+                  <span className="inline-flex max-w-full items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-950 leading-snug">
+                    {OUT_OF_NETWORK_ONLY_LABEL}
+                  </span>
+                ) : null}
+                {(facility.levels_of_care ?? []).map((level) => (
                   <span
                     key={level}
                     className="inline-flex max-w-full items-center rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium text-foreground/90 leading-snug break-words"

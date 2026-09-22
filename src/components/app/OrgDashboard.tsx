@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Building2,
@@ -12,6 +12,7 @@ import {
   Eye,
   EyeOff,
   Wand2,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,6 +75,7 @@ export function OrgDashboard({
   welcomeName = "there",
   onFacilitiesChanged,
 }: Props) {
+  const navigate = useNavigate();
   const { isFacilityAdmin, isSuperAdmin } = useAuth();
   const canManageFacilityVisibility = adminMode || isFacilityAdmin || isSuperAdmin;
   const [org, setOrg] = useState<OrgRow | null>(null);
@@ -129,14 +131,19 @@ export function OrgDashboard({
   const loadFacilities = useCallback(async () => {
     if (!organizationId) return;
     setFacilitiesLoading(true);
-    const { data: f } = await supabase
+    const { data: f, error } = await supabase
       .from("facilities")
       .select(
         "id,name,city,state,image_urls,levels_of_care,updated_at,bd_contact_name,bd_contact_phone,bd_contact_email,hidden_from_org_page",
       )
       .eq("organization_id", organizationId)
       .order("updated_at", { ascending: false });
-    setAllFacilities((f as FacilityRow[]) ?? []);
+    if (error) {
+      toast.error("Couldn't load your facilities", { description: error.message });
+      setAllFacilities([]);
+    } else {
+      setAllFacilities((f as FacilityRow[]) ?? []);
+    }
     setFacilitiesLoading(false);
   }, [organizationId]);
 
@@ -145,6 +152,14 @@ export function OrgDashboard({
     await loadFacilities();
     onFacilitiesChanged?.();
   }, [loadFacilities, onFacilitiesChanged]);
+
+  const handleFacilityCreated = useCallback(
+    (facilityId?: string) => {
+      void reloadFacilities();
+      if (facilityId && !adminMode) navigate(`/app/facilities/${facilityId}`);
+    },
+    [reloadFacilities, navigate, adminMode],
+  );
 
   useEffect(() => {
     setFacilityPage(1);
@@ -163,7 +178,7 @@ export function OrgDashboard({
     if (!organizationId) return;
     let cancelled = false;
     (async () => {
-      const [{ data: o }, { count: mCount }] = await Promise.all([
+      const [{ data: o, error: orgError }, { count: mCount, error: memError }] = await Promise.all([
         supabase
           .from("organizations")
           .select("id,name,slug,logo_url,brand_color,verified")
@@ -175,6 +190,12 @@ export function OrgDashboard({
           .eq("organization_id", organizationId),
       ]);
       if (cancelled) return;
+      if (orgError) {
+        toast.error("Couldn't load organization", { description: orgError.message });
+      }
+      if (memError) {
+        toast.error("Couldn't load team count", { description: memError.message });
+      }
       setOrg(o as OrgRow | null);
       setMemberCount(mCount ?? 0);
 
@@ -273,6 +294,13 @@ export function OrgDashboard({
             {org?.name && <p className="text-sm text-muted-foreground mt-1 truncate">{org.name}</p>}
           </div>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {membersHref ? (
+              <Button asChild variant="outline" size="sm">
+                <Link to={membersHref}>
+                  <UserPlus className="h-4 w-4" /> Invite teammates
+                </Link>
+              </Button>
+            ) : null}
             <Button variant="outline" size="sm" onClick={handleShare} disabled={!org?.slug}>
               <Share2 className="h-4 w-4" /> Share
             </Button>
@@ -341,7 +369,7 @@ export function OrgDashboard({
                 </Link>
               </Button>
             )}
-            <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} />
+            <AddFacilityDialog organizationId={organizationId} onCreated={handleFacilityCreated} />
           </div>
         </div>
 
@@ -360,7 +388,7 @@ export function OrgDashboard({
             <Building2 className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <p className="font-medium">No facilities yet</p>
             <p className="text-sm text-muted-foreground mt-1 mb-4">
-              Add programs so BD reps can share them.
+              Add a facility and in-network insurance so partners can find who you accept.
             </p>
             <div className="flex items-center justify-center gap-2 flex-wrap">
               {canManageFacilityVisibility && (
@@ -370,7 +398,7 @@ export function OrgDashboard({
                   </Link>
                 </Button>
               )}
-              <AddFacilityDialog organizationId={organizationId} onCreated={reloadFacilities} />
+              <AddFacilityDialog organizationId={organizationId} onCreated={handleFacilityCreated} />
             </div>
           </div>
         ) : pageFacilities.length === 0 ? (

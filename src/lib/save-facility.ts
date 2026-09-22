@@ -1,9 +1,11 @@
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { FacilityContractDraft, FacilityDraft } from "@/components/app/facility/facility-types";
 import { uniqueAccreditations } from "@/lib/accreditations";
 import { sanitizePlanTypes } from "@/lib/plan-types";
 import { resolveStateCode } from "@/lib/us-states";
 import { syncPrimaryBdAssignment } from "@/lib/admin-bd";
+import { hasAssignedBdContact } from "@/lib/bd-contact";
 
 export type ContractsMode = "all" | "in_network" | "none";
 
@@ -102,13 +104,27 @@ export async function saveFacilityWithContracts(args: {
   }
 
   const id = String(data);
-  await syncPrimaryBdAssignment({
+  const bd = await syncPrimaryBdAssignment({
     facilityId: id,
     organizationId,
     name: draft.bd_contact_name || null,
     phone: draft.bd_contact_phone || null,
     email: draft.bd_contact_email || null,
   });
+  if (!bd.ok) {
+    toast.warning("Facility and insurance saved, but the assigned BD contact didn't stick", {
+      description: bd.error,
+    });
+  } else if (
+    (draft.bd_contact_name?.trim() || draft.bd_contact_phone?.trim() || draft.bd_contact_email?.trim()) &&
+    !hasAssignedBdContact({
+      bd_contact_name: draft.bd_contact_name,
+      bd_contact_phone: draft.bd_contact_phone,
+      bd_contact_email: draft.bd_contact_email,
+    })
+  ) {
+    toast.warning("Facility and insurance saved. Add a name plus a phone or email so Search can show who to call.");
+  }
   const { data: row } = await supabase.from("facilities").select("slug").eq("id", id).maybeSingle();
   return { ok: true, facilityId: id, slug: row?.slug ?? null };
 }

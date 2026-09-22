@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,10 +25,16 @@ export function useReferralNetwork() {
   const load = useCallback(async () => {
     if (!orgId) { setPartners([]); return; }
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("referral_network")
       .select("id, partner:organizations!referral_network_partner_org_id_fkey(id,name,slug,logo_url,hq_city,hq_state,bd_contact_name,bd_contact_phone,bd_contact_email)")
       .eq("owner_org_id", orgId);
+    if (error) {
+      toast.error("Couldn't load your referral network", { description: error.message });
+      setPartners([]);
+      setLoading(false);
+      return;
+    }
     const rows = (data ?? []) as Array<{ id: string; partner: Omit<PartnerOrg, "rowId"> | null }>;
     setPartners(
       rows

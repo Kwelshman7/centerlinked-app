@@ -188,8 +188,8 @@ export function Hero() {
                     size="xl"
                     className="group w-full sm:w-auto min-h-12 px-7"
                   >
-                    <Link to="/signup">
-                      Create Your Organization Profile
+                    <Link to="/join">
+                      Join free with your work email
                       <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                   </Button>

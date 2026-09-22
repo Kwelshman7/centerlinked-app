@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,8 @@ import { ImageUploader } from "@/components/app/ImageUploader";
 import { FacilityCardForm } from "@/components/app/facility/FacilityCardForm";
 import { FacilityDraft, emptyFacility } from "@/components/app/facility/facility-types";
 import { saveFacilityWithContracts } from "@/lib/save-facility";
+import { bdFieldsFromUser, hasAssignedBdContact } from "@/lib/bd-contact";
+import { fullNameFromAuthUser } from "@/lib/auth-user";
 import {
   ArrowLeft,
   ArrowRight,
@@ -48,10 +50,11 @@ const STEPS = [
 ];
 
 export default function Onboarding() {
-  const { profile, user, refresh } = useAuth();
+  const { profile, user, refresh, loading, isFacilityAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const addOnly = params.get("add") === "1";
+  const canImportPdf = isFacilityAdmin || isSuperAdmin;
 
   const [step, setStep] = useState(addOnly ? 2 : 1);
   const [addingHow, setAddingHow] = useState<"undecided" | "manual">(addOnly ? "manual" : "undecided");
@@ -61,6 +64,69 @@ export default function Onboarding() {
     name: "", website: "", hq_city: "", hq_state: "", description: "", phone: "", num_facilities: "", logo_url: "",
   });
   const [facilities, setFacilities] = useState<FacilityDraft[]>([emptyFacility()]);
+  const [orgLinkChecked, setOrgLinkChecked] = useState(false);
+  const [orgLinkFailed, setOrgLinkFailed] = useState(false);
+  const prefilledBd = useRef(false);
+  const submittingRef = useRef(false);
+  const draftFromMe = (): FacilityDraft => ({
+    ...emptyFacility(),
+    ...bdFieldsFromUser({
+      full_name: profile?.full_name || fullNameFromAuthUser(user),
+      email: profile?.email || user?.email,
+    }),
+  });
+
+  useEffect(() => {
+    if (loading) return;
+    if (profile?.organization_id) {
+      setOrgLinkChecked(true);
+      setOrgLinkFailed(false);
+      return;
+    }
+    let cancelled = false;
+    void refresh().finally(() => {
+      if (!cancelled) setOrgLinkChecked(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, profile?.organization_id, refresh]);
+
+  useEffect(() => {
+    if (loading || !orgLinkChecked) return;
+    if (profile?.organization_id) return;
+    let cancelled = false;
+    void (async () => {
+      // Create/claim can land here before profiles.organization_id flushes.
+      // A membership row means they already have an org — don't bounce to setup.
+      if (user?.id) {
+        const { data: membership, error: membershipError } = await supabase
+          .from("organization_members")
+          .select("organization_id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        if (cancelled) return;
+        if (membershipError) {
+          toast.error("Couldn't confirm your organization", {
+            description: "Stay here — retry, or go to Search and add facilities when your organization appears.",
+          });
+          await refresh();
+          if (!cancelled) setOrgLinkFailed(true);
+          return;
+        }
+        if (membership?.organization_id) {
+          await refresh();
+          return;
+        }
+      }
+      if (cancelled) return;
+      navigate("/setup-organization", { replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, orgLinkChecked, profile?.organization_id, user?.id, refresh, navigate]);
 
   // Hydrate org from DB if linked
   useEffect(() => {
@@ -68,8 +134,11 @@ export default function Onboarding() {
       setOrgLoaded(true);
       return;
     }
-    supabase.from("organizations").select(orgOnboardingSelect).eq("id", profile.organization_id).maybeSingle().then(({ data }) => {
-      if (data) {
+    supabase.from("organizations").select(orgOnboardingSelect).eq("id", profile.organization_id).maybeSingle().then(({ data, error }) => {
+      if (error) {
+        toast.error("Couldn't load organization details", { description: error.message });
+        if (!addOnly) setStep((s) => (s === 1 ? 2 : s));
+      } else if (data) {
         setOrg({
           name: data.name ?? "",
           website: data.website ?? "",
@@ -88,21 +157,47 @@ export default function Onboarding() {
     });
   }, [profile?.organization_id, addOnly]);
 
+  useEffect(() => {
+    const fields = bdFieldsFromUser({
+      full_name: profile?.full_name || fullNameFromAuthUser(user),
+      email: profile?.email || user?.email,
+    });
+    if (!fields.bd_contact_name && !fields.bd_contact_email) return;
+    setFacilities((prev) =>
+      prev.map((f, i) => {
+        if (i !== 0) return f;
+        if (prefilledBd.current) {
+          return !f.bd_contact_name.trim() && fields.bd_contact_name
+            ? { ...f, bd_contact_name: fields.bd_contact_name }
+            : f;
+        }
+        if (f.bd_contact_name.trim() || f.bd_contact_email.trim() || f.bd_contact_phone.trim()) {
+          return f;
+        }
+        return { ...f, ...fields };
+      }),
+    );
+    prefilledBd.current = true;
+  }, [profile?.full_name, profile?.email, user]);
+
   const updateOrg = <K extends keyof OrgDraft>(k: K, v: OrgDraft[K]) =>
     setOrg((p) => ({ ...p, [k]: v }));
 
   const updateFacility = (i: number, next: FacilityDraft) =>
     setFacilities((p) => p.map((f, idx) => (idx === i ? next : f)));
-  const addFacility = () => setFacilities((p) => [...p, emptyFacility()]);
+  const addFacility = () => setFacilities((p) => [...p, draftFromMe()]);
   const removeFacility = (i: number) =>
     setFacilities((p) => (p.length === 1 ? p : p.filter((_, idx) => idx !== i)));
 
   const canContinueOrg = org.name.trim().length > 0;
-  const canContinueFacilities = facilities.every((f) => f.name.trim().length > 0);
+  const canContinueFacilities = facilities.some((f) => f.name.trim().length > 0);
 
   const totalContracts = useMemo(
     () => facilities.reduce((sum, f) => sum + f.contracts.filter((c) => c.payer_name.trim()).length, 0),
     [facilities],
+  );
+  const missingReferralContact = facilities.some(
+    (f) => f.name.trim() && !hasAssignedBdContact(f),
   );
 
   const handleSubmit = async () => {
@@ -112,40 +207,73 @@ export default function Onboarding() {
       navigate("/setup-organization", { replace: true });
       return;
     }
+    if (submittingRef.current) {
+      toast.message("Still submitting", {
+        description: "Check Facilities before adding the same programs again.",
+      });
+      return;
+    }
+    submittingRef.current = true;
     setSaving(true);
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
+      setSaving(false);
+      toast.error("Taking too long to submit facilities", {
+        description: "You can leave this page. Check Facilities before adding the same programs again.",
+      });
+    }, 20_000);
 
     try {
-      // 1. Update organization
-      const { error: orgErr } = await supabase
-        .from("organizations")
-        .update({
-          name: org.name.trim(),
-          website: org.website || null,
-          hq_city: org.hq_city || null,
-          hq_state: org.hq_state || null,
-          description: org.description || null,
-          phone: org.phone || null,
-          num_facilities: org.num_facilities ? parseInt(org.num_facilities) : null,
-          logo_url: org.logo_url || null,
-        })
-        .eq("id", profile.organization_id);
-      if (orgErr) throw orgErr;
+      // Org updates are admin-only. Invited BD reps still save facilities here.
+      if (!addOnly && (isFacilityAdmin || isSuperAdmin) && org.name.trim()) {
+        const { error: orgErr } = await supabase
+          .from("organizations")
+          .update({
+            name: org.name.trim(),
+            website: org.website || null,
+            hq_city: org.hq_city || null,
+            hq_state: org.hq_state || null,
+            description: org.description || null,
+            phone: org.phone || null,
+            num_facilities: org.num_facilities ? parseInt(org.num_facilities) : null,
+            logo_url: org.logo_url || null,
+          })
+          .eq("id", profile.organization_id);
+        if (orgErr) {
+          toast.error("Couldn't update organization details", {
+            description: "Your facilities and insurance will still save.",
+          });
+        }
+      }
 
       const validFacilities = facilities.filter((f) => f.name.trim());
+      if (!validFacilities.length) {
+        toast.error("Add at least one facility name");
+        return;
+      }
       const savedNames: string[] = [];
       const failed: { name: string; error: string }[] = [];
+      const stillFailed: FacilityDraft[] = [];
+      let firstSavedId: string | null = null;
       for (const facilityDraft of validFacilities) {
         const result = await saveFacilityWithContracts({
           organizationId: profile.organization_id,
           draft: facilityDraft,
-          includeHidden: true,
+          includeHidden: isFacilityAdmin || isSuperAdmin,
           contractsMode: "all",
         });
-        if (result.ok) savedNames.push(facilityDraft.name.trim());
-        else failed.push({ name: facilityDraft.name.trim(), error: result.error });
+        if (result.ok) {
+          savedNames.push(facilityDraft.name.trim());
+          if (!firstSavedId) firstSavedId = result.facilityId;
+        } else {
+          failed.push({ name: facilityDraft.name.trim(), error: result.error });
+          stillFailed.push(facilityDraft);
+        }
       }
 
       if (failed.length) {
+        setFacilities(stillFailed.length ? stillFailed : [draftFromMe()]);
         toast.error(
           `${savedNames.length} saved, ${failed.length} failed`,
           { description: failed.map((f) => `${f.name}: ${f.error}`).join(" · ") },
@@ -154,17 +282,50 @@ export default function Onboarding() {
       }
 
       await refresh();
-      toast.success("Network submitted!", { description: "Your facilities are pending verification." });
-      navigate("/app/search");
+      toast.success("Facilities submitted", {
+        description: "They're pending review. You can add or edit insurance anytime.",
+      });
+      navigate(firstSavedId ? `/app/facilities/${firstSavedId}` : "/app/search");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       toast.error(msg);
     } finally {
-      setSaving(false);
+      window.clearTimeout(fallbackTimer);
+      submittingRef.current = false;
+      if (!timedOut) setSaving(false);
     }
   };
 
-  if (!orgLoaded) {
+  const showHowChooser = step === 2 && addingHow === "undecided" && !addOnly && canImportPdf;
+  const showManualFacilities = step === 2 && !showHowChooser;
+
+  if (orgLinkFailed && !profile?.organization_id) {
+    return (
+      <div className="grid place-items-center py-24 px-4 text-center space-y-3">
+        <p className="font-medium">Couldn't confirm your organization</p>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Your account may still be linking. Retry, or search now and add facilities when it appears.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button
+            type="button"
+            onClick={() => {
+              setOrgLinkFailed(false);
+              setOrgLinkChecked(false);
+              void refresh();
+            }}
+          >
+            Retry
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/app/search">Go to Search</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || !orgLoaded || !profile?.organization_id) {
     return <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
@@ -185,11 +346,12 @@ export default function Onboarding() {
           <div className="text-center mb-10 animate-fade-up">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary mb-4">
               <Sparkles className="h-3.5 w-3.5" />
-              You&apos;re on as a BD rep
+              Add facilities and insurance
             </div>
             <h1 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">List your facilities and share your link</h1>
             <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-              Import a one-pager or add programs by hand. Keep insurance, contacts, and levels of care accurate so partners always reopen the right page.
+              Add programs and insurance contracts by hand
+              {canImportPdf ? ", or import a one-pager if you have one" : ""}. Keep contacts and levels of care accurate so partners reopen the right page.
             </p>
           </div>
 
@@ -251,7 +413,7 @@ export default function Onboarding() {
               </div>
               <div className="space-y-2">
                 <Label>Website</Label>
-                <Input type="url" placeholder="https://" value={org.website} onChange={(e) => updateOrg("website", e.target.value)} />
+                <Input type="text" inputMode="url" placeholder="https://" value={org.website} onChange={(e) => updateOrg("website", e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>HQ city</Label>
@@ -285,7 +447,7 @@ export default function Onboarding() {
       )}
 
       {/* STEP 2: Facilities */}
-      {step === 2 && addingHow === "undecided" && !addOnly && (
+      {showHowChooser && (
         <div className="space-y-4 animate-fade-up">
           <div className="text-center sm:text-left">
             <h2 className="font-heading text-xl font-bold">How do you want to add facilities?</h2>
@@ -329,7 +491,7 @@ export default function Onboarding() {
         </div>
       )}
 
-      {step === 2 && addingHow === "manual" && (
+      {showManualFacilities && (
         <div className="space-y-6 animate-fade-up">
           {!addOnly && (
             <div className="rounded-2xl bg-gradient-to-br from-primary/5 via-accent/30 to-card p-5 sm:p-6 border border-border/60">
@@ -388,6 +550,28 @@ export default function Onboarding() {
               <ReviewStat label="Total photos" value={facilities.reduce((s, f) => s + f.image_urls.length, 0)} />
             </div>
 
+            {totalContracts === 0 ? (
+              <div className="mb-6 rounded-xl border border-warning/30 bg-warning/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-sm text-warning-foreground">
+                  No in-network insurance yet. Partners search by who accepts what — add payers now, or after you submit.
+                </p>
+                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setStep(2)}>
+                  Add insurance
+                </Button>
+              </div>
+            ) : null}
+
+            {missingReferralContact ? (
+              <div className="mb-6 rounded-xl border border-warning/30 bg-warning/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-sm text-warning-foreground">
+                  Search only shows who to call when a facility has a name plus a phone or email.
+                </p>
+                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setStep(2)}>
+                  Add contact
+                </Button>
+              </div>
+            ) : null}
+
             <div className="space-y-3">
               <h3 className="font-heading font-semibold text-lg">{org.name || "Your organization"}</h3>
               {(org.hq_city || org.hq_state) && (
@@ -425,7 +609,7 @@ export default function Onboarding() {
       )}
 
       {/* Sticky footer nav */}
-      {!(step === 2 && addingHow === "undecided" && !addOnly) && (
+      {!showHowChooser && (
       <div className="fixed bottom-0 left-0 right-0 sm:static sm:mt-8 z-30">
         <div className="bg-card/95 backdrop-blur-md sm:bg-transparent sm:backdrop-blur-none border-t border-border sm:border-0 px-4 py-3 sm:p-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
@@ -433,7 +617,7 @@ export default function Onboarding() {
               type="button"
               variant="outline"
               onClick={() => {
-                if (step === 2 && addingHow === "manual" && !addOnly) {
+                if (step === 2 && addingHow === "manual" && !addOnly && canImportPdf) {
                   setAddingHow("undecided");
                   return;
                 }

@@ -56,56 +56,62 @@ export default function Settings() {
   const [payersCount, setPayersCount] = useState(0);
   const [contractsCount, setContractsCount] = useState(0);
   const [membersCount, setMembersCount] = useState(0);
+  const [orgHydrated, setOrgHydrated] = useState(false);
 
   useEffect(() => {
     if (!profile?.organization_id) return;
     const orgId = profile.organization_id;
+    setOrgHydrated(false);
     (async () => {
       let { data, error } = await supabase.from("organizations").select(orgDashboardSelect).eq("id", orgId).maybeSingle();
       if (isMissingOptionalOrgColumn(error)) {
         ({ data, error } = await supabase.from("organizations").select(orgDashboardSelectFallback).eq("id", orgId).maybeSingle());
       }
-      void error;
-      if (data) {
-        setOrgName(data.name || "");
-        setOrgDesc(data.description || "");
-        setOrgWebsite(data.website || "");
-        setOrgCity(data.hq_city || "");
-        setOrgState(data.hq_state || "");
-        setOrgLogo(data.logo_url ? [data.logo_url] : []);
-        setOrgFavicon(
-          (data as { favicon_url?: string | null }).favicon_url
-            ? [(data as { favicon_url: string }).favicon_url]
-            : [],
-        );
-        setOrgFooterImage(
-          (data as { footer_image_url?: string | null }).footer_image_url
-            ? [(data as { footer_image_url: string }).footer_image_url]
-            : [],
-        );
-        setSocialFacebook((data as { social_facebook_url?: string | null }).social_facebook_url || "");
-        setSocialInstagram((data as { social_instagram_url?: string | null }).social_instagram_url || "");
-        setSocialLinkedin((data as { social_linkedin_url?: string | null }).social_linkedin_url || "");
-        setSocialX((data as { social_x_url?: string | null }).social_x_url || "");
-        setBdName(data.bd_contact_name || "");
-        setBdPhone(data.bd_contact_phone || "");
-        setBdEmail(data.bd_contact_email || "");
-        setOrgVerified(!!data.verified);
-        setTagline((data as { tagline?: string | null }).tagline || "");
-        setBrandColor((data as { brand_color?: string | null }).brand_color || "#1A73E8");
-        setAccentColor((data as { accent_color?: string | null }).accent_color || "#E0EDFF");
-        const cover = (data as { cover_image_url?: string | null }).cover_image_url;
-        const gallery = (data as { image_urls?: string[] | null }).image_urls;
-        setOrgImages(mergeOrgImages(gallery, cover));
-        setAnnouncement((data as { announcement?: string | null }).announcement || "");
-        const badges = ((data as { program_badges?: string[] | null }).program_badges) || [];
-        setProgramBadgesText(badges.join(", "));
-        setCtaPrimary((data as { cta_primary_label?: string | null }).cta_primary_label || "");
-        setCtaSecondary((data as { cta_secondary_label?: string | null }).cta_secondary_label || "");
-        const wr = ((data as { why_refer?: unknown }).why_refer) as unknown;
-        if (Array.isArray(wr)) {
-          setWhyRefer(wr.filter((x): x is { title: string; body: string } => !!x && typeof x === "object" && "title" in x && "body" in x));
-        }
+      if (error || !data) {
+        toast.error("Couldn't load organization settings", {
+          description: error?.message || "Organization not found.",
+        });
+        return;
+      }
+      setOrgHydrated(true);
+      setOrgName(data.name || "");
+      setOrgDesc(data.description || "");
+      setOrgWebsite(data.website || "");
+      setOrgCity(data.hq_city || "");
+      setOrgState(data.hq_state || "");
+      setOrgLogo(data.logo_url ? [data.logo_url] : []);
+      setOrgFavicon(
+        (data as { favicon_url?: string | null }).favicon_url
+          ? [(data as { favicon_url: string }).favicon_url]
+          : [],
+      );
+      setOrgFooterImage(
+        (data as { footer_image_url?: string | null }).footer_image_url
+          ? [(data as { footer_image_url: string }).footer_image_url]
+          : [],
+      );
+      setSocialFacebook((data as { social_facebook_url?: string | null }).social_facebook_url || "");
+      setSocialInstagram((data as { social_instagram_url?: string | null }).social_instagram_url || "");
+      setSocialLinkedin((data as { social_linkedin_url?: string | null }).social_linkedin_url || "");
+      setSocialX((data as { social_x_url?: string | null }).social_x_url || "");
+      setBdName(data.bd_contact_name || "");
+      setBdPhone(data.bd_contact_phone || "");
+      setBdEmail(data.bd_contact_email || "");
+      setOrgVerified(!!data.verified);
+      setTagline((data as { tagline?: string | null }).tagline || "");
+      setBrandColor((data as { brand_color?: string | null }).brand_color || "#1A73E8");
+      setAccentColor((data as { accent_color?: string | null }).accent_color || "#E0EDFF");
+      const cover = (data as { cover_image_url?: string | null }).cover_image_url;
+      const gallery = (data as { image_urls?: string[] | null }).image_urls;
+      setOrgImages(mergeOrgImages(gallery, cover));
+      setAnnouncement((data as { announcement?: string | null }).announcement || "");
+      const badges = ((data as { program_badges?: string[] | null }).program_badges) || [];
+      setProgramBadgesText(badges.join(", "));
+      setCtaPrimary((data as { cta_primary_label?: string | null }).cta_primary_label || "");
+      setCtaSecondary((data as { cta_secondary_label?: string | null }).cta_secondary_label || "");
+      const wr = ((data as { why_refer?: unknown }).why_refer) as unknown;
+      if (Array.isArray(wr)) {
+        setWhyRefer(wr.filter((x): x is { title: string; body: string } => !!x && typeof x === "object" && "title" in x && "body" in x));
       }
       const { data: fs } = await supabase
         .from("facilities")
@@ -143,6 +149,14 @@ export default function Settings() {
   const saveOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.organization_id) return;
+    if (!orgHydrated) {
+      toast.error("Organization settings haven't loaded yet");
+      return;
+    }
+    if (!orgName.trim()) {
+      toast.error("Organization name is required");
+      return;
+    }
     setSavingOrg(true);
     const program_badges = programBadgesText
       .split(",")
@@ -156,7 +170,7 @@ export default function Settings() {
     const { error } = await supabase.rpc("update_organization_profile", {
       _organization_id: profile.organization_id,
       _profile: {
-        name: orgName,
+        name: orgName.trim(),
         description: orgDesc,
         website: orgWebsite,
         hq_city: orgCity,
@@ -215,11 +229,19 @@ export default function Settings() {
               <h2 className="font-heading text-lg font-semibold">Organization snapshot</h2>
               <p className="text-xs text-muted-foreground">Quick stats and tools for your network.</p>
             </div>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/app/facilities/upload-pdf">
-                <Wand2 className="h-4 w-4" /> Upload PDF
-              </Link>
-            </Button>
+            {canManageOrganization ? (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/app/facilities/upload-pdf">
+                  <Wand2 className="h-4 w-4" /> Upload PDF
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/app/members">
+                  <Users className="h-4 w-4" /> Invite teammates
+                </Link>
+              </Button>
+            )}
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {orgStats.map((s) => {
@@ -261,7 +283,7 @@ export default function Settings() {
               <h2 className="font-heading text-lg font-semibold">Organization</h2>
               <p className="text-xs text-muted-foreground mt-1">Changes apply to your organization and its public facility pages.</p>
             </div>
-            <Button type="submit" form="organization-settings-form" disabled={savingOrg} className="hidden sm:inline-flex shrink-0">
+            <Button type="submit" form="organization-settings-form" disabled={savingOrg || !orgHydrated} className="hidden sm:inline-flex shrink-0">
               {savingOrg && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
             </Button>
           </div>
@@ -445,7 +467,7 @@ export default function Settings() {
             </div>
 
             <div className="sticky bottom-3 z-20 -mx-2 mt-6 border-t border-border/60 bg-card/95 px-2 pt-3 pb-1 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
-              <Button type="submit" disabled={savingOrg} className="w-full sm:hidden">
+              <Button type="submit" disabled={savingOrg || !orgHydrated} className="w-full sm:hidden">
                 {savingOrg && <Loader2 className="h-4 w-4 animate-spin" />} Save organization
               </Button>
             </div>

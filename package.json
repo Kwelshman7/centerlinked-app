@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "test": "node --test server/stripe/membership-checkout.test.mjs server/stripe/checkout-request.test.mjs && node --experimental-strip-types --test src/lib/helpers.test.ts src/lib/org-one-pager-model.test.ts src/lib/pricing.test.ts src/lib/plan-types.test.ts src/lib/insurance-plan-types-catalog.test.ts src/lib/insurance-contract-status.test.ts src/lib/accreditations.test.ts src/lib/match-payer.test.ts src/lib/bd-contact.test.ts src/lib/location-quality.test.ts src/lib/verification-events.test.ts src/lib/data-quality.test.ts src/lib/pdf-import.test.ts src/lib/professional-network.test.ts src/lib/contact-workspace.test.ts",
+    "test": "node --test server/stripe/membership-checkout.test.mjs server/stripe/checkout-request.test.mjs server/email/templates.test.mjs && node --experimental-strip-types --test src/lib/helpers.test.ts src/lib/join-intent.test.ts src/lib/invite-claim.test.ts src/lib/org-one-pager-model.test.ts src/lib/pricing.test.ts src/lib/plan-types.test.ts src/lib/insurance-plan-types-catalog.test.ts src/lib/insurance-contract-status.test.ts src/lib/accreditations.test.ts src/lib/match-payer.test.ts src/lib/bd-contact.test.ts src/lib/location-quality.test.ts src/lib/verification-events.test.ts src/lib/data-quality.test.ts src/lib/pdf-import.test.ts src/lib/pdf-embedded-images.test.ts src/lib/professional-network.test.ts src/lib/contact-workspace.test.ts",
     "preview": "vite preview",
     "facility-images": "node server/facility-images/run-batch.mjs",
     "facility-images:status": "node server/facility-images/run-batch.mjs --status",

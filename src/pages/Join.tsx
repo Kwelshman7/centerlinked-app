@@ -8,20 +8,22 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { isEmailAuthAllowed, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
+import { emailAuthGate, EMAIL_AUTH_UNAVAILABLE_MESSAGE, PERSONAL_EMAIL_BLOCKED_MESSAGE } from "@/lib/email-domains";
 import { applySocialMeta } from "@/lib/social-meta";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { notifyAuthEvent } from "@/lib/transactional-email";
 import { assertPdfFile } from "@/lib/upload-guards";
 import {
   clearPendingJoinPdf,
-  consumeJoinImportPath,
+  consumeJoinImportPathForAdmin,
   hasJoinImportIntent,
   peekPendingJoinPdfName,
   setJoinImportIntent,
   setPendingJoinPdf,
 } from "@/lib/join-intent";
-import { professionalPath, rememberConnectUser } from "@/lib/professional-network";
+import { consumeConnectUser, professionalPath, rememberConnectUser } from "@/lib/professional-network";
+import { consumeFirstRunSignup, isFirstRunUser, setFirstRunSignup } from "@/lib/auth-user";
+import { claimPendingOrgInvite } from "@/lib/org-setup";
 
 const STEPS = [
   {
@@ -29,12 +31,12 @@ const STEPS = [
     detail: "Use your work email. No card required.",
   },
   {
-    title: "Claim or create your organization",
-    detail: "Facilities and insurance are saved here — not before.",
+    title: "Search, or invite your team",
+    detail: "Find who accepts what insurance. Invite other BD reps anytime.",
   },
   {
-    title: "Review the extract, then save",
-    detail: "AI reads programs, insurance, and photos. You confirm every field before anything is committed.",
+    title: "Add your organization when ready",
+    detail: "Claim or create it, then add facilities and insurance contracts.",
   },
 ] as const;
 
@@ -46,13 +48,18 @@ function formatBytes(size: number) {
 export default function Join() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, profile, loading, isSuperAdmin } = useAuth();
+  const { user, profile, loading, isSuperAdmin, isFacilityAdmin, refresh } = useAuth();
+  const claimingInvite = useRef(false);
+  const claimedForUserId = useRef<string | null>(null);
+  const joinedForUserId = useRef<string | null>(null);
+  const signingUpRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(() => (searchParams.get("email") || "").trim());
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [awaitingEmail, setAwaitingEmail] = useState(false);
+  const [resending, setResending] = useState(false);
   const [wantsImport, setWantsImport] = useState(
     () => searchParams.get("import") === "pdf" || hasJoinImportIntent(),
   );
@@ -63,7 +70,7 @@ export default function Join() {
     applySocialMeta({
       title: "Join CenterLinked free",
       description:
-        "Sign up free with your work email. Import a facilities PDF, review the extracted data and photos, and confirm before anything is saved.",
+        "Sign up free with your work email. Search who accepts what insurance, invite other BD reps, and add your organization and contracts when you are ready.",
       path: "/join",
     });
   }, []);
@@ -79,19 +86,111 @@ export default function Join() {
   useEffect(() => {
     if (loading) return;
     const connectId = searchParams.get("connect");
-    if (user && connectId) {
+    const firstRun = Boolean(user && isFirstRunUser(user.created_at));
+    // Returning users with an org can follow a connect share. First-run
+    // without an org must claim/setup first — same rule as AuthCallback.
+    // Leftover PDF import intent is not a first-run signal.
+    if (user && connectId && !firstRun && (profile?.organization_id || isSuperAdmin)) {
       navigate(professionalPath(connectId), { replace: true });
       return;
     }
     if (user && (profile?.organization_id || isSuperAdmin)) {
-      const importPath = wantsImport ? consumeJoinImportPath() : null;
+      if (firstRun) {
+        consumeFirstRunSignup();
+        consumeConnectUser();
+      }
+      const importPath = wantsImport
+        ? consumeJoinImportPathForAdmin(isFacilityAdmin || isSuperAdmin)
+        : null;
       navigate(importPath || "/app/search", { replace: true });
       return;
     }
     if (user && !profile?.organization_id) {
-      navigate("/setup-organization", { replace: true });
+      const leaveJoin = () => {
+        const firstRun = isFirstRunUser(user.created_at);
+        if (firstRun) consumeFirstRunSignup();
+        if (!firstRun && connectId) {
+          navigate(professionalPath(connectId), { replace: true });
+          return;
+        }
+        navigate(firstRun ? "/setup-organization" : "/app/search", { replace: true });
+      };
+      const fallbackTimer = window.setTimeout(() => {
+        // handleSubmit holds claimingInvite during signUp. Don't steal that
+        // navigation — the form has its own 20s unlock.
+        if (signingUpRef.current) return;
+        claimedForUserId.current = user.id;
+        toast.error("Taking too long to check for an invite", {
+          description: "Opening organization setup. You can accept the invite there.",
+        });
+        leaveJoin();
+      }, 20_000);
+      if (claimedForUserId.current === user.id) {
+        window.clearTimeout(fallbackTimer);
+        // A successful claim + refresh() re-runs this effect and would
+        // otherwise send a first-run invitee to setup.
+        if (joinedForUserId.current === user.id) {
+          navigate("/app/search", { replace: true });
+          return;
+        }
+        leaveJoin();
+        return;
+      }
+      // Signup may already be holding this ref. Still time out so a hung
+      // claim cannot leave them on the Join spinner forever.
+      if (claimingInvite.current) {
+        return () => window.clearTimeout(fallbackTimer);
+      }
+      claimingInvite.current = true;
+      let cancelled = false;
+      void (async () => {
+        try {
+          const claimed = await claimPendingOrgInvite();
+          if (cancelled) return;
+          claimedForUserId.current = user.id;
+          if (claimed.joined) {
+            joinedForUserId.current = user.id;
+            await refresh();
+            if (cancelled) return;
+            toast.success("You've joined your organization", {
+              description: "Add facilities and insurance next.",
+            });
+            // Do not wait for profile.organization_id — a stale refresh sent
+            // invitees through leaveJoin() into skippable setup.
+            navigate("/app/search", { replace: true });
+            return;
+          }
+        } catch (err) {
+          if (cancelled) return;
+          claimedForUserId.current = user.id;
+          toast.error(err instanceof Error ? err.message : "Couldn't join your organization", {
+            description: "You can accept the invite from organization setup.",
+          });
+        }
+        if (cancelled) return;
+        leaveJoin();
+      })();
+      return () => {
+        cancelled = true;
+        window.clearTimeout(fallbackTimer);
+        claimingInvite.current = false;
+      };
     }
-  }, [loading, user, profile?.organization_id, isSuperAdmin, navigate, wantsImport, searchParams]);
+  }, [loading, user, profile?.organization_id, isSuperAdmin, isFacilityAdmin, navigate, wantsImport, searchParams, refresh]);
+
+  const resendConfirmation = async () => {
+    const workEmail = email.trim().toLowerCase();
+    if (!workEmail) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: workEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    setResending(false);
+    if (error) toast.error(error.message);
+    else toast.success("Confirmation sent", { description: `Check ${workEmail}.` });
+  };
 
   const focusAccountForm = () => {
     document.getElementById("create-account")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -103,7 +202,7 @@ export default function Join() {
     focusAccountForm();
     toast.message("Create your free account next", {
       description:
-        "After you claim or create your organization, you’ll upload the PDF, review the extract, and confirm before save.",
+        "After you create your organization you can import that PDF, or add facilities and insurance by hand.",
     });
   };
 
@@ -134,7 +233,8 @@ export default function Join() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !email.trim() || !password) {
+    const workEmail = email.trim().toLowerCase();
+    if (!fullName.trim() || !workEmail || !password) {
       toast.error("Fill in your name, work email, and password");
       return;
     }
@@ -143,13 +243,35 @@ export default function Join() {
       return;
     }
 
+    if (signingUpRef.current) {
+      toast.message("Still creating your account", {
+        description: "Wait for this attempt to finish, or sign in if the account was created.",
+      });
+      return;
+    }
+    signingUpRef.current = true;
     setSaving(true);
+    // Hold the signed-in effect before signUp returns a session. Auth can
+    // publish `user` in the same tick and would otherwise race this claim
+    // into skippable setup (or away from Search after a successful join).
+    claimingInvite.current = true;
+    let keepClaimHold = false;
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
+      setSaving(false);
+      claimingInvite.current = false;
+      toast.error("Taking too long to create your account", {
+        description: "Check your inbox, or sign in with this work email if the account was created.",
+      });
+    }, 20_000);
     try {
-      const allowed = await isEmailAuthAllowed(email);
-      if (!allowed) {
-        toast.error(PERSONAL_EMAIL_BLOCKED_MESSAGE.title, {
-          description: PERSONAL_EMAIL_BLOCKED_MESSAGE.description,
-        });
+      const emailGate = await emailAuthGate(workEmail);
+      if (emailGate !== "allowed") {
+        const message = emailGate === "unavailable"
+          ? EMAIL_AUTH_UNAVAILABLE_MESSAGE
+          : PERSONAL_EMAIL_BLOCKED_MESSAGE;
+        toast.error(message.title, { description: message.description });
         return;
       }
 
@@ -157,17 +279,28 @@ export default function Join() {
       if (pickedPdf) setPendingJoinPdf(pickedPdf);
 
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: workEmail,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: { full_name: fullName.trim() },
         },
       });
+      const alreadyRegistered =
+        (error && /already|registered|exists/i.test(error.message)) ||
+        Boolean(data?.user && (data.user.identities?.length ?? 1) === 0);
+      if (alreadyRegistered) {
+        toast.message("You already have an account", {
+          description: "Sign in with this work email. If you were invited, you’ll join automatically.",
+        });
+        navigate(`/login?email=${encodeURIComponent(workEmail)}`, { replace: true });
+        return;
+      }
       if (error) {
         toast.error(error.message);
         return;
       }
+      setFirstRunSignup();
       if (!data.session) {
         setAwaitingEmail(true);
         toast.success("Check your inbox", {
@@ -176,11 +309,36 @@ export default function Join() {
         });
         return;
       }
+      keepClaimHold = true;
       notifyAuthEvent("signup", fullName.trim());
+      try {
+        const claimed = await claimPendingOrgInvite();
+        if (data.user?.id) claimedForUserId.current = data.user.id;
+        if (claimed.joined) {
+          if (data.user?.id) joinedForUserId.current = data.user.id;
+          await refresh();
+          toast.success("Welcome to CenterLinked", {
+            description: "You've joined your organization. Add facilities and insurance next.",
+          });
+          navigate("/app/search", { replace: true });
+          return;
+        }
+      } catch (err) {
+        if (data.user?.id) claimedForUserId.current = data.user.id;
+        toast.error(err instanceof Error ? err.message : "Couldn't join your organization", {
+          description: "You can accept the invite on the next screen.",
+        });
+      }
       toast.success("Welcome to CenterLinked");
       navigate("/setup-organization", { replace: true });
     } finally {
-      setSaving(false);
+      window.clearTimeout(fallbackTimer);
+      signingUpRef.current = false;
+      if (!timedOut) setSaving(false);
+      // Keep the hold when a session exists — Join unmounts after navigate.
+      // Clearing here would let the effect send a just-joined invitee to setup
+      // before profiles.organization_id lands.
+      if (!keepClaimHold) claimingInvite.current = false;
     }
   };
 
@@ -202,7 +360,7 @@ export default function Join() {
         <div className="mb-6 flex items-center justify-between gap-3 lg:mb-10">
           <Logo to="/" size="md" />
           <Link
-            to="/login"
+            to={email.trim() ? `/login?email=${encodeURIComponent(email.trim())}` : "/login"}
             className="text-sm font-medium text-primary hover:underline"
             onClick={() => {
               if (wantsImport) setJoinImportIntent();
@@ -222,8 +380,8 @@ export default function Join() {
               Join the referral network.
             </h1>
             <p className="mt-3 max-w-xl text-[15px] text-muted-foreground sm:text-base">
-              Create a free work-email account. Then search in-network programs, or list your
-              organization by importing a facilities PDF.
+              Create a free work-email account. Search who accepts what insurance, invite other
+              BD reps, and add your organization and contracts when you are ready.
             </p>
 
             <ol className="mt-8 space-y-3">
@@ -243,79 +401,93 @@ export default function Join() {
               ))}
             </ol>
 
-            <div
-              className="mt-6 rounded-2xl border-2 border-dashed border-primary/30 bg-card/80 p-4 sm:p-5"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                void onPdfChosen(e.dataTransfer.files?.[0]);
-              }}
-            >
-              <p className="font-heading font-semibold">Import your facilities PDF</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Upload a one-pager or insurance list. We extract facilities, contracts, and images.
-                You confirm the extract is correct before anything is committed.
-              </p>
-
-              {pickedPdfName ? (
-                <div className="mt-4 flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 px-3 py-3">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{pickedPdfName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {pickedPdf
-                        ? `${formatBytes(pickedPdf.size)} · selected — not saved yet`
-                        : "Selected on this device — you’ll confirm it again if you leave this tab"}
-                    </p>
-                  </div>
-                  <Button type="button" variant="ghost" size="icon" onClick={clearPickedPdf} aria-label="Remove PDF">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Button
-                    type="button"
-                    variant="hero"
-                    size="lg"
-                    className="w-full sm:w-auto"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-4 w-4" />
-                    Choose facilities PDF
-                  </Button>
-                  <button
-                    type="button"
-                    className="text-sm font-medium text-primary hover:underline"
-                    onClick={startPdfImport}
-                  >
-                    I’ll upload after I create my account
-                  </button>
-                </div>
-              )}
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/pdf,.pdf"
-                className="hidden"
-                onChange={(e) => {
-                  void onPdfChosen(e.target.files?.[0]);
+            {wantsImport || pickedPdfName ? (
+              <div
+                className="mt-6 rounded-2xl border-2 border-dashed border-primary/30 bg-card/80 p-4 sm:p-5"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  void onPdfChosen(e.dataTransfer.files?.[0]);
                 }}
-              />
+              >
+                <p className="font-heading font-semibold">Import your facilities PDF</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Upload a one-pager or insurance list. We extract facilities, contracts, and images.
+                  You confirm the extract is correct before anything is committed.
+                </p>
 
-              <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                Nothing is saved until you review and confirm. Missing data stays blank — we do not
-                invent contracts or addresses. PDF up to 15MB.
+                {pickedPdfName ? (
+                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 px-3 py-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{pickedPdfName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {pickedPdf
+                          ? `${formatBytes(pickedPdf.size)} · selected — not saved yet`
+                          : "Selected on this device — you’ll confirm it again if you leave this tab"}
+                      </p>
+                    </div>
+                    <Button type="button" variant="ghost" size="icon" onClick={clearPickedPdf} aria-label="Remove PDF">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Button
+                      type="button"
+                      variant="hero"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Choose facilities PDF
+                    </Button>
+                    <button
+                      type="button"
+                      className="text-sm font-medium text-primary hover:underline"
+                      onClick={startPdfImport}
+                    >
+                      I’ll upload the PDF after I create my account
+                    </button>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    void onPdfChosen(e.target.files?.[0]);
+                  }}
+                />
+
+                <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  Nothing is saved until you review and confirm. Missing data stays blank — we do not
+                  invent contracts or addresses. PDF up to 15MB.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-6 text-sm text-muted-foreground">
+                Have a facilities PDF?{" "}
+                <button
+                  type="button"
+                  className="font-medium text-primary hover:underline"
+                  onClick={startPdfImport}
+                >
+                  Organization admins can import it after setup
+                </button>
+                . You can also add facilities and contracts by hand.
               </p>
-            </div>
+            )}
 
             <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
               <SearchIcon className="h-4 w-4 shrink-0" />
-              Only here to search? Create the same free account, then skip listing for now.
+              Only here to search or invite teammates? Create the same free account, then skip listing for now.
             </p>
           </section>
 
@@ -326,9 +498,9 @@ export default function Join() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   {wantsImport
                     ? pickedPdfName
-                      ? `Next you’ll claim your organization, then review ${pickedPdfName} before save.`
-                      : "After this, you’ll claim your organization, upload the PDF, and review the extract before save."
-                    : "Work email required. Free to sign up, no card required."}
+                      ? `After you create your organization, admins can review ${pickedPdfName} before save. You can also add facilities by hand.`
+                      : "After you create your organization, admins can import a PDF. You can also add facilities and insurance by hand."
+                    : "Work email required. Free to sign up, no card required. Organization can wait."}
                 </p>
               </div>
 
@@ -336,12 +508,30 @@ export default function Join() {
                 <div className="space-y-3 rounded-xl border border-border/70 bg-muted/40 p-5 text-center">
                   <p className="font-heading font-semibold">Confirm your work email</p>
                   <p className="text-sm text-muted-foreground">
-                    Click the link we sent to finish creating your free account.
-                    {wantsImport ? " We’ll continue to PDF import after you sign in." : ""}
+                    Click the link we sent to{" "}
+                    <span className="font-medium text-foreground">{email.trim().toLowerCase()}</span> to finish
+                    creating your free account. Use this exact work email — that is how an invite
+                    connects you to your organization.
+                    {wantsImport
+                      ? " After you sign in, organization admins can import the PDF. Everyone else can add facilities by hand."
+                      : ""}
                   </p>
-                  <Button asChild variant="outline">
-                    <Link to="/login">Sign in</Link>
-                  </Button>
+                  <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
+                    <Button type="button" onClick={() => void resendConfirmation()} disabled={resending}>
+                      {resending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Sending…
+                        </>
+                      ) : (
+                        "Resend confirmation"
+                      )}
+                    </Button>
+                    <Button asChild variant="outline">
+                      <Link to={email.trim() ? `/login?email=${encodeURIComponent(email.trim().toLowerCase())}` : "/login"}>
+                        Sign in
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -409,13 +599,14 @@ export default function Join() {
                     onBeforeSignIn={() => {
                       if (wantsImport) setJoinImportIntent();
                       if (pickedPdf) setPendingJoinPdf(pickedPdf);
+                      setFirstRunSignup();
                     }}
                   />
 
                   <p className="mt-6 text-center text-sm text-muted-foreground">
                     Already have an account?{" "}
                     <Link
-                      to="/login"
+                      to={email.trim() ? `/login?email=${encodeURIComponent(email.trim())}` : "/login"}
                       className="font-medium text-primary hover:underline"
                       onClick={() => {
                         if (wantsImport) setJoinImportIntent();

@@ -49,7 +49,7 @@ export function Pricing() {
     if (authLoading) return;
 
     if (!user) {
-      navigate("/signup", {
+      navigate("/join", {
         state: {
           from: "/setup-organization",
           checkoutPlan: { membershipTier, interval, doneForYou, facilityCount },
@@ -247,7 +247,7 @@ export function Pricing() {
 
               {quote.isEnterprise ? (
                 <Button asChild variant="hero" size="lg" className="mt-8 w-full rounded-full">
-                  <Link to="/signup">
+                  <Link to="/join">
                     Create your account
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>

@@ -9,7 +9,7 @@ export type AccessRequestNotifyPayload = {
   notes?: string;
 };
 
-async function postJson(path: string, body: unknown, auth = false) {
+async function postJson(path: string, body: unknown, auth = false, timeoutMs?: number) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (auth) {
     const { data } = await supabase.auth.getSession();
@@ -18,11 +18,26 @@ async function postJson(path: string, body: unknown, auth = false) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(path, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
+  const controller = timeoutMs ? new AbortController() : undefined;
+  const timer = timeoutMs
+    ? window.setTimeout(() => controller?.abort(), timeoutMs)
+    : undefined;
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller?.signal,
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("Email request timed out");
+    }
+    throw err;
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
 
   const json = (await res.json().catch(() => ({}))) as {
     error?: string;
@@ -65,12 +80,12 @@ export async function sendOrgWelcomeEmail(input: {
 }
 
 /**
- * Email a pending org invite. Caller must be a facility admin of the org and a
+ * Email a pending org invite. Caller must be an org member (or admin) and a
  * matching `pending` row must already exist in `org_invites` — create the invite
  * via `create_org_invite` first.
  */
 export async function sendOrgInvite(input: { organization_id: string; email: string }) {
-  return postJson("/api/send-org-invite", input, true);
+  return postJson("/api/send-org-invite", input, true, 20_000);
 }
 
 /** Super-admin only. Returns the secret launch-import URL if LAUNCH_IMPORT_TOKEN is set. */

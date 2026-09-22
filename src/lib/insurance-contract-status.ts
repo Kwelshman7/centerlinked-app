@@ -213,6 +213,17 @@ export function insuranceMatchLabel(status: InsuranceMatchStatus): string {
   return MATCH_LABELS[status];
 }
 
+export const OUT_OF_NETWORK_ONLY_LABEL = "Out of Network Only";
+
+/** True when the facility has no in-network contract. A missing load is not this list. */
+export function isOutOfNetworkOnlyFacility(
+  contracts: Array<{ in_network?: boolean | null }>,
+  options?: { selfPayOnly?: boolean | null },
+): boolean {
+  if (options?.selfPayOnly) return false;
+  return !contracts.some((contract) => contract.in_network);
+}
+
 /**
  * Bulk-link helper. Exact name, alias, or known map only.
  * Does not use contains/fuzzy matching — uncertain labels stay unlinked.

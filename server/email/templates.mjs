@@ -276,9 +276,14 @@ export function accountCreatedEmail({ recipientName }) {
   const bodyHtml = `
     ${heading("Welcome to CenterLinked")}
     ${para(`Hi ${escapeHtml(name)},`)}
-    ${para("Your account is ready. CenterLinked is the private referral network for treatment business-development teams — one live organization page your partners can reopen.")}
-    ${label("Next step")}
-    ${para("Sign in with this email. If your team already invited you, you will land on that organization automatically. Otherwise you can join or create your organization.")}
+    ${para("Your free work-email account is ready. No card required. CenterLinked is the private tool treatment BD reps use to find who accepts what insurance.")}
+    ${label("What you can do now")}
+    ${listItems([
+      "Search approved programs by insurance, location, and level of care",
+      "Invite other BD reps — they sign up free and can add their own organization",
+      "Add your organization, facilities, and insurance contracts when you are ready",
+    ])}
+    ${para("If a teammate already invited you, sign in with this same email and you will join that organization automatically.")}
     ${ctaButton(login, "Sign in to CenterLinked")}
     ${supportLine()}
   `;
@@ -286,7 +291,7 @@ export function accountCreatedEmail({ recipientName }) {
   return {
     subject: "Welcome to CenterLinked",
     html: layout({
-      preheader: "Your account is ready. Sign in to join your organization.",
+      preheader: "Your free account is ready. Search insurance, invite BD reps, and add contracts when you are ready.",
       title: "Welcome to CenterLinked",
       bodyHtml,
     }),
@@ -295,10 +300,14 @@ export function accountCreatedEmail({ recipientName }) {
       "",
       `Hi ${name},`,
       "",
-      "Your account is ready. CenterLinked is the private referral network for treatment BD teams.",
+      "Your free work-email account is ready. No card required.",
       "",
-      "Sign in with this email. If your team already invited you, you will land on that organization automatically.",
-      "Otherwise you can join or create your organization.",
+      "What you can do now:",
+      "- Search approved programs by insurance, location, and level of care",
+      "- Invite other BD reps — they sign up free and can add their own organization",
+      "- Add your organization, facilities, and insurance contracts when you are ready",
+      "",
+      "If a teammate already invited you, sign in with this same email and you will join that organization automatically.",
       "",
       `Sign in: ${login}`,
       "",
@@ -314,7 +323,7 @@ export function orgAssignedEmail({ recipientName, organizationName, alreadyLinke
   const name = recipientName?.trim() || "there";
   const org = organizationName?.trim() || "your organization";
   const login = appLoginUrl();
-  const signupUrl = `${siteUrl()}/signup`;
+  const signupUrl = `${siteUrl()}/join`;
 
   const bodyHtml = `
     ${heading(`You are the admin for ${escapeHtml(org)}`)}
@@ -369,7 +378,7 @@ export function orgClaimInviteEmail({ recipientName, organizationName }) {
   const name = recipientName?.trim() || "there";
   const org = organizationName?.trim() || "your organization";
   const login = appLoginUrl();
-  const signupUrl = `${siteUrl()}/signup`;
+  const signupUrl = `${siteUrl()}/join`;
 
   const bodyHtml = `
     ${heading(`Claim ${escapeHtml(org)} on CenterLinked — free`)}
@@ -574,11 +583,16 @@ export function verificationReminderEmail({ recipientName, organizationName, fac
  * The invite is claimed on first login via `claim_pending_org_invite`,
  * so the recipient must sign up with the exact invited address.
  */
-export function orgInviteEmail({ organizationName, inviterName, roleAtOrg }) {
+export function orgInviteEmail({ organizationName, inviterName, roleAtOrg, email }) {
   const org = organizationName?.trim() || "an organization";
   const inviter = inviterName?.trim() || "A teammate";
-  const login = appLoginUrl();
-  const signupUrl = `${siteUrl()}/signup`;
+  const invitedEmail = String(email || "").trim().toLowerCase();
+  const signupUrl = invitedEmail
+    ? `${siteUrl()}/join?email=${encodeURIComponent(invitedEmail)}`
+    : `${siteUrl()}/join`;
+  const login = invitedEmail
+    ? `${siteUrl()}/login?email=${encodeURIComponent(invitedEmail)}`
+    : appLoginUrl();
   const roleLabel = roleAtOrg === "facility_admin" ? "an organization admin" : "a team member";
 
   const bodyHtml = `

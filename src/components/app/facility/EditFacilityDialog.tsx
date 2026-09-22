@@ -53,8 +53,11 @@ interface Props {
   contracts: ExistingContract[];
   onSaved: () => void;
   triggerClassName?: string;
+  triggerLabel?: string;
   /** Enables team-member picker for BD assignment. */
   organizationId?: string | null;
+  /** Parent already failed to load contracts — do not treat empty as “no insurance”. */
+  contractsLoadFailed?: boolean;
 }
 
 function toDraft(f: FacilityLike, contracts: ExistingContract[]): FacilityDraft {
@@ -94,7 +97,9 @@ export function EditFacilityDialog({
   contracts,
   onSaved,
   triggerClassName,
+  triggerLabel = "Edit Facility",
   organizationId,
+  contractsLoadFailed = false,
 }: Props) {
   const { profile, isFacilityAdmin, isSuperAdmin } = useAuth();
   const canManageVisibility = isFacilityAdmin || isSuperAdmin;
@@ -107,6 +112,7 @@ export function EditFacilityDialog({
   const [contractsLoading, setContractsLoading] = useState(false);
   const [contractsUnavailable, setContractsUnavailable] = useState(false);
   const loadToken = useRef(0);
+  const savingRef = useRef(false);
 
   const handleOpen = (next: boolean) => {
     if (next) {
@@ -122,10 +128,16 @@ export function EditFacilityDialog({
           .eq("facility_id", facility.id);
         if (token !== loadToken.current) return;
         if (error) {
-          setContractsUnavailable(true);
-          setDraft(toDraft(facility, []));
+          // Keep what the page already loaded. An empty failed reload must not
+          // lock first-insurance entry, and a failed reload must not wipe payers.
+          setDraft(toDraft(facility, contracts));
+          const lockInsurance = contracts.length > 0 || contractsLoadFailed;
+          setContractsUnavailable(lockInsurance);
           toast.error("Could not load insurance contracts", {
-            description: "Facility details can still be saved. Insurance will be left unchanged.",
+            description:
+              lockInsurance
+                ? "Facility details can still be saved. Insurance will be left unchanged."
+                : "You can still add payers. Try again if this keeps happening.",
           });
         } else {
           setContractsUnavailable(false);
@@ -156,6 +168,13 @@ export function EditFacilityDialog({
       return;
     }
     if (contractsLoading) return;
+    if (savingRef.current) {
+      toast.message("Still saving", {
+        description: "Wait for this attempt to finish before saving again.",
+      });
+      return;
+    }
+    savingRef.current = true;
     setSaving(true);
     try {
       const result = await saveFacilityWithContracts({
@@ -175,7 +194,10 @@ export function EditFacilityDialog({
       );
       setOpen(false);
       onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't save those changes");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -191,7 +213,7 @@ export function EditFacilityDialog({
         className={triggerClassName}
         onClick={() => handleOpen(true)}
       >
-        <Pencil className="h-3.5 w-3.5" /> Edit Facility
+        <Pencil className="h-3.5 w-3.5" /> {triggerLabel}
       </Button>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>

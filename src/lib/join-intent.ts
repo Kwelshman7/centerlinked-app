@@ -54,6 +54,20 @@ export function consumeJoinImportPath(): string | null {
   return JOIN_PDF_IMPORT_PATH;
 }
 
+/**
+ * PDF import is admin-only. Invited BD reps who tapped the Join PDF option
+ * must not land on that dead end — clear the intent and continue elsewhere.
+ */
+export function consumeJoinImportPathForAdmin(canImport: boolean): string | null {
+  if (!hasJoinImportIntent()) return null;
+  if (!canImport) {
+    remove(INTENT_KEY);
+    remove(POST_LOGIN_KEY);
+    return null;
+  }
+  return consumeJoinImportPath();
+}
+
 export function setPendingJoinPdf(file: File) {
   pendingJoinPdf = file;
   write(PDF_NAME_KEY, file.name);

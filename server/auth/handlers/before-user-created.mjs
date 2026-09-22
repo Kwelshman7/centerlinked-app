@@ -103,7 +103,7 @@ export async function handleBeforeUserCreated(rawBody, headers = {}) {
 
   if (!allowed) {
     return reject(
-      "Personal email addresses aren't accepted unless CenterLinked has approved an exception. Please use your work email or request access.",
+      "Personal email addresses aren't accepted unless CenterLinked has approved that exact address. Please use your work email.",
     );
   }
 

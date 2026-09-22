@@ -8,7 +8,7 @@ const productLinkColumns = [
     { label: "Pricing", href: "#pricing" },
   ],
   [
-    { label: "Create Your Profile", href: "/request-access", isRoute: true },
+    { label: "Create Your Profile", href: "/join", isRoute: true },
     { label: "Sign In", href: "/login", isRoute: true },
   ],
 ] as const;
@@ -31,10 +31,10 @@ export function Footer() {
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
               Questions?{" "}
-              <Link to="/request-access" className="text-primary hover:underline">
-                Create Your Profile
+              <Link to="/join" className="text-primary hover:underline">
+                Create a free account
               </Link>{" "}
-              and we&apos;ll follow up.
+              with your work email.
             </p>
           </div>
 

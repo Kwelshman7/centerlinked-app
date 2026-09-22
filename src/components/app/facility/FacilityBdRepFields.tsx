@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useOrgTeamMembers } from "@/hooks/useOrgTeamMembers";
+import { hasAssignedBdContact } from "@/lib/bd-contact";
 import { cn } from "@/lib/utils";
 
 export interface BdContactValue {
@@ -125,6 +126,11 @@ export function FacilityBdRepFields({ organizationId, value, onChange, className
           onChange={(e) => onChange({ ...value, bd_contact_email: e.target.value })}
         />
       </div>
+      {value.bd_contact_name.trim() && !hasAssignedBdContact(value) ? (
+        <p className="text-xs text-warning-foreground">
+          Search only shows this contact when you add a phone or email.
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -29,8 +29,8 @@ export function FinalCTA() {
               size="xl"
               className="group shadow-lg shadow-primary/20 w-full sm:w-auto"
             >
-              <Link to="/request-access">
-                Claim Your Organization Profile Today
+              <Link to="/join">
+                Join free with your work email
                 <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </Button>
