@@ -10,11 +10,13 @@ export function InviteColleagueCard({
   description = "They sign up free with a work email, then can add their organization, facilities, and insurance contracts.",
   compact = false,
   inline = false,
+  showEmail = true,
 }: {
   title?: string;
   description?: string;
   compact?: boolean;
   inline?: boolean;
+  showEmail?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const joinUrl = `${window.location.origin}/join`;
@@ -39,9 +41,11 @@ export function InviteColleagueCard({
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           {copied ? "Link copied" : "Copy invite link"}
         </Button>
-        <Button asChild size="sm" variant="outline">
-          <a href={mailto}>Email a colleague</a>
-        </Button>
+        {showEmail ? (
+          <Button asChild size="sm" variant="outline">
+            <a href={mailto}>Email a colleague</a>
+          </Button>
+        ) : null}
       </div>
     );
   }
@@ -62,9 +66,11 @@ export function InviteColleagueCard({
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           {copied ? "Link copied" : "Copy invite link"}
         </Button>
-        <Button asChild variant="outline">
-          <a href={mailto}>Email a colleague</a>
-        </Button>
+        {showEmail ? (
+          <Button asChild variant="outline">
+            <a href={mailto}>Email a colleague</a>
+          </Button>
+        ) : null}
       </div>
     </Card>
   );

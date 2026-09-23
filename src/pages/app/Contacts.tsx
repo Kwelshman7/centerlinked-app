@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog,
@@ -42,7 +43,8 @@ import {
   type ProfessionalCard,
 } from "@/lib/professional-network";
 import { useSavedProfessionals } from "@/hooks/useSavedProfessionals";
-import { sanitizePhone } from "@/lib/phone";
+import { formatPhoneDisplay, sanitizePhone } from "@/lib/phone";
+import { resolveStateCode } from "@/lib/us-states";
 import { isPartnerVisibleFacility } from "@/lib/facility-visibility";
 import { cn } from "@/lib/utils";
 
@@ -427,7 +429,7 @@ export default function Contacts() {
             {contacts.length.toLocaleString("en-US")} {contacts.length === 1 ? "person" : "people"} in your list
           </p>
         </div>
-        <InviteColleagueCard inline />
+        <InviteColleagueCard inline showEmail={false} />
       </div>
 
       {requests.length > 0 ? (
@@ -482,13 +484,37 @@ export default function Contacts() {
 
       <Card className="min-w-0 overflow-hidden">
         {loading ? (
-          <div className="divide-y divide-border/60">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="px-4 py-3">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="mt-2 h-3 w-28" />
-              </div>
-            ))}
+          <div>
+            <div className="divide-y divide-border/60 md:hidden">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-2 px-3 py-3">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              ))}
+            </div>
+            <Table className="hidden table-fixed md:table">
+              <ContactTableHeader />
+              <TableBody>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent">
+                    <TableCell className="px-3 py-2.5">
+                      <Skeleton className="h-4 w-32" />
+                    </TableCell>
+                    <TableCell className="px-3 py-2.5">
+                      <Skeleton className="h-4 w-28" />
+                    </TableCell>
+                    <TableCell className="px-3 py-2.5">
+                      <Skeleton className="h-4 w-36" />
+                    </TableCell>
+                    <TableCell className="px-3 py-2.5">
+                      <Skeleton className="h-4 w-8" />
+                    </TableCell>
+                    <TableCell className="px-2 py-2.5" />
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : pageRows.length === 0 ? (
           <div className="space-y-3 p-8 text-center text-sm text-muted-foreground">
@@ -522,10 +548,10 @@ export default function Contacts() {
           </div>
         ) : (
           <>
-            <ul className="divide-y divide-border/60">
+            <ul className="divide-y divide-border/60 md:hidden">
               {pageRows.map((contact) => (
                 <li key={contact.id}>
-                  <ContactListRow
+                  <ContactMobileRow
                     contact={contact}
                     menuOpen={menuOpenId === contact.id}
                     onMenuOpenChange={(open) => setMenuOpenId(open ? contact.id : null)}
@@ -538,6 +564,24 @@ export default function Contacts() {
                 </li>
               ))}
             </ul>
+            <Table className="hidden table-fixed md:table">
+              <ContactTableHeader />
+              <TableBody>
+                {pageRows.map((contact) => (
+                  <ContactListRow
+                    key={contact.id}
+                    contact={contact}
+                    menuOpen={menuOpenId === contact.id}
+                    onMenuOpenChange={(open) => setMenuOpenId(open ? contact.id : null)}
+                    onOpen={() => void openContact(contact)}
+                    onDelete={() => {
+                      setMenuOpenId(null);
+                      setRemoveTarget(contact);
+                    }}
+                  />
+                ))}
+              </TableBody>
+            </Table>
             {pageCount > 1 ? (
               <div className="flex flex-col gap-2 border-t border-border/60 px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <p>
@@ -630,6 +674,7 @@ export default function Contacts() {
                 </p>
                 <InviteColleagueCard
                   compact
+                  showEmail={false}
                   title="Invite them to CenterLinked"
                   description="They sign up free with a work email, then can add their organization and insurance contracts."
                 />
@@ -660,93 +705,176 @@ export default function Contacts() {
   );
 }
 
-function ContactListRow({
-  contact,
-  menuOpen,
-  onMenuOpenChange,
-  onOpen,
-  onDelete,
-}: {
+function ContactTableHeader() {
+  return (
+    <TableHeader>
+      <TableRow className="hover:bg-transparent">
+        <TableHead className="h-9 w-[26%] px-3 text-xs font-semibold uppercase tracking-[0.06em]">Name</TableHead>
+        <TableHead className="h-9 w-40 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Contact #</TableHead>
+        <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Organization</TableHead>
+        <TableHead className="h-9 w-16 px-3 text-xs font-semibold uppercase tracking-[0.06em]">State</TableHead>
+        <TableHead className="h-9 w-10 px-2" />
+      </TableRow>
+    </TableHeader>
+  );
+}
+
+type ContactRowProps = {
   contact: WorkspaceContact;
   menuOpen: boolean;
   onMenuOpenChange: (open: boolean) => void;
   onOpen: () => void;
   onDelete: () => void;
-}) {
+};
+
+function ContactActions({ contact, menuOpen, onMenuOpenChange, onOpen, onDelete }: ContactRowProps) {
   const tel = sanitizePhone(contact.phone);
   const email = contact.email?.trim() || "";
-  const orgName = contact.organization?.name || "No organization";
 
   return (
-    <div className="flex min-w-0 items-center gap-2 px-3 py-2.5 sm:px-4">
-      <button type="button" className="min-w-0 flex-1 text-left" onClick={onOpen}>
-        <p className="truncate font-medium leading-snug text-foreground">{contact.fullName}</p>
-        <p className="mt-0.5 truncate text-sm text-muted-foreground">{orgName}</p>
-      </button>
-      <Popover open={menuOpen} onOpenChange={onMenuOpenChange}>
-        <PopoverTrigger asChild>
-          <Button
+    <Popover open={menuOpen} onOpenChange={onMenuOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0 text-muted-foreground"
+          aria-label={`Actions for ${contact.fullName}`}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-48 p-1" onClick={(event) => event.stopPropagation()}>
+        <div className="flex flex-col">
+          {tel ? (
+            <a href={`tel:${tel}`} className={menuItemClass}>
+              <Phone className="h-3.5 w-3.5" />
+              Call
+            </a>
+          ) : (
+            <span className={cn(menuItemClass, "pointer-events-none opacity-40")}>
+              <Phone className="h-3.5 w-3.5" />
+              Call
+            </span>
+          )}
+          {tel ? (
+            <a href={`sms:${tel}`} className={menuItemClass}>
+              <MessageSquare className="h-3.5 w-3.5" />
+              Text
+            </a>
+          ) : (
+            <span className={cn(menuItemClass, "pointer-events-none opacity-40")}>
+              <MessageSquare className="h-3.5 w-3.5" />
+              Text
+            </span>
+          )}
+          {email ? (
+            <a href={`mailto:${email}`} className={menuItemClass}>
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </a>
+          ) : (
+            <span className={cn(menuItemClass, "pointer-events-none opacity-40")}>
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </span>
+          )}
+          <button type="button" className={menuItemClass} onClick={onOpen}>
+            <User className="h-3.5 w-3.5" />
+            View profile
+          </button>
+          <div className="my-1 h-px bg-border" />
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 text-muted-foreground"
-            aria-label={`Actions for ${contact.fullName}`}
-            onClick={(event) => event.stopPropagation()}
+            className={cn(menuItemClass, "text-destructive hover:bg-destructive/10")}
+            onClick={onDelete}
           >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-48 p-1" onClick={(event) => event.stopPropagation()}>
-          <div className="flex flex-col">
-            {tel ? (
-              <a href={`tel:${tel}`} className={menuItemClass}>
-                <Phone className="h-3.5 w-3.5" />
-                Call
-              </a>
-            ) : (
-              <span className={cn(menuItemClass, "pointer-events-none opacity-40")}>
-                <Phone className="h-3.5 w-3.5" />
-                Call
-              </span>
-            )}
-            {tel ? (
-              <a href={`sms:${tel}`} className={menuItemClass}>
-                <MessageSquare className="h-3.5 w-3.5" />
-                Text
-              </a>
-            ) : (
-              <span className={cn(menuItemClass, "pointer-events-none opacity-40")}>
-                <MessageSquare className="h-3.5 w-3.5" />
-                Text
-              </span>
-            )}
-            {email ? (
-              <a href={`mailto:${email}`} className={menuItemClass}>
-                <Mail className="h-3.5 w-3.5" />
-                Email
-              </a>
-            ) : (
-              <span className={cn(menuItemClass, "pointer-events-none opacity-40")}>
-                <Mail className="h-3.5 w-3.5" />
-                Email
-              </span>
-            )}
-            <button type="button" className={menuItemClass} onClick={onOpen}>
-              <User className="h-3.5 w-3.5" />
-              View profile
-            </button>
-            <div className="my-1 h-px bg-border" />
-            <button
-              type="button"
-              className={cn(menuItemClass, "text-destructive hover:bg-destructive/10")}
-              onClick={onDelete}
-            >
-              Delete
-            </button>
-          </div>
-        </PopoverContent>
-      </Popover>
+            Delete
+          </button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function ContactMobileRow({
+  contact,
+  menuOpen,
+  onMenuOpenChange,
+  onOpen,
+  onDelete,
+}: ContactRowProps) {
+  const tel = sanitizePhone(contact.phone);
+  const displayPhone = formatPhoneDisplay(contact.phone);
+  const orgName = contact.organization?.name || null;
+  const stateCode = resolveStateCode(contact.state);
+
+  return (
+    <div className="flex items-start gap-2 px-3 py-2.5">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <button type="button" className="min-w-0 truncate text-left font-medium leading-snug text-foreground" onClick={onOpen}>
+            {contact.fullName}
+          </button>
+          <span className="shrink-0 text-xs font-semibold text-muted-foreground">{stateCode || "—"}</span>
+        </div>
+        <p className="mt-0.5 flex min-w-0 items-baseline gap-1.5 text-sm text-muted-foreground">
+          {displayPhone && tel ? (
+            <a href={`tel:${tel}`} className="shrink-0 tabular-nums text-foreground hover:text-primary">
+              {displayPhone}
+            </a>
+          ) : (
+            <span className="shrink-0">—</span>
+          )}
+          <span aria-hidden>·</span>
+          <span className="min-w-0 truncate">{orgName || "No organization"}</span>
+        </p>
+      </div>
+      <ContactActions
+        contact={contact}
+        menuOpen={menuOpen}
+        onMenuOpenChange={onMenuOpenChange}
+        onOpen={onOpen}
+        onDelete={onDelete}
+      />
     </div>
+  );
+}
+
+function ContactListRow(props: ContactRowProps) {
+  const { contact, onOpen } = props;
+  const tel = sanitizePhone(contact.phone);
+  const displayPhone = formatPhoneDisplay(contact.phone);
+  const orgName = contact.organization?.name || null;
+  const stateCode = resolveStateCode(contact.state);
+
+  return (
+    <TableRow>
+      <TableCell className="px-3 py-2.5">
+        <button type="button" className="block w-full truncate text-left font-medium leading-snug text-foreground" onClick={onOpen}>
+          {contact.fullName}
+        </button>
+      </TableCell>
+      <TableCell className="px-3 py-2.5">
+        {displayPhone && tel ? (
+          <a href={`tel:${tel}`} className="block truncate tabular-nums text-foreground hover:text-primary">
+            {displayPhone}
+          </a>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </TableCell>
+      <TableCell className="truncate px-3 py-2.5 text-foreground">
+        {orgName || <span className="text-muted-foreground">—</span>}
+      </TableCell>
+      <TableCell className="px-3 py-2.5 font-medium text-foreground">
+        {stateCode || <span className="font-normal text-muted-foreground">—</span>}
+      </TableCell>
+      <TableCell className="px-2 py-2.5">
+        <ContactActions {...props} />
+      </TableCell>
+    </TableRow>
   );
 }
 

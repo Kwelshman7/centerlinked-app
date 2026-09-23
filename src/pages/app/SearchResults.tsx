@@ -568,27 +568,6 @@ export default function SearchResults() {
             <InviteColleagueCard inline />
           </div>
         </div>
-      ) : profile?.organization_id && ownFacilityCount != null && ownFacilityCount > 0 ? (
-        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            Add another facility and insurance, invite teammates, or share CenterLinked with a BD rep at another org.
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <AddFacilityDialog
-              organizationId={profile.organization_id}
-              onCreated={(facilityId) => {
-                setOwnFacilityCount((n) => (n == null ? 1 : n + 1));
-                if (facilityId) navigate(`/app/facilities/${facilityId}`);
-              }}
-              triggerLabel="Add facility and insurance"
-              triggerVariant="outline"
-            />
-            <Button asChild size="sm" variant="outline">
-              <Link to="/app/members">Invite teammates</Link>
-            </Button>
-            <InviteColleagueCard inline />
-          </div>
-        </div>
       ) : null}
     <div className="min-w-0 lg:flex lg:items-start lg:gap-6">
       <aside className="min-w-0 shrink-0 lg:sticky lg:top-16 lg:w-72 lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto xl:w-80">
