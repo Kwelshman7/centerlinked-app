@@ -42,7 +42,7 @@ export function PublicOrgSheetPreviewContent() {
 
         <main className="px-3.5 pt-2.5 pb-2 space-y-2.5 bg-white">
           <header className="space-y-1">
-            <h1 className="sr-only">{DEMO_ORG.orgName}</h1>
+            <p className="sr-only">{DEMO_ORG.orgName}</p>
             <ExpandableText text={DEMO_ORG.description} brand={BRAND} clampLines={3} preview />
           </header>
 

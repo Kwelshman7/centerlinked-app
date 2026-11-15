@@ -31,6 +31,7 @@ interface Props {
   contracts: EditableContract[];
   onSaved: () => void;
   triggerClassName?: string;
+  triggerLabel?: string;
 }
 
 export function EditInsuranceContractsDialog({
@@ -40,6 +41,7 @@ export function EditInsuranceContractsDialog({
   contracts,
   onSaved,
   triggerClassName,
+  triggerLabel = "Insurance",
 }: Props) {
   const { profile } = useAuth();
   const orgId = organizationId || profile?.organization_id || null;
@@ -130,7 +132,7 @@ export function EditInsuranceContractsDialog({
         className={triggerClassName}
         onClick={() => handleOpen(true)}
       >
-        <Pencil className="h-3.5 w-3.5" /> Edit
+        <Pencil className="h-3.5 w-3.5" /> {triggerLabel}
       </Button>
       <DialogContent className="max-w-lg">
         <DialogHeader>

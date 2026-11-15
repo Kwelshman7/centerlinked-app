@@ -8,11 +8,38 @@ It is invite-oriented and work-email gated. It does not store PHI, provide medic
 
 ## Pages
 
-- [Home](/): Product overview, pricing, and FAQ.
+- [Home](/): Product overview and FAQ.
+- [Pricing](/pricing): What is free, what membership includes, and how to cancel.
+- [About](/about): What the product is for, and what it deliberately does not do.
+- [Partners](/partners): List a program, or search if you place people.
+- [Contact](/contact): Write the team about a listing or a membership question.
 - [Login](/login): Sign in with a work email.
 - [Signup](/signup): Create an account (work email required).
 - [Request access](/request-access): Ask to join if you do not yet have an invite.
 - [Privacy](/privacy) and [Terms](/terms).
+
+## Who it is for, and who it is not for
+
+For: behavioral health business development reps, treatment programs, multi-site treatment organizations, and professional referral sources (hospitals, employee assistance programs, interventionists).
+
+Not for: patients or families looking for treatment on their own. Accounts require a work email, personal email domains are blocked unless approved, and the product stores no patient records, no charts, and no scheduling.
+
+## By audience
+
+- [BD reps](/for/bd-reps), [Treatment programs](/for/programs), [Multi-site organizations](/for/organizations), [Levels of care](/for/partners), [Referral sources](/for/referral-sources).
+
+## By capability
+
+- [Insurance-fit search](/platform/search), [Program listings](/platform/listings), [Monthly verification](/platform/verification), [Contacts](/platform/contacts).
+
+## Compared with the alternatives
+
+- [vs SAMHSA Treatment Locator](/vs/samhsa-treatment-locator): SAMHSA lists licensed facilities and addresses. CenterLinked adds the named in-network contract, the date someone last confirmed it, and the business development contact.
+- [vs payer provider directories](/vs/payer-directories): a payer directory answers for one carrier at a time and stops at the facility. CenterLinked searches payer, level of care, and city together and names the person to call.
+
+## Notes
+
+- [Insights index](/insights), covering insurance fit, monthly verification, and why a listing needs a person.
 
 ## Pricing
 

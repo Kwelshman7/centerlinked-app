@@ -22,7 +22,8 @@ import { orgPublicPath } from "@/lib/public-urls";
 import { resolveStateCode } from "@/lib/us-states";
 import { OrgStateFilter } from "@/components/public/OrgStateFilter";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
-import { FacilityGridCard } from "@/components/FacilityGridCard";
+import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -33,6 +34,14 @@ interface OrgRow {
   logo_url: string | null;
   brand_color: string | null;
   verified: boolean | null;
+}
+
+interface ContractRow {
+  id: string;
+  facility_id: string;
+  payer_id: string | null;
+  payer_name: string;
+  in_network: boolean;
 }
 
 interface FacilityRow {
@@ -80,6 +89,7 @@ export function OrgDashboard({
   const canManageFacilityVisibility = adminMode || isFacilityAdmin || isSuperAdmin;
   const [org, setOrg] = useState<OrgRow | null>(null);
   const [allFacilities, setAllFacilities] = useState<FacilityRow[]>([]);
+  const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [facilityPage, setFacilityPage] = useState(1);
   const [selectedState, setSelectedState] = useState("all");
   const [facilitiesLoading, setFacilitiesLoading] = useState(false);
@@ -122,7 +132,7 @@ export function OrgDashboard({
         ? `/app/facilities/${allFacilities[0].id}`
         : "/app#org-facilities";
 
-  const membersHref = adminMode ? null : "/app/members";
+  const membersHref = adminMode ? null : "/app/contacts";
 
   const uploadPdfHref = `/app/facilities/upload-pdf?orgId=${organizationId}`;
 
@@ -141,8 +151,24 @@ export function OrgDashboard({
     if (error) {
       toast.error("Couldn't load your facilities", { description: error.message });
       setAllFacilities([]);
+      setContracts([]);
     } else {
-      setAllFacilities((f as FacilityRow[]) ?? []);
+      const facs = (f as FacilityRow[]) ?? [];
+      setAllFacilities(facs);
+      if (facs.length === 0) {
+        setContracts([]);
+      } else {
+        const { data: c, error: contractsError } = await supabase
+          .from("insurance_contracts")
+          .select("id,facility_id,payer_id,payer_name,in_network")
+          .in("facility_id", facs.map((row) => row.id));
+        if (contractsError) {
+          toast.error("Couldn't load insurance contracts", { description: contractsError.message });
+          setContracts([]);
+        } else {
+          setContracts((c as ContractRow[]) ?? []);
+        }
+      }
     }
     setFacilitiesLoading(false);
   }, [organizationId]);
@@ -405,53 +431,75 @@ export function OrgDashboard({
           <div className="text-center py-8 text-sm text-muted-foreground">No facilities in this state.</div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-              {pageFacilities.map((f) => (
-                <div key={f.id} className="min-w-0 flex flex-col gap-2">
-                  <FacilityGridCard
-                    facility={f}
-                    href={facilityDetailHref(f.id)}
-                  />
-                  <div className="flex items-start justify-between gap-2 px-0.5">
-                    <div className="min-w-0 text-xs leading-snug text-muted-foreground">
-                      {f.hidden_from_org_page ? (
-                        <span className="inline-flex items-center gap-1 text-amber-700/90">
-                          <EyeOff className="h-3 w-3 shrink-0" /> Hidden from public organization profile
-                        </span>
-                      ) : f.bd_contact_name?.trim() ? (
-                        <p>
-                          <span className="font-medium text-foreground/80">BD:</span>{" "}
-                          <span className="text-foreground/90">{f.bd_contact_name.trim()}</span>
-                        </p>
-                      ) : (
-                        <p className="text-amber-700/80">No BD assigned</p>
-                      )}
-                    </div>
-                    <div className="flex items-center shrink-0 gap-0.5">
-                      <Button asChild type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]">
-                        <Link to={facilityDetailHref(f.id)}>
-                          <Pencil className="h-3.5 w-3.5" /> Edit
-                        </Link>
-                      </Button>
-                      {canManageFacilityVisibility && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-[11px]"
-                          disabled={visibilitySavingId === f.id}
-                          onClick={() => void toggleFacilityVisibility(f)}
-                          aria-label={f.hidden_from_org_page ? `Show ${f.name} on the public organization profile` : `Hide ${f.name} from the public organization profile`}
-                        >
-                          {f.hidden_from_org_page ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                          {f.hidden_from_org_page ? "Show" : "Hide"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Listing</TableHead>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Location</TableHead>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">BD contact</TableHead>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Public</TableHead>
+                    <TableHead className="h-9 px-3 text-right text-xs font-semibold uppercase tracking-[0.06em]">In-network</TableHead>
+                    <TableHead className="h-9 px-3 text-right text-xs font-semibold uppercase tracking-[0.06em]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pageFacilities.map((f) => {
+                    const inNetwork = contracts.filter((c) => c.facility_id === f.id && c.in_network);
+                    return (
+                      <TableRow key={f.id}>
+                        <TableCell className="px-3 py-2 font-medium">
+                          <Link to={facilityDetailHref(f.id)} className="hover:text-primary">
+                            {f.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-muted-foreground">
+                          {[f.city, f.state].filter(Boolean).join(", ") || "—"}
+                        </TableCell>
+                        <TableCell className="px-3 py-2">
+                          {f.bd_contact_name?.trim() ? (
+                            f.bd_contact_name
+                          ) : (
+                            <span className="text-amber-700/80">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-muted-foreground">
+                          {f.hidden_from_org_page ? "Hidden" : "Shown"}
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right tabular-nums">{inNetwork.length}</TableCell>
+                        <TableCell className="px-3 py-2">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            <EditInsuranceContractsDialog
+                              facilityId={f.id}
+                              organizationId={organizationId}
+                              facilityName={f.name}
+                              contracts={inNetwork}
+                              onSaved={() => void reloadFacilities()}
+                            />
+                            <Button asChild type="button" variant="outline" size="sm">
+                              <Link to={facilityDetailHref(f.id)}>
+                                <Pencil className="h-3.5 w-3.5" /> Edit
+                              </Link>
+                            </Button>
+                            {canManageFacilityVisibility && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={visibilitySavingId === f.id}
+                                onClick={() => void toggleFacilityVisibility(f)}
+                                aria-label={f.hidden_from_org_page ? `Show ${f.name} on the public organization profile` : `Hide ${f.name} from the public organization profile`}
+                              >
+                                {f.hidden_from_org_page ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                                {f.hidden_from_org_page ? "Show" : "Hide"}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
 
             {showFacilityPagination && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 mt-1 border-t border-border/60">

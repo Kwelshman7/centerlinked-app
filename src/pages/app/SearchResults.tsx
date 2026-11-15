@@ -10,6 +10,7 @@ import { SearchForm } from "@/components/app/search/SearchForm";
 import { InviteColleagueCard } from "@/components/app/InviteColleagueCard";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
 import { SearchProgramRow } from "@/components/app/search/SearchProgramRow";
+
 import { toast } from "sonner";
 import { useReferralNetwork } from "@/hooks/useReferralNetwork";
 import {
@@ -507,7 +508,7 @@ export default function SearchResults() {
       ? "Searching…"
       : loadError
         ? "Could not load results"
-        : `${programs.length} ${programs.length === 1 ? "program" : "programs"}`;
+        : `${programs.length} ${programs.length === 1 ? "match" : "matches"}`;
 
   const chips: Array<{ key: string; label: string; clear: Partial<SearchFilterValues> }> = [];
   if (payerId) chips.push({ key: "payer", label: payerName || "Insurance", clear: { payerId: null, payerName: "" } });
@@ -563,7 +564,7 @@ export default function SearchResults() {
               triggerLabel="Add facility and insurance"
             />
             <Button asChild size="sm" variant="outline">
-              <Link to="/app/members">Invite teammates</Link>
+              <Link to="/app/contacts">Invite teammates</Link>
             </Button>
             <InviteColleagueCard inline />
           </div>
@@ -574,9 +575,9 @@ export default function SearchResults() {
         <div className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="font-heading text-xl font-bold tracking-tight">Find in-network care</h1>
+              <h1 className="font-heading text-xl font-bold tracking-tight">Who to call</h1>
               <p className={cn("mt-1 text-sm text-muted-foreground lg:mb-4", canSearch && "hidden lg:block")}>
-                Search approved programs by insurance, location, and level of care. Each result includes who to call.
+                Insurance and location first. Each result is the person at a program that accepts it.
               </p>
             </div>
             <button
@@ -604,10 +605,10 @@ export default function SearchResults() {
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
           <div className="min-w-0">
             <h2 className="font-heading text-lg font-semibold tracking-tight">
-              {resultCount ?? "Programs"}
+              {resultCount ?? "People"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {canSearch ? summary : "Choose insurance or a state to see matching programs."}
+              {canSearch ? summary : "Choose an insurance or a state. Preferred partners are listed first."}
             </p>
           </div>
         </div>
@@ -639,9 +640,9 @@ export default function SearchResults() {
           {!canSearch ? (
             <div className="px-6 py-16 text-center">
               <SearchIcon className="mx-auto mb-3 h-9 w-9 text-muted-foreground" />
-              <p className="font-heading font-semibold">Start with insurance or location</p>
+              <p className="font-heading font-semibold">Start with insurance or a state</p>
               <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                Results are approved programs in the network — not a public treatment directory.
+                You’ll get the BD contact at each program that accepts that insurance near there.
               </p>
             </div>
           ) : loading ? (

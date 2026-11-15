@@ -7,9 +7,30 @@ import { siteUrl } from "./email/config.mjs";
  */
 const STATIC_ROUTES = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/pricing", changefreq: "monthly", priority: "0.9" },
+  { path: "/about", changefreq: "monthly", priority: "0.7" },
+  { path: "/partners", changefreq: "monthly", priority: "0.6" },
+  { path: "/contact", changefreq: "monthly", priority: "0.5" },
   { path: "/signup", changefreq: "monthly", priority: "0.6" },
   { path: "/login", changefreq: "monthly", priority: "0.4" },
   { path: "/request-access", changefreq: "monthly", priority: "0.6" },
+  // Audience and platform guides — one indexable page per query these buyers run.
+  { path: "/for/bd-reps", changefreq: "monthly", priority: "0.8" },
+  { path: "/for/programs", changefreq: "monthly", priority: "0.8" },
+  { path: "/for/organizations", changefreq: "monthly", priority: "0.8" },
+  { path: "/for/partners", changefreq: "monthly", priority: "0.7" },
+  { path: "/for/referral-sources", changefreq: "monthly", priority: "0.7" },
+  { path: "/platform/search", changefreq: "monthly", priority: "0.8" },
+  { path: "/platform/listings", changefreq: "monthly", priority: "0.7" },
+  { path: "/platform/verification", changefreq: "monthly", priority: "0.7" },
+  { path: "/platform/contacts", changefreq: "monthly", priority: "0.7" },
+  // Head-to-head pages targeting the incumbent queries.
+  { path: "/vs/samhsa-treatment-locator", changefreq: "monthly", priority: "0.8" },
+  { path: "/vs/payer-directories", changefreq: "monthly", priority: "0.8" },
+  { path: "/insights", changefreq: "monthly", priority: "0.5" },
+  { path: "/insights/insurance-before-the-brochure", changefreq: "yearly", priority: "0.5" },
+  { path: "/insights/what-monthly-verification-changes", changefreq: "yearly", priority: "0.5" },
+  { path: "/insights/the-person-on-the-listing", changefreq: "yearly", priority: "0.5" },
   { path: "/privacy", changefreq: "yearly", priority: "0.2" },
   { path: "/terms", changefreq: "yearly", priority: "0.2" },
 ];

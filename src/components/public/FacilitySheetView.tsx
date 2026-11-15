@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Building2,
@@ -35,6 +36,7 @@ import { categorizeFacilityTags, PROGRAM_SECTIONS } from "@/lib/facility-program
 import { formatPlanTypeList, sanitizePlanTypes } from "@/lib/plan-types";
 import { OUT_OF_NETWORK_ONLY_LABEL } from "@/lib/insurance-contract-status";
 import { loadPublicReferralContacts } from "@/lib/load-public-referral-contacts";
+import { orgPublicPath } from "@/lib/public-urls";
 
 /** Stacked hero photo on phones. Desktop fills the image half instead. */
 const HERO_IMAGE_HEIGHT = "h-[200px] sm:h-[220px] lg:h-full";
@@ -117,6 +119,11 @@ interface Props {
   coverImageUrl?: string | null;
   /** Record page only. Set when this facility has no in-network contract. */
   outOfNetworkOnly?: boolean;
+  /**
+   * Org logo link beside the program name.
+   * Null leaves the logo unlinked. Omit to link the organization page when it has a slug.
+   */
+  logoHref?: string | null;
 }
 
 function fmtDate(d: string | null | undefined) {
@@ -223,6 +230,28 @@ function ProgramTagCard({
 }
 
 
+function OrgProfileMark({ org, href }: { org: SheetOrg; href: string | null }) {
+  const mark = (
+    <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border/70 bg-card p-1.5 shadow-sm sm:h-20 sm:w-20">
+      {org.logo_url ? (
+        <img src={org.logo_url} alt="" className="max-h-full max-w-full object-contain" />
+      ) : (
+        <Building2 className="h-7 w-7 text-muted-foreground" aria-hidden />
+      )}
+    </div>
+  );
+  if (!href) return mark;
+  return (
+    <Link
+      to={href}
+      className="shrink-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      aria-label={`${org.name} home`}
+    >
+      {mark}
+    </Link>
+  );
+}
+
 export function FacilitySheetView({
   facility,
   org,
@@ -237,6 +266,7 @@ export function FacilitySheetView({
   brandColor,
   coverImageUrl,
   outOfNetworkOnly = false,
+  logoHref,
 }: Props) {
   const brand = useOrgBrandColor(org, brandColor);
   const [footerVisible, setFooterVisible] = useState(false);
@@ -335,7 +365,13 @@ export function FacilitySheetView({
           />
 
           <div className="p-4 sm:p-5 lg:p-6 flex flex-col min-w-0 order-2 lg:order-1 lg:min-h-0 lg:overflow-y-auto">
-            <div className="flex items-start justify-between gap-3 min-w-0">
+            <div className="flex items-start gap-3 min-w-0">
+              {mode === "public" && org ? (
+                <OrgProfileMark
+                  org={org}
+                  href={logoHref === undefined ? (org.slug ? orgPublicPath(org.slug) : null) : logoHref}
+                />
+              ) : null}
               <div className="min-w-0 flex-1">
                   {mode === "public" && org?.name ? (
                     <p className="hidden print:block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
@@ -353,13 +389,12 @@ export function FacilitySheetView({
                       </a>
                     </p>
                   )}
+                  {programText ? (
+                    <ExpandableText text={programText} brand={brand} clampLines={3} className="mt-3 min-w-0" />
+                  ) : null}
               </div>
               {aboutHeaderExtra ? <div className="shrink-0 print:hidden">{aboutHeaderExtra}</div> : null}
             </div>
-
-            {programText ? (
-              <ExpandableText text={programText} brand={brand} clampLines={3} className="mt-3 min-w-0" />
-            ) : null}
 
             {(outOfNetworkOnly || (facility.levels_of_care?.length ?? 0) > 0) && (
               <div className="mt-3 flex flex-wrap gap-1.5">

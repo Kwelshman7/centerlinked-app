@@ -3,14 +3,8 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { applySocialMeta, orgShareCardType, orgShareIcon, orgShareImage } from "@/lib/social-meta";
-import { Building2, FileText, Share2, User } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { ClaimOrganizationDialog } from "@/components/ClaimOrganizationDialog";
-import {
-  FOOTER_ACTION_BTN_CLASS,
-  FOOTER_ACTION_ICON_CLASS,
-  footerActionButtonStyle,
-  openReferPatientSheet,
-} from "@/lib/org-shared-footer";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   FacilitySheetView,
@@ -20,9 +14,9 @@ import {
 } from "@/components/public/FacilitySheetView";
 import { SearchContextBar } from "@/components/app/search/SearchContextBar";
 import { OrgFooter } from "@/components/public/OrgFooter";
-import { ProgramOrgHeader } from "@/components/public/ProgramOrgHeader";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import {
+  orgPublicPath,
   programDisplayPath,
   programPublicPath,
   programPublicUrl,
@@ -199,97 +193,18 @@ export default function ProgramSheet() {
     return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
   }
 
-  const pillStyle = footerActionButtonStyle(brand);
-
-  const shareAction = facility.slug ? (
-    <button
-      type="button"
-      className={FOOTER_ACTION_BTN_CLASS}
-      style={pillStyle}
-      onClick={async () => {
-        const url =
-          typeof window !== "undefined"
-            ? programPublicUrl(window.location.origin, facility.slug!, org?.slug)
-            : "";
-        if (!url) return;
-        try {
-          if (navigator.share) {
-            await navigator.share({ title: facility.name, url });
-          } else {
-            await navigator.clipboard.writeText(url);
-            toast.success("Link copied");
-          }
-          if (org?.id) trackOrgEvent(org.id, "share_click");
-        } catch {
-          /* user cancelled share */
-        }
-      }}
-    >
-      <Share2 className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
-      Share Link
-    </button>
-  ) : null;
-
   const referPhone = facility.bd_contact_phone || org?.bd_contact_phone;
   const referEmail = facility.bd_contact_email || org?.bd_contact_email;
   const hasReferContact = !!(sanitizePhone(referPhone) || referEmail?.trim());
-
-  const referAction = hasReferContact ? (
-    <button
-      type="button"
-      onClick={() => openReferPatientSheet()}
-      className={FOOTER_ACTION_BTN_CLASS}
-      style={pillStyle}
-    >
-      <User className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
-      Refer Patient
-    </button>
-  ) : null;
-
-  const headerActions = (
-    <>
-      {referAction}
-      {shareAction}
-      <button
-        type="button"
-        className={FOOTER_ACTION_BTN_CLASS}
-        style={pillStyle}
-        onClick={() => void handleExportPdf()}
-      >
-        <FileText className={FOOTER_ACTION_ICON_CLASS} aria-hidden />
-        Export PDF
-      </button>
-      {org && !org.verified ? (
-        <ClaimOrganizationDialog
-          organizationId={org.id}
-          organizationName={org.name}
-          triggerLabel="Claim"
-          triggerClassName={FOOTER_ACTION_BTN_CLASS}
-          triggerStyle={pillStyle}
-        />
-      ) : null}
-    </>
-  );
-
   const hasSiblingFacilities = publishedFacilityCount > 1;
+  const logoHref = hasSiblingFacilities && org?.slug ? orgPublicPath(org.slug) : null;
 
   return (
-    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
+    <div className="flex h-dvh flex-col overflow-hidden bg-muted/30 print:h-auto print:overflow-visible lg:flex-row">
       <SearchContextBar currentOrgSlug={org?.slug} />
-      {org ? (
-        <ProgramOrgHeader org={org} brand={brand} logoHref={hasSiblingFacilities ? undefined : null}>
-          {headerActions}
-        </ProgramOrgHeader>
-      ) : (
-        <header className="bg-slate-900 text-white border-b border-slate-800 print:hidden">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
-            <span className="font-heading font-bold truncate">{facility.name}</span>
-            {headerActions}
-          </div>
-        </header>
-      )}
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto print:overflow-visible">
+      <main className="mx-auto max-w-[1400px] space-y-6 px-4 pb-5 pt-4 sm:px-6 sm:pb-8 sm:pt-5 lg:px-8">
         <FacilitySheetView
           facility={facility}
           org={org}
@@ -297,8 +212,13 @@ export default function ProgramSheet() {
           mode="public"
           brandColor={brand}
           coverImageUrl={org?.cover_image_url ?? null}
+          logoHref={logoHref}
           aboutHeaderExtra={
-            canManage ? (
+            <>
+              {org && !org.verified ? (
+                <ClaimOrganizationDialog organizationId={org.id} organizationName={org.name} triggerLabel="Claim" />
+              ) : null}
+              {canManage ? (
               <EditFacilityDialog
                 facility={{
                   id: facility.id,
@@ -332,7 +252,8 @@ export default function ProgramSheet() {
                 organizationId={facility.organization_id}
                 onSaved={loadAll}
               />
-            ) : null
+              ) : null}
+            </>
           }
         />
 
@@ -358,6 +279,7 @@ export default function ProgramSheet() {
           showReferSlot={hasReferContact}
         />
       </main>
+      </div>
     </div>
   );
 }

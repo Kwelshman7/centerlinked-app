@@ -1,27 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Building2,
-  ExternalLink,
-  AlertTriangle,
-  Loader2,
-  EyeOff,
-} from "lucide-react";
-import {
-  FacilitySheetView,
-  SheetOrg,
-  SheetContract,
-} from "@/components/public/FacilitySheetView";
+import { ExternalLink, AlertTriangle, Loader2, EyeOff } from "lucide-react";
+import { SheetOrg, SheetContract } from "@/components/public/FacilitySheetView";
+import { FacilityRecordView } from "@/components/app/facility/FacilityRecordView";
+import { orgPublicPath } from "@/lib/public-urls";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { ShareSheetButton } from "@/components/app/ShareSheetButton";
 import { listFacilityBdAssignments } from "@/lib/admin-bd";
-import { Card } from "@/components/ui/card";
-import { BdContactLine } from "@/components/app/search/BdContactLine";
 import { isOutOfNetworkOnlyFacility } from "@/lib/insurance-contract-status";
 
 interface Facility {
@@ -230,89 +220,79 @@ export default function FacilityDetail() {
       plan_types: c.plan_types ?? [],
     }));
 
-  const actionClass = "w-full justify-center min-w-0 sm:w-auto";
-
-  return (
-    <div className="max-w-[1400px] mx-auto pb-8 space-y-5 sm:space-y-6 min-w-0">
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
-        {org?.slug && orgPublicLive ? (
-          <Button asChild type="button" variant="outline" size="sm" className={actionClass}>
-            <Link to={`/o/${org.slug}`}>
-              <ExternalLink className="h-4 w-4" /> View Organization
-            </Link>
-          </Button>
-        ) : org?.slug && (isMine || isSuperAdmin) ? (
+  const headerActions = (
+    <>
+      {org?.slug && !orgPublicLive && (isMine || isSuperAdmin) ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            toast.message("Public page isn’t live yet", {
+              description: "It goes live after CenterLinked approves the organization.",
+            })
+          }
+        >
+          <ExternalLink className="h-4 w-4" /> View organization
+        </Button>
+      ) : null}
+      {isMine || isSuperAdmin ? (
+        <AssignFacilityBdDialog
+          facilityId={facility.id}
+          facilityName={facility.name}
+          organizationId={facility.organization_id}
+          bd_contact_name={facility.bd_contact_name}
+          bd_contact_phone={facility.bd_contact_phone}
+          bd_contact_email={facility.bd_contact_email}
+          onSaved={loadFacility}
+        />
+      ) : null}
+      {canManage ? (
+        <EditFacilityDialog
+          facility={facility}
+          contracts={contracts.map((c) => ({
+            id: c.id,
+            payer_id: c.payer_id,
+            payer_name: c.payer_name,
+            in_network: c.in_network,
+            plan_types: c.plan_types ?? [],
+          }))}
+          organizationId={facility.organization_id}
+          contractsLoadFailed={contractsLoadFailed}
+          onSaved={loadFacility}
+        />
+      ) : null}
+      {isMine || isSuperAdmin ? (
+        facility.slug && facilityPublicLive ? (
+          <ShareSheetButton
+            slug={facility.slug}
+            orgSlug={org?.slug}
+            kind="facility"
+            variant="outline"
+            size="sm"
+            label="Share"
+            hideCopy
+          />
+        ) : facility.slug ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className={actionClass}
             onClick={() =>
-              toast.message("Public page isn’t live yet", {
-                description: "It goes live after CenterLinked approves the organization.",
+              toast.message("Facility isn’t public yet", {
+                description: "Share becomes available after this facility is approved.",
               })
             }
           >
-            <ExternalLink className="h-4 w-4" /> View Organization
+            Share
           </Button>
-        ) : null}
-        {(isMine || isSuperAdmin) && (
-          <>
-            <AssignFacilityBdDialog
-              facilityId={facility.id}
-              facilityName={facility.name}
-              organizationId={facility.organization_id}
-              bd_contact_name={facility.bd_contact_name}
-              bd_contact_phone={facility.bd_contact_phone}
-              bd_contact_email={facility.bd_contact_email}
-              onSaved={loadFacility}
-              triggerClassName={actionClass}
-            />
-            {canManage && (
-              <EditFacilityDialog
-                facility={facility}
-                contracts={contracts.map((c) => ({
-                  id: c.id,
-                  payer_id: c.payer_id,
-                  payer_name: c.payer_name,
-                  in_network: c.in_network,
-                  plan_types: c.plan_types ?? [],
-                }))}
-                organizationId={facility.organization_id}
-                contractsLoadFailed={contractsLoadFailed}
-                onSaved={loadFacility}
-                triggerClassName={actionClass}
-              />
-            )}
-            {facility.slug && facilityPublicLive ? (
-              <ShareSheetButton
-                slug={facility.slug}
-                orgSlug={org?.slug}
-                kind="facility"
-                variant="default"
-                size="sm"
-                label="Share Facility"
-                hideCopy
-                className={actionClass}
-              />
-            ) : facility.slug ? (
-              <Button
-                type="button"
-                size="sm"
-                className={actionClass}
-                onClick={() =>
-                  toast.message("Facility isn’t public yet", {
-                    description: "Share becomes available after this facility is approved.",
-                  })
-                }
-              >
-                Share Facility
-              </Button>
-            ) : null}
-          </>
-        )}
-      </div>
+        ) : null
+      ) : null}
+    </>
+  );
 
+  return (
+    <div className="mx-auto min-w-0 max-w-[1400px] space-y-5 pb-8 sm:space-y-6">
       {facility.verification_status === "pending" && (isMine || isSuperAdmin) && (
         <div className="rounded-lg bg-warning/10 border border-warning/30 text-sm p-3 flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
@@ -385,43 +365,20 @@ export default function FacilityDetail() {
         </div>
       )}
 
-      <FacilitySheetView
+      <FacilityRecordView
         facility={facility}
         org={org}
         contracts={sheetContracts}
-        mode="internal"
-        coverImageUrl={org?.cover_image_url ?? null}
         outOfNetworkOnly={
           !contractsLoadFailed &&
           isOutOfNetworkOnlyFacility(contracts, { selfPayOnly: facility.self_pay_only })
         }
+        extraReps={extraReps}
+        orgHref={org?.slug && orgPublicLive ? orgPublicPath(org.slug) : null}
+        headerActions={isMine || isSuperAdmin ? headerActions : undefined}
+        verifiedAt={facility.contracts_verified_at}
+        frozen={facility.verification_frozen}
       />
-
-      {extraReps.length > 0 && (
-        <Card className="space-y-3 p-4">
-          <h2 className="font-heading text-sm font-semibold">Additional BD contacts</h2>
-          <p className="text-xs text-muted-foreground">
-            Shown to signed-in referral partners. Internal notes are never displayed here.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {extraReps.map((rep) => (
-              <div key={rep.id} className="rounded-lg border border-border/60 p-3">
-                <BdContactLine
-                  name={rep.full_name}
-                  phone={rep.phone}
-                  email={rep.email}
-                  title={rep.title}
-                />
-                {rep.territory || rep.availability_status ? (
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    {[rep.territory, rep.availability_status].filter(Boolean).join(" · ")}
-                  </p>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Check, X, Pencil } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PayerEditDrawer, PayerEdit } from "@/components/app/admin/PayerEditDrawer";
 import { toast } from "sonner";
 
@@ -21,6 +22,16 @@ interface PayerRow {
   active: boolean;
   status: "approved" | "pending" | "rejected";
 }
+
+const CATEGORY_LABEL: Record<string, string> = {
+  national: "National",
+  regional: "Regional",
+  behavioral: "Behavioral",
+  government: "Government",
+  military: "Military",
+  tpa: "TPA",
+  other: "Other",
+};
 
 const emptyDraft = (): PayerEdit => ({
   name: "", parent_company: null, aliases: [], category: "other",
@@ -116,50 +127,70 @@ export default function InsuranceDatabase() {
         </Select>
       </div>
 
-      <div className="space-y-2">
-        {filtered.length === 0 && (
-          <Card className="p-8 text-center text-sm text-muted-foreground">No insurance matches your filters.</Card>
-        )}
-        {filtered.map((p) => (
-          <Card key={p.id} className="p-3 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-semibold truncate">{p.name}</p>
-                  {p.status === "pending" && <Badge variant="outline" className="border-warning text-warning text-[10px]">Pending</Badge>}
-                  {p.status === "rejected" && <Badge variant="outline" className="border-destructive text-destructive text-[10px]">Rejected</Badge>}
-                  {!p.active && <Badge variant="secondary" className="text-[10px]">Inactive</Badge>}
-                </div>
-                {p.parent_company && (
-                  <p className="text-xs text-muted-foreground mt-0.5">Parent: {p.parent_company}</p>
-                )}
-                {p.aliases.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1.5">
-                    {p.aliases.map((a) => (
-                      <Badge key={a} variant="secondary" className="text-[10px] font-normal">{a}</Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 sm:shrink-0">
-                {p.status === "pending" && (
-                  <>
-                    <Button size="sm" variant="outline" className="border-success text-success hover:bg-success/10" onClick={() => quickAction(p.id, { status: "approved" })}>
-                      <Check className="h-4 w-4" /> Approve
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={() => quickAction(p.id, { status: "rejected" })}>
-                      <X className="h-4 w-4" /> Reject
-                    </Button>
-                  </>
-                )}
-                <Button size="sm" variant="outline" onClick={() => { setEditing({ ...p }); setDrawerOpen(true); }}>
-                  <Pencil className="h-4 w-4" /> Edit
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <p className="text-xs text-muted-foreground">
+        {filtered.length} {filtered.length === 1 ? "company" : "companies"}
+        {rows && filtered.length !== rows.length ? ` of ${rows.length}` : ""}
+      </p>
+
+      {filtered.length === 0 ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">No insurance matches your filters.</Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Name</TableHead>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Parent</TableHead>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Category</TableHead>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Aliases</TableHead>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Status</TableHead>
+                <TableHead className="h-9 px-3 text-right text-xs font-semibold uppercase tracking-[0.06em]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="px-3 py-2 font-medium">{p.name}</TableCell>
+                  <TableCell className="px-3 py-2 text-muted-foreground">{p.parent_company || "—"}</TableCell>
+                  <TableCell className="px-3 py-2">{CATEGORY_LABEL[p.category] ?? p.category}</TableCell>
+                  <TableCell className="max-w-[240px] px-3 py-2">
+                    {p.aliases.length > 0 ? (
+                      <span className="line-clamp-2 text-muted-foreground">{p.aliases.join(", ")}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-3 py-2">
+                    <div className="flex flex-wrap gap-1">
+                      {p.status === "pending" && <Badge variant="outline" className="border-warning text-warning text-[10px]">Pending</Badge>}
+                      {p.status === "rejected" && <Badge variant="outline" className="border-destructive text-destructive text-[10px]">Rejected</Badge>}
+                      {p.status === "approved" && <Badge variant="secondary" className="text-[10px]">Approved</Badge>}
+                      {!p.active && <Badge variant="secondary" className="text-[10px]">Inactive</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-3 py-2">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      {p.status === "pending" && (
+                        <>
+                          <Button size="sm" variant="outline" className="border-success text-success hover:bg-success/10" onClick={() => quickAction(p.id, { status: "approved" })}>
+                            <Check className="h-4 w-4" /> Approve
+                          </Button>
+                          <Button size="sm" variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={() => quickAction(p.id, { status: "rejected" })}>
+                            <X className="h-4 w-4" /> Reject
+                          </Button>
+                        </>
+                      )}
+                      <Button size="sm" variant="outline" onClick={() => { setEditing({ ...p }); setDrawerOpen(true); }}>
+                        <Pencil className="h-4 w-4" /> Edit
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
       <PayerEditDrawer open={drawerOpen} onOpenChange={setDrawerOpen} payer={editing} onSaved={load} />
     </div>

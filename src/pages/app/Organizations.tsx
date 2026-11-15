@@ -394,7 +394,7 @@ export default function Organizations() {
         <TabsList className="grid h-auto w-full grid-cols-2">
           <TabsTrigger value="network" className="min-w-0 gap-1.5 px-2">
             <Star className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">Your network</span>
+            <span className="truncate">My network</span>
             <span className="shrink-0 text-xs text-muted-foreground">({partners.length})</span>
           </TabsTrigger>
           <TabsTrigger value="all" className="min-w-0 gap-1.5 px-2">

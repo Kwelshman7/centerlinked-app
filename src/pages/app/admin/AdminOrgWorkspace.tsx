@@ -21,6 +21,8 @@ import {
   Share2,
 } from "lucide-react";
 import { EditFacilityDialog } from "@/components/app/facility/EditFacilityDialog";
+import { EditInsuranceContractsDialog } from "@/components/app/facility/EditInsuranceContractsDialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddFacilityDialog } from "@/components/app/facility/AddFacilityDialog";
 import { AssignFacilityBdDialog } from "@/components/app/facility/AssignFacilityBdDialog";
 import { OrgDashboard } from "@/components/app/OrgDashboard";
@@ -295,95 +297,118 @@ export default function AdminOrgWorkspace() {
               </div>
             </Card>
           ) : (
-            <div className="grid gap-3">
-              {facilities.map((f) => {
-                const fContracts = contracts.filter((c) => c.facility_id === f.id);
-                return (
-                  <Card key={f.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden shrink-0">
-                      {f.image_urls?.[0] ? (
-                        <img src={f.image_urls[0]} alt={f.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full grid place-items-center">
-                          <Building2 className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold truncate">{f.name}</p>
-                        <Badge variant="outline" className="text-[10px] capitalize">
-                          {f.verification_status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {[f.city, f.state].filter(Boolean).join(", ") || "No location"} · {fContracts.length} contracts
-                      </p>
-                      <p className="text-xs mt-1 truncate">
-                        {f.bd_contact_name?.trim() ? (
-                          <span className="text-foreground/80">
-                            <span className="text-muted-foreground">BD:</span> {f.bd_contact_name}
-                          </span>
-                        ) : (
-                          <span className="text-amber-700/80">No BD assigned</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      <Button asChild size="sm" variant="ghost">
-                        <Link to={`/app/facilities/${f.id}`}>
-                          <ExternalLink className="h-4 w-4" /> Open
-                        </Link>
-                      </Button>
-                      <AssignFacilityBdDialog
-                        facilityId={f.id}
-                        facilityName={f.name}
-                        organizationId={org.id}
-                        bd_contact_name={f.bd_contact_name}
-                        bd_contact_phone={f.bd_contact_phone}
-                        bd_contact_email={f.bd_contact_email}
-                        onSaved={load}
-                      />
-                      <EditFacilityDialog
-                        facility={{ ...f, accreditations: f.accreditations ?? [] }}
-                        contracts={fContracts.map((c) => ({
-                          id: c.id,
-                          payer_id: c.payer_id,
-                          payer_name: c.payer_name,
-                          in_network: c.in_network,
-                        }))}
-                        organizationId={org.id}
-                        onSaved={load}
-                      />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this facility?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This permanently removes {f.name} and its insurance contracts.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteFacility(f.id, f.name)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Delete facility
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+            <Card className="overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Listing</TableHead>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Location</TableHead>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Status</TableHead>
+                    <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">BD contact</TableHead>
+                    <TableHead className="h-9 px-3 text-right text-xs font-semibold uppercase tracking-[0.06em]">In-network</TableHead>
+                    <TableHead className="h-9 px-3 text-right text-xs font-semibold uppercase tracking-[0.06em]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {facilities.map((f) => {
+                    const fContracts = contracts.filter((c) => c.facility_id === f.id);
+                    const inNetwork = fContracts.filter((c) => c.in_network);
+                    return (
+                      <TableRow key={f.id}>
+                        <TableCell className="px-3 py-2 font-medium">
+                          <Link to={`/app/facilities/${f.id}`} className="hover:text-primary">
+                            {f.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-muted-foreground">
+                          {[f.city, f.state].filter(Boolean).join(", ") || "—"}
+                        </TableCell>
+                        <TableCell className="px-3 py-2">
+                          <Badge variant="outline" className="text-[10px] capitalize">
+                            {f.verification_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-3 py-2">
+                          {f.bd_contact_name?.trim() ? (
+                            f.bd_contact_name
+                          ) : (
+                            <span className="text-amber-700/80">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right tabular-nums">{inNetwork.length}</TableCell>
+                        <TableCell className="px-3 py-2">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            <EditInsuranceContractsDialog
+                              facilityId={f.id}
+                              organizationId={org.id}
+                              facilityName={f.name}
+                              contracts={inNetwork.map((c) => ({
+                                id: c.id,
+                                payer_id: c.payer_id,
+                                payer_name: c.payer_name,
+                                in_network: c.in_network,
+                              }))}
+                              onSaved={load}
+                            />
+                            <AssignFacilityBdDialog
+                              facilityId={f.id}
+                              facilityName={f.name}
+                              organizationId={org.id}
+                              bd_contact_name={f.bd_contact_name}
+                              bd_contact_phone={f.bd_contact_phone}
+                              bd_contact_email={f.bd_contact_email}
+                              onSaved={load}
+                              triggerLabel="BD"
+                            />
+                            <EditFacilityDialog
+                              facility={{ ...f, accreditations: f.accreditations ?? [] }}
+                              contracts={fContracts.map((c) => ({
+                                id: c.id,
+                                payer_id: c.payer_id,
+                                payer_name: c.payer_name,
+                                in_network: c.in_network,
+                              }))}
+                              organizationId={org.id}
+                              onSaved={load}
+                              triggerLabel="Edit"
+                            />
+                            <Button asChild size="sm" variant="ghost">
+                              <Link to={`/app/facilities/${f.id}`}>
+                                <ExternalLink className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete this facility?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This permanently removes {f.name} and its insurance contracts.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteFacility(f.id, f.name)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete facility
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

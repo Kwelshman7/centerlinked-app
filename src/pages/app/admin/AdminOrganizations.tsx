@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, Search, Plus, BadgeCheck, ExternalLink, Settings } from "lucide-react";
 import { EditOrganizationDialog, type OrgEditable } from "@/components/app/admin/EditOrganizationDialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface OrgRow extends OrgEditable {
   slug: string | null;
@@ -61,9 +62,7 @@ export default function AdminOrganizations() {
             <Building2 className="h-7 w-7 text-primary" /> Edit all organizations
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Click <strong className="font-medium text-foreground">Edit</strong> to update profile details, or{" "}
-            <strong className="font-medium text-foreground">Manage</strong> to edit branding, facilities, and shared
-            links for any organization on the platform.
+            Scan every organization, then edit the profile or open it to add facilities and insurance.
           </p>
         </div>
         <Button asChild>
@@ -85,10 +84,14 @@ export default function AdminOrganizations() {
         </div>
       </Card>
 
+      <p className="text-xs text-muted-foreground">
+        {loading ? "Loading organizations…" : `${filtered.length} ${filtered.length === 1 ? "organization" : "organizations"}`}
+      </p>
+
       {loading ? (
-        <div className="grid gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
+        <div className="grid gap-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 rounded-md" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -97,52 +100,72 @@ export default function AdminOrganizations() {
           <p className="font-medium">No organizations found</p>
         </Card>
       ) : (
-        <div className="grid gap-3">
-          {filtered.map((o) => {
-            const facCount = counts.get(o.id) ?? 0;
-            return (
-              <Card key={o.id} className="p-4 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-lg bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
-                  {o.logo_url ? (
-                    <img src={o.logo_url} alt={o.name} className="w-full h-full object-contain p-1" />
-                  ) : (
-                    <Building2 className="h-6 w-6 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold truncate">{o.name}</p>
-                    {o.verified && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        <BadgeCheck className="h-3 w-3 text-success" /> Verified
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                    {[o.hq_city, o.hq_state].filter(Boolean).join(", ") || "No HQ"} · {facCount}{" "}
-                    {facCount === 1 ? "facility" : "facilities"}
-                    {o.email_domain ? ` · ${o.email_domain}` : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                  {o.slug && (
-                    <Button asChild size="sm" variant="ghost">
-                      <Link to={`/o/${o.slug}`} target="_blank">
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
-                  <EditOrganizationDialog org={o} onSaved={loadOrgs} triggerLabel="Edit" />
-                  <Button asChild size="sm">
-                    <Link to={`/app/admin/organizations/${o.id}`}>
-                      <Settings className="h-4 w-4" /> Manage
-                    </Link>
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Organization</TableHead>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Location</TableHead>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Domain</TableHead>
+                <TableHead className="h-9 px-3 text-right text-xs font-semibold uppercase tracking-[0.06em]">Facilities</TableHead>
+                <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Status</TableHead>
+                <TableHead className="h-9 px-3 text-right text-xs font-semibold uppercase tracking-[0.06em]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((o) => {
+                const facCount = counts.get(o.id) ?? 0;
+                return (
+                  <TableRow key={o.id}>
+                    <TableCell className="px-3 py-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-white">
+                          {o.logo_url ? (
+                            <img src={o.logo_url} alt="" className="h-full w-full object-contain p-0.5" />
+                          ) : (
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <span className="truncate font-medium">{o.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-muted-foreground">
+                      {[o.hq_city, o.hq_state].filter(Boolean).join(", ") || "—"}
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-muted-foreground">{o.email_domain || "—"}</TableCell>
+                    <TableCell className="px-3 py-2 text-right tabular-nums">{facCount}</TableCell>
+                    <TableCell className="px-3 py-2">
+                      {o.verified ? (
+                        <Badge variant="secondary" className="text-[10px]">
+                          <BadgeCheck className="h-3 w-3 text-success" /> Verified
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Unverified</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-3 py-2">
+                      <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        {o.slug && (
+                          <Button asChild size="sm" variant="ghost">
+                            <Link to={`/o/${o.slug}`} target="_blank">
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        )}
+                        <EditOrganizationDialog org={o} onSaved={loadOrgs} triggerLabel="Edit" />
+                        <Button asChild size="sm">
+                          <Link to={`/app/admin/organizations/${o.id}`}>
+                            <Settings className="h-4 w-4" /> Manage
+                          </Link>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );

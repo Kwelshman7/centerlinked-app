@@ -102,7 +102,7 @@ export function FacilityBdRepFields({ organizationId, value, onChange, className
           </Select>
           {members.length === 0 && !loading && (
             <p className="text-xs text-muted-foreground">
-              No team members yet. Invite BD reps from Members, or enter contact details below.
+              No teammates yet. Invite them from Contacts, or enter contact details below.
             </p>
           )}
         </div>

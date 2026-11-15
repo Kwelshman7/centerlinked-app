@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bookmark, Loader2, Mail, MessageSquare, MoreHorizontal, Phone, Search, User } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog,
@@ -39,6 +38,7 @@ import {
   asProfessionalCards,
   asProfessionalProfile,
   compareNameSearch,
+  initialsFromName,
   professionalPath,
   type ProfessionalCard,
 } from "@/lib/professional-network";
@@ -50,6 +50,11 @@ import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 40;
 const FETCH_PAGE = 1000;
+
+function contactIndexLetter(name: string) {
+  const letter = name.trim().charAt(0).toUpperCase();
+  return /[A-Z]/.test(letter) ? letter : "#";
+}
 
 async function fetchAllRows<T>(
   run: (from: number, to: number) => PromiseLike<{
@@ -292,7 +297,13 @@ export default function Contacts() {
   }, [contacts, extraSaved, savedIds]);
 
   const list = savedOnly ? savedContacts : contacts;
-  const filtered = useMemo(() => filterWorkspaceContacts(list, { query }), [list, query]);
+  const filtered = useMemo(
+    () =>
+      filterWorkspaceContacts(list, { query })
+        .slice()
+        .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" })),
+    [list, query],
+  );
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
@@ -417,6 +428,16 @@ export default function Contacts() {
   };
 
   const loading = networkLoading || catalogLoading || partnersLoading;
+  const contactGroups = useMemo(() => {
+    const groups: Array<{ letter: string; rows: WorkspaceContact[] }> = [];
+    for (const contact of pageRows) {
+      const letter = contactIndexLetter(contact.fullName);
+      const last = groups[groups.length - 1];
+      if (!last || last.letter !== letter) groups.push({ letter, rows: [contact] });
+      else last.rows.push(contact);
+    }
+    return groups;
+  }, [pageRows]);
   const connectedIds = useMemo(() => new Set(connections.map((person) => person.user_id)), [connections]);
   const findMatches = directory.filter((person) => person.user_id !== user?.id);
 
@@ -426,10 +447,15 @@ export default function Contacts() {
         <div className="min-w-0">
           <h1 className="font-heading text-xl font-bold">Contacts</h1>
           <p className="text-xs text-muted-foreground">
-            {contacts.length.toLocaleString("en-US")} {contacts.length === 1 ? "person" : "people"} in your list
+            {contacts.length.toLocaleString("en-US")} {contacts.length === 1 ? "contact" : "contacts"}
           </p>
         </div>
-        <InviteColleagueCard inline showEmail={false} />
+        <div className="flex shrink-0 items-center gap-2">
+          <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
+            Add
+          </Button>
+          <InviteColleagueCard inline showEmail={false} />
+        </div>
       </div>
 
       {requests.length > 0 ? (
@@ -484,37 +510,16 @@ export default function Contacts() {
 
       <Card className="min-w-0 overflow-hidden">
         {loading ? (
-          <div>
-            <div className="divide-y divide-border/60 md:hidden">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="space-y-2 px-3 py-3">
+          <div className="divide-y divide-border/60">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-3 py-3">
+                <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-2">
                   <Skeleton className="h-4 w-36" />
                   <Skeleton className="h-3 w-48" />
                 </div>
-              ))}
-            </div>
-            <Table className="hidden table-fixed md:table">
-              <ContactTableHeader />
-              <TableBody>
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <TableRow key={i} className="hover:bg-transparent">
-                    <TableCell className="px-3 py-2.5">
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                    <TableCell className="px-3 py-2.5">
-                      <Skeleton className="h-4 w-28" />
-                    </TableCell>
-                    <TableCell className="px-3 py-2.5">
-                      <Skeleton className="h-4 w-36" />
-                    </TableCell>
-                    <TableCell className="px-3 py-2.5">
-                      <Skeleton className="h-4 w-8" />
-                    </TableCell>
-                    <TableCell className="px-2 py-2.5" />
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+              </div>
+            ))}
           </div>
         ) : pageRows.length === 0 ? (
           <div className="space-y-3 p-8 text-center text-sm text-muted-foreground">
@@ -548,40 +553,29 @@ export default function Contacts() {
           </div>
         ) : (
           <>
-            <ul className="divide-y divide-border/60 md:hidden">
-              {pageRows.map((contact) => (
-                <li key={contact.id}>
-                  <ContactMobileRow
-                    contact={contact}
-                    menuOpen={menuOpenId === contact.id}
-                    onMenuOpenChange={(open) => setMenuOpenId(open ? contact.id : null)}
-                    onOpen={() => void openContact(contact)}
-                    onDelete={() => {
-                      setMenuOpenId(null);
-                      setRemoveTarget(contact);
-                    }}
-                  />
-                </li>
-              ))}
-            </ul>
-            <Table className="hidden table-fixed md:table">
-              <ContactTableHeader />
-              <TableBody>
-                {pageRows.map((contact) => (
-                  <ContactListRow
-                    key={contact.id}
-                    contact={contact}
-                    menuOpen={menuOpenId === contact.id}
-                    onMenuOpenChange={(open) => setMenuOpenId(open ? contact.id : null)}
-                    onOpen={() => void openContact(contact)}
-                    onDelete={() => {
-                      setMenuOpenId(null);
-                      setRemoveTarget(contact);
-                    }}
-                  />
-                ))}
-              </TableBody>
-            </Table>
+            {contactGroups.map((group) => (
+              <section key={group.letter}>
+                <h2 className="sticky top-0 z-10 border-b border-border/60 bg-muted/80 px-3 py-1 text-xs font-semibold text-primary backdrop-blur">
+                  {group.letter}
+                </h2>
+                <ul className="divide-y divide-border/60">
+                  {group.rows.map((contact) => (
+                    <li key={contact.id}>
+                      <ContactIndexRow
+                        contact={contact}
+                        menuOpen={menuOpenId === contact.id}
+                        onMenuOpenChange={(open) => setMenuOpenId(open ? contact.id : null)}
+                        onOpen={() => void openContact(contact)}
+                        onDelete={() => {
+                          setMenuOpenId(null);
+                          setRemoveTarget(contact);
+                        }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
             {pageCount > 1 ? (
               <div className="flex flex-col gap-2 border-t border-border/60 px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <p>
@@ -705,20 +699,6 @@ export default function Contacts() {
   );
 }
 
-function ContactTableHeader() {
-  return (
-    <TableHeader>
-      <TableRow className="hover:bg-transparent">
-        <TableHead className="h-9 w-[26%] px-3 text-xs font-semibold uppercase tracking-[0.06em]">Name</TableHead>
-        <TableHead className="h-9 w-40 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Contact #</TableHead>
-        <TableHead className="h-9 px-3 text-xs font-semibold uppercase tracking-[0.06em]">Organization</TableHead>
-        <TableHead className="h-9 w-16 px-3 text-xs font-semibold uppercase tracking-[0.06em]">State</TableHead>
-        <TableHead className="h-9 w-10 px-2" />
-      </TableRow>
-    </TableHeader>
-  );
-}
-
 type ContactRowProps = {
   contact: WorkspaceContact;
   menuOpen: boolean;
@@ -798,7 +778,28 @@ function ContactActions({ contact, menuOpen, onMenuOpenChange, onOpen, onDelete 
   );
 }
 
-function ContactMobileRow({
+function ContactQuickLink({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      aria-label={label}
+      className="grid h-9 w-9 place-items-center rounded-full text-primary hover:bg-primary/10"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {children}
+    </a>
+  );
+}
+
+function ContactIndexRow({
   contact,
   menuOpen,
   onMenuOpenChange,
@@ -806,75 +807,53 @@ function ContactMobileRow({
   onDelete,
 }: ContactRowProps) {
   const tel = sanitizePhone(contact.phone);
+  const email = contact.email?.trim() || "";
   const displayPhone = formatPhoneDisplay(contact.phone);
-  const orgName = contact.organization?.name || null;
-  const stateCode = resolveStateCode(contact.state);
+  const place = [contact.city, resolveStateCode(contact.state) || contact.state].filter(Boolean).join(", ");
+  const subtitle = [contact.title, contact.organization?.name].filter(Boolean).join(" · ");
+  const detail = [displayPhone || null, place || null].filter(Boolean).join(" · ");
 
   return (
-    <div className="flex items-start gap-2 px-3 py-2.5">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-3">
-          <button type="button" className="min-w-0 truncate text-left font-medium leading-snug text-foreground" onClick={onOpen}>
-            {contact.fullName}
-          </button>
-          <span className="shrink-0 text-xs font-semibold text-muted-foreground">{stateCode || "—"}</span>
-        </div>
-        <p className="mt-0.5 flex min-w-0 items-baseline gap-1.5 text-sm text-muted-foreground">
-          {displayPhone && tel ? (
-            <a href={`tel:${tel}`} className="shrink-0 tabular-nums text-foreground hover:text-primary">
-              {displayPhone}
-            </a>
+    <div className="flex items-center gap-2 px-3 py-2.5">
+      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-xs font-semibold text-primary">
+          {contact.avatarUrl ? (
+            <img src={contact.avatarUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            <span className="shrink-0">—</span>
+            initialsFromName(contact.fullName)
           )}
-          <span aria-hidden>·</span>
-          <span className="min-w-0 truncate">{orgName || "No organization"}</span>
-        </p>
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate font-medium leading-snug">{contact.fullName}</span>
+          {subtitle ? <span className="block truncate text-sm text-muted-foreground">{subtitle}</span> : null}
+          {detail ? <span className="block truncate text-xs text-muted-foreground">{detail}</span> : null}
+        </span>
+      </button>
+      <div className="flex shrink-0 items-center">
+        {tel ? (
+          <ContactQuickLink href={`tel:${tel}`} label={`Call ${contact.fullName}`}>
+            <Phone className="h-4 w-4" />
+          </ContactQuickLink>
+        ) : null}
+        {tel ? (
+          <ContactQuickLink href={`sms:${tel}`} label={`Text ${contact.fullName}`}>
+            <MessageSquare className="h-4 w-4" />
+          </ContactQuickLink>
+        ) : null}
+        {email ? (
+          <ContactQuickLink href={`mailto:${email}`} label={`Email ${contact.fullName}`}>
+            <Mail className="h-4 w-4" />
+          </ContactQuickLink>
+        ) : null}
+        <ContactActions
+          contact={contact}
+          menuOpen={menuOpen}
+          onMenuOpenChange={onMenuOpenChange}
+          onOpen={onOpen}
+          onDelete={onDelete}
+        />
       </div>
-      <ContactActions
-        contact={contact}
-        menuOpen={menuOpen}
-        onMenuOpenChange={onMenuOpenChange}
-        onOpen={onOpen}
-        onDelete={onDelete}
-      />
     </div>
-  );
-}
-
-function ContactListRow(props: ContactRowProps) {
-  const { contact, onOpen } = props;
-  const tel = sanitizePhone(contact.phone);
-  const displayPhone = formatPhoneDisplay(contact.phone);
-  const orgName = contact.organization?.name || null;
-  const stateCode = resolveStateCode(contact.state);
-
-  return (
-    <TableRow>
-      <TableCell className="px-3 py-2.5">
-        <button type="button" className="block w-full truncate text-left font-medium leading-snug text-foreground" onClick={onOpen}>
-          {contact.fullName}
-        </button>
-      </TableCell>
-      <TableCell className="px-3 py-2.5">
-        {displayPhone && tel ? (
-          <a href={`tel:${tel}`} className="block truncate tabular-nums text-foreground hover:text-primary">
-            {displayPhone}
-          </a>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </TableCell>
-      <TableCell className="truncate px-3 py-2.5 text-foreground">
-        {orgName || <span className="text-muted-foreground">—</span>}
-      </TableCell>
-      <TableCell className="px-3 py-2.5 font-medium text-foreground">
-        {stateCode || <span className="font-normal text-muted-foreground">—</span>}
-      </TableCell>
-      <TableCell className="px-2 py-2.5">
-        <ContactActions {...props} />
-      </TableCell>
-    </TableRow>
   );
 }
 

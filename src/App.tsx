@@ -26,7 +26,6 @@ import ProfessionalProfile from "./pages/app/ProfessionalProfile";
 import FacilityDetail from "./pages/app/FacilityDetail";
 import Onboarding from "./pages/app/Onboarding";
 import PdfFacilityUpload from "./pages/app/PdfFacilityUpload";
-import Members from "./pages/app/Members";
 import Verifications from "./pages/app/Verifications";
 import Settings from "./pages/app/Settings";
 import Billing from "./pages/app/Billing";
@@ -53,6 +52,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import OrgOnePagerPreview from "./pages/dev/OrgOnePagerPreview";
 import LaunchImport from "./pages/LaunchImport";
+import { ComparisonPage, ForAudiencePage, InsightRoute, PlatformTopicPage, PricingPage } from "./pages/marketing/Routes";
+import { AboutPage, ContactPage, InsightsIndexPage, PartnersPage } from "./pages/marketing/CompanyPages";
 
 function AppIndexRedirect() {
   return <Navigate to="/app/search" replace />;
@@ -77,6 +78,15 @@ const App = () => (
             <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/partners" element={<PartnersPage />} />
+            <Route path="/insights" element={<InsightsIndexPage />} />
+            <Route path="/insights/:slug" element={<InsightRoute />} />
+            <Route path="/for/:audience" element={<ForAudiencePage />} />
+            <Route path="/platform/:topic" element={<PlatformTopicPage />} />
+            <Route path="/vs/:slug" element={<ComparisonPage />} />
             {import.meta.env.DEV ? (
               <Route path="/dev/org-one-pager-preview" element={<OrgOnePagerPreview />} />
             ) : null}
@@ -116,7 +126,7 @@ const App = () => (
               <Route path="facilities/:id" element={<FacilityDetail />} />
               <Route path="facilities/:id/verify" element={<VerifyContracts />} />
               <Route path="onboarding" element={<Onboarding />} />
-              <Route path="members" element={<Members />} />
+              <Route path="members" element={<Navigate to="/app/contacts" replace />} />
               <Route path="verifications" element={<AdminRoute><Verifications /></AdminRoute>} />
               {FEATURES.community && <Route path="feed" element={<Feed />} />}
               {FEATURES.community && <Route path="messages" element={<Messenger />} />}

@@ -16,6 +16,15 @@ const RESERVED_SLUGS = new Set([
   "request-access",
   "privacy",
   "terms",
+  "pricing",
+  "about",
+  "contact",
+  "partners",
+  "insights",
+  "careers",
+  "for",
+  "platform",
+  "vs",
   "create-organization",
   "setup-organization",
   "app",
@@ -52,6 +61,22 @@ export function isPublicSharePath(pathname) {
     path.startsWith("/request-access") ||
     path.startsWith("/privacy") ||
     path.startsWith("/terms") ||
+    path === "/pricing" ||
+    path.startsWith("/pricing/") ||
+    path === "/about" ||
+    path.startsWith("/about/") ||
+    path === "/contact" ||
+    path.startsWith("/contact/") ||
+    path === "/partners" ||
+    path.startsWith("/partners/") ||
+    path === "/insights" ||
+    path.startsWith("/insights/") ||
+    path === "/for" ||
+    path.startsWith("/for/") ||
+    path === "/platform" ||
+    path.startsWith("/platform/") ||
+    path === "/vs" ||
+    path.startsWith("/vs/") ||
     path.startsWith("/create-organization") ||
     path.startsWith("/setup-organization") ||
     path.startsWith("/assets")

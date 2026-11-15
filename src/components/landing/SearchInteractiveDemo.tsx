@@ -12,7 +12,6 @@ import {
   Star,
   Users,
   ArrowRight,
-  LayoutDashboard,
   Building2,
   Settings,
   Check,
@@ -98,9 +97,9 @@ const TOTAL_ORGS = SEARCH_RESULTS.length;
 const TOTAL_FACILITIES = SEARCH_RESULTS.reduce((n, o) => n + o.facilities.length, 0);
 
 const TABS = [
-  { label: "Home", icon: LayoutDashboard, active: false },
   { label: "Search", icon: SearchIcon, active: true },
-  { label: "Network", icon: Building2, active: false },
+  { label: "Contacts", icon: Users, active: false },
+  { label: "Facilities", icon: Building2, active: false },
   { label: "Settings", icon: Settings, active: false },
 ] as const;
 
@@ -167,11 +166,11 @@ function SearchFormScreen({
   return (
     <div className="h-full overflow-hidden px-4 py-5 space-y-6 pb-20">
       <div className="text-center space-y-2 pt-1">
-        <h1 className="text-2xl font-bold tracking-tight font-heading">
-          Find in-network facilities
-        </h1>
+        <p className="text-2xl font-bold tracking-tight font-heading">
+          Who to call
+        </p>
         <p className="text-sm text-muted-foreground">
-          Search verified treatment contracts by insurance, location, and level of care.
+          Insurance, level of care, and place. Then the person who answers.
         </p>
       </div>
 
@@ -349,7 +348,7 @@ function OrgResultCard({ org }: { org: DemoOrgResult }) {
 
       <div className="px-3 pb-3">
         <div className="h-9 w-full rounded-md bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2">
-          View organization page
+          Open the listing
           <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
         </div>
       </div>
@@ -372,9 +371,9 @@ function ResultsScreen() {
       </div>
 
       <div className="min-w-0">
-        <h1 className="text-lg font-semibold truncate leading-tight">
+        <p className="text-lg font-semibold truncate leading-tight">
           {PAYER} · in {STATE_CODE}
-        </h1>
+        </p>
         <p className="text-xs text-muted-foreground mt-1">
           {TOTAL_ORGS} organizations · {TOTAL_FACILITIES} matching facilities
         </p>

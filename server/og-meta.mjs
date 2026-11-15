@@ -9,6 +9,8 @@ import {
   siteOrigin,
 } from "./og-share.mjs";
 
+import { resolveMarketingMeta } from "./marketing-meta.mjs";
+
 export { isPublicSharePath, isSocialPreviewBot };
 
 function escapeHtml(value) {
@@ -127,6 +129,19 @@ function resolveShareIcon(org) {
 
 export async function resolvePublicMeta(pathname) {
   const path = pathname.split("?")[0].replace(/\/+$/, "") || "/";
+
+  // Marketing routes are static copy, so they resolve without a database round
+  // trip. Keeps the CenterLinked share card and favicon — these are our pages.
+  const marketing = resolveMarketingMeta(path);
+  if (marketing) {
+    return buildMeta({
+      title: marketing.title,
+      description: marketing.description,
+      path,
+      siteName: "CenterLinked",
+      imageAlt: "CenterLinked",
+    });
+  }
 
   const orgProgram = path.match(/^\/o\/([^/]+)\/p\/([^/]+)$/);
   if (orgProgram) {

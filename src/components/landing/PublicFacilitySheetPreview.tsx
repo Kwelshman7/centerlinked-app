@@ -84,9 +84,9 @@ export function PublicFacilitySheetPreviewContent() {
             </nav>
 
             <div>
-              <h1 className="font-heading text-xl font-bold tracking-tight leading-tight">
+              <p className="font-heading text-xl font-bold tracking-tight leading-tight">
                 {FEATURED_FACILITY.name}
-              </h1>
+              </p>
               <p className="mt-1.5 text-xs text-muted-foreground inline-flex items-center gap-1.5 min-w-0">
                 <MapPin className="h-3.5 w-3.5 shrink-0" style={{ color: BRAND }} aria-hidden />
                 <span className="truncate">{FEATURED_FACILITY.location}</span>

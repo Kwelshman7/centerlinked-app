@@ -78,7 +78,7 @@ export const LISTED_TIER = {
   cta: "Start for free",
   description:
     "Search for free and provide the in-network providers you work with.",
-  tableNote: "BD representative accounts are free.",
+  tableNote: "Business development accounts are free. No card is required to search.",
 } as const;
 
 export type DfyPackage = {
@@ -102,10 +102,10 @@ export const ENTERPRISE = {
 } as const;
 
 export const PRICING_HEADING = {
-  titleBefore: "One live link,",
-  titleAccent: "any size",
+  titleBefore: "Membership follows",
+  titleAccent: "how many facilities you keep live",
   summary:
-    "Whether you operate one facility or a nationwide organization, CenterLinked makes it easy to keep every location, contract, and referral contact current — no matter how big or small you are.",
+    "Listing a program is free. Search is free with a work email. Membership is optional. The price follows the number of facilities on the organization: $99 a month for one facility, up to $499 a month for 15. Groups with 16 or more facilities are quoted. Paying annually saves 20%.",
 } as const;
 
 export const PRICING_SUMMARY =

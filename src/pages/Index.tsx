@@ -1,43 +1,11 @@
-import { Header } from "@/components/landing/Header";
-import { Hero } from "@/components/landing/Hero";
-import { ProfileInventory } from "@/components/landing/ProfileInventory";
-import { WhoFor } from "@/components/landing/WhoFor";
-import { HowItWorks } from "@/components/landing/HowItWorks";
-import { ProductShowcase } from "@/components/landing/ProductShowcase";
-import { OrgDashboardSection } from "@/components/landing/OrgDashboardSection";
-import { VerifiedMonthly } from "@/components/landing/VerifiedMonthly";
-import { Pricing } from "@/components/landing/Pricing";
-import { FAQ } from "@/components/landing/FAQ";
-import { FinalCTA } from "@/components/landing/FinalCTA";
-import { Footer } from "@/components/landing/Footer";
+import { HomePage } from "@/components/marketing/HomePage";
+import { MarketingShell } from "@/components/marketing/MarketingChrome";
 
-/**
- * Landing journey:
- * Hero → who it’s for → PDF / stale profile → how it works →
- * product proof → dashboard → monthly verification → pricing → FAQ → convert
- */
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <Header />
-      <main>
-        <Hero />
-        <WhoFor />
-        <ProfileInventory />
-        <HowItWorks />
-        <ProductShowcase />
-        <OrgDashboardSection />
-        <VerifiedMonthly />
-        <section id="pricing">
-          <Pricing />
-        </section>
-        <section id="faq">
-          <FAQ />
-        </section>
-        <FinalCTA />
-      </main>
-      <Footer />
-    </div>
+    <MarketingShell>
+      <HomePage />
+    </MarketingShell>
   );
 };
 

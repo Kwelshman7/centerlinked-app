@@ -237,7 +237,7 @@ export default function Settings() {
               </Button>
             ) : (
               <Button asChild variant="outline" size="sm">
-                <Link to="/app/members">
+                <Link to="/app/contacts">
                   <Users className="h-4 w-4" /> Invite teammates
                 </Link>
               </Button>

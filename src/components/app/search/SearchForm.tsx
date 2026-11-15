@@ -200,28 +200,6 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
             approvedOnly
           />
         </FieldShell>
-        <FieldShell label="Plan type" htmlFor="search-plan-type">
-          <Select
-            value={planType || "_any"}
-            onValueChange={(v) => {
-              const next = v === "_any" ? "" : parsePlanTypeParam(v);
-              setPlanType(next);
-              commit({ planType: next });
-            }}
-          >
-            <SelectTrigger id="search-plan-type" className={control}>
-              <SelectValue placeholder="Any plan type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="_any">Any plan type</SelectItem>
-              {PLAN_TYPES.map((pt) => (
-                <SelectItem key={pt.slug} value={pt.slug}>
-                  {pt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FieldShell>
         <FieldShell label="Level of care" htmlFor="search-loc">
           <Select
             value={loc || "_any"}
@@ -299,6 +277,28 @@ export function SearchForm({ variant = "hero" }: { variant?: SearchFormVariant }
         </FieldShell>
         {moreOpen ? (
           <>
+            <FieldShell label="Plan type" htmlFor="search-plan-type">
+              <Select
+                value={planType || "_any"}
+                onValueChange={(v) => {
+                  const next = v === "_any" ? "" : parsePlanTypeParam(v);
+                  setPlanType(next);
+                  commit({ planType: next });
+                }}
+              >
+                <SelectTrigger id="search-plan-type" className={control}>
+                  <SelectValue placeholder="Any plan type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_any">Any plan type</SelectItem>
+                  {PLAN_TYPES.map((pt) => (
+                    <SelectItem key={pt.slug} value={pt.slug}>
+                      {pt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FieldShell>
             <FieldShell label="ZIP" htmlFor="search-zip">
               <Input
                 id="search-zip"

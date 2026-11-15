@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { isPublicSharePath, isSocialPreviewBot } from "./server/og-share.mjs";
 import { renderPreviewHtml } from "./server/og-meta.mjs";
+import { isMarketingMetaPath, isNonBrowserClient } from "./server/marketing-meta.mjs";
 import { renderOrgOgImage, renderOrgOgIcon } from "./server/og-image.mjs";
 import { handlePublicImage } from "./server/public-image.mjs";
 
@@ -138,10 +139,12 @@ export function socialPreviewPlugin(): Plugin {
           return;
         }
 
-        if (!isPublicSharePath(pathname)) return next();
-
+        // Mirrors middleware.js: share bots on public org/program URLs, plus
+        // any non-browser client on a marketing route.
         const userAgent = req.headers["user-agent"] ?? "";
-        if (!isSocialPreviewBot(userAgent)) return next();
+        const shareBot = isSocialPreviewBot(userAgent) && isPublicSharePath(pathname);
+        const marketingFetch = isNonBrowserClient(userAgent) && isMarketingMetaPath(pathname);
+        if (!shareBot && !marketingFetch) return next();
 
         try {
           const html = await renderPreviewHtml(pathname, indexHtml);

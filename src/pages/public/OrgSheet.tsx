@@ -248,8 +248,9 @@ export default function OrgSheet() {
         : "";
 
   return (
-    <div id="top" className="min-h-screen bg-background overflow-x-hidden">
+    <div id="top" className="flex h-dvh flex-col overflow-hidden bg-background print:h-auto print:overflow-visible lg:flex-row">
       <SearchContextBar currentOrgSlug={org.slug} />
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto print:overflow-visible">
       <ProgramOrgHeader org={org} brand={brand} logoHref={null}>
         {heroContact ? (
           <button
@@ -327,6 +328,7 @@ export default function OrgSheet() {
           onExportPdf={handleExportPdf}
         />
       </main>
+      </div>
     </div>
   );
 }

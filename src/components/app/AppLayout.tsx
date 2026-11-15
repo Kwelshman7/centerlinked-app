@@ -13,7 +13,6 @@ import {
   PanelLeft,
   Menu,
   UserRound,
-  UserPlus,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -284,9 +283,6 @@ export function AppLayout() {
       { to: "/app/search", label: "Search", icon: SearchIcon },
       { to: "/app/contacts", label: "Contacts", icon: Users },
     ];
-    if (profile?.organization_id) {
-      items.push({ to: "/app/members", label: "Members", icon: UserPlus });
-    }
     items.push(
       { to: "/app/organizations?view=all", label: "Organizations", icon: Building2, orgView: "all" },
       { to: "/app/facilities", label: "Facilities", icon: Building },
@@ -294,7 +290,7 @@ export function AppLayout() {
       { to: "/app/settings", label: "Settings", icon: Settings },
     );
     return items;
-  }, [hasOrgAccess, user, needsSuperAdminSetup, profile?.organization_id]);
+  }, [hasOrgAccess, user, needsSuperAdminSetup]);
 
   const mobilePrimary: NavItem[] = useMemo(() => {
     if (!hasOrgAccess) {
@@ -309,7 +305,6 @@ export function AppLayout() {
     ];
     if (profile?.organization_id) {
       items.push({ to: "/app/facilities", label: "Facilities", icon: Building });
-      items.push({ to: "/app/members", label: "Members", icon: UserPlus });
     } else {
       items.push({ to: "/app/organizations?view=all", label: "Orgs", icon: Building2, orgView: "all" });
     }

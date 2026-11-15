@@ -23,7 +23,7 @@ export function Logo({ className, to = "/", size = "md" }: LogoProps) {
     <span className={cn("inline-flex items-center group", className)}>
       <img
         src={logoFull}
-        alt="CenterLinked"
+        alt={to ? "" : "CenterLinked"}
         className={cn("w-auto object-contain select-none", sizes[size])}
         draggable={false}
       />
@@ -32,7 +32,7 @@ export function Logo({ className, to = "/", size = "md" }: LogoProps) {
 
   if (!to) return inner;
   return (
-    <Link to={to} className="inline-flex items-center hover:opacity-90 transition-opacity">
+    <Link to={to} aria-label="CenterLinked" className="inline-flex items-center hover:opacity-90 transition-opacity">
       {inner}
     </Link>
   );
