@@ -126,7 +126,7 @@ export async function claimPendingOrgInvite(): Promise<{ joined: boolean; organi
       .maybeSingle();
     profileOrganizationId = prof?.organization_id ?? null;
   }
-  if (user?.id && !Boolean(result?.joined && result?.organization_id) && !profileOrganizationId) {
+  if (user?.id && !(result?.joined && result?.organization_id) && !profileOrganizationId) {
     const { data: membership, error: membershipError } = await supabase
       .from("organization_members")
       .select("organization_id")
